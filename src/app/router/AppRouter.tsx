@@ -3,8 +3,6 @@
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
-import { RoleRoute } from './RoleRoute';
-import { ROUTES, USER_ROLES } from '../config/constants';
 
 // Layouts
 import { AppLayout } from '../../shared/layouts/AppLayout';
@@ -17,9 +15,9 @@ import { RequestAmbulancePage } from '../../features/ambulance/presentation/page
 import { AmbulanceTrackingPage } from '../../features/ambulance/presentation/pages/AmbulanceTrackingPage';
 import { CheckoutPage } from '../../features/booking/presentation/pages/CheckoutPage';
 import { LoginPage } from '../../features/auth/presentation/pages/LoginPage';
+import { HomePage } from '../../features/home/presentation/pages/HomePage';
 
 // Placeholder pages
-const HomePage = () => <div className="p-6"><h1 className="text-2xl font-bold">Bienvenido a MediConnect</h1></div>;
 const RegisterPage = () => <div>Register Page</div>;
 
 export const AppRouter = () => {

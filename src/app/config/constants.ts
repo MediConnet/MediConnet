@@ -14,6 +14,7 @@ export const ROUTES = {
   REQUEST_AMBULANCE: '/ambulance/request',
   AMBULANCE_TRACKING: '/ambulance/tracking/:id',
   CHECKOUT: '/checkout',
+  APPOINTMENTS: '/appointments',
 } as const;
 
 export const USER_ROLES = {

@@ -26,14 +26,15 @@ body {
   margin: 0;
   padding: 0;
   min-width: 320px;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 #root {
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 /* NOTE: Animaciones para iconos flotantes en el login */
