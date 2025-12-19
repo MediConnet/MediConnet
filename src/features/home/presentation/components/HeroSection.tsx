@@ -4,14 +4,17 @@
 import { Box, Typography, Button } from '@mui/material';
 import { Favorite, ArrowForward } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useHomeContent } from '../hooks/useHome';
 import { ROUTES } from '../../../../app/config/constants';
 
 export const HeroSection = () => {
   const navigate = useNavigate();
+  const { data: homeContent } = useHomeContent();
 
   const handleExploreServices = () => {
-    // NOTE: Navegar a la página de búsqueda cuando se implemente
-    navigate(ROUTES.SEARCH);
+    // NOTE: Navegar usando la URL del backend o fallback a SEARCH
+    const link = homeContent?.hero.ctaLink || ROUTES.SEARCH;
+    navigate(link);
   };
 
   return (
@@ -63,7 +66,7 @@ export const HeroSection = () => {
           textShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
         }}
       >
-        Tu Salud es Nuestra Prioridad
+        {homeContent?.hero.title || 'Tu Salud es Nuestra Prioridad'}
       </Typography>
 
       {/* NOTE: Subtítulo descriptivo */}
@@ -79,7 +82,7 @@ export const HeroSection = () => {
           opacity: 0.95,
         }}
       >
-        Encuentra médicos, farmacias, laboratorios y servicios de salud cerca de ti
+        {homeContent?.hero.subtitle || 'Encuentra médicos, farmacias, laboratorios y servicios de salud cerca de ti'}
       </Typography>
 
       {/* NOTE: Botón de llamada a la acción */}
@@ -105,7 +108,7 @@ export const HeroSection = () => {
           transition: 'all 0.3s ease',
         }}
       >
-        Explora Nuestros Servicios
+        {homeContent?.hero.ctaText || 'Explora Nuestros Servicios'}
       </Button>
     </Box>
   );
