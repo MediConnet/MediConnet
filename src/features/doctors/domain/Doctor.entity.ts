@@ -1,8 +1,6 @@
 /**
  * Entidad Doctor
  */
-
-// TODO: Agregar el campo para la foto de perfil
 export interface Doctor {
   id: string;
   name: string;
@@ -20,6 +18,11 @@ export interface Doctor {
   education?: string[];
   experience?: string[];
   languages?: string[];
+
+  photoUrl?: string;         
+  registrationNumber?: string; 
+  scheduleText?: string;     
+  consultationFee?: number;
 }
 
 

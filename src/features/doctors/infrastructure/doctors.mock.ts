@@ -18,8 +18,10 @@ export const MOCK_DOCTORS: Doctor[] = [
       longitude: -78.4678,
     },
     experience: ['15 años de experiencia'],
-    // Agregamos una propiedad temporal para la foto (debería estar en la entidad idealmente)
-    // photoUrl: placeholderImage + "?img=1" 
+    registrationNumber: '1234-MSP-2020',
+    scheduleText: 'Lun-Vie 9:00-18:00',
+    consultationFee: 40.00,
+    bio: 'Especialista en cardiología clínica con enfoque en prevención cardiovascular. Comprometida con el bienestar integral de mis pacientes.',
   },
   {
     id: 'd2',

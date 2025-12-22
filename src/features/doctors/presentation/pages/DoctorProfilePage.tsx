@@ -1,54 +1,174 @@
-import { useParams } from 'react-router-dom';
+import {
+  AccessTime,
+  ArrowBack,
+  AttachMoney,
+  CalendarMonth,
+  FavoriteBorder,
+  Star,
+  VerifiedUser
+} from '@mui/icons-material';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useDoctor } from '../hooks/useDoctor';
-import { AvailabilityCalendar } from '../components/AvailabilityCalendar';
-import { Availability } from '../../domain/Availability.entity';
 
 export const DoctorProfilePage = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { data: doctor, isLoading } = useDoctor(id || '');
 
-  const handleSelectAvailability = (availability: Availability) => {
-    // Navegar a checkout
-    window.location.href = `/checkout?doctorId=${doctor?.id}&availabilityId=${availability.id}`;
-  };
+  const doctorImage = doctor ? `https://i.pravatar.cc/300?u=${doctor.id}` : '';
 
-  if (isLoading) {
-    return <div>Cargando...</div>;
-  }
-
-  if (!doctor) {
-    return <div>Doctor no encontrado</div>;
-  }
+  if (isLoading) return <div className="p-10 text-center">Cargando perfil...</div>;
+  if (!doctor) return <div className="p-10 text-center">Doctor no encontrado</div>;
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-4">{doctor.name}</h1>
-      <p className="text-xl text-gray-600 mb-4">{doctor.specialty}</p>
-      
-      <div className="mb-6">
-        <span className="text-yellow-500">★</span>
-        <span className="ml-1">
-          {doctor.rating.toFixed(1)} ({doctor.totalReviews} reseñas)
-        </span>
-      </div>
+    <div className="min-h-screen bg-[#f0fdfa] pb-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        {/* Botón Volver */}
+        <button 
+          onClick={() => navigate(-1)}
+          className="flex items-center text-gray-500 hover:text-gray-900 mb-6 transition-colors font-medium cursor-pointer"
+        >
+          <ArrowBack className="mr-1" fontSize="small" />
+          Volver
+        </button>
 
-      {doctor.bio && (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2">Sobre el doctor</h2>
-          <p className="text-gray-700">{doctor.bio}</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* --- COLUMNA IZQUIERDA (Principal) --- */}
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* Tarjeta Principal */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div className="flex flex-col md:flex-row gap-6">
+                {/* Foto */}
+                <div className="w-full md:w-48 h-48 flex-shrink-0">
+                  <img 
+                    src={doctorImage} 
+                    alt={doctor.name} 
+                    className="w-full h-full object-cover rounded-xl shadow-sm"
+                  />
+                </div>
+                
+                {/* Info Básica */}
+                <div className="flex-grow">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h1 className="text-2xl font-bold text-gray-900 mb-2">{doctor.name}</h1>
+                      <span className="inline-block px-3 py-1 bg-[#06B6D4]/10 text-[#06B6D4] text-xs font-bold rounded-lg border border-[#06B6D4]/20 mb-4">
+                        {doctor.specialty}
+                      </span>
+                    </div>
+                    {/* Botón Guardar con cursor-pointer */}
+                    <button className="text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1 text-sm border px-3 py-1 rounded-full hover:bg-red-50 cursor-pointer">
+                      <FavoriteBorder fontSize="small" />
+                      <span className="hidden sm:inline">Guardar</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-3 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <VerifiedUser className="text-[#06B6D4]" fontSize="small" />
+                      <span>{doctor.experience?.[0] || 'Experiencia no especificada'}</span>
+                    </div>
+                    {doctor.registrationNumber && (
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-700 w-5 text-center">#</span>
+                        <span>Registro: {doctor.registrationNumber}</span>
+                      </div>
+                    )}
+                    {doctor.scheduleText && (
+                      <div className="flex items-center gap-2">
+                        <AccessTime className="text-gray-400" fontSize="small" />
+                        <span>Horario: {doctor.scheduleText}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bio */}
+              {doctor.bio && (
+                <div className="mt-6 pt-6 border-t border-gray-100">
+                  <h3 className="font-semibold text-gray-900 mb-2">Sobre el doctor</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    {doctor.bio}
+                  </p>
+                </div>
+              )}
+
+              {/* Caja de Tarifas */}
+              <div className="mt-6 bg-green-50 rounded-xl p-4 border border-green-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-white p-2 rounded-full shadow-sm text-green-600">
+                    <AttachMoney />
+                  </div>
+                  <div>
+                    <p className="font-bold text-green-800 text-sm">Tarifa de Consulta</p>
+                    <p className="text-green-600 text-xs">Incluye revisión y diagnóstico</p>
+                  </div>
+                </div>
+                <span className="text-xl font-bold text-green-700">
+                  ${doctor.consultationFee?.toFixed(2) || '0.00'}
+                </span>
+              </div>
+              
+              {/* Botón Agendar (Móvil) */}
+              <button className="w-full mt-6 lg:hidden bg-[#06B6D4] text-white py-3 rounded-xl font-bold hover:bg-[#0891b2] transition-colors flex items-center justify-center gap-2 cursor-pointer">
+                <CalendarMonth />
+                Agendar Cita
+              </button>
+            </div>
+
+            {/* Sección de Reseñas */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-900">Reseñas y Valoraciones</h3>
+                <div className="flex items-center gap-1 bg-yellow-50 px-3 py-1 rounded-lg">
+                  <Star className="text-yellow-400" fontSize="small" />
+                  <span className="font-bold text-gray-900">{doctor.rating.toFixed(1)}</span>
+                  <span className="text-gray-500 text-xs">({doctor.totalReviews})</span>
+                </div>
+              </div>
+              
+              {/* Botón Escribir Reseña (Color actualizado y cursor pointer) */}
+              <button className="w-full py-2.5 bg-[#06B6D4] text-white font-medium rounded-xl hover:bg-[#0891b2] transition-colors cursor-pointer">
+                Escribir una reseña
+              </button>
+            </div>
+
+          </div>
+
+          {/* --- COLUMNA DERECHA (Sidebar Sticky) --- */}
+          <div className="hidden lg:block">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-4">
+              <h3 className="font-bold text-gray-900 mb-4">Información Profesional</h3>
+              
+              <div className="space-y-4 mb-6">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase font-semibold">Especialidad</p>
+                  <p className="text-gray-900 font-medium">{doctor.specialty}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase font-semibold">Experiencia</p>
+                  <p className="text-gray-900 font-medium">{doctor.experience?.[0]}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase font-semibold">Horario de Atención</p>
+                  <p className="text-gray-900 font-medium">{doctor.scheduleText}</p>
+                </div>
+              </div>
+
+              {/* Botón Agendar (Desktop) */}
+              <button className="w-full bg-[#06B6D4] text-white py-3 rounded-xl font-bold hover:bg-[#0891b2] transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-200 cursor-pointer">
+                <CalendarMonth />
+                Agendar Cita
+              </button>
+            </div>
+          </div>
+
         </div>
-      )}
-
-      {/* Placeholder para disponibilidad */}
-      <AvailabilityCalendar
-        availabilities={[]}
-        onSelect={handleSelectAvailability}
-      />
+      </div>
     </div>
   );
 };
-
-
-
-
-
