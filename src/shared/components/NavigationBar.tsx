@@ -1,16 +1,16 @@
 // NOTE: Barra de navegación principal con links a diferentes secciones
 // TODO: Agregar indicador visual de página activa más destacado
 
-import { Box, Button } from '@mui/material';
-import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  Home as HomeIcon,
-  LocalHospital as DoctorsIcon,
-  Business as PharmacyIcon,
-  Science as LabIcon,
   LocalShipping as AmbulanceIcon,
+  LocalHospital as DoctorsIcon,
+  Home as HomeIcon,
+  Science as LabIcon,
+  Business as PharmacyIcon,
   Inventory as SuppliesIcon,
 } from '@mui/icons-material';
+import { Box, Button } from '@mui/material';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../app/config/constants';
 
 interface NavItem {
@@ -21,7 +21,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: 'Inicio', icon: <HomeIcon />, path: ROUTES.HOME },
-  { label: 'Médicos', icon: <DoctorsIcon />, path: ROUTES.SEARCH },
+  { label: 'Médicos', icon: <DoctorsIcon />, path: ROUTES.SPECIALTIES },
   { label: 'Farmacias', icon: <PharmacyIcon />, path: ROUTES.PHARMACIES },
   { label: 'Laboratorios', icon: <LabIcon />, path: ROUTES.LABORATORIES },
   { label: 'Ambulancias', icon: <AmbulanceIcon />, path: ROUTES.AMBULANCES },

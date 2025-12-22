@@ -17,6 +17,7 @@ export const ROUTES = {
   AMBULANCE_DETAIL: '/ambulances/:id',
   CHECKOUT: '/checkout',
   APPOINTMENTS: '/appointments',
+  SPECIALTIES: '/specialties',
   PHARMACIES: '/pharmacies',
   PHARMACY_DETAIL: '/pharmacies/:id',
   PHARMACY_BRANCH: '/pharmacy-branch/:id',
