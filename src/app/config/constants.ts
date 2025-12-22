@@ -13,7 +13,17 @@ export const ROUTES = {
   DOCTOR_PROFILE: '/doctor/:id',
   REQUEST_AMBULANCE: '/ambulance/request',
   AMBULANCE_TRACKING: '/ambulance/tracking/:id',
+  AMBULANCES: '/ambulances',
+  AMBULANCE_DETAIL: '/ambulances/:id',
   CHECKOUT: '/checkout',
+  APPOINTMENTS: '/appointments',
+  PHARMACIES: '/pharmacies',
+  PHARMACY_DETAIL: '/pharmacies/:id',
+  PHARMACY_BRANCH: '/pharmacy-branch/:id',
+  LABORATORIES: '/laboratories',
+  LABORATORY_DETAIL: '/laboratories/:id',
+  SUPPLIES: '/supplies',
+  SUPPLY_DETAIL: '/supplies/:id',
 } as const;
 
 export const USER_ROLES = {
