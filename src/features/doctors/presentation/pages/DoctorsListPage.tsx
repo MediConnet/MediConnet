@@ -9,7 +9,6 @@ export const DoctorsListPage = () => {
   const { specialtyName } = useParams<{ specialtyName: string }>();
   const navigate = useNavigate();
   
-  // 1. Estado para la barra de búsqueda
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: doctors, isLoading } = useDoctorsBySpecialty(specialtyName);
@@ -18,8 +17,6 @@ export const DoctorsListPage = () => {
     s => s.name.toLowerCase() === specialtyName?.toLowerCase()
   );
 
-  // 2. Lógica de Filtrado
-  // Si hay texto, filtramos. Si no, mostramos todos.
   const filteredDoctors = doctors?.filter(doctor => {
     const query = searchQuery.toLowerCase();
     
@@ -56,7 +53,6 @@ export const DoctorsListPage = () => {
               <h1 className="text-4xl font-bold text-gray-900 capitalize">
                 {specialtyName}
               </h1>
-              {/* 3. Actualizamos el contador dinámicamente */}
               <p className="text-gray-500 mt-1">
                 {filteredDoctors?.length || 0} médicos encontrados
               </p>
@@ -71,7 +67,6 @@ export const DoctorsListPage = () => {
           </div>
           <input
             type="text"
-            // Vinculamos el input al estado
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
@@ -81,13 +76,11 @@ export const DoctorsListPage = () => {
 
         {/* --- Lógica de Renderizado del Grid --- */}
         
-        {/* CASO 1: No hay médicos en la especialidad (independiente de la búsqueda) */}
         {!doctors || doctors.length === 0 ? (
            <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-300">
              <p className="text-gray-500 text-lg">No existen médicos registrados en esta especialidad.</p>
            </div>
         
-        // CASO 2: Hay médicos, pero el FILTRO no encontró coincidencias (Tu imagen)
         ) : filteredDoctors?.length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100 flex flex-col items-center justify-center min-h-[300px]">
             <MedicalServicesOutlined sx={{ fontSize: 80 }} className="text-gray-300 mb-4" />
@@ -96,7 +89,6 @@ export const DoctorsListPage = () => {
             </h3>
           </div>
 
-        // CASO 3: Hay resultados, mostramos el Grid
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {filteredDoctors?.map((doctor) => (

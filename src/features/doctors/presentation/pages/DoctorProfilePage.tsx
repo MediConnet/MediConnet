@@ -5,8 +5,10 @@ import {
   CalendarMonth,
   FavoriteBorder,
   Star,
+  StarBorder,
   VerifiedUser
 } from '@mui/icons-material';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDoctor } from '../hooks/useDoctor';
 
@@ -16,6 +18,29 @@ export const DoctorProfilePage = () => {
   const { data: doctor, isLoading } = useDoctor(id || '');
 
   const doctorImage = doctor ? `https://i.pravatar.cc/300?u=${doctor.id}` : '';
+
+  // --- ESTADOS PARA LA RESEÑA ---
+  const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0); 
+  const [comment, setComment] = useState("");
+
+  const handleSubmitReview = () => {
+    // Aquí iría la llamada al backend. Por ahora solo simulamos.
+    console.log("Enviando reseña:", { rating, comment });
+    
+    // Limpiamos y cerramos
+    setIsReviewFormOpen(false);
+    setRating(0);
+    setComment("");
+    alert("¡Gracias! Tu reseña se ha enviado (simulación).");
+  };
+
+  const handleCancelReview = () => {
+    setIsReviewFormOpen(false);
+    setRating(0);
+    setComment("");
+  };
 
   if (isLoading) return <div className="p-10 text-center">Cargando perfil...</div>;
   if (!doctor) return <div className="p-10 text-center">Doctor no encontrado</div>;
@@ -120,9 +145,9 @@ export const DoctorProfilePage = () => {
               </button>
             </div>
 
-            {/* Sección de Reseñas */}
+            {/* Sección de Reseñas y Formulario */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-bold text-gray-900">Reseñas y Valoraciones</h3>
                 <div className="flex items-center gap-1 bg-yellow-50 px-3 py-1 rounded-lg">
                   <Star className="text-yellow-400" fontSize="small" />
@@ -131,10 +156,73 @@ export const DoctorProfilePage = () => {
                 </div>
               </div>
               
-              {/* Botón Escribir Reseña (Color actualizado y cursor pointer) */}
-              <button className="w-full py-2.5 bg-[#06B6D4] text-white font-medium rounded-xl hover:bg-[#0891b2] transition-colors cursor-pointer">
-                Escribir una reseña
-              </button>
+              {!isReviewFormOpen ? (
+                <button 
+                  onClick={() => setIsReviewFormOpen(true)}
+                  className="w-full py-2.5 bg-[#06B6D4] text-white font-medium rounded-xl hover:bg-[#0891b2] transition-colors cursor-pointer"
+                >
+                  Escribir una reseña
+                </button>
+              ) : (
+                <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100 animate-fade-in-down">
+                  
+                  {/* Selector de Estrellas */}
+                  <div className="mb-4">
+                    <p className="text-sm font-semibold text-gray-700 mb-2">Tu calificación</p>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((starValue) => (
+                        <button
+                          key={starValue}
+                          type="button"
+                          onClick={() => setRating(starValue)}
+                          onMouseEnter={() => setHoverRating(starValue)}
+                          onMouseLeave={() => setHoverRating(0)}
+                          className="focus:outline-none transition-transform hover:scale-110 cursor-pointer"
+                        >
+                          {(hoverRating || rating) >= starValue ? (
+                            <Star className="text-yellow-400 text-3xl" />
+                          ) : (
+                            <StarBorder className="text-gray-300 text-3xl" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Input de Texto */}
+                  <div className="mb-4">
+                    <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                      Comentario (opcional)
+                    </label>
+                    <textarea
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      placeholder="Comparte tu experiencia..."
+                      rows={3}
+                      className="w-full border border-gray-200 rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#06B6D4] focus:border-transparent outline-none bg-white resize-none"
+                    />
+                  </div>
+
+                  {/* Botones de Acción */}
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={handleSubmitReview}
+                      disabled={rating === 0} 
+                      className={`flex-1 py-2 rounded-lg font-medium text-white transition-colors cursor-pointer
+                        ${rating === 0 ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#06B6D4] hover:bg-[#0891b2]'}
+                      `}
+                    >
+                      Publicar Reseña
+                    </button>
+                    <button 
+                      onClick={handleCancelReview}
+                      className="px-4 py-2 border border-gray-300 bg-white text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
           </div>
