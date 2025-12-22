@@ -25,7 +25,7 @@ const navItems: NavItem[] = [
   { label: 'Farmacias', icon: <PharmacyIcon />, path: ROUTES.PHARMACIES },
   { label: 'Laboratorios', icon: <LabIcon />, path: ROUTES.LABORATORIES },
   { label: 'Ambulancias', icon: <AmbulanceIcon />, path: ROUTES.AMBULANCES },
-  { label: 'Insumos', icon: <SuppliesIcon />, path: ROUTES.SEARCH },
+  { label: 'Insumos', icon: <SuppliesIcon />, path: ROUTES.SUPPLIES },
 ];
 
 export const NavigationBar = () => {
@@ -44,6 +44,10 @@ export const NavigationBar = () => {
     // Para ambulancias, también considerar las rutas hijas
     if (path === ROUTES.AMBULANCES) {
       return location.pathname.startsWith('/ambulances');
+    }
+    // Para insumos, también considerar las rutas hijas
+    if (path === ROUTES.SUPPLIES) {
+      return location.pathname.startsWith('/supplies');
     }
     return location.pathname === path;
   };
