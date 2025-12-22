@@ -16,6 +16,9 @@ import { AmbulanceTrackingPage } from '../../features/ambulance/presentation/pag
 import { CheckoutPage } from '../../features/booking/presentation/pages/CheckoutPage';
 import { LoginPage } from '../../features/auth/presentation/pages/LoginPage';
 import { HomePage } from '../../features/home/presentation/pages/HomePage';
+import { PharmaciesListPage } from '../../features/pharmacies/presentation/pages/PharmaciesListPage';
+import { PharmacyDetailPage } from '../../features/pharmacies/presentation/pages/PharmacyDetailPage';
+import { BranchDetailPage } from '../../features/pharmacies/presentation/pages/BranchDetailPage';
 
 // Placeholder pages
 const RegisterPage = () => <div>Register Page</div>;
@@ -36,6 +39,9 @@ export const AppRouter = () => {
           <Route path="/search" element={<SearchPage />} />
           <Route path="/doctor/:id" element={<DoctorProfilePage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/pharmacies" element={<PharmaciesListPage />} />
+          <Route path="/pharmacies/:id" element={<PharmacyDetailPage />} />
+          <Route path="/pharmacy-branch/:id" element={<BranchDetailPage />} />
         </Route>
 
         {/* Rutas de ambulancia */}

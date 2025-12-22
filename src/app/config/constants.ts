@@ -15,6 +15,9 @@ export const ROUTES = {
   AMBULANCE_TRACKING: '/ambulance/tracking/:id',
   CHECKOUT: '/checkout',
   APPOINTMENTS: '/appointments',
+  PHARMACIES: '/pharmacies',
+  PHARMACY_DETAIL: '/pharmacies/:id',
+  PHARMACY_BRANCH: '/pharmacy-branch/:id',
 } as const;
 
 export const USER_ROLES = {

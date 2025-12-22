@@ -27,12 +27,14 @@ export const AppLayout = () => {
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
+        
         overflowX: 'hidden',
+        
       }}
     >
       {/* NOTE: Header/Navbar completamente blanco con todos los elementos */}
-      <header className="bg-white w-full shadow-sm" style={{ position: 'sticky', top: 0, zIndex: 1000 }}>
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-2 lg:px-8">
+      <header className="w-full shadow-sm " style={{ position: 'sticky', top: 0, zIndex: 1000, borderBottom: '1px solid #00bcd4' }}>
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-2 lg:px-8 ">
           <div className="flex justify-between items-center h-12 w-full py-1">
             {/* NOTE: Logo a la izquierda */}
             <Box
