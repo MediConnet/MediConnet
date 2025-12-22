@@ -22,11 +22,6 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: 'Inicio', icon: <HomeIcon />, path: ROUTES.HOME },
   { label: 'Médicos', icon: <DoctorsIcon />, path: ROUTES.SPECIALTIES },
-  { label: 'Farmacias', icon: <PharmacyIcon />, path: ROUTES.SEARCH },
-  { label: 'Laboratorios', icon: <LabIcon />, path: ROUTES.SEARCH },
-  { label: 'Ambulancias', icon: <AmbulanceIcon />, path: ROUTES.REQUEST_AMBULANCE },
-  { label: 'Insumos', icon: <SuppliesIcon />, path: ROUTES.SEARCH },
-  { label: 'Médicos', icon: <DoctorsIcon />, path: ROUTES.SEARCH },
   { label: 'Farmacias', icon: <PharmacyIcon />, path: ROUTES.PHARMACIES },
   { label: 'Laboratorios', icon: <LabIcon />, path: ROUTES.LABORATORIES },
   { label: 'Ambulancias', icon: <AmbulanceIcon />, path: ROUTES.AMBULANCES },
