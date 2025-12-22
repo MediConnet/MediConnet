@@ -13,6 +13,8 @@ export const ROUTES = {
   DOCTOR_PROFILE: '/doctor/:id',
   REQUEST_AMBULANCE: '/ambulance/request',
   AMBULANCE_TRACKING: '/ambulance/tracking/:id',
+  AMBULANCES: '/ambulances',
+  AMBULANCE_DETAIL: '/ambulances/:id',
   CHECKOUT: '/checkout',
   APPOINTMENTS: '/appointments',
   PHARMACIES: '/pharmacies',

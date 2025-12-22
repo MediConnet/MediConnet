@@ -21,6 +21,8 @@ import { PharmacyDetailPage } from '../../features/pharmacies/presentation/pages
 import { BranchDetailPage } from '../../features/pharmacies/presentation/pages/BranchDetailPage';
 import { LaboratoriesPage } from '../../features/laboratories/ui/pages/LaboratoriesPage';
 import { LaboratoryDetailPage } from '../../features/laboratories/ui/pages/LaboratoryDetailPage';
+import { AmbulancesListPage } from '../../features/ambulance/presentation/pages/AmbulancesListPage';
+import { AmbulanceDetailPage } from '../../features/ambulance/presentation/pages/AmbulanceDetailPage';
 
 // Placeholder pages
 const RegisterPage = () => <div>Register Page</div>;
@@ -46,6 +48,8 @@ export const AppRouter = () => {
           <Route path="/pharmacy-branch/:id" element={<BranchDetailPage />} />
           <Route path="/laboratories" element={<LaboratoriesPage />} />
           <Route path="/laboratories/:id" element={<LaboratoryDetailPage />} />
+          <Route path="/ambulances" element={<AmbulancesListPage />} />
+          <Route path="/ambulances/:id" element={<AmbulanceDetailPage />} />
         </Route>
 
         {/* Rutas de ambulancia */}
