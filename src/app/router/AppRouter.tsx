@@ -1,7 +1,7 @@
 // NOTE: Configuración principal de rutas de la aplicación
 // TODO: Agregar lazy loading de componentes para mejor performance
 
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 
 // Layouts
@@ -9,13 +9,14 @@ import { AppLayout } from '../../shared/layouts/AppLayout';
 import { AuthLayout } from '../../shared/layouts/AuthLayout';
 
 // Pages
-import { SearchPage } from '../../features/search/presentation/pages/SearchPage';
-import { DoctorProfilePage } from '../../features/doctors/presentation/pages/DoctorProfilePage';
-import { RequestAmbulancePage } from '../../features/ambulance/presentation/pages/RequestAmbulancePage';
 import { AmbulanceTrackingPage } from '../../features/ambulance/presentation/pages/AmbulanceTrackingPage';
-import { CheckoutPage } from '../../features/booking/presentation/pages/CheckoutPage';
+import { RequestAmbulancePage } from '../../features/ambulance/presentation/pages/RequestAmbulancePage';
 import { LoginPage } from '../../features/auth/presentation/pages/LoginPage';
+import { CheckoutPage } from '../../features/booking/presentation/pages/CheckoutPage';
+import { DoctorProfilePage } from '../../features/doctors/presentation/pages/DoctorProfilePage';
 import { HomePage } from '../../features/home/presentation/pages/HomePage';
+import { SearchPage } from '../../features/search/presentation/pages/SearchPage';
+import { SpecialtiesPage } from '../../features/search/presentation/pages/SpecialtiesPage';
 
 // Placeholder pages
 const RegisterPage = () => <div>Register Page</div>;
@@ -33,6 +34,7 @@ export const AppRouter = () => {
         {/* Rutas protegidas */}
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/home" element={<HomePage />} />
+          <Route path="/specialties" element={<SpecialtiesPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/doctor/:id" element={<DoctorProfilePage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
