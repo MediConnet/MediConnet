@@ -18,6 +18,8 @@ export const ROUTES = {
   PHARMACIES: '/pharmacies',
   PHARMACY_DETAIL: '/pharmacies/:id',
   PHARMACY_BRANCH: '/pharmacy-branch/:id',
+  LABORATORIES: '/laboratories',
+  LABORATORY_DETAIL: '/laboratories/:id',
 } as const;
 
 export const USER_ROLES = {

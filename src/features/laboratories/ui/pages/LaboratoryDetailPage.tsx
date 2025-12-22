@@ -1,19 +1,22 @@
+import { Box, Button, Chip, Typography, Card, CardContent, Grid, CircularProgress } from '@mui/material';
 import { useState, useMemo } from 'react';
-import { Box, Typography, Button, Card, CardContent, Grid, CircularProgress } from '@mui/material';
-import { ArrowBack, Favorite, AccessTime, LocationOn, LocalShipping, Star, WhatsApp } from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useBranch, useBranchReviews, useCreateReview } from '../hooks/usePharmacy';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowBack, Favorite, AccessTime, LocationOn, Description, WhatsApp, Star } from '@mui/icons-material';
+import { AppointmentModal } from '../components/AppointmentModal';
 import { ReviewForm } from '../components/ReviewForm';
 import { ReviewItem } from '../components/ReviewItem';
+import { useLaboratory, useLaboratoryReviews, useCreateReview } from '../hooks/useLaboratory';
 import { Footer } from '../../../../shared/components/Footer';
 
-export const BranchDetailPage = () => {
-  const navigate = useNavigate();
+export const LaboratoryDetailPage = () => {
   const { id } = useParams<{ id: string }>();
-  const { data: branch, isLoading: isLoadingBranch } = useBranch(id || '');
-  const { data: reviews = [] } = useBranchReviews(id || '');
-  const createReviewMutation = useCreateReview();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
+  
+  const { data: laboratory, isLoading: isLoadingLaboratory } = useLaboratory(id || '');
+  const { data: reviews = [] } = useLaboratoryReviews(id || '');
+  const createReviewMutation = useCreateReview();
 
   // Calcular rating promedio
   const averageRating = useMemo(() => {
@@ -24,12 +27,12 @@ export const BranchDetailPage = () => {
 
   const handleCreateReview = async (reviewData: { rating: number; comment?: string }) => {
     if (!id) {
-      console.error('No hay ID de sucursal');
+      console.error('No hay ID de laboratorio');
       return;
     }
     try {
       await createReviewMutation.mutateAsync({
-        branchId: id,
+        laboratoryId: id,
         rating: reviewData.rating,
         comment: reviewData.comment,
       });
@@ -40,7 +43,7 @@ export const BranchDetailPage = () => {
     }
   };
 
-  if (isLoadingBranch) {
+  if (isLoadingLaboratory) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
         <CircularProgress />
@@ -48,15 +51,20 @@ export const BranchDetailPage = () => {
     );
   }
 
-  if (!branch) {
+  if (!laboratory) {
     return (
       <Box sx={{ textAlign: 'center', py: 8 }}>
         <Typography variant="h6" sx={{ color: 'text.secondary' }}>
-          Sucursal no encontrada
+          Laboratorio no encontrado
         </Typography>
       </Box>
     );
   }
+
+  const handleWhatsApp = () => {
+    const message = encodeURIComponent(`Hola, me interesa información sobre ${laboratory.name}`);
+    window.open(`https://wa.me/${laboratory.phone.replace('+', '')}?text=${message}`, '_blank');
+  };
 
   return (
     <Box sx={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#f0fdfa' }}>
@@ -71,25 +79,26 @@ export const BranchDetailPage = () => {
         </Button>
 
         <Grid container spacing={4}>
-          {/* Columna izquierda - Imagen e información principal */}
+          {/* Columna izquierda */}
           <Grid item xs={12} md={8}>
-            {branch.image && (
-              <Box
-                component="img"
-                src={branch.image}
-                alt={branch.name}
-                sx={{
-                  width: '100%',
-                  height: { xs: 300, md: 500 },
-                  objectFit: 'cover',
-                  borderRadius: 2,
-                  mb: 3,
-                }}
-              />
-            )}
+            {/* Imagen */}
+            <Box
+              component="img"
+              src={laboratory.image}
+              alt={laboratory.name}
+              sx={{
+                width: '100%',
+                height: { xs: 300, md: 400 },
+                objectFit: 'cover',
+                borderRadius: 2,
+                mb: 3,
+              }}
+            />
+
+            {/* Nombre y favoritos */}
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                {branch.name}
+                {laboratory.name}
               </Typography>
               <Button
                 startIcon={<Favorite />}
@@ -102,91 +111,92 @@ export const BranchDetailPage = () => {
                 Agregar a Favoritos
               </Button>
             </Box>
+
+            {/* Horario */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <AccessTime sx={{ fontSize: 20, color: 'text.secondary' }} />
               <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                Horario: {branch.schedule}
+                Horario: {laboratory.schedule}
               </Typography>
             </Box>
+
+            {/* Dirección */}
             <Box sx={{ display: 'flex', alignItems: 'start', gap: 1, mb: 3 }}>
               <LocationOn sx={{ fontSize: 20, color: 'text.secondary', mt: 0.5 }} />
               <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                {branch.address}
+                {laboratory.address}
               </Typography>
             </Box>
-            {branch.hasDelivery && (
-              <Box
-                sx={{
-                  backgroundColor: '#d1fae5',
-                  color: '#065f46',
-                  px: 2,
-                  py: 1.5,
-                  borderRadius: 2,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  mb: 3,
-                }}
-              >
-                <LocalShipping sx={{ fontSize: 20 }} />
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  Envío a domicilio disponible
-                </Typography>
-              </Box>
-            )}
 
-            {/* Card izquierda con información adicional */}
-            <Card sx={{ mt: 3, mb: 3 }}>
+            {/* Exámenes disponibles */}
+            <Card sx={{ mb: 3 }}>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'start', gap: 1, mb: 2 }}>
-                  <LocationOn sx={{ fontSize: 20, color: 'text.secondary', mt: 0.5 }} />
-                  <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-                    {branch.address}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <Description sx={{ fontSize: 20, color: 'text.secondary' }} />
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    Exámenes disponibles:
                   </Typography>
                 </Box>
-                {branch.hasDelivery && (
-                  <Box
-                    sx={{
-                      backgroundColor: '#d1fae5',
-                      color: '#065f46',
-                      px: 2,
-                      py: 1.5,
-                      borderRadius: 2,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      mb: 3,
-                    }}
-                  >
-                    <LocalShipping sx={{ fontSize: 20 }} />
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      Envío a domicilio disponible
-                    </Typography>
-                  </Box>
-                )}
-                <Button
-                  variant="contained"
-                  startIcon={<WhatsApp />}
-                  fullWidth
-                  sx={{
-                    backgroundColor: '#10b981',
-                    color: 'white',
-                    textTransform: 'none',
-                    mb: 3,
-                    py: 1.5,
-                    fontSize: '1rem',
-                    '&:hover': {
-                      backgroundColor: '#059669',
-                    },
-                  }}
-                >
-                  Contactar por WhatsApp
-                </Button>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {laboratory.exams.map(exam => (
+                    <Chip
+                      key={exam}
+                      label={exam}
+                      sx={{
+                        borderColor: '#8b5cf6',
+                        color: '#8b5cf6',
+                        backgroundColor: 'white',
+                        fontWeight: 500,
+                      }}
+                      variant="outlined"
+                    />
+                  ))}
+                </Box>
               </CardContent>
             </Card>
 
-            {/* Card de Reseñas y Valoraciones */}
-            <Card sx={{ mt: 3, mb: 3 }}>
+            {/* Botones de acción */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
+              <Button
+                variant="contained"
+                startIcon={<AccessTime />}
+                fullWidth
+                onClick={() => setOpen(true)}
+                sx={{
+                  backgroundColor: '#8b5cf6',
+                  color: 'white',
+                  textTransform: 'none',
+                  py: 1.5,
+                  fontSize: '1rem',
+                  '&:hover': {
+                    backgroundColor: '#7c3aed',
+                  },
+                }}
+              >
+                Agendar Examen
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<WhatsApp />}
+                fullWidth
+                onClick={handleWhatsApp}
+                sx={{
+                  backgroundColor: '#10b981',
+                  color: 'white',
+                  textTransform: 'none',
+                  py: 1.5,
+                  fontSize: '1rem',
+                  '&:hover': {
+                    backgroundColor: '#059669',
+                  },
+                }}
+              >
+                Contactar por WhatsApp
+              </Button>
+            </Box>
+
+            {/* Reseñas */}
+            <Card>
               <CardContent>
                 <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
                   Reseñas y Valoraciones
@@ -225,31 +235,22 @@ export const BranchDetailPage = () => {
                   />
                 )}
 
-                {!showReviewForm && reviews.length === 0 && (
-                  <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center' }}>
-                    Aún no hay reseñas. ¡Sé el primero en dejar una!
-                  </Typography>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Card de Comentarios (Reseñas individuales) */}
-            {reviews.length > 0 && (
-              <Card sx={{ mt: 3, mb: 3 }}>
-                <CardContent>
-                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                    Comentarios
-                  </Typography>
-                  <Box>
+                {/* Lista de reseñas */}
+                {reviews.length > 0 ? (
+                  <Box sx={{ mt: 2 }}>
                     {[...reviews]
                       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                       .map((review) => (
                         <ReviewItem key={review.id} review={review} />
                       ))}
                   </Box>
-                </CardContent>
-              </Card>
-            )}
+                ) : !showReviewForm && (
+                  <Typography variant="body2" sx={{ color: 'text.secondary', textAlign: 'center' }}>
+                    Aún no hay reseñas. ¡Sé el primero en dejar una!
+                  </Typography>
+                )}
+              </CardContent>
+            </Card>
           </Grid>
 
           {/* Columna derecha - Información de contacto */}
@@ -264,7 +265,7 @@ export const BranchDetailPage = () => {
                     Teléfono
                   </Typography>
                   <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    {branch.phone}
+                    {laboratory.phone}
                   </Typography>
                 </Box>
                 <Box sx={{ mb: 2 }}>
@@ -272,7 +273,7 @@ export const BranchDetailPage = () => {
                     Dirección
                   </Typography>
                   <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    {branch.address}
+                    {laboratory.address}
                   </Typography>
                 </Box>
                 <Box sx={{ mb: 3 }}>
@@ -280,13 +281,14 @@ export const BranchDetailPage = () => {
                     Horario de Atención
                   </Typography>
                   <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    {branch.schedule}
+                    {laboratory.schedule}
                   </Typography>
                 </Box>
                 <Button
                   variant="outlined"
                   startIcon={<WhatsApp />}
                   fullWidth
+                  onClick={handleWhatsApp}
                   sx={{
                     borderColor: '#10b981',
                     color: '#10b981',
@@ -306,9 +308,8 @@ export const BranchDetailPage = () => {
         </Grid>
       </Box>
 
-      {/* Footer */}
       <Footer />
+      <AppointmentModal open={open} onClose={() => setOpen(false)} laboratory={laboratory} />
     </Box>
   );
 };
-
