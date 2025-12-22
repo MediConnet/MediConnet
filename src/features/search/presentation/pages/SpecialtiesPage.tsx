@@ -7,9 +7,14 @@ export const SpecialtiesPage = () => {
   const { data: specialties, isLoading } = useSpecialties();
 
   const handleSelectSpecialty = (id: string) => {
-    // Aquí redirigimos a la búsqueda filtrada por esa especialidad (lo haremos funcionar luego)
-    console.log(`Especialidad seleccionada: ${id}`);
-    // navigate(/search?specialty=${id}); // Ejemplo futuro
+    // 1. Buscamos la especialidad completa usando el ID que recibimos del click
+    const selectedSpecialty = specialties?.find(s => s.id === id);
+
+    if (selectedSpecialty) {
+      // 2. Navegamos usando el NOMBRE (ej: /specialties/Cardiología)
+      // Esto hará match con la ruta que creamos: /specialties/:specialtyName
+      navigate(`/specialties/${selectedSpecialty.name}`);
+    }
   };
 
   return (
@@ -39,7 +44,7 @@ export const SpecialtiesPage = () => {
             <SpecialtyCard 
               key={specialty.id} 
               specialty={specialty} 
-              onClick={handleSelectSpecialty}
+              onClick={handleSelectSpecialty} 
             />
           ))}
         </div>

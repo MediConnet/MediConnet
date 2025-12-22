@@ -16,6 +16,7 @@ import { RequestAmbulancePage } from '../../features/ambulance/presentation/page
 import { LoginPage } from '../../features/auth/presentation/pages/LoginPage';
 import { CheckoutPage } from '../../features/booking/presentation/pages/CheckoutPage';
 import { DoctorProfilePage } from '../../features/doctors/presentation/pages/DoctorProfilePage';
+import { DoctorsListPage } from '../../features/doctors/presentation/pages/DoctorsListPage';
 import { HomePage } from '../../features/home/presentation/pages/HomePage';
 import { LaboratoriesPage } from '../../features/laboratories/ui/pages/LaboratoriesPage';
 import { LaboratoryDetailPage } from '../../features/laboratories/ui/pages/LaboratoryDetailPage';
@@ -56,6 +57,7 @@ export const AppRouter = () => {
           <Route path="/ambulances/:id" element={<AmbulanceDetailPage />} />
           <Route path="/supplies" element={<SuppliesListPage />} />
           <Route path="/supplies/:id" element={<SupplyStoreDetailPage />} />
+          <Route path="/specialties/:specialtyName" element={<DoctorsListPage />} />
         </Route>
 
         {/* Rutas de ambulancia */}

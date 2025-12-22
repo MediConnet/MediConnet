@@ -1,6 +1,8 @@
 /**
  * Entidad Doctor
  */
+
+// TODO: Agregar el campo para la foto de perfil
 export interface Doctor {
   id: string;
   name: string;
