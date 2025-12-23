@@ -89,14 +89,14 @@ export const AppLayout = () => {
               <NavigationBar />
             </Box>
 
-            {/* NOTE: Acciones del usuario a la derecha (Mis Citas y Cerrar sesión) */}
+            {/* NOTE: Acciones del usuario a la derecha (Mis Citas, Perfil y Cerrar sesión) */}
             {user && (
               <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'flex-end',
-                  gap: 2,
+                  gap: 1.5,
                   flexShrink: 0,
                 }}
               >
@@ -121,7 +121,29 @@ export const AppLayout = () => {
                   Mis Citas
                 </Button>
                 <Button
-                  startIcon={<Person />}
+                  onClick={() => {
+                    // TODO: Navegar a perfil cuando se implemente
+                  }}
+                  size="small"
+                  sx={{
+                    minWidth: 'auto',
+                    width: 36,
+                    height: 36,
+                    borderRadius: 1,
+                    backgroundColor: '#e0e0e0',
+                    color: '#4b5563',
+                    padding: 0,
+                    '&:hover': {
+                      backgroundColor: '#d0d0d0',
+                    },
+                    '& .MuiSvgIcon-root': {
+                      color: '#4b5563',
+                    },
+                  }}
+                >
+                  <Person />
+                </Button>
+                <Button
                   onClick={handleLogout}
                   size="small"
                   sx={{
@@ -132,9 +154,6 @@ export const AppLayout = () => {
                     px: 1,
                     '&:hover': {
                       backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                    },
-                    '& .MuiSvgIcon-root': {
-                      color: '#4b5563',
                     },
                   }}
                 >
