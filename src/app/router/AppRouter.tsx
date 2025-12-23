@@ -28,6 +28,7 @@ import { SpecialtiesPage } from '../../features/search/presentation/pages/Specia
 import { SuppliesListPage } from '../../features/supplies/presentation/pages/SuppliesListPage';
 import { SupplyStoreDetailPage } from '../../features/supplies/presentation/pages/SupplyStoreDetailPage';
 import { AppointmentsPage } from '../../features/appointments/presentation/pages/AppointmentsPage';
+import { ServicesCatalogPage } from '../../features/home/presentation/pages/ServicesCatalogPage';
 
 // Placeholder pages
 const RegisterPage = () => <div>Register Page</div>;
@@ -45,6 +46,7 @@ export const AppRouter = () => {
         {/* Rutas protegidas */}
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/home" element={<HomePage />} />
+          <Route path="/services" element={<ServicesCatalogPage />} />
           <Route path="/specialties" element={<SpecialtiesPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/doctor/:id" element={<DoctorProfilePage />} />
