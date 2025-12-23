@@ -3,7 +3,7 @@ import {
   Visibility,
   WorkHistory
 } from '@mui/icons-material';
-import { Doctor } from '../../domain/Doctor.entity';
+import { type Doctor } from '../../domain/Doctor.entity';
 
 interface DoctorCardProps {
   doctor: Doctor;
