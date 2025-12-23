@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { getHomeContentUseCase } from '../../application/get-home-content.usecase';
-import { getFeaturesUseCase } from '../../application/get-features.usecase';
 import { getFeaturedServicesUseCase } from '../../application/get-featured-services.usecase';
-import type { HomeContent } from '../../domain/HomeContent.entity';
+import { getFeaturesUseCase } from '../../application/get-features.usecase';
+import { getHomeContentUseCase } from '../../application/get-home-content.usecase';
+import { getServiceCategoriesUseCase } from '../../application/get-service-categories.usecase';
 import type { Feature } from '../../domain/Feature.entity';
 import type { FeaturedService } from '../../domain/FeaturedService.entity';
+import type { HomeContent } from '../../domain/HomeContent.entity';
+import type { ServiceCategory } from '../../domain/ServiceCategory.entity';
 
 /**
  * Hook: Obtener contenido principal de la página home
@@ -37,6 +39,17 @@ export const useFeaturedServices = () => {
     queryFn: () => getFeaturedServicesUseCase(),
     staleTime: 1 * 60 * 1000, // 1 minuto (cambian más frecuentemente)
     refetchInterval: 5 * 1000, // Refrescar cada 5 segundos para rotación
+  });
+};
+
+/**
+ * Hook: Obtener catálogo de servicios (categorías)
+ */
+export const useServiceCategories = () => {
+  return useQuery<ServiceCategory[]>({
+    queryKey: ['home', 'service-categories'],
+    queryFn: () => getServiceCategoriesUseCase(),
+    staleTime: Infinity, // Estos datos casi nunca cambian
   });
 };
 

@@ -1,7 +1,8 @@
-import { httpClient } from '../../../shared/lib/http';
-import type { HomeContent } from '../domain/HomeContent.entity';
+import { ROUTES } from '../../../app/config/constants';
 import type { Feature } from '../domain/Feature.entity';
 import type { FeaturedService } from '../domain/FeaturedService.entity';
+import type { HomeContent } from '../domain/HomeContent.entity';
+import type { ServiceCategory } from '../domain/ServiceCategory.entity';
 
 /**
  * API: Obtener contenido principal de la página home
@@ -19,7 +20,7 @@ export const getHomeContentAPI = async (): Promise<HomeContent> => {
       title: 'Tu Salud es Nuestra Prioridad',
       subtitle: 'Encuentra médicos, farmacias, laboratorios y servicios de salud cerca de ti',
       ctaText: 'Explora Nuestros Servicios',
-      ctaLink: '/search',
+      ctaLink: '/services',
     },
     features: {
       title: '¿Por Qué Elegirnos?',
@@ -103,3 +104,58 @@ export const getFeaturedServicesAPI = async (): Promise<FeaturedService[]> => {
   return [];
 };
 
+/**
+ * API: Obtener catálogo de servicios
+ */
+export const getServiceCategoriesAPI = async (): Promise<ServiceCategory[]> => {
+  // Simulamos delay
+  // await new Promise(resolve => setTimeout(resolve, 300));
+
+  return [
+    {
+      id: '1',
+      title: 'Médicos',
+      description: 'Encuentra especialistas médicos',
+      icon: 'LocalHospital', // Mapea a DoctorsIcon
+      route: ROUTES.SPECIALTIES,
+      color: '#3b82f6', // Azul brillante
+      shadowColor: 'rgba(59, 130, 246, 0.4)',
+    },
+    {
+      id: '2',
+      title: 'Farmacias',
+      description: 'Farmacias y medicamentos',
+      icon: 'Business', // Mapea a PharmacyIcon
+      route: ROUTES.PHARMACIES,
+      color: '#22c55e', // Verde vibrante
+      shadowColor: 'rgba(34, 197, 94, 0.4)',
+    },
+    {
+      id: '3',
+      title: 'Laboratorios',
+      description: 'Exámenes y análisis clínicos',
+      icon: 'Science', // Mapea a LabIcon
+      route: ROUTES.LABORATORIES,
+      color: '#a855f7', // Morado
+      shadowColor: 'rgba(168, 85, 247, 0.4)',
+    },
+    {
+      id: '4',
+      title: 'Ambulancias',
+      description: 'Servicios de emergencia',
+      icon: 'LocalShipping', // Mapea a AmbulanceIcon
+      route: ROUTES.AMBULANCES,
+      color: '#ef4444', // Rojo
+      shadowColor: 'rgba(239, 68, 68, 0.4)',
+    },
+    {
+      id: '5',
+      title: 'Insumos Médicos',
+      description: 'Equipos y suministros médicos',
+      icon: 'Inventory', // Asegúrate de tener este ícono mapeado o usa uno similar
+      route: ROUTES.SUPPLIES,
+      color: '#f97316', // Naranja
+      shadowColor: 'rgba(249, 115, 22, 0.4)',
+    },
+  ];
+};

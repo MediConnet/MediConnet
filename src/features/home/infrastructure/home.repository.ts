@@ -1,10 +1,12 @@
-import type { HomeContent } from '../domain/HomeContent.entity';
 import type { Feature } from '../domain/Feature.entity';
 import type { FeaturedService } from '../domain/FeaturedService.entity';
+import type { HomeContent } from '../domain/HomeContent.entity';
+import type { ServiceCategory } from '../domain/ServiceCategory.entity';
 import {
-  getHomeContentAPI,
-  getFeaturesAPI,
   getFeaturedServicesAPI,
+  getFeaturesAPI,
+  getHomeContentAPI,
+  getServiceCategoriesAPI,
 } from './home.api';
 
 /**
@@ -22,6 +24,10 @@ export class HomeRepository {
 
   async getFeaturedServices(): Promise<FeaturedService[]> {
     return await getFeaturedServicesAPI();
+  }
+
+  async getServiceCategories(): Promise<ServiceCategory[]> {
+    return await getServiceCategoriesAPI();
   }
 }
 
