@@ -28,6 +28,7 @@ import { SpecialtiesPage } from '../../features/search/presentation/pages/Specia
 import { SuppliesListPage } from '../../features/supplies/presentation/pages/SuppliesListPage';
 import { SupplyStoreDetailPage } from '../../features/supplies/presentation/pages/SupplyStoreDetailPage';
 import { AppointmentsPage } from '../../features/appointments/presentation/pages/AppointmentsPage';
+import { ProfilePage } from '../../features/profile/pages/ProfilePage';
 
 // Placeholder pages
 const RegisterPage = () => <div>Register Page</div>;
@@ -59,6 +60,7 @@ export const AppRouter = () => {
           <Route path="/supplies" element={<SuppliesListPage />} />
           <Route path="/supplies/:id" element={<SupplyStoreDetailPage />} />
           <Route path="/appointments" element={<AppointmentsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/specialties/:specialtyName" element={<DoctorsListPage />} />
         </Route>
 

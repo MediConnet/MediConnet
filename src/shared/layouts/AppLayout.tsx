@@ -121,9 +121,7 @@ export const AppLayout = () => {
                   Mis Citas
                 </Button>
                 <Button
-                  onClick={() => {
-                    // TODO: Navegar a perfil cuando se implemente
-                  }}
+                  onClick={() => navigate(ROUTES.PROFILE)}
                   size="small"
                   sx={{
                     minWidth: 'auto',
