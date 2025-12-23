@@ -25,6 +25,7 @@ export const ROUTES = {
   LABORATORY_DETAIL: '/laboratories/:id',
   SUPPLIES: '/supplies',
   SUPPLY_DETAIL: '/supplies/:id',
+  PROFILE: '/profile',
 } as const;
 
 export const USER_ROLES = {
