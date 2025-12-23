@@ -4,22 +4,32 @@
  */
 export interface Appointment {
   id: string;
-  title: string;
-  date: string; // Formato: YYYY-MM-DD
-  time: string; // Formato: HH:mm
-  location?: string;
-  notes?: string;
-  reminderEnabled: boolean;
+  doctorId: string;      
+  doctorName: string;    
+  specialty: string;     
+  date: string;          // YYYY-MM-DD
+  time: string;          // HH:mm
+  
+  // Datos del paciente
+  patientName: string;   
+  patientPhone: string;  
+  symptoms: string;     
+  
+  status: 'scheduled' | 'completed' | 'cancelled'; 
+  price: number;
+  
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface CreateAppointmentParams {
-  title: string;
+  doctorId: string;
+  doctorName: string;
+  specialty: string;
   date: string;
   time: string;
-  location?: string;
-  notes?: string;
-  reminderEnabled: boolean;
+  patientName: string;
+  patientPhone: string;
+  symptoms: string;
+  price: number;
 }
 
