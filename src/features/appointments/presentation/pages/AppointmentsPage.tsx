@@ -1,25 +1,26 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, Tabs, Tab, Grid } from '@mui/material';
 import { CalendarToday, Add, CreditCard } from '@mui/icons-material';
 
-import { AppointmentForm } from '../components/AppointmentForm';
 import { ReminderForm } from '../components/ReminderForm';
 import { AppointmentCard } from '../components/AppointmentCard';
 import { ReminderCard } from '../components/ReminderCard';
 import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 
-import { useAppointments, useCreateAppointment, useDeleteAppointment } from '../hooks/useAppointment';
+import { useAppointments, useDeleteAppointment } from '../hooks/useAppointment';
 import { useReminders, useCreateReminder, useDeleteReminder } from '../hooks/useReminder';
 
 import { Footer } from '../../../../shared/components/Footer';
+import { ROUTES } from '../../../../app/config/constants';
 import type { Appointment } from '../../domain/Appointment.entity';
 import type { Reminder } from '../../domain/Reminder.entity';
 
 type TabValue = 'paid' | 'reminders';
 
 export const AppointmentsPage = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabValue>('paid');
-  const [appointmentFormOpen, setAppointmentFormOpen] = useState(false);
   const [reminderFormOpen, setReminderFormOpen] = useState(false);
 
   const [deleteAppointmentModal, setDeleteAppointmentModal] = useState<{
@@ -35,7 +36,6 @@ export const AppointmentsPage = () => {
   const { data: appointments = [], isLoading: appointmentsLoading } = useAppointments();
   const { data: reminders = [], isLoading: remindersLoading } = useReminders();
 
-  const createAppointment = useCreateAppointment();
   const deleteAppointment = useDeleteAppointment();
   const createReminder = useCreateReminder();
   const deleteReminder = useDeleteReminder();
@@ -103,7 +103,7 @@ export const AppointmentsPage = () => {
           <Button
             variant="contained"
             startIcon={<Add />}
-            onClick={() => setAppointmentFormOpen(true)}
+            onClick={() => navigate(ROUTES.SPECIALTIES)}
             sx={{
               backgroundColor: '#06b6d4',
               color: 'white',
@@ -232,11 +232,6 @@ export const AppointmentsPage = () => {
       </Box>
 
       {/* Modals */}
-      <AppointmentForm
-        open={appointmentFormOpen}
-        onClose={() => setAppointmentFormOpen(false)}
-        onSubmit={(params) => createAppointment.mutate(params)}
-      />
       <ReminderForm
         open={reminderFormOpen}
         onClose={() => setReminderFormOpen(false)}
