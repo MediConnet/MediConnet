@@ -28,11 +28,8 @@ import { SpecialtiesPage } from '../../features/search/presentation/pages/Specia
 import { SuppliesListPage } from '../../features/supplies/presentation/pages/SuppliesListPage';
 import { SupplyStoreDetailPage } from '../../features/supplies/presentation/pages/SupplyStoreDetailPage';
 import { AppointmentsPage } from '../../features/appointments/presentation/pages/AppointmentsPage';
-<<<<<<< HEAD
 import { ServicesCatalogPage } from '../../features/home/presentation/pages/ServicesCatalogPage';
-=======
 import { ProfilePage } from '../../features/profile/pages/ProfilePage';
->>>>>>> develop
 
 // Placeholder pages
 const RegisterPage = () => <div>Register Page</div>;
