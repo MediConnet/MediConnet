@@ -27,6 +27,7 @@ import { SearchPage } from '../../features/search/presentation/pages/SearchPage'
 import { SpecialtiesPage } from '../../features/search/presentation/pages/SpecialtiesPage';
 import { SuppliesListPage } from '../../features/supplies/presentation/pages/SuppliesListPage';
 import { SupplyStoreDetailPage } from '../../features/supplies/presentation/pages/SupplyStoreDetailPage';
+import { AppointmentsPage } from '../../features/appointments/presentation/pages/AppointmentsPage';
 
 // Placeholder pages
 const RegisterPage = () => <div>Register Page</div>;
@@ -57,6 +58,7 @@ export const AppRouter = () => {
           <Route path="/ambulances/:id" element={<AmbulanceDetailPage />} />
           <Route path="/supplies" element={<SuppliesListPage />} />
           <Route path="/supplies/:id" element={<SupplyStoreDetailPage />} />
+          <Route path="/appointments" element={<AppointmentsPage />} />
           <Route path="/specialties/:specialtyName" element={<DoctorsListPage />} />
         </Route>
 
