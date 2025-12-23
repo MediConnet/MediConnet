@@ -81,7 +81,7 @@ export const AppointmentModal = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto"
+      className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto"
       onClick={handleBackdropClick}
     >
       <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl animate-fade-in-up my-auto">
