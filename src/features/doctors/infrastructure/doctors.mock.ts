@@ -1,0 +1,101 @@
+import { Doctor } from '../domain/Doctor.entity';
+
+// Usaremos imágenes de placeholder por ahora
+const placeholderImage = "https://i.pravatar.cc/300";
+
+export const MOCK_DOCTORS: Doctor[] = [
+  {
+    id: 'd1',
+    name: 'Dr. María González Pérez',
+    specialty: 'Cardiología',
+    email: 'maria.gonzalez@example.com',
+    phone: '+593 99 123 4567',
+    rating: 4.8,
+    totalReviews: 124,
+    location: {
+      address: 'Av. Amazonas y Naciones Unidas',
+      latitude: -0.1807,
+      longitude: -78.4678,
+    },
+    experience: ['15 años de experiencia'],
+    registrationNumber: '1234-MSP-2020',
+    scheduleText: 'Lun-Vie 9:00-18:00',
+    consultationFee: 40.00,
+    bio: 'Especialista en cardiología clínica con enfoque en prevención cardiovascular. Comprometida con el bienestar integral de mis pacientes.',
+  },
+  {
+    id: 'd2',
+    name: 'Dr. Diego Vargas Paredes',
+    specialty: 'Cardiología',
+    email: 'diego.vargas@example.com',
+    phone: '+593 99 234 5678',
+    rating: 4.5,
+    totalReviews: 89,
+    location: {
+      address: 'Hospital Metropolitano',
+      latitude: -0.1807,
+      longitude: -78.4678,
+    },
+    experience: ['12 años de experiencia'],
+  },
+  {
+    id: 'd3',
+    name: 'Dra. Gabriela Torres Mendoza',
+    specialty: 'Cardiología',
+    email: 'gabriela.torres@example.com',
+    phone: '+593 99 345 6789',
+    rating: 4.9,
+    totalReviews: 210,
+    location: {
+      address: 'Clínica Internacional',
+      latitude: -0.1807,
+      longitude: -78.4678,
+    },
+    experience: ['14 años de experiencia'],
+  },
+  {
+    id: 'd4',
+    name: 'Dra. Patricia Herrera',
+    specialty: 'Dermatología',
+    email: 'patricia.herrera@example.com',
+    phone: '+593 99 456 7890',
+    rating: 4.7,
+    totalReviews: 156,
+    location: {
+      address: 'Centro Médico Meditrópoli',
+      latitude: -0.1807,
+      longitude: -78.4678,
+    },
+    experience: ['10 años de experiencia'],
+  },
+  {
+    id: 'd5',
+    name: 'Dr. Roberto Estévez',
+    specialty: 'Cardiología',
+    email: 'roberto.estevez@example.com',
+    phone: '+593 99 567 8901',
+    rating: 4.6,
+    totalReviews: 98,
+    location: {
+      address: 'Hospital Vozandes',
+      latitude: -0.1807,
+      longitude: -78.4678,
+    },
+    experience: ['18 años de experiencia'],
+  },
+  {
+    id: 'd6',
+    name: 'Dra. Lucía Villamar',
+    specialty: 'Cardiología',
+    email: 'lucia.villamar@example.com',
+    phone: '+593 99 678 9012',
+    rating: 4.9,
+    totalReviews: 315,
+    location: {
+      address: 'Torre Médica Citimed',
+      latitude: -0.1807,
+      longitude: -78.4678,
+    },
+    experience: ['22 años de experiencia'],
+  },
+];

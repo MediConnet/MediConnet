@@ -18,6 +18,11 @@ export interface Doctor {
   education?: string[];
   experience?: string[];
   languages?: string[];
+
+  photoUrl?: string;         
+  registrationNumber?: string; 
+  scheduleText?: string;     
+  consultationFee?: number;
 }
 
 
