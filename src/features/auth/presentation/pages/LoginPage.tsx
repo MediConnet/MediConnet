@@ -5,14 +5,22 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import {
+  CalendarToday,
+  Email as EmailIcon,
+  Favorite,
+  Google as GoogleIcon,
+  LocalHospital,
+  LocalShipping,
+  Lock as LockIcon,
+  Visibility,
+  VisibilityOff,
+} from "@mui/icons-material";
+import {
+  Alert,
   Box,
+  Button,
   Card,
   CardContent,
-  TextField,
-  Button,
-  Typography,
-  InputAdornment,
-  Link,
   Checkbox,
   FormControlLabel,
   IconButton,
@@ -37,52 +45,58 @@ import { ROUTES } from '../../../../app/config/constants';
 export const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // 1. Recuperamos el store mock
   const authStore = useAuthStore();
-  
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+
+  // 2. Estados LOCALES para la UI
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // NOTE: Obtener la ruta de origen si fue redirigido desde una ruta protegida
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/home';
+  const from =
+    (location.state as { from?: { pathname: string } })?.from?.pathname ||
+    "/home";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
+    setError(null);
+    setIsLoading(true);
 
     try {
-      // TODO: Reemplazar con llamada real al backend
-      // const response = await loginAPI({ email, password });
-      
-      // NOTE: Simulación temporal - remover cuando se implemente el backend
+      // Simulamos llamada (delay de 1 segundo)
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       if (email && password) {
+        // Usamos el método login del mock
         authStore.login(
           {
-            id: '1',
-            email: 'prueba@prueba.com',
-            name: 'prueba',
-            role: 'patient',
+            id: "1",
+            email: email,
+            name: "Usuario Prueba",
+            role: "patient",
           },
-          'prueba'
+          "mock-token"
         );
+
         navigate(from, { replace: true });
       } else {
-        setError('Por favor completa todos los campos');
+        throw new Error("Faltan datos");
       }
     } catch (err) {
-      setError('Credenciales inválidas');
+      console.error(err);
+      setError("Credenciales inválidas. Intenta de nuevo.");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const handleGoogleLogin = () => {
-    // TODO: Implementar autenticación con Google
-    console.log('Google login');
+    // TODO: Implementar autenticación con Google real
+    console.log("Google login clicked");
   };
 
   return (
@@ -101,14 +115,14 @@ export const LoginPage = () => {
         boxSizing: 'border-box',
       }}
     >
-          {/* NOTE: Patrón de cuadrícula de fondo */}
+      {/* NOTE: Patrón de cuadrícula de fondo */}
       <Box
         sx={{
-          position: 'absolute',
+          position: "absolute",
           top: 0,
           left: 0,
-          width: '100%',
-          height: '100%',
+          width: "100%",
+          height: "100%",
           opacity: 0.2,
           backgroundImage: `
             linear-gradient(rgba(20, 184, 166, 0.08) 1px, transparent 1px),
@@ -258,6 +272,12 @@ export const LoginPage = () => {
             />
           </Box>
 
+          {error && (
+            <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+              {error}
+            </Alert>
+          )}
+
           {/* NOTE: Formulario de login */}
           <Box component="form" onSubmit={handleSubmit}>
             <TextField
@@ -265,7 +285,7 @@ export const LoginPage = () => {
               label="Correo electrónico"
               type="email"
               value={email}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@email.com"
               margin="dense"
               required
@@ -287,7 +307,7 @@ export const LoginPage = () => {
             <TextField
               fullWidth
               label="Contraseña"
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
               margin="dense"
@@ -353,12 +373,12 @@ export const LoginPage = () => {
               </Link>
             </Box>
 
-            {/* NOTE: Botón de login con gradiente azul-verde */}
+            {/* NOTE: Botón de login */}
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              disabled={loading}
+              disabled={isLoading}
               sx={{
                 mt: 0.5,
                 mb: { xs: 1.25, sm: 1.5 },
@@ -368,18 +388,19 @@ export const LoginPage = () => {
                 fontSize: { xs: '0.8125rem', sm: '0.875rem' },
                 fontWeight: 600,
                 borderRadius: 2,
-                color: 'white',
-                boxShadow: '0 4px 12px rgba(20, 184, 166, 0.3)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #0d9488 0%, #0891b2 100%)',
-                  boxShadow: '0 6px 16px rgba(20, 184, 166, 0.4)',
+                color: "white",
+                boxShadow: "0 4px 12px rgba(20, 184, 166, 0.3)",
+                "&:hover": {
+                  background:
+                    "linear-gradient(135deg, #0d9488 0%, #0891b2 100%)",
+                  boxShadow: "0 6px 16px rgba(20, 184, 166, 0.4)",
                 },
-                '&:disabled': {
-                  background: 'grey.300',
+                "&:disabled": {
+                  background: "grey.300",
                 },
               }}
             >
-              {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+              {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
             </Button>
           </Box>
 
@@ -387,10 +408,11 @@ export const LoginPage = () => {
           <Typography variant="body2" align="center" sx={{ color: 'text.secondary', mb: { xs: 1.25, sm: 1.5 }, fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}>
             ¿No tienes cuenta?{' '}
             <Link
-              href="/register"
+              component={RouterLink}
+              to="/register"
               underline="always"
-              sx={{ 
-                color: '#14b8a6', 
+              sx={{
+                color: "#14b8a6",
                 fontWeight: 700,
                 textDecorationColor: '#14b8a6',
                 fontSize: { xs: '0.75rem', sm: '0.8125rem' },
@@ -416,8 +438,9 @@ export const LoginPage = () => {
                 borderRadius: 2,
                 fontSize: { xs: '0.75rem', sm: '0.8125rem' },
                 fontWeight: 600,
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #0d9488 0%, #0891b2 100%)',
+                "&:hover": {
+                  background:
+                    "linear-gradient(135deg, #0d9488 0%, #0891b2 100%)",
                 },
                 '& .MuiSvgIcon-root': {
                   fontSize: { xs: 14, sm: 16 },
@@ -441,10 +464,10 @@ export const LoginPage = () => {
                 borderRadius: 2,
                 fontSize: { xs: '0.75rem', sm: '0.8125rem' },
                 fontWeight: 600,
-                bgcolor: 'white',
-                '&:hover': {
-                  borderColor: '#0d9488',
-                  bgcolor: '#f0fdfa',
+                bgcolor: "white",
+                "&:hover": {
+                  borderColor: "#0d9488",
+                  bgcolor: "#f0fdfa",
                 },
                 '& .MuiSvgIcon-root': {
                   fontSize: { xs: 14, sm: 16 },
@@ -468,8 +491,9 @@ export const LoginPage = () => {
                 borderRadius: 2,
                 fontSize: { xs: '0.75rem', sm: '0.8125rem' },
                 fontWeight: 600,
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+                "&:hover": {
+                  background:
+                    "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
                 },
                 '& .MuiSvgIcon-root': {
                   fontSize: { xs: 14, sm: 16 },
@@ -484,4 +508,3 @@ export const LoginPage = () => {
     </Box>
   );
 };
-
