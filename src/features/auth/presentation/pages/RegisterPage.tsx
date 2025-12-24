@@ -1,111 +1,222 @@
-import { useState } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
-  Box, Card, CardContent, Typography, TextField, Button,
-  InputAdornment, IconButton, Link, Alert
-} from '@mui/material';
+  CalendarToday,
+  Email as EmailIcon,
+  Favorite,
+  LocalHospital,
+  LocalShipping,
+  Lock as LockIcon,
+  Person,
+  Visibility,
+  VisibilityOff,
+} from "@mui/icons-material";
 import {
-  Person, Email, Lock, Visibility, VisibilityOff, ArrowBack
-} from '@mui/icons-material';
-import { MediConnectLogo } from '../components/MediConnectLogo';
-import { ROUTES } from '../../../../app/config/constants';
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  IconButton,
+  InputAdornment,
+  Link,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { useState } from "react";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { ROUTES } from "../../../../app/config/constants";
+import { MediConnectLogo } from "../components/MediConnectLogo";
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
-  
-  // Estados LOCALES para la UI
+
+  // Estados
   const [isLoading, setIsLoading] = useState(false);
-  const [formError, setFormError] = useState('');
-  
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
+  const [formError, setFormError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  // Manejar cambios
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (formError) setFormError('');
+    if (formError) setFormError("");
   };
 
-  // Simular envío
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError('');
+    setFormError("");
 
-    // Validaciones visuales
-    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
-      setFormError('Por favor, completa todos los campos.');
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.password ||
+      !formData.confirmPassword
+    ) {
+      setFormError("Por favor, completa todos los campos.");
       return;
     }
     if (formData.password.length < 6) {
-        setFormError('La contraseña debe tener al menos 6 caracteres.');
-        return;
+      setFormError("La contraseña debe tener al menos 6 caracteres.");
+      return;
     }
     if (formData.password !== formData.confirmPassword) {
-      setFormError('Las contraseñas no coinciden.');
+      setFormError("Las contraseñas no coinciden.");
       return;
     }
 
-    // Simulación de carga y éxito
     setIsLoading(true);
-    
-    // Esperamos 1.5 segundos para parecer real
-    setTimeout(() => {
-        setIsLoading(false);
-        alert("¡Registro simulado exitoso! Redirigiendo al login...");
-        navigate(ROUTES.LOGIN); // Te devuelve al login
-    }, 1500);
+    // Simulación de registro
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    setIsLoading(false);
+    navigate(ROUTES.LOGIN);
   };
 
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #e0f2fe 0%, #f0fdfa 100%)',
-        p: 2,
+        height: "100vh",
+        width: "100vw",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        // Mismo fondo degradado que Login
+        background:
+          "linear-gradient(180deg, #f0fdfa 0%, #ccfbf1 50%, #99f6e4 100%)",
+        position: "relative",
+        overflow: "hidden",
+        m: 0,
+        p: 0,
       }}
     >
+      {/* NOTE: Patrón de cuadrícula de fondo */}
+      <Box
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          opacity: 0.2,
+          backgroundImage: `
+            linear-gradient(rgba(20, 184, 166, 0.08) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(20, 184, 166, 0.08) 1px, transparent 1px)
+          `,
+          backgroundSize: "40px 40px",
+        }}
+      />
+
+      {/* NOTE: Iconos flotantes (Copia exacta del Login) */}
+      <LocalHospital
+        sx={{
+          position: "absolute",
+          top: "10%",
+          left: "10%",
+          fontSize: 80,
+          color: "rgba(20, 184, 166, 0.12)",
+          animation: "float 6s ease-in-out infinite",
+        }}
+      />
+      <Favorite
+        sx={{
+          position: "absolute",
+          top: "15%",
+          right: "10%",
+          fontSize: 60,
+          color: "rgba(20, 184, 166, 0.12)",
+          animation: "float 8s ease-in-out infinite",
+          animationDelay: "1s",
+        }}
+      />
+      <LocalShipping
+        sx={{
+          position: "absolute",
+          bottom: "15%",
+          left: "8%",
+          fontSize: 70,
+          color: "rgba(20, 184, 166, 0.12)",
+          animation: "float 7s ease-in-out infinite",
+          animationDelay: "2s",
+        }}
+      />
+      <CalendarToday
+        sx={{
+          position: "absolute",
+          bottom: "10%",
+          right: "12%",
+          fontSize: 65,
+          color: "rgba(20, 184, 166, 0.12)",
+          animation: "float 9s ease-in-out infinite",
+          animationDelay: "0.5s",
+        }}
+      />
+
       <Card
         sx={{
           maxWidth: 450,
-          width: '100%',
-          borderRadius: 4,
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+          width: "100%",
+          borderRadius: 3,
+          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.1)",
+          position: "relative",
+          zIndex: 1,
+          mx: 2,
+          maxHeight: "90vh",
+          overflowY: "auto",
         }}
       >
-        <CardContent sx={{ p: 4 }}>
-          
-          <Button
-            startIcon={<ArrowBack />}
-            onClick={() => navigate(ROUTES.LOGIN)}
-            sx={{ mb: 2, textTransform: 'none', color: 'text.secondary' }}
+        <CardContent sx={{ p: 4, "&:last-child": { pb: 4 } }}>
+          {/* Logo */}
+          <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+            <MediConnectLogo />
+          </Box>
+
+          {/* Título */}
+          <Typography
+            variant="h5"
+            component="h1"
+            align="center"
+            gutterBottom
+            sx={{ fontWeight: 600, mb: 0.5, color: "text.primary" }}
           >
-            Volver al inicio de sesión
-          </Button>
-
-          <MediConnectLogo />
-          <Typography variant="h5" align="center" fontWeight={700} gutterBottom>
-            Crea tu cuenta
+            Únete a
           </Typography>
-          <Typography variant="body2" align="center" color="text.secondary" mb={4}>
-            Regístrate para acceder a los servicios de salud
+          <Typography
+            variant="h4"
+            component="h2"
+            align="center"
+            gutterBottom
+            sx={{
+              fontWeight: 700,
+              mb: 1,
+              background: "linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%)",
+              backgroundClip: "text",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
+            MediConnect
+          </Typography>
+          <Typography
+            variant="body2"
+            align="center"
+            color="text.secondary"
+            sx={{ mb: 4 }}
+          >
+            Crea tu cuenta en segundos
           </Typography>
 
-          {/* Alerta de Error Local */}
+          {/* Alerta de Error */}
           {formError && (
             <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
               {formError}
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit}>
+          {/* Formulario */}
+          <Box component="form" onSubmit={handleSubmit}>
             <TextField
               fullWidth
               label="Nombre completo"
@@ -113,14 +224,17 @@ export const RegisterPage = () => {
               value={formData.name}
               onChange={handleChange}
               margin="normal"
+              required
+              sx={{ mb: 1 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Person color="action" />
+                    <Person sx={{ color: "grey.500" }} />
                   </InputAdornment>
                 ),
               }}
             />
+
             <TextField
               fullWidth
               label="Correo electrónico"
@@ -129,37 +243,47 @@ export const RegisterPage = () => {
               value={formData.email}
               onChange={handleChange}
               margin="normal"
+              required
+              sx={{ mb: 1 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Email color="action" />
+                    <EmailIcon sx={{ color: "grey.500" }} />
                   </InputAdornment>
                 ),
               }}
             />
+
             <TextField
               fullWidth
               label="Contraseña"
               name="password"
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               value={formData.password}
               onChange={handleChange}
               margin="normal"
+              required
+              sx={{ mb: 1 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Lock color="action" />
+                    <LockIcon sx={{ color: "grey.500" }} />
                   </InputAdornment>
                 ),
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                    <IconButton
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                      size="small"
+                    >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
                 ),
               }}
             />
+
             <TextField
               fullWidth
               label="Confirmar contraseña"
@@ -168,48 +292,66 @@ export const RegisterPage = () => {
               value={formData.confirmPassword}
               onChange={handleChange}
               margin="normal"
+              required
+              sx={{ mb: 1 }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Lock color="action" />
+                    <LockIcon sx={{ color: "grey.500" }} />
                   </InputAdornment>
                 ),
               }}
             />
 
             <Button
+              type="submit"
               fullWidth
               variant="contained"
-              type="submit"
               disabled={isLoading}
               sx={{
                 mt: 3,
-                mb: 2,
+                mb: 3,
                 py: 1.5,
-                backgroundColor: '#06b6d4',
-                fontSize: '1rem',
+                background: "linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%)",
+                textTransform: "none",
+                fontSize: "1rem",
                 fontWeight: 600,
-                textTransform: 'none',
                 borderRadius: 2,
-                boxShadow: '0 4px 12px rgba(6, 182, 212, 0.3)',
-                '&:hover': {
-                  backgroundColor: '#0891b2',
+                color: "white",
+                boxShadow: "0 4px 12px rgba(20, 184, 166, 0.3)",
+                "&:hover": {
+                  background:
+                    "linear-gradient(135deg, #0d9488 0%, #0891b2 100%)",
+                  boxShadow: "0 6px 16px rgba(20, 184, 166, 0.4)",
+                },
+                "&:disabled": {
+                  background: "grey.300",
                 },
               }}
             >
-              {isLoading ? 'Creando cuenta...' : 'Crear cuenta'}
+              {isLoading ? "Creando cuenta..." : "Crear cuenta"}
             </Button>
-          </form>
-
-          <Box sx={{ textAlign: 'center', mt: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              ¿Ya tienes una cuenta?{' '}
-              <Link component={RouterLink} to={ROUTES.LOGIN} fontWeight={600} underline="hover" sx={{ color: '#06b6d4' }}>
-                Inicia sesión
-              </Link>
-            </Typography>
           </Box>
 
+          <Typography
+            variant="body2"
+            align="center"
+            sx={{ color: "text.secondary" }}
+          >
+            ¿Ya tienes cuenta?{" "}
+            <Link
+              component={RouterLink}
+              to="/login"
+              underline="always"
+              sx={{
+                color: "#14b8a6",
+                fontWeight: 700,
+                textDecorationColor: "#14b8a6",
+              }}
+            >
+              Inicia sesión
+            </Link>
+          </Typography>
         </CardContent>
       </Card>
     </Box>
