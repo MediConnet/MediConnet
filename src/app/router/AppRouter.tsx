@@ -14,6 +14,7 @@ import { AmbulancesListPage } from '../../features/ambulance/presentation/pages/
 import { AmbulanceTrackingPage } from '../../features/ambulance/presentation/pages/AmbulanceTrackingPage';
 import { RequestAmbulancePage } from '../../features/ambulance/presentation/pages/RequestAmbulancePage';
 import { LoginPage } from '../../features/auth/presentation/pages/LoginPage';
+import { ForgotPasswordPage } from '../../features/auth/presentation/pages/ForgotPasswordPage';
 import { CheckoutPage } from '../../features/booking/presentation/pages/CheckoutPage';
 import { DoctorProfilePage } from '../../features/doctors/presentation/pages/DoctorProfilePage';
 import { DoctorsListPage } from '../../features/doctors/presentation/pages/DoctorsListPage';
@@ -42,6 +43,7 @@ export const AppRouter = () => {
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         </Route>
 
         {/* Rutas protegidas */}

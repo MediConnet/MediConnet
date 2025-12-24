@@ -37,12 +37,12 @@ export const PersonalInfoCard = ({ profile, onUpdate }: PersonalInfoCardProps) =
       sx={{
         backgroundColor: 'white',
         borderRadius: 2,
-        p: 4,
+        p: { xs: 2, sm: 3, md: 4 },
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
       }}
     >
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b', fontSize: '1.25rem' }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: { xs: 2, sm: 0 }, mb: { xs: 2, sm: 3 } }}>
+        <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b', fontSize: { xs: '1.125rem', sm: '1.25rem' } }}>
           Información Personal
         </Typography>
         <Button
@@ -63,7 +63,7 @@ export const PersonalInfoCard = ({ profile, onUpdate }: PersonalInfoCardProps) =
         </Button>
       </Box>
 
-      <Grid container spacing={4}>
+      <Grid container spacing={{ xs: 3, md: 4 }}>
         <Grid item xs={12} md={6}>
           <Box sx={{ mb: 3 }}>
             <Typography variant="body2" sx={{ color: '#64748b', mb: 0.5, fontSize: '0.875rem' }}>

@@ -33,7 +33,7 @@ export const SupplyStoreCard = ({ supplyStore }: SupplyStoreCardProps) => {
         borderRadius: 3,
         boxShadow: supplyStore.sponsored ? '0 0 0 2px #f97316' : '0 2px 8px rgba(0, 0, 0, 0.1)',
         position: 'relative',
-        overflow: 'visible',
+        overflow: 'hidden',
         cursor: 'pointer',
         transition: 'transform 0.2s, box-shadow 0.2s',
         '&:hover': {
@@ -42,27 +42,33 @@ export const SupplyStoreCard = ({ supplyStore }: SupplyStoreCardProps) => {
         },
       }}
     >
-      {supplyStore.sponsored && (
-        <Box sx={{ position: 'absolute', top: 8, left: 8, zIndex: 1 }}>
-          <Chip 
-            label="Patrocinado" 
-            size="small" 
-            sx={{ 
-              backgroundColor: '#f97316', 
-              color: 'white',
-              fontWeight: 600,
-              fontSize: '0.75rem',
-            }} 
-          />
-        </Box>
-      )}
-      <CardMedia
-        component="img"
-        height="200"
-        image={supplyStore.image}
-        alt={supplyStore.name}
-        sx={{ objectFit: 'cover' }}
-      />
+      <Box sx={{ position: 'relative', overflow: 'hidden', borderTopLeftRadius: 12, borderTopRightRadius: 12 }}>
+        {supplyStore.sponsored && (
+          <Box sx={{ position: 'absolute', top: 8, left: 8, zIndex: 1 }}>
+            <Chip 
+              label="Patrocinado" 
+              size="small" 
+              sx={{ 
+                backgroundColor: '#f97316', 
+                color: 'white',
+                fontWeight: 600,
+                fontSize: '0.75rem',
+              }} 
+            />
+          </Box>
+        )}
+        <CardMedia
+          component="img"
+          image={supplyStore.image}
+          alt={supplyStore.name}
+          sx={{ 
+            height: 200,
+            width: '100%',
+            objectFit: 'cover',
+            display: 'block',
+          }}
+        />
+      </Box>
 
       <CardContent>
         <Typography variant="h6" fontWeight={600} mb={1}>

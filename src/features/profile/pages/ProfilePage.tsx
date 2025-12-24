@@ -56,8 +56,8 @@ export const ProfilePage = () => {
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: '#f9fafb' }}>
       <Box sx={{ flex: 1, maxWidth: '1200px', mx: 'auto', width: '100%', px: { xs: 2, md: 4 }, py: 4 }}>
         {/* Profile Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 4 }}>
-          <Box sx={{ position: 'relative' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 2, sm: 3 }, mb: { xs: 3, md: 4 }, flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
+          <Box sx={{ position: 'relative', flexShrink: 0 }}>
             <input
               type="file"
               ref={fileInputRef}
@@ -68,13 +68,13 @@ export const ProfilePage = () => {
             <Avatar
               src={profileImage || undefined}
               sx={{
-                width: 120,
-                height: 120,
+                width: { xs: 80, sm: 100, md: 120 },
+                height: { xs: 80, sm: 100, md: 120 },
                 bgcolor: profileImage ? 'transparent' : '#06b6d4',
-                fontSize: 48,
+                fontSize: { xs: 32, sm: 40, md: 48 },
               }}
             >
-              {!profileImage && <Person sx={{ fontSize: 64, color: 'white' }} />}
+              {!profileImage && <Person sx={{ fontSize: { xs: 40, sm: 50, md: 64 }, color: 'white' }} />}
             </Avatar>
             <IconButton
               onClick={handleCameraClick}
@@ -83,23 +83,23 @@ export const ProfilePage = () => {
                 bottom: 0,
                 right: 0,
                 bgcolor: '#e0e0e0',
-                width: 36,
-                height: 36,
+                width: { xs: 28, sm: 32, md: 36 },
+                height: { xs: 28, sm: 32, md: 36 },
                 border: '3px solid white',
                 '&:hover': {
                   bgcolor: '#d0d0d0',
                 },
               }}
             >
-              <CameraAlt sx={{ fontSize: 20, color: '#4b5563' }} />
+              <CameraAlt sx={{ fontSize: { xs: 16, sm: 18, md: 20 }, color: '#4b5563' }} />
             </IconButton>
           </Box>
 
-          <Box>
-            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5, color: '#1e293b', fontSize: '2rem' }}>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5, color: '#1e293b', fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' } }}>
               Mi Perfil
             </Typography>
-            <Typography variant="body1" sx={{ color: '#64748b', fontSize: '1rem' }}>
+            <Typography variant="body1" sx={{ color: '#64748b', fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' } }}>
               {profileData.fullName.toLowerCase()}
             </Typography>
           </Box>

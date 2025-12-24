@@ -9,6 +9,7 @@ export const ROUTES = {
   HOME: '/home',
   LOGIN: '/login',
   REGISTER: '/register',
+  FORGOT_PASSWORD: '/forgot-password',
   SEARCH: '/search',
   DOCTOR_PROFILE: '/doctor/:id',
   REQUEST_AMBULANCE: '/ambulance/request',

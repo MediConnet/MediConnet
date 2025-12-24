@@ -33,7 +33,7 @@ export const AmbulanceCard = ({ ambulance }: AmbulanceCardProps) => {
         borderRadius: 3,
         boxShadow: ambulance.sponsored ? '0 0 0 2px #ef4444' : '0 2px 8px rgba(0, 0, 0, 0.1)',
         position: 'relative',
-        overflow: 'visible',
+        overflow: 'hidden',
         cursor: 'pointer',
         transition: 'transform 0.2s, box-shadow 0.2s',
         '&:hover': {
@@ -42,27 +42,33 @@ export const AmbulanceCard = ({ ambulance }: AmbulanceCardProps) => {
         },
       }}
     >
-      {ambulance.sponsored && (
-        <Box sx={{ position: 'absolute', top: 8, left: 8, zIndex: 1 }}>
-          <Chip 
-            label="Patrocinado" 
-            size="small" 
-            sx={{ 
-              backgroundColor: '#ef4444', 
-              color: 'white',
-              fontWeight: 600,
-              fontSize: '0.75rem',
-            }} 
-          />
-        </Box>
-      )}
-      <CardMedia
-        component="img"
-        height="200"
-        image={ambulance.image}
-        alt={ambulance.name}
-        sx={{ objectFit: 'cover' }}
-      />
+      <Box sx={{ position: 'relative', overflow: 'hidden', borderTopLeftRadius: 12, borderTopRightRadius: 12 }}>
+        {ambulance.sponsored && (
+          <Box sx={{ position: 'absolute', top: 8, left: 8, zIndex: 1 }}>
+            <Chip 
+              label="Patrocinado" 
+              size="small" 
+              sx={{ 
+                backgroundColor: '#ef4444', 
+                color: 'white',
+                fontWeight: 600,
+                fontSize: '0.75rem',
+              }} 
+            />
+          </Box>
+        )}
+        <CardMedia
+          component="img"
+          image={ambulance.image}
+          alt={ambulance.name}
+          sx={{ 
+            height: 200,
+            width: '100%',
+            objectFit: 'cover',
+            display: 'block',
+          }}
+        />
+      </Box>
 
       <CardContent>
         <Typography variant="h6" fontWeight={600} mb={1}>

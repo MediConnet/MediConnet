@@ -29,9 +29,9 @@ export const AppointmentCard = ({ appointment, onDelete }: AppointmentCardProps)
         },
       }}
     >
-      <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1.125rem' }}>
+      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2, gap: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.125rem' }, flex: 1, minWidth: 0 }}>
             {appointment.title}
           </Typography>
           {onDelete && (

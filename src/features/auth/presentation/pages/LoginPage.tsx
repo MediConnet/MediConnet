@@ -3,7 +3,7 @@
 // TODO: Agregar validación de formulario más robusta
 
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -32,6 +32,7 @@ import {
 } from '@mui/icons-material';
 import { useAuthStore } from '../../../../app/store/auth.store';
 import { MediConnectLogo } from '../components/MediConnectLogo';
+import { ROUTES } from '../../../../app/config/constants';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
@@ -88,7 +89,7 @@ export const LoginPage = () => {
     <Box
       sx={{
         height: '100vh',
-        width: '100vw',
+        width: '100%',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -96,7 +97,8 @@ export const LoginPage = () => {
         position: 'relative',
         overflow: 'hidden',
         m: 0,
-        p: 0,
+        p: { xs: 1.5, sm: 2, md: 3 },
+        boxSizing: 'border-box',
       }}
     >
           {/* NOTE: Patrón de cuadrícula de fondo */}
@@ -112,69 +114,78 @@ export const LoginPage = () => {
             linear-gradient(rgba(20, 184, 166, 0.08) 1px, transparent 1px),
             linear-gradient(90deg, rgba(20, 184, 166, 0.08) 1px, transparent 1px)
           `,
-          backgroundSize: '40px 40px',
+          backgroundSize: { xs: '30px 30px', sm: '40px 40px' },
         }}
       />
 
-      {/* NOTE: Iconos médicos flotantes animados en el fondo */}
+      {/* NOTE: Iconos médicos flotantes animados en el fondo - ocultos en móviles muy pequeños */}
       <LocalHospital
         sx={{
           position: 'absolute',
-          top: '10%',
-          left: '10%',
-          fontSize: 80,
+          top: { xs: '5%', sm: '10%' },
+          left: { xs: '5%', sm: '10%' },
+          fontSize: { xs: 40, sm: 60, md: 80 },
           color: 'rgba(20, 184, 166, 0.12)',
           animation: 'float 6s ease-in-out infinite',
+          display: { xs: 'none', sm: 'block' },
         }}
       />
       <Favorite
         sx={{
           position: 'absolute',
-          top: '15%',
-          right: '10%',
-          fontSize: 60,
+          top: { xs: '8%', sm: '15%' },
+          right: { xs: '5%', sm: '10%' },
+          fontSize: { xs: 30, sm: 45, md: 60 },
           color: 'rgba(20, 184, 166, 0.12)',
           animation: 'float 8s ease-in-out infinite',
           animationDelay: '1s',
+          display: { xs: 'none', sm: 'block' },
         }}
       />
       <LocalShipping
         sx={{
           position: 'absolute',
-          bottom: '15%',
-          left: '8%',
-          fontSize: 70,
+          bottom: { xs: '10%', sm: '15%' },
+          left: { xs: '5%', sm: '8%' },
+          fontSize: { xs: 35, sm: 50, md: 70 },
           color: 'rgba(20, 184, 166, 0.12)',
           animation: 'float 7s ease-in-out infinite',
           animationDelay: '2s',
+          display: { xs: 'none', sm: 'block' },
         }}
       />
       <CalendarToday
         sx={{
           position: 'absolute',
-          bottom: '10%',
-          right: '12%',
-          fontSize: 65,
+          bottom: { xs: '8%', sm: '10%' },
+          right: { xs: '5%', sm: '12%' },
+          fontSize: { xs: 32, sm: 48, md: 65 },
           color: 'rgba(20, 184, 166, 0.12)',
           animation: 'float 9s ease-in-out infinite',
           animationDelay: '0.5s',
+          display: { xs: 'none', sm: 'block' },
         }}
       />
 
       <Card
         sx={{
-          maxWidth: 450,
+          maxWidth: { xs: '100%', sm: 420, md: 450 },
           width: '100%',
-          borderRadius: 3,
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
+          maxHeight: '95vh',
+          borderRadius: { xs: 2, sm: 3 },
+          boxShadow: { xs: '0 10px 40px rgba(0, 0, 0, 0.1)', sm: '0 20px 60px rgba(0, 0, 0, 0.1)' },
           position: 'relative',
           zIndex: 1,
-          mx: 2,
+          overflow: 'auto',
+          '&::-webkit-scrollbar': {
+            display: 'none',
+          },
+          scrollbarWidth: 'none',
         }}
       >
-        <CardContent sx={{ p: 4, '&:last-child': { pb: 4 } }}>
+        <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 }, '&:last-child': { pb: { xs: 2, sm: 2.5, md: 3 } } }}>
           {/* NOTE: Logo de MediConnect */}
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: { xs: 0.75, sm: 1 } }}>
             <MediConnectLogo />
           </Box>
 
@@ -184,7 +195,7 @@ export const LoginPage = () => {
             component="h1" 
             align="center" 
             gutterBottom 
-            sx={{ fontWeight: 600, mb: 0.5, color: 'text.primary' }}
+            sx={{ fontWeight: 600, mb: 0.25, color: 'text.primary', fontSize: { xs: '0.9375rem', sm: '1rem', md: '1.125rem' } }}
           >
             Bienvenido a
           </Typography>
@@ -195,7 +206,8 @@ export const LoginPage = () => {
             gutterBottom 
             sx={{ 
               fontWeight: 700, 
-              mb: 1, 
+              mb: { xs: 0.25, sm: 0.5 },
+              fontSize: { xs: '1.25rem', sm: '1.375rem', md: '1.5rem' }, 
               background: 'linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%)',
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
@@ -204,7 +216,7 @@ export const LoginPage = () => {
           >
             MediConnect
           </Typography>
-          <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: 3 }}>
+          <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: { xs: 1.25, sm: 1.5 }, fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}>
             Inicia sesión para continuar
           </Typography>
 
@@ -215,15 +227,19 @@ export const LoginPage = () => {
             startIcon={<GoogleIcon />}
             onClick={handleGoogleLogin}
             sx={{
-              mb: 2,
-              py: 1.25,
+              mb: { xs: 0.75, sm: 1 },
+              py: { xs: 0.625, sm: 0.75 },
               borderColor: 'grey.300',
               color: 'text.primary',
               textTransform: 'none',
               borderRadius: 2,
+              fontSize: { xs: '0.75rem', sm: '0.8125rem' },
               '&:hover': {
                 borderColor: 'grey.400',
                 bgcolor: 'grey.50',
+              },
+              '& .MuiSvgIcon-root': {
+                fontSize: { xs: 14, sm: 16 },
               },
             }}
           >
@@ -231,11 +247,11 @@ export const LoginPage = () => {
           </Button>
 
           {/* NOTE: Separador circular */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', my: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', my: { xs: 0.75, sm: 1 } }}>
             <Box
               sx={{
-                width: 8,
-                height: 8,
+                width: { xs: 4, sm: 5 },
+                height: { xs: 4, sm: 5 },
                 borderRadius: '50%',
                 bgcolor: 'grey.300',
               }}
@@ -251,16 +267,20 @@ export const LoginPage = () => {
               value={email}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
               placeholder="tu@email.com"
-              margin="normal"
+              margin="dense"
               required
               error={!!error}
-              sx={{ mb: 1 }}
+              sx={{ mb: 0.75 }}
+              size="small"
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <EmailIcon sx={{ color: 'grey.500' }} />
+                    <EmailIcon sx={{ color: 'grey.500', fontSize: { xs: 16, sm: 18 } }} />
                   </InputAdornment>
                 ),
+              }}
+              InputLabelProps={{
+                sx: { fontSize: { xs: '0.8125rem', sm: '0.875rem' } },
               }}
             />
 
@@ -270,15 +290,16 @@ export const LoginPage = () => {
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-              margin="normal"
+              margin="dense"
               required
               error={!!error}
               helperText={error}
-              sx={{ mb: 1 }}
+              sx={{ mb: 0.75 }}
+              size="small"
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <LockIcon sx={{ color: 'grey.500' }} />
+                    <LockIcon sx={{ color: 'grey.500', fontSize: { xs: 16, sm: 18 } }} />
                   </InputAdornment>
                 ),
                 endAdornment: (
@@ -287,37 +308,45 @@ export const LoginPage = () => {
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
                       size="small"
+                      sx={{ '& .MuiSvgIcon-root': { fontSize: { xs: 16, sm: 18 } } }}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
                 ),
               }}
+              InputLabelProps={{
+                sx: { fontSize: { xs: '0.8125rem', sm: '0.875rem' } },
+              }}
             />
 
             {/* NOTE: Recordarme y Olvidé contraseña */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1, mb: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: { xs: 0.5, sm: 0 }, mt: 0.5, mb: { xs: 1.25, sm: 1.5 } }}>
               <FormControlLabel
                 control={
                   <Checkbox
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
                     size="small"
+                    sx={{ '& .MuiSvgIcon-root': { fontSize: { xs: 16, sm: 18 } } }}
                   />
                 }
                 label={
-                  <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                  <Typography variant="body2" sx={{ fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}>
                     Recordarme
                   </Typography>
                 }
+                sx={{ m: 0 }}
               />
               <Link
-                href="/forgot-password"
+                component={RouterLink}
+                to={ROUTES.FORGOT_PASSWORD}
                 underline="hover"
                 sx={{ 
-                  fontSize: '0.875rem', 
+                  fontSize: { xs: '0.75rem', sm: '0.8125rem' }, 
                   color: 'primary.main',
                   fontWeight: 500,
+                  whiteSpace: 'nowrap',
                 }}
               >
                 ¿Olvidaste tu contraseña?
@@ -331,12 +360,12 @@ export const LoginPage = () => {
               variant="contained"
               disabled={loading}
               sx={{
-                mt: 1,
-                mb: 3,
-                py: 1.5,
+                mt: 0.5,
+                mb: { xs: 1.25, sm: 1.5 },
+                py: { xs: 0.875, sm: 1 },
                 background: 'linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%)',
                 textTransform: 'none',
-                fontSize: '1rem',
+                fontSize: { xs: '0.8125rem', sm: '0.875rem' },
                 fontWeight: 600,
                 borderRadius: 2,
                 color: 'white',
@@ -355,7 +384,7 @@ export const LoginPage = () => {
           </Box>
 
           {/* NOTE: Link de registro */}
-          <Typography variant="body2" align="center" sx={{ color: 'text.secondary', mb: 3 }}>
+          <Typography variant="body2" align="center" sx={{ color: 'text.secondary', mb: { xs: 1.25, sm: 1.5 }, fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}>
             ¿No tienes cuenta?{' '}
             <Link
               href="/register"
@@ -364,6 +393,7 @@ export const LoginPage = () => {
                 color: '#14b8a6', 
                 fontWeight: 700,
                 textDecorationColor: '#14b8a6',
+                fontSize: { xs: '0.75rem', sm: '0.8125rem' },
               }}
             >
               Regístrate gratis
@@ -371,22 +401,26 @@ export const LoginPage = () => {
           </Typography>
 
           {/* NOTE: Botones de categorías */}
-          <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center' }}>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 0.625, sm: 0.75 }, justifyContent: 'center', mt: { xs: 0.5, sm: 0 } }}>
             {/* Botón Médicos */}
             <Button
               variant="contained"
               startIcon={<LocalHospital />}
               sx={{
-                flex: 1,
-                py: 1.25,
+                flex: { xs: 'none', sm: 1 },
+                width: { xs: '100%', sm: 'auto' },
+                py: { xs: 0.625, sm: 0.75 },
                 background: 'linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%)',
                 color: 'white',
                 textTransform: 'none',
                 borderRadius: 2,
-                fontSize: '0.875rem',
+                fontSize: { xs: '0.75rem', sm: '0.8125rem' },
                 fontWeight: 600,
                 '&:hover': {
                   background: 'linear-gradient(135deg, #0d9488 0%, #0891b2 100%)',
+                },
+                '& .MuiSvgIcon-root': {
+                  fontSize: { xs: 14, sm: 16 },
                 },
               }}
             >
@@ -398,18 +432,22 @@ export const LoginPage = () => {
               variant="outlined"
               startIcon={<CalendarToday />}
               sx={{
-                flex: 1,
-                py: 1.25,
+                flex: { xs: 'none', sm: 1 },
+                width: { xs: '100%', sm: 'auto' },
+                py: { xs: 0.625, sm: 0.75 },
                 borderColor: '#14b8a6',
                 color: '#14b8a6',
                 textTransform: 'none',
                 borderRadius: 2,
-                fontSize: '0.875rem',
+                fontSize: { xs: '0.75rem', sm: '0.8125rem' },
                 fontWeight: 600,
                 bgcolor: 'white',
                 '&:hover': {
                   borderColor: '#0d9488',
                   bgcolor: '#f0fdfa',
+                },
+                '& .MuiSvgIcon-root': {
+                  fontSize: { xs: 14, sm: 16 },
                 },
               }}
             >
@@ -421,16 +459,20 @@ export const LoginPage = () => {
               variant="contained"
               startIcon={<LocalShipping />}
               sx={{
-                flex: 1,
-                py: 1.25,
+                flex: { xs: 'none', sm: 1 },
+                width: { xs: '100%', sm: 'auto' },
+                py: { xs: 0.625, sm: 0.75 },
                 background: 'linear-gradient(135deg, #f87171 0%, #ef4444 100%)',
                 color: 'white',
                 textTransform: 'none',
                 borderRadius: 2,
-                fontSize: '0.875rem',
+                fontSize: { xs: '0.75rem', sm: '0.8125rem' },
                 fontWeight: 600,
                 '&:hover': {
                   background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+                },
+                '& .MuiSvgIcon-root': {
+                  fontSize: { xs: 14, sm: 16 },
                 },
               }}
             >

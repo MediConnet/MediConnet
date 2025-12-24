@@ -74,27 +74,28 @@ export const AppointmentsPage = () => {
         }}
       >
         {/* Header Section */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'flex-start' }, gap: { xs: 2, sm: 0 }, mb: { xs: 3, md: 4 } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.5, sm: 2 }, flex: 1, minWidth: 0 }}>
             <Box
               sx={{
-                width: 56,
-                height: 56,
+                width: { xs: 48, sm: 56 },
+                height: { xs: 48, sm: 56 },
                 borderRadius: 1.5,
                 backgroundColor: '#06b6d4',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                flexShrink: 0,
               }}
             >
-              <CalendarToday sx={{ fontSize: 28, color: 'white' }} />
+              <CalendarToday sx={{ fontSize: { xs: 24, sm: 28 }, color: 'white' }} />
             </Box>
 
-            <Box>
-              <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5, color: '#1e293b', fontSize: '2rem' }}>
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5, color: '#1e293b', fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' } }}>
                 Mis Citas
               </Typography>
-              <Typography variant="body1" sx={{ color: '#64748b', fontSize: '0.9375rem' }}>
+              <Typography variant="body1" sx={{ color: '#64748b', fontSize: { xs: '0.875rem', sm: '0.9375rem' } }}>
                 Registra y gestiona tus citas médicas
               </Typography>
             </Box>
@@ -107,13 +108,14 @@ export const AppointmentsPage = () => {
             sx={{
               backgroundColor: '#06b6d4',
               color: 'white',
-              px: 3,
-              py: 1.5,
-              fontSize: '0.9375rem',
+              px: { xs: 2, sm: 3 },
+              py: { xs: 1, sm: 1.5 },
+              fontSize: { xs: '0.875rem', sm: '0.9375rem' },
               fontWeight: 600,
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+              width: { xs: '100%', sm: 'auto' },
               '&:hover': {
                 backgroundColor: '#0891b2',
                 boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
@@ -125,26 +127,28 @@ export const AppointmentsPage = () => {
         </Box>
 
         {/* ✅ Tabs (IGUAL A LA IMAGEN) */}
-        <Box sx={{ mb: 0 }}>
+        <Box sx={{ mb: 0, overflowX: 'auto' }}>
           <Tabs
             value={activeTab}
             onChange={(_, newValue) => setActiveTab(newValue)}
             TabIndicatorProps={{ style: { display: 'none' } }}
+            variant="scrollable"
+            scrollButtons="auto"
             sx={{
               minHeight: 'auto',
-              '& .MuiTabs-flexContainer': { gap: '8px' },
+              '& .MuiTabs-flexContainer': { gap: { xs: '4px', sm: '8px' } },
             }}
           >
             <Tab
               value="paid"
-              icon={<CreditCard sx={{ fontSize: 18 }} />}
+              icon={<CreditCard sx={{ fontSize: { xs: 16, sm: 18 } }} />}
               iconPosition="start"
               label={`Citas Pagadas (${appointments.length})`}
               sx={tabStyle}
             />
             <Tab
               value="reminders"
-              icon={<CalendarToday sx={{ fontSize: 18 }} />}
+              icon={<CalendarToday sx={{ fontSize: { xs: 16, sm: 18 } }} />}
               iconPosition="start"
               label={`Mis Recordatorios (${reminders.length})`}
               sx={tabStyle}
@@ -265,11 +269,11 @@ export const AppointmentsPage = () => {
 /* ✅ Estilo exacto pestañas como la imagen */
 const tabStyle = {
   minHeight: 'auto',
-  px: 3,
-  py: 1.2,
+  px: { xs: 2, sm: 3 },
+  py: { xs: 1, sm: 1.2 },
   borderRadius: '10px',
   textTransform: 'none',
-  fontSize: '0.875rem',
+  fontSize: { xs: '0.75rem', sm: '0.875rem' },
   fontWeight: 500,
   color: '#64748b',
   backgroundColor: '#f1f5f9',
