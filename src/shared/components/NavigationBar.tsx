@@ -70,19 +70,21 @@ export const NavigationBar = () => {
             onClick={() => navigate(item.path)}
             size="small"
             sx={{
-              color: active ? '#0e7490' : '#4b5563', // Azul oscuro si activo, gris oscuro si inactivo
-              backgroundColor: active ? '#e0f2fe' : 'transparent', // Fondo azul claro si activo
+              color: active ? '#0e7490' : '#4b5563',
+              backgroundColor: active ? '#e0f2fe' : 'transparent',
               fontWeight: active ? 600 : 400,
               textTransform: 'none',
-              fontSize: '0.875rem',
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
               py: 0.5,
-              px: 1.5,
+              px: { xs: 1, sm: 1.5 },
               borderRadius: 1,
+              minWidth: { xs: 'auto', sm: 'auto' },
               '&:hover': {
                 backgroundColor: active ? '#e0f2fe' : 'rgba(0, 0, 0, 0.04)',
               },
               '& .MuiSvgIcon-root': {
                 color: active ? '#0e7490' : '#4b5563',
+                fontSize: { xs: 16, sm: 18 },
               },
             }}
           >

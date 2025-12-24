@@ -16,8 +16,8 @@ export const MediConnectLogo = () => {
       {/* NOTE: Logo cuadrado con esquinas redondeadas y símbolo médico */}
       <Box
         sx={{
-          width: 64,
-          height: 64,
+          width: { xs: 48, sm: 56, md: 64 },
+          height: { xs: 48, sm: 56, md: 64 },
           borderRadius: 2.5,
           background: 'linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%)',
           display: 'flex',
@@ -28,7 +28,7 @@ export const MediConnectLogo = () => {
       >
         <LocalHospital
           sx={{
-            fontSize: 32,
+            fontSize: { xs: 24, sm: 28, md: 32 },
             color: 'white',
           }}
         />

@@ -12,7 +12,14 @@ export const ProfileTabs = ({ value, onChange }: any) => {
       value={value}
       onChange={(_, v) => onChange(v)}
       TabIndicatorProps={{ style: { display: 'none' } }}
-      sx={{ '& .MuiTabs-flexContainer': { gap: 1 } }}
+      variant="scrollable"
+      scrollButtons="auto"
+      sx={{
+        '& .MuiTabs-flexContainer': { gap: { xs: 0.5, sm: 1 } },
+        '& .MuiTabs-scrollButtons': {
+          '&.Mui-disabled': { opacity: 0.3 },
+        },
+      }}
     >
       <Tab icon={<Person />} label="Información" value="info" sx={tabStyle} />
       <Tab icon={<Description />} label="Historial" value="history" sx={tabStyle} />
@@ -25,11 +32,17 @@ export const ProfileTabs = ({ value, onChange }: any) => {
 const tabStyle = {
   textTransform: 'none',
   borderRadius: 2,
-  px: 3,
+  px: { xs: 2, sm: 3 },
+  py: { xs: 1, sm: 1.5 },
+  minHeight: { xs: 40, sm: 48 },
+  fontSize: { xs: '0.75rem', sm: '0.875rem' },
   backgroundColor: '#f1f5f9',
   '&.Mui-selected': {
     backgroundColor: '#fff',
     border: '1.5px solid #0f172a',
     fontWeight: 600,
+  },
+  '& .MuiSvgIcon-root': {
+    fontSize: { xs: 18, sm: 20 },
   },
 };

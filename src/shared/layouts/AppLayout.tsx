@@ -34,7 +34,7 @@ export const AppLayout = () => {
     >
       {/* NOTE: Header/Navbar completamente blanco con todos los elementos */}
       <header className="w-full shadow-sm " style={{ position: 'sticky', top: 0, zIndex: 1000, borderBottom: '1px solid #00bcd4' }}>
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-2 lg:px-8 ">
+        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 ">
           <div className="flex justify-between items-center h-12 w-full py-1">
             {/* NOTE: Logo a la izquierda */}
             <Box
@@ -42,17 +42,17 @@ export const AppLayout = () => {
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 1.5,
+                gap: { xs: 1, sm: 1.5 },
                 cursor: 'pointer',
                 flexShrink: 0,
               }}
             >
               <Box
                 sx={{
-                  width: 32,
-                  height: 32,
+                  width: { xs: 28, sm: 32 },
+                  height: { xs: 28, sm: 32 },
                   borderRadius: 1.5,
-                  backgroundColor: '#e0f2fe', // Azul claro
+                  backgroundColor: '#e0f2fe',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -60,16 +60,17 @@ export const AppLayout = () => {
               >
                 <Favorite
                   sx={{
-                    fontSize: 18,
-                    color: '#ef4444', // Rojo
+                    fontSize: { xs: 16, sm: 18 },
+                    color: '#ef4444',
                   }}
                 />
               </Box>
               <Typography
                 sx={{
-                  fontSize: '1.125rem',
+                  fontSize: { xs: '1rem', sm: '1.125rem' },
                   fontWeight: 700,
-                  color: '#0e7490', // Azul oscuro/teal
+                  color: '#0e7490',
+                  display: { xs: 'none', sm: 'block' },
                 }}
               >
                 Medify
@@ -83,7 +84,7 @@ export const AppLayout = () => {
                 alignItems: 'center',
                 flex: 1,
                 justifyContent: 'center',
-                mx: 4,
+                mx: { md: 2, lg: 4 },
               }}
             >
               <NavigationBar />
@@ -96,7 +97,7 @@ export const AppLayout = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'flex-end',
-                  gap: 1.5,
+                  gap: { xs: 0.5, sm: 1.5 },
                   flexShrink: 0,
                 }}
               >
@@ -106,15 +107,17 @@ export const AppLayout = () => {
                   size="small"
                   sx={{
                     textTransform: 'none',
-                    color: '#4b5563', // Gris oscuro
-                    fontSize: '0.875rem',
+                    color: '#4b5563',
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
                     py: 0.5,
-                    px: 1,
+                    px: { xs: 0.5, sm: 1 },
+                    display: { xs: 'none', sm: 'flex' },
                     '&:hover': {
                       backgroundColor: 'rgba(0, 0, 0, 0.04)',
                     },
                     '& .MuiSvgIcon-root': {
                       color: '#4b5563',
+                      fontSize: { xs: 16, sm: 18 },
                     },
                   }}
                 >
@@ -125,8 +128,8 @@ export const AppLayout = () => {
                   size="small"
                   sx={{
                     minWidth: 'auto',
-                    width: 36,
-                    height: 36,
+                    width: { xs: 32, sm: 36 },
+                    height: { xs: 32, sm: 36 },
                     borderRadius: 1,
                     backgroundColor: '#e0e0e0',
                     color: '#4b5563',
@@ -136,6 +139,7 @@ export const AppLayout = () => {
                     },
                     '& .MuiSvgIcon-root': {
                       color: '#4b5563',
+                      fontSize: { xs: 18, sm: 20 },
                     },
                   }}
                 >
@@ -146,10 +150,11 @@ export const AppLayout = () => {
                   size="small"
                   sx={{
                     textTransform: 'none',
-                    color: '#4b5563', // Gris oscuro
-                    fontSize: '0.875rem',
+                    color: '#4b5563',
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
                     py: 0.5,
-                    px: 1,
+                    px: { xs: 0.5, sm: 1 },
+                    display: { xs: 'none', md: 'block' },
                     '&:hover': {
                       backgroundColor: 'rgba(0, 0, 0, 0.04)',
                     },

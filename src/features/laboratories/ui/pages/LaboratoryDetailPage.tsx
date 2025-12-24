@@ -78,7 +78,7 @@ export const LaboratoryDetailPage = () => {
           Volver
         </Button>
 
-        <Grid container spacing={4}>
+        <Grid container spacing={{ xs: 3, md: 4 }}>
           {/* Columna izquierda */}
           <Grid item xs={12} md={8}>
             {/* Imagen */}
@@ -96,8 +96,8 @@ export const LaboratoryDetailPage = () => {
             />
 
             {/* Nombre y favoritos */}
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-              <Typography variant="h4" sx={{ fontWeight: 700 }}>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', gap: { xs: 1, sm: 0 }, mb: 2 }}>
+              <Typography variant="h4" sx={{ fontWeight: 700, fontSize: { xs: '1.5rem', sm: '2rem' } }}>
                 {laboratory.name}
               </Typography>
               <Button

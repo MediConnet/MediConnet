@@ -70,25 +70,24 @@ export const BranchDetailPage = () => {
           Volver
         </Button>
 
-        <Grid container spacing={4}>
+        <Grid container spacing={{ xs: 3, md: 4 }}>
           {/* Columna izquierda - Imagen e información principal */}
           <Grid item xs={12} md={8}>
-            {branch.image && (
-              <Box
-                component="img"
-                src={branch.image}
-                alt={branch.name}
-                sx={{
-                  width: '100%',
-                  height: { xs: 300, md: 500 },
-                  objectFit: 'cover',
-                  borderRadius: 2,
-                  mb: 3,
-                }}
-              />
-            )}
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-              <Typography variant="h4" sx={{ fontWeight: 700 }}>
+            <Box
+              component="img"
+              src={branch.image || 'https://via.placeholder.com/800x600/f0fdfa/94a3b8?text=Sin+imagen'}
+              alt={branch.name}
+              sx={{
+                width: '100%',
+                height: { xs: 300, md: 500 },
+                objectFit: 'cover',
+                borderRadius: 2,
+                mb: 3,
+                display: 'block',
+              }}
+            />
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', gap: { xs: 1, sm: 0 }, mb: 2 }}>
+              <Typography variant="h4" sx={{ fontWeight: 700, fontSize: { xs: '1.5rem', sm: '2rem' } }}>
                 {branch.name}
               </Typography>
               <Button
@@ -96,6 +95,7 @@ export const BranchDetailPage = () => {
                 sx={{
                   textTransform: 'none',
                   color: 'text.primary',
+                  width: { xs: '100%', sm: 'auto' },
                   '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' },
                 }}
               >

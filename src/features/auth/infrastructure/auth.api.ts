@@ -1,41 +1,33 @@
-import { type AuthResponse, type LoginCredentials, type RegisterCredentials } from '../domain/auth.types';
-
-// Simulación de delay de red
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+import type { ResetPasswordRequest, ResetPasswordResponse } from '../domain/ResetPasswordRequest.entity';
 
 /**
- * API: Iniciar sesión (Simulado)
+ * API: Enviar enlace de restablecimiento de contraseña
+ * TODO: Conectar con endpoint real del backend cuando esté disponible
+ * Endpoint esperado: POST /api/auth/reset-password
  */
-export const loginAPI = async (credentials: LoginCredentials): Promise<AuthResponse> => {
-  await delay(1000);
-  // Simulación exitosa
+export const sendResetPasswordAPI = async (
+  request: ResetPasswordRequest
+): Promise<ResetPasswordResponse> => {
+  // TODO: Reemplazar con llamada real al backend
+  // const response = await httpClient.post<ResetPasswordResponse>('/auth/reset-password', request);
+  // return response.data;
+
+  // Simular delay de red
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
+  // NOTE: Simulación - en producción esto enviaría un email real
+  // Por ahora, solo validamos que el email tenga formato válido
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(request.email)) {
+    return {
+      success: false,
+      message: 'Por favor ingresa un correo electrónico válido',
+    };
+  }
+
   return {
-    user: {
-      id: 'user-123',
-      email: credentials.email,
-      name: 'Usuario de Prueba',
-      role: 'patient',
-    },
-    token: 'mock-jwt-token-login',
+    success: true,
+    message: 'Se ha enviado un enlace de restablecimiento a tu correo electrónico',
   };
 };
 
-/**
- * API: Registrar nuevo usuario (Simulado)
- * ✅ NUEVA FUNCIÓN
- */
-export const registerAPI = async (credentials: RegisterCredentials): Promise<AuthResponse> => {
-    await delay(0); 
-    
-    // Aquí el backend validaría si el email ya existe, etc.
-    // Simulamos un registro exitoso que devuelve el usuario creado y su token.
-    return {
-        user: {
-            id: `new-user-${Date.now()}`,
-            email: credentials.email,
-            name: credentials.name,
-            role: 'patient',
-        },
-        token: 'mock-jwt-token-register',
-    };
-};

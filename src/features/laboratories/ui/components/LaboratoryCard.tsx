@@ -33,7 +33,7 @@ export const LaboratoryCard = ({ laboratory }: LaboratoryCardProps) => {
         borderRadius: 3,
         boxShadow: laboratory.sponsored ? '0 0 0 2px #8b5cf6' : '0 2px 8px rgba(0, 0, 0, 0.1)',
         position: 'relative',
-        overflow: 'visible',
+        overflow: 'hidden',
         cursor: 'pointer',
         transition: 'transform 0.2s, box-shadow 0.2s',
         '&:hover': {
@@ -42,41 +42,47 @@ export const LaboratoryCard = ({ laboratory }: LaboratoryCardProps) => {
         },
       }}
     >
-      {laboratory.sponsored && (
-        <Box sx={{ position: 'absolute', top: 8, left: 8, zIndex: 1 }}>
-          <Chip 
-            label="Patrocinado" 
-            size="small" 
-            sx={{ 
-              backgroundColor: '#8b5cf6', 
-              color: 'white',
-              fontWeight: 600,
-              fontSize: '0.75rem',
-            }} 
-          />
-        </Box>
-      )}
-      {laboratory.sponsored && (
-        <Box sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}>
-          <Chip 
-            label="Anuncio" 
-            size="small" 
-            sx={{ 
-              backgroundColor: '#8b5cf6', 
-              color: 'white',
-              fontWeight: 600,
-              fontSize: '0.75rem',
-            }} 
-          />
-        </Box>
-      )}
-      <CardMedia
-        component="img"
-        height="200"
-        image={laboratory.image}
-        alt={laboratory.name}
-        sx={{ objectFit: 'cover' }}
-      />
+      <Box sx={{ position: 'relative', overflow: 'hidden', borderTopLeftRadius: 12, borderTopRightRadius: 12 }}>
+        {laboratory.sponsored && (
+          <Box sx={{ position: 'absolute', top: 8, left: 8, zIndex: 1 }}>
+            <Chip 
+              label="Patrocinado" 
+              size="small" 
+              sx={{ 
+                backgroundColor: '#8b5cf6', 
+                color: 'white',
+                fontWeight: 600,
+                fontSize: '0.75rem',
+              }} 
+            />
+          </Box>
+        )}
+        {laboratory.sponsored && (
+          <Box sx={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}>
+            <Chip 
+              label="Anuncio" 
+              size="small" 
+              sx={{ 
+                backgroundColor: '#8b5cf6', 
+                color: 'white',
+                fontWeight: 600,
+                fontSize: '0.75rem',
+              }} 
+            />
+          </Box>
+        )}
+        <CardMedia
+          component="img"
+          image={laboratory.image}
+          alt={laboratory.name}
+          sx={{ 
+            height: 200,
+            width: '100%',
+            objectFit: 'cover',
+            display: 'block',
+          }}
+        />
+      </Box>
 
       <CardContent>
         <Typography variant="h6" fontWeight={600} mb={1}>
