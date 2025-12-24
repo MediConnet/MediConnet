@@ -1,4 +1,4 @@
-import { Provider } from '../../application/search-providers.usecase';
+import type { Provider } from '../../application/search-providers.usecase';
 import { Button } from '../../../../shared/ui/Button';
 
 interface ProviderCardProps {

@@ -3,7 +3,7 @@ import { SearchFilters } from '../components/SearchFilters';
 import { ProviderCard } from '../components/ProviderCard';
 import { useSearch } from '../hooks/useSearch';
 import { SearchFiltersVO } from '../../domain/search-filters.vo';
-import { Provider } from '../../application/search-providers.usecase';
+import type { Provider } from '../../application/search-providers.usecase';
 
 export const SearchPage = () => {
   const [filters, setFilters] = useState<SearchFiltersVO>(

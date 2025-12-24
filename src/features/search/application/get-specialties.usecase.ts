@@ -1,4 +1,4 @@
-import { Specialty } from '../domain/specialty.entity';
+import type { Specialty } from '../domain/specialty.entity';
 import { MOCK_SPECIALTIES } from '../infrastructure/specialties.mock';
 
 /**

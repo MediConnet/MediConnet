@@ -1,4 +1,4 @@
-import { Availability } from '../../domain/Availability.entity';
+import type { Availability } from '../../domain/Availability.entity';
 import { Button } from '../../../../shared/ui/Button';
 
 interface AvailabilityCalendarProps {

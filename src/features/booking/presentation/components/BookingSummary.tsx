@@ -1,4 +1,4 @@
-import { Booking } from '../../domain/Booking.entity';
+import type { Booking } from '../../domain/Booking.entity';
 import { formatMoney } from '../../../../shared/lib/formatMoney';
 import { formatDate, formatTime } from '../../../../shared/lib/formatDate';
 

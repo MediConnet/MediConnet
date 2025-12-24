@@ -15,7 +15,11 @@ export interface SearchFilters {
 }
 
 export class SearchFiltersVO {
-  constructor(private filters: SearchFilters) {}
+  private filters: SearchFilters;
+
+  constructor(filters: SearchFilters) {
+    this.filters = filters;
+  }
 
   getQuery(): string | undefined {
     return this.filters.query;

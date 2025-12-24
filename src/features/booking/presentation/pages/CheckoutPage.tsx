@@ -1,11 +1,10 @@
 import { useSearchParams } from 'react-router-dom';
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { confirmBookingUseCase, ConfirmBookingDTO } from '../../application/confirm-booking.usecase';
+import { confirmBookingUseCase, type ConfirmBookingDTO } from '../../application/confirm-booking.usecase';
 import { BookingSummary } from '../components/BookingSummary';
-import { Input } from '../../../../shared/ui/Input';
 import { Button } from '../../../../shared/ui/Button';
-import { Booking } from '../../domain/Booking.entity';
+import type { Booking } from '../../domain/Booking.entity';
 
 export const CheckoutPage = () => {
   const [searchParams] = useSearchParams();
@@ -46,6 +45,7 @@ export const CheckoutPage = () => {
     paymentStatus: 'pending',
     amount: 100,
     currency: 'USD',
+    createdAt: new Date(),
   };
 
   return (

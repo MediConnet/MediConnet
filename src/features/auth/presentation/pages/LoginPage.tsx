@@ -24,20 +24,11 @@ import {
   Checkbox,
   FormControlLabel,
   IconButton,
+  InputAdornment,
+  Link,
+  TextField,
+  Typography,
 } from '@mui/material';
-import {
-  Email as EmailIcon,
-  Lock as LockIcon,
-  Google as GoogleIcon,
-  Visibility,
-  VisibilityOff,
-} from '@mui/icons-material';
-import {
-  LocalHospital,
-  Favorite,
-  LocalShipping,
-  CalendarToday,
-} from '@mui/icons-material';
 import { useAuthStore } from '../../../../app/store/auth.store';
 import { MediConnectLogo } from '../components/MediConnectLogo';
 import { ROUTES } from '../../../../app/config/constants';

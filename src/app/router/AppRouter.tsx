@@ -32,24 +32,7 @@ import { AppointmentsPage } from '../../features/appointments/presentation/pages
 import { ServicesCatalogPage } from '../../features/home/presentation/pages/ServicesCatalogPage';
 import { ProfilePage } from '../../features/profile/pages/ProfilePage';
 
-import { AppointmentsPage } from "../../features/appointments/presentation/pages/AppointmentsPage";
-import { CheckoutPage } from "../../features/booking/presentation/pages/CheckoutPage";
-import { DoctorProfilePage } from "../../features/doctors/presentation/pages/DoctorProfilePage";
-import { DoctorsListPage } from "../../features/doctors/presentation/pages/DoctorsListPage";
-import { HomePage } from "../../features/home/presentation/pages/HomePage";
-import { ServicesCatalogPage } from "../../features/home/presentation/pages/ServicesCatalogPage";
-import { LaboratoriesPage } from "../../features/laboratories/ui/pages/LaboratoriesPage";
-import { LaboratoryDetailPage } from "../../features/laboratories/ui/pages/LaboratoryDetailPage";
-import { BranchDetailPage } from "../../features/pharmacies/presentation/pages/BranchDetailPage";
-import { PharmaciesListPage } from "../../features/pharmacies/presentation/pages/PharmaciesListPage";
-import { PharmacyDetailPage } from "../../features/pharmacies/presentation/pages/PharmacyDetailPage";
-import { ProfilePage } from "../../features/profile/pages/ProfilePage";
-import { SearchPage } from "../../features/search/presentation/pages/SearchPage";
-import { SpecialtiesPage } from "../../features/search/presentation/pages/SpecialtiesPage";
-import { SuppliesListPage } from "../../features/supplies/presentation/pages/SuppliesListPage";
-import { SupplyStoreDetailPage } from "../../features/supplies/presentation/pages/SupplyStoreDetailPage";
-
-// const RegisterPage = () => <div>Register Page</div>;
+const RegisterPage = () => <div>Register Page</div>;
 
 export const AppRouter = () => {
   return (

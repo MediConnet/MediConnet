@@ -1,7 +1,7 @@
 // NOTE: Cliente HTTP configurado con Axios e interceptors
 // TODO: Agregar manejo de errores más robusto y retry logic
 
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios, { type AxiosInstance, AxiosError } from 'axios';
 import { env } from '../../app/config/env';
 import { useAuthStore } from '../../app/store/auth.store';
 

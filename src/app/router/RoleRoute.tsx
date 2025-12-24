@@ -3,7 +3,6 @@
 
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
-import { USER_ROLES } from '../config/constants';
 
 interface RoleRouteProps {
   children: React.ReactNode;

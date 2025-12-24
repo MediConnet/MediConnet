@@ -1,4 +1,4 @@
-import { Doctor } from '../domain/Doctor.entity';
+import type { Doctor } from '../domain/Doctor.entity';
 import { MOCK_DOCTORS } from '../infrastructure/doctors.mock';
 
 export const getDoctorUseCase = async (doctorId: string): Promise<Doctor> => {

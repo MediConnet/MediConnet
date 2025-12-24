@@ -1,4 +1,4 @@
-import { Doctor } from '../domain/Doctor.entity';
+import type { Doctor } from '../domain/Doctor.entity';
 import { getDoctorAPI } from './doctors.api';
 
 /**
