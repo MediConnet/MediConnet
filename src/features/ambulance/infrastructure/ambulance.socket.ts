@@ -5,7 +5,7 @@
 export class AmbulanceSocket {
   private socket: WebSocket | null = null;
 
-  connect(requestId: string, onUpdate: (data: any) => void) {
+  connect(requestId: string, _onUpdate: (data: any) => void) {
     // TODO: Implementar conexión WebSocket
     console.log('Conectando WebSocket para request:', requestId);
   }

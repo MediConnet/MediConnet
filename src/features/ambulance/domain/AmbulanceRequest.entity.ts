@@ -1,3 +1,5 @@
+import type { AmbulanceStatus } from './AmbulanceStatus.enum';
+
 /**
  * Entidad AmbulanceRequest
  */

@@ -1,5 +1,5 @@
 import { requestAmbulanceAPI } from '../infrastructure/ambulance.api';
-import { AmbulanceRequest } from '../domain/AmbulanceRequest.entity';
+import type { AmbulanceRequest } from '../domain/AmbulanceRequest.entity';
 
 export interface RequestAmbulanceDTO {
   patientName: string;

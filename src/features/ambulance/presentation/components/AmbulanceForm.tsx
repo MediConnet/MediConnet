@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Input } from '../../../../shared/ui/Input';
 import { Button } from '../../../../shared/ui/Button';
 import { useRequestAmbulance } from '../hooks/useAmbulance';
-import { RequestAmbulanceDTO } from '../../application/request-ambulance.usecase';
+import type { RequestAmbulanceDTO } from '../../application/request-ambulance.usecase';
 
 export const AmbulanceForm = () => {
   const [formData, setFormData] = useState<Partial<RequestAmbulanceDTO>>({

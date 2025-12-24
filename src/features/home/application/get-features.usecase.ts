@@ -1,4 +1,4 @@
-import { Feature } from '../domain/Feature.entity';
+import type { Feature } from '../domain/Feature.entity';
 import { HomeRepository } from '../infrastructure/home.repository';
 
 const homeRepository = new HomeRepository();

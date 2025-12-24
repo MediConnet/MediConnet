@@ -1,6 +1,6 @@
 import { httpClient } from '../../../shared/lib/http';
-import { AmbulanceRequest } from '../domain/AmbulanceRequest.entity';
-import { RequestAmbulanceDTO } from '../application/request-ambulance.usecase';
+import type { AmbulanceRequest } from '../domain/AmbulanceRequest.entity';
+import type { RequestAmbulanceDTO } from '../application/request-ambulance.usecase';
 
 export const requestAmbulanceAPI = async (
   data: RequestAmbulanceDTO

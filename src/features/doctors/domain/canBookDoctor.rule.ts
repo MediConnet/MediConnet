@@ -1,11 +1,11 @@
-import { Doctor } from './Doctor.entity';
-import { Availability } from './Availability.entity';
+import type { Doctor } from './Doctor.entity';
+import type { Availability } from './Availability.entity';
 
 /**
  * Regla de negocio: Verificar si se puede reservar un doctor
  */
 export const canBookDoctor = (
-  doctor: Doctor,
+  _doctor: Doctor,
   availability: Availability
 ): { canBook: boolean; reason?: string } => {
   if (!availability.isAvailable) {

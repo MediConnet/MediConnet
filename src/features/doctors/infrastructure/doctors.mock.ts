@@ -1,7 +1,4 @@
-import { Doctor } from '../domain/Doctor.entity';
-
-// Usaremos imágenes de placeholder por ahora
-const placeholderImage = "https://i.pravatar.cc/300";
+import type { Doctor } from '../domain/Doctor.entity';
 
 export const MOCK_DOCTORS: Doctor[] = [
   {

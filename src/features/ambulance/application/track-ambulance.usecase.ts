@@ -1,5 +1,5 @@
 import { trackAmbulanceAPI } from '../infrastructure/ambulance.api';
-import { AmbulanceRequest } from '../domain/AmbulanceRequest.entity';
+import type { AmbulanceRequest } from '../domain/AmbulanceRequest.entity';
 
 export const trackAmbulanceUseCase = async (
   requestId: string

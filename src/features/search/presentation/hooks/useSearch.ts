@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { searchProvidersUseCase, Provider } from '../../application/search-providers.usecase';
+import { searchProvidersUseCase, type Provider } from '../../application/search-providers.usecase';
 import { SearchFiltersVO } from '../../domain/search-filters.vo';
 
 export const useSearch = (filters: SearchFiltersVO) => {

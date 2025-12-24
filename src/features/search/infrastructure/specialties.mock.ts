@@ -1,4 +1,4 @@
-import { Specialty } from '../domain/specialty.entity';
+import type { Specialty } from '../domain/specialty.entity';
 
 export const MOCK_SPECIALTIES: Specialty[] = [
   // --- Fila 1 ---

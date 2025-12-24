@@ -1,4 +1,4 @@
-import { AmbulanceRequest } from './AmbulanceRequest.entity';
+import type { AmbulanceRequest } from './AmbulanceRequest.entity';
 import { AmbulanceStatus } from './AmbulanceStatus.enum';
 
 /**

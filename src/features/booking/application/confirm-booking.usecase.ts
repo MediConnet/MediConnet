@@ -1,5 +1,5 @@
 import { confirmBookingAPI } from '../infrastructure/booking.api';
-import { Booking } from '../domain/Booking.entity';
+import type { Booking } from '../domain/Booking.entity';
 
 export interface ConfirmBookingDTO {
   doctorId: string;

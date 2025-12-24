@@ -1,6 +1,6 @@
 import { httpClient } from '../../../shared/lib/http';
-import { Booking } from '../domain/Booking.entity';
-import { ConfirmBookingDTO } from '../application/confirm-booking.usecase';
+import type { Booking } from '../domain/Booking.entity';
+import type { ConfirmBookingDTO } from '../application/confirm-booking.usecase';
 
 export const confirmBookingAPI = async (
   data: ConfirmBookingDTO

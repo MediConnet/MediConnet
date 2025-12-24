@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAppointmentsUseCase } from '../../application/get-appointments.usecase';
-import { createAppointmentUseCase, type CreateAppointmentParams } from '../../application/create-appointment.usecase';
+import { createAppointmentUseCase } from '../../application/create-appointment.usecase';
 import { deleteAppointmentUseCase } from '../../application/delete-appointment.usecase';
-import type { Appointment } from '../../domain/Appointment.entity';
+import type { Appointment, CreateAppointmentParams } from '../../domain/Appointment.entity';
 
 /**
  * Hook: Obtener lista de citas del usuario

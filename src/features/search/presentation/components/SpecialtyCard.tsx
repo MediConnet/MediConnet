@@ -1,4 +1,4 @@
-import { Specialty } from '../../domain/specialty.entity';
+import type { Specialty } from '../../domain/specialty.entity';
 
 interface SpecialtyCardProps {
   specialty: Specialty;

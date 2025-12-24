@@ -1,7 +1,7 @@
 import { httpClient } from '../../../shared/lib/http';
-import { Doctor } from '../domain/Doctor.entity';
-import { Availability } from '../domain/Availability.entity';
-import { BookingRequest, BookingResponse } from '../application/book-doctor.usecase';
+import type { Doctor } from '../domain/Doctor.entity';
+import type { Availability } from '../domain/Availability.entity';
+import type { BookingRequest, BookingResponse } from '../application/book-doctor.usecase';
 
 export const getDoctorAPI = async (doctorId: string): Promise<Doctor> => {
   const response = await httpClient.get<Doctor>(`/doctors/${doctorId}`);
