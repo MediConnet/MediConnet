@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getDoctorsBySpecialtyUseCase } from '../../application/get-doctors-by-specialty.usecase';
-import { Doctor } from '../../domain/Doctor.entity';
+import { type Doctor } from '../../domain/Doctor.entity';
 
 export const useDoctorsBySpecialty = (specialtyName: string | undefined) => {
   return useQuery<Doctor[], Error>({

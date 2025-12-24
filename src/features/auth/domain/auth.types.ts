@@ -6,6 +6,13 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface RegisterCredentials {
+  name: string;
+  email: string;
+  password: string;
+  // Note: 'confirmPassword' se maneja solo en la UI para validación, no se envía al backend.
+}
+
 export interface AuthResponse {
   user: {
     id: string;
