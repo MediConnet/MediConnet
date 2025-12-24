@@ -17,8 +17,6 @@ interface AuthState {
   updateUser: (user: Partial<User>) => void;
 }
 
-// NOTE: Implementación temporal sin Zustand
-// TODO: Reemplazar con Zustand cuando se configure
 let authState: AuthState = {
   user: null,
   token: null,
@@ -61,8 +59,3 @@ export const useAuthStore = () => {
     ...authState,
   };
 };
-
-
-
-
-
