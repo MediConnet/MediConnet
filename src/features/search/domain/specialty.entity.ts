@@ -1,10 +1,12 @@
+import type { ReactNode } from 'react';
+
 /**
  * Representa una especialidad médica en el sistema.
- * Usamos clases de Tailwind para los colores por practicidad en el frontend.
+ * Actualizado: 'icon' ahora recibe un ReactNode para usar íconos de librerías (MUI).
  */
 export interface Specialty {
   id: string;
   name: string;
-  icon: string; // Por ahora usaremos emojis, luego pueden ser SVGs o URLs
+  icon: ReactNode; 
   colorClass: string; 
 }
