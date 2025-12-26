@@ -70,7 +70,7 @@ export const AppointmentModal = ({
 
   const handlePayment = () => {
     // 1. Mostrar Alerta de Simulación
-    alert("¡Simulación! Redirigiendo a pasarela de pagos...");
+    alert("¡Cita agendada con éxito!");
 
     // 2. Limpiar formulario y estados
     resetForm();
