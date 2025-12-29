@@ -15,6 +15,7 @@ import { AppLayout } from "../../shared/layouts/AppLayout";
 import { AuthLayout } from "../../shared/layouts/AuthLayout";
 
 // Pages
+import { ActivityPage } from "../../features/activity-history/presentation/pages/ActivityPage";
 import { AdminDashboardPage } from "../../features/admin-dashboard/presentation/pages/AdminDashboardPage";
 import { AmbulanceDetailPage } from "../../features/ambulance/presentation/pages/AmbulanceDetailPage";
 import { AmbulancesListPage } from "../../features/ambulance/presentation/pages/AmbulancesListPage";
@@ -68,11 +69,12 @@ export const AppRouter = () => {
           <Route path="/supplies/:id" element={<SupplyStoreDetailPage />} />
         </Route>
 
-        {/* Rutas de Admin Dashboard (publicas de momento)*/}
+        {/* Rutas de Admin Dashboard (públicas de momento)*/}
         <Route path="/admin" element={<Outlet />}>
           <Route path="dashboard" element={<AdminDashboardPage />} />
           <Route path="requests" element={<RequestsPage />} />
           <Route path="services" element={<ServicesDashboardPage />} />
+          <Route path="activity" element={<ActivityPage />} />
         </Route>
 
         {/* Rutas protegidas */}
