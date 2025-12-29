@@ -33,6 +33,7 @@ import { BranchDetailPage } from "../../features/pharmacies/presentation/pages/B
 import { PharmaciesListPage } from "../../features/pharmacies/presentation/pages/PharmaciesListPage";
 import { PharmacyDetailPage } from "../../features/pharmacies/presentation/pages/PharmacyDetailPage";
 import { ProfilePage } from "../../features/profile/pages/ProfilePage";
+import { RequestsPage } from "../../features/provider-requests/presentation/pages/RequestsPage";
 import { SearchPage } from "../../features/search/presentation/pages/SearchPage";
 import { SpecialtiesPage } from "../../features/search/presentation/pages/SpecialtiesPage";
 import { SuppliesListPage } from "../../features/supplies/presentation/pages/SuppliesListPage";
@@ -64,9 +65,10 @@ export const AppRouter = () => {
           <Route path="/supplies/:id" element={<SupplyStoreDetailPage />} />
         </Route>
 
-        {/* Rutas de Admin Dashboard de momento pública*/}
+        {/* Rutas de Admin Dashboard (publicas de momento)*/}
         <Route path="/admin" element={<Outlet />}>
           <Route path="dashboard" element={<AdminDashboardPage />} />
+          <Route path="requests" element={<RequestsPage />} />
         </Route>
 
         {/* Rutas protegidas */}
