@@ -115,8 +115,7 @@ export const LoginPage = () => {
         );
 
         if (user.role === 'admin') {
-          // TODO: Navegar a panel de administración cuando esté listo
-          navigate(ROUTES.HOME);
+          navigate('/admin/dashboard');
         } else {
           navigate(ROUTES.HOME);
         }
