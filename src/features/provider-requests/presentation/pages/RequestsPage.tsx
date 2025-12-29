@@ -24,162 +24,210 @@ import {
   type GridColDef,
   type GridRenderCellParams,
 } from "@mui/x-data-grid";
+import { useEffect, useState } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import type {
   ProviderRequest,
   ServiceType,
 } from "../../domain/provider-request.entity";
+import { RequestDetailModal } from "../components/RequestDetailModal";
 import { RequestStatusBadge } from "../components/RequestStatusBadge";
 import { useProviderRequests } from "../hooks/useProviderRequests";
 
-// Mock del Admin actual
 const CURRENT_ADMIN = {
   name: "Admin General",
   roleLabel: "Super Admin",
   initials: "AG",
 };
 
-// --- Configuración de las Columnas de la Tabla ---
-const getColumns = (): GridColDef<ProviderRequest>[] => [
-  {
-    field: "id",
-    headerName: "ID",
-    width: 90,
-  },
-  {
-    field: "providerName",
-    headerName: "Proveedor",
-    width: 300,
-    renderCell: (params: GridRenderCellParams<ProviderRequest>) => (
-      <Stack
-        direction="row"
-        spacing={2}
-        alignItems="center"
-        sx={{ height: "100%" }}
-      >
-        <Avatar src={params.row.avatarUrl} alt={params.row.providerName}>
-          {params.row.providerName.charAt(0)}
-        </Avatar>
-
-        {/* Contenedor de texto ajustado */}
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-          }}
-        >
-          <Typography
-            variant="subtitle2"
-            fontWeight={600}
-            sx={{ lineHeight: 1.2 }}
-          >
-            {params.row.providerName}
-          </Typography>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ lineHeight: 1.2 }}
-          >
-            {params.row.email}
-          </Typography>
-        </Box>
-      </Stack>
-    ),
-  },
-  {
-    field: "serviceType",
-    headerName: "Tipo de Servicio",
-    width: 180,
-    renderCell: (params) => {
-      const type = params.value as ServiceType;
-      let icon = null;
-
-      // Mapeo de íconos
-      if (type === "doctor")
-        icon = <LocalHospital color="primary" fontSize="small" />;
-      if (type === "pharmacy")
-        icon = <LocalPharmacy color="success" fontSize="small" />;
-      if (type === "laboratory")
-        icon = <Science color="info" fontSize="small" />;
-      if (type === "ambulance")
-        icon = <AirportShuttle color="error" fontSize="small" />;
-      if (type === "supplies")
-        icon = <Inventory color="warning" fontSize="small" />;
-
-      return (
-        <Stack
-          direction="row"
-          spacing={1}
-          alignItems="center"
-          sx={{ height: "100%" }}
-        >
-          {icon}
-          <span className="capitalize">{type}</span>
-        </Stack>
-      );
-    },
-  },
-  { field: "submissionDate", headerName: "Fecha Solicitud", width: 130 },
-  {
-    field: "documentsCount",
-    headerName: "Docs",
-    width: 80,
-    align: "center",
-    headerAlign: "center",
-    renderCell: (params) => (
-      <Typography variant="body2" fontWeight={500}>
-        {params.value}
-      </Typography>
-    ),
-  },
-  {
-    field: "status",
-    headerName: "Estado",
-    width: 150,
-    renderCell: (params: GridRenderCellParams<ProviderRequest>) => (
-      <Box sx={{ display: "flex", alignItems: "center", height: "100%" }}>
-        <RequestStatusBadge status={params.row.status} />
-      </Box>
-    ),
-  },
-  {
-    field: "actions",
-    headerName: "Acciones",
-    sortable: false,
-    width: 150,
-    renderCell: (params: GridRenderCellParams<ProviderRequest>) => {
-      const isPending = params.row.status === "PENDING";
-      return (
-        <Stack
-          direction="row"
-          spacing={1}
-          alignItems="center"
-          sx={{ height: "100%" }}
-        >
-          <IconButton size="small" title="Ver detalles" color="primary">
-            <Visibility fontSize="small" />
-          </IconButton>
-          {isPending && (
-            <>
-              <IconButton size="small" title="Aprobar" color="success">
-                <Check fontSize="small" />
-              </IconButton>
-              <IconButton size="small" title="Rechazar" color="error">
-                <Close fontSize="small" />
-              </IconButton>
-            </>
-          )}
-        </Stack>
-      );
-    },
-  },
-];
-
 export const RequestsPage = () => {
-  const { data: requests, isLoading } = useProviderRequests();
+  const { data: initialData, isLoading } = useProviderRequests();
 
-  const columns = getColumns();
+  const [requests, setRequests] = useState<ProviderRequest[]>([]);
+
+  const [selectedRequest, setSelectedRequest] =
+    useState<ProviderRequest | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (initialData) {
+      setRequests(initialData);
+    }
+  }, [initialData]);
+
+  const handleViewRequest = (request: ProviderRequest) => {
+    setSelectedRequest(request);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedRequest(null);
+  };
+
+  const handleApprove = (id: string) => {
+    setRequests((prevRequests) =>
+      prevRequests.map((req) =>
+        req.id === id ? { ...req, status: "APPROVED" } : req
+      )
+    );
+
+    handleCloseModal();
+  };
+
+  const handleReject = (id: string) => {
+    setRequests((prevRequests) =>
+      prevRequests.map((req) =>
+        req.id === id ? { ...req, status: "REJECTED" } : req
+      )
+    );
+    handleCloseModal();
+  };
+
+  const columns: GridColDef<ProviderRequest>[] = [
+    { field: "id", headerName: "ID", width: 90 },
+    {
+      field: "providerName",
+      headerName: "Proveedor",
+      width: 300,
+      renderCell: (params: GridRenderCellParams<ProviderRequest>) => (
+        <Stack
+          direction="row"
+          spacing={2}
+          alignItems="center"
+          sx={{ height: "100%" }}
+        >
+          <Avatar src={params.row.avatarUrl} alt={params.row.providerName}>
+            {params.row.providerName.charAt(0)}
+          </Avatar>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
+          >
+            <Typography
+              variant="subtitle2"
+              fontWeight={600}
+              sx={{ lineHeight: 1.2 }}
+            >
+              {params.row.providerName}
+            </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ lineHeight: 1.2 }}
+            >
+              {params.row.email}
+            </Typography>
+          </Box>
+        </Stack>
+      ),
+    },
+    {
+      field: "serviceType",
+      headerName: "Tipo de Servicio",
+      width: 180,
+      renderCell: (params) => {
+        const type = params.value as ServiceType;
+        let icon = null;
+
+        if (type === "doctor")
+          icon = <LocalHospital color="primary" fontSize="small" />;
+        if (type === "pharmacy")
+          icon = <LocalPharmacy color="success" fontSize="small" />;
+        if (type === "laboratory")
+          icon = <Science color="info" fontSize="small" />;
+        if (type === "ambulance")
+          icon = <AirportShuttle color="error" fontSize="small" />;
+        if (type === "supplies")
+          icon = <Inventory color="warning" fontSize="small" />;
+
+        return (
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            sx={{ height: "100%" }}
+          >
+            {icon}
+            <span className="capitalize">{type}</span>
+          </Stack>
+        );
+      },
+    },
+    { field: "submissionDate", headerName: "Fecha Solicitud", width: 130 },
+    {
+      field: "documentsCount",
+      headerName: "Docs",
+      width: 80,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params) => (
+        <Typography variant="body2" fontWeight={500}>
+          {params.value}
+        </Typography>
+      ),
+    },
+    {
+      field: "status",
+      headerName: "Estado",
+      width: 150,
+      renderCell: (params: GridRenderCellParams<ProviderRequest>) => (
+        <Box sx={{ display: "flex", alignItems: "center", height: "100%" }}>
+          <RequestStatusBadge status={params.row.status} />
+        </Box>
+      ),
+    },
+    {
+      field: "actions",
+      headerName: "Acciones",
+      sortable: false,
+      width: 150,
+      renderCell: (params: GridRenderCellParams<ProviderRequest>) => {
+        const isPending = params.row.status === "PENDING";
+        return (
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            sx={{ height: "100%" }}
+          >
+            <IconButton
+              size="small"
+              title="Ver detalles"
+              color="primary"
+              onClick={() => handleViewRequest(params.row)}
+            >
+              <Visibility fontSize="small" />
+            </IconButton>
+
+            {isPending && (
+              <>
+                <IconButton
+                  size="small"
+                  title="Aprobar"
+                  color="success"
+                  onClick={() => handleApprove(params.row.id)}
+                >
+                  <Check fontSize="small" />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  title="Rechazar"
+                  color="error"
+                  onClick={() => handleReject(params.row.id)}
+                >
+                  <Close fontSize="small" />
+                </IconButton>
+              </>
+            )}
+          </Stack>
+        );
+      },
+    },
+  ];
 
   return (
     <DashboardLayout
@@ -188,7 +236,7 @@ export const RequestsPage = () => {
       title="Solicitudes"
     >
       <Box sx={{ height: "100%", width: "100%", p: 1 }}>
-        {/* Header de la sección con botón Exportar */}
+        {/* Header */}
         <Stack
           direction="row"
           justifyContent="space-between"
@@ -208,7 +256,7 @@ export const RequestsPage = () => {
           </Button>
         </Stack>
 
-        {/* Barra de Filtros */}
+        {/* Filtros */}
         <Stack
           direction={{ xs: "column", md: "row" }}
           spacing={2}
@@ -241,15 +289,13 @@ export const RequestsPage = () => {
             size="small"
             sx={{ minWidth: 150 }}
             slotProps={{
-              inputLabel: {
-                shrink: true,
-              },
+              inputLabel: { shrink: true },
             }}
             label="Desde fecha"
           />
         </Stack>
 
-        {/* Tabla de Datos (DataGrid) */}
+        {/* DataGrid */}
         <Box
           sx={{
             height: 600,
@@ -260,7 +306,7 @@ export const RequestsPage = () => {
           }}
         >
           <DataGrid
-            rows={requests || []}
+            rows={requests}
             columns={columns}
             loading={isLoading}
             rowHeight={80}
@@ -270,7 +316,7 @@ export const RequestsPage = () => {
               },
             }}
             pageSizeOptions={[5, 10, 20]}
-            checkboxSelection
+            disableColumnResize
             disableRowSelectionOnClick
             sx={{
               border: "none",
@@ -283,6 +329,15 @@ export const RequestsPage = () => {
             }}
           />
         </Box>
+
+        {/* Modal de Detalle */}
+        <RequestDetailModal
+          open={isModalOpen}
+          onClose={handleCloseModal}
+          request={selectedRequest}
+          onApprove={handleApprove}
+          onReject={handleReject}
+        />
       </Box>
     </DashboardLayout>
   );

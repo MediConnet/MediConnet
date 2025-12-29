@@ -5,11 +5,21 @@ export const MOCK_REQUESTS: ProviderRequest[] = [
     id: 'REQ-001',
     providerName: 'Dr. Roberto Sánchez',
     email: 'roberto.sanchez@email.com',
-    avatarUrl: 'https://i.pravatar.cc/150?img=11', // Avatar de ejemplo
+    avatarUrl: 'https://i.pravatar.cc/150?img=11',
     serviceType: 'doctor',
     submissionDate: '2024-01-25',
     documentsCount: 3,
-    status: 'PENDING'
+    status: 'PENDING',
+    phone: '+52 55 1234 5678',
+    whatsapp: '+52 55 1234 5678',
+    city: 'Ciudad de México',
+    address: 'Av. Reforma 222, Consultorio 304',
+    description: 'Especialista en Cardiología Intervencionista con más de 10 años de experiencia. Egresado del Instituto Nacional de Cardiología.',
+    documents: [
+      { id: '1', name: 'Título Profesional.pdf', type: 'pdf', url: '#' },
+      { id: '2', name: 'Cédula Profesional.pdf', type: 'pdf', url: '#' },
+      { id: '3', name: 'Comprobante Domicilio.jpg', type: 'image', url: '#' },
+    ]
   },
   {
     id: 'REQ-002',
@@ -18,7 +28,19 @@ export const MOCK_REQUESTS: ProviderRequest[] = [
     serviceType: 'pharmacy',
     submissionDate: '2024-01-24',
     documentsCount: 5,
-    status: 'APPROVED'
+    status: 'APPROVED',
+    phone: '+52 33 9876 5432',
+    whatsapp: '+52 33 9876 5432',
+    city: 'Guadalajara',
+    address: 'Calle Morelos 567, Centro',
+    description: 'Farmacia con servicio 24 horas. Medicamentos genéricos y de patente.',
+    documents: [
+      { id: '1', name: 'Licencia Sanitaria.pdf', type: 'pdf', url: '#' },
+      { id: '2', name: 'Aviso de Funcionamiento.pdf', type: 'pdf', url: '#' },
+      { id: '3', name: 'RFC.pdf', type: 'pdf', url: '#' },
+      { id: '4', name: 'Comprobante Domicilio.pdf', type: 'pdf', url: '#' },
+      { id: '5', name: 'Fotografías Local.jpg', type: 'image', url: '#' },
+    ]
   },
   {
     id: 'REQ-003',
@@ -27,7 +49,18 @@ export const MOCK_REQUESTS: ProviderRequest[] = [
     serviceType: 'laboratory',
     submissionDate: '2024-01-23',
     documentsCount: 4,
-    status: 'REJECTED'
+    status: 'REJECTED',
+    phone: '+593 2 256 7890',
+    whatsapp: '+593 99 123 4567',
+    city: 'Quito',
+    address: 'Av. Amazonas N24-12 y Mariscal Foch',
+    description: 'Laboratorio de análisis clínicos de alta complejidad. Certificación ISO 9001. Resultados en línea 24/7.',
+    documents: [
+      { id: '1', name: 'Permiso ACESS.pdf', type: 'pdf', url: '#' },
+      { id: '2', name: 'RUC.pdf', type: 'pdf', url: '#' },
+      { id: '3', name: 'Título Bioquímico Responsable.pdf', type: 'pdf', url: '#' },
+      { id: '4', name: 'Manual de Procedimientos.pdf', type: 'pdf', url: '#' },
+    ]
   },
   {
     id: 'REQ-004',
@@ -37,7 +70,17 @@ export const MOCK_REQUESTS: ProviderRequest[] = [
     serviceType: 'doctor',
     submissionDate: '2024-01-22',
     documentsCount: 3,
-    status: 'PENDING'
+    status: 'PENDING',
+    phone: '+52 81 8345 6789',
+    whatsapp: '+52 81 8345 6789',
+    city: 'Monterrey',
+    address: 'Av. Constitución 405, Piso 4, Consultorio 402',
+    description: 'Pediatra Neonatóloga certificada. Atención integral del recién nacido y control de niño sano. Lactancia materna.',
+    documents: [
+      { id: '1', name: 'Título Médico Cirujano.pdf', type: 'pdf', url: '#' },
+      { id: '2', name: 'Diploma Especialidad Pediatría.pdf', type: 'pdf', url: '#' },
+      { id: '3', name: 'Certificación Consejo Mexicano.pdf', type: 'pdf', url: '#' },
+    ]
   },
   {
     id: 'REQ-005',
@@ -46,6 +89,15 @@ export const MOCK_REQUESTS: ProviderRequest[] = [
     serviceType: 'ambulance',
     submissionDate: '2024-01-20',
     documentsCount: 2,
-    status: 'APPROVED'
+    status: 'APPROVED',
+    phone: '+52 22 2123 4567',
+    whatsapp: '+52 22 2123 4567',
+    city: 'Puebla',
+    address: 'Blvd. Héroes del 5 de Mayo 1200, Zona Dorada',
+    description: 'Servicio de traslado terrestre de urgencia y terapia intensiva. Unidades equipadas con desfibrilador y oxígeno.',
+    documents: [
+      { id: '1', name: 'Tarjeta de Circulación.pdf', type: 'pdf', url: '#' },
+      { id: '2', name: 'Póliza de Seguro Responsabilidad Civil.pdf', type: 'pdf', url: '#' },
+    ]
   },
 ];
