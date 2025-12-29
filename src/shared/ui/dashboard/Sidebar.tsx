@@ -17,7 +17,7 @@ export const Sidebar = ({ role, isOpen }: SidebarProps) => {
         isOpen ? "w-64" : "w-20"
       }`}
     >
-      {/* ... (LOGO SE MANTIENE IGUAL) ... */}
+      {/* ... LOGO ... */}
       <div
         className={`h-20 flex items-center ${
           isOpen ? "px-6 gap-2" : "justify-center px-0"

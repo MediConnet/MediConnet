@@ -36,6 +36,7 @@ import { ProfilePage } from "../../features/profile/pages/ProfilePage";
 import { RequestsPage } from "../../features/provider-requests/presentation/pages/RequestsPage";
 import { SearchPage } from "../../features/search/presentation/pages/SearchPage";
 import { SpecialtiesPage } from "../../features/search/presentation/pages/SpecialtiesPage";
+import { ServicesDashboardPage } from "../../features/services-dashboard/presentation/pages/ServicesDashboardPage";
 import { SuppliesListPage } from "../../features/supplies/presentation/pages/SuppliesListPage";
 import { SupplyStoreDetailPage } from "../../features/supplies/presentation/pages/SupplyStoreDetailPage";
 
@@ -69,6 +70,7 @@ export const AppRouter = () => {
         <Route path="/admin" element={<Outlet />}>
           <Route path="dashboard" element={<AdminDashboardPage />} />
           <Route path="requests" element={<RequestsPage />} />
+          <Route path="services" element={<ServicesDashboardPage />} />
         </Route>
 
         {/* Rutas protegidas */}

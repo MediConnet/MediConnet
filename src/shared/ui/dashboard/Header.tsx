@@ -8,24 +8,14 @@ export interface UserHeaderProfile {
 }
 
 interface HeaderProps {
-  title: string;
   user: UserHeaderProfile;
   onMenuToggle: () => void;
-  isMenuOpen: boolean; // Necesitamos saber si está abierto para calcular la posición left
+  isMenuOpen: boolean;
 }
 
-export const Header = ({
-  title,
-  user,
-  onMenuToggle,
-  isMenuOpen,
-}: HeaderProps) => {
+export const Header = ({ user, onMenuToggle, isMenuOpen }: HeaderProps) => {
   return (
     <header
-      // CAMBIO CLAVE:
-      // 1. Quitamos 'style={{ width: inherit }}'
-      // 2. Usamos 'fixed top-0 right-0' para pegarlo arriba y derecha
-      // 3. Usamos condicional: 'left-64' (abierto) vs 'left-20' (cerrado)
       className={`bg-white h-20 px-8 flex items-center justify-between border-b border-gray-200 fixed top-0 right-0 z-40 transition-all duration-300 ${
         isMenuOpen ? "left-64" : "left-20"
       }`}
@@ -37,7 +27,9 @@ export const Header = ({
         >
           <MenuIcon />
         </button>
-        <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
+        <h2 className="text-2xl font-bold text-gray-800">
+          Panel de Administración
+        </h2>
       </div>
 
       <div className="flex items-center gap-6">
