@@ -230,11 +230,7 @@ export const RequestsPage = () => {
   ];
 
   return (
-    <DashboardLayout
-      role="ADMIN"
-      userProfile={CURRENT_ADMIN}
-      title="Solicitudes"
-    >
+    <DashboardLayout role="ADMIN" userProfile={CURRENT_ADMIN}>
       <Box sx={{ height: "100%", width: "100%", p: 1 }}>
         {/* Header */}
         <Stack

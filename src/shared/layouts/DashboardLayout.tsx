@@ -5,18 +5,15 @@ import { Sidebar } from "../ui/dashboard/Sidebar";
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  title?: string;
   role: UserRole;
   userProfile: UserHeaderProfile;
 }
 
 export const DashboardLayout = ({
   children,
-  title = "Panel",
   role,
   userProfile,
 }: DashboardLayoutProps) => {
-  // Estado para controlar si el sidebar está expandido (true) o mini (false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
@@ -24,16 +21,14 @@ export const DashboardLayout = ({
       <Sidebar role={role} isOpen={isSidebarOpen} />
 
       {/* Contenedor Principal */}
-      {/* Cambiamos ml-0 por ml-20 cuando está cerrado (ancho del mini sidebar) */}
       <div
         className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${
           isSidebarOpen ? "ml-64" : "ml-20"
         }`}
       >
         <Header
-          title={title}
           user={userProfile}
-          isMenuOpen={isSidebarOpen} // Pasamos el estado al header para calcular su ancho/posición
+          isMenuOpen={isSidebarOpen}
           onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)}
         />
 

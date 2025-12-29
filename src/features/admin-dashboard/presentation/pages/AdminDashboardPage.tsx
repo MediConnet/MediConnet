@@ -29,7 +29,7 @@ export const AdminDashboardPage = () => {
     return <div className="p-8">Cargando dashboard...</div>;
 
   return (
-    <DashboardLayout role="ADMIN" userProfile={CURRENT_ADMIN} title="Dashboard">
+    <DashboardLayout role="ADMIN" userProfile={CURRENT_ADMIN}>
       {/* FILA 1: Estadísticas Principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <StatCard
