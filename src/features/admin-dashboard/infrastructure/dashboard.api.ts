@@ -5,7 +5,7 @@ const MOCK_STATS: DashboardStats = {
   usersInApp: { value: 12500, trend: '+8% este mes' },
   monthlyContacts: 3420,
   totalCities: 28,
-  requestStatus: { pending: 3, approved: 3, rejected: 1 }, // Datos de tu imagen
+  requestStatus: { pending: 3, approved: 3, rejected: 1 }, 
   servicesByType: {
     doctors: 68,
     pharmacies: 42,
