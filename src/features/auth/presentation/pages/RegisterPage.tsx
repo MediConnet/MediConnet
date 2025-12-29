@@ -72,7 +72,7 @@ export const RegisterPage = () => {
     // Simulación de registro
     await new Promise((resolve) => setTimeout(resolve, 1500));
     setIsLoading(false);
-    navigate(ROUTES.LOGIN);
+    navigate(ROUTES.HOME);
   };
 
   return (
@@ -341,7 +341,7 @@ export const RegisterPage = () => {
             ¿Ya tienes cuenta?{" "}
             <Link
               component={RouterLink}
-              to="/login"
+              to={ROUTES.HOME}
               underline="always"
               sx={{
                 color: "#14b8a6",
