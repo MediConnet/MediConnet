@@ -73,7 +73,7 @@ export const ForgotPasswordPage = () => {
           {/* Link de volver */}
           <Link
             component="button"
-            onClick={() => navigate(ROUTES.LOGIN)}
+            onClick={() => navigate(ROUTES.HOME)}
             underline="hover"
             sx={{
               display: 'flex',

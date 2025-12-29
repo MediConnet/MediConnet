@@ -38,10 +38,10 @@ httpClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      // NOTE: Token inválido o expirado - redirigir a login
+      // NOTE: Token inválido o expirado - redirigir a home
       const authStore = useAuthStore();
       authStore.logout();
-      window.location.href = '/login';
+      window.location.href = '/home';
     }
     return Promise.reject(error);
   }

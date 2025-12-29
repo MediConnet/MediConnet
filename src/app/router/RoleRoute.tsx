@@ -15,7 +15,7 @@ export const RoleRoute = ({ children, allowedRoles }: RoleRouteProps) => {
 
   // NOTE: Primero verifica autenticación
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/home" replace />;
   }
 
   // NOTE: Luego verifica que el usuario tenga uno de los roles permitidos

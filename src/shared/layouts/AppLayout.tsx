@@ -3,22 +3,17 @@
 
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Box, Button, Typography } from '@mui/material';
-import { CalendarToday, Person, Favorite } from '@mui/icons-material';
-import { useUIStore } from '../../app/store/ui.store';
-import { NavigationBar } from '../components/NavigationBar';
 import { ROUTES } from '../../app/config/constants';
 import { useAuthStore } from '../../app/store/auth.store';
 
 export const AppLayout = () => {
   const navigate = useNavigate();
-  const uiStore = useUIStore();
   const authStore = useAuthStore();
-  const { sidebarOpen } = uiStore;
   const { user, logout } = authStore;
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate(ROUTES.HOME);
   };
 
   return (
@@ -32,129 +27,193 @@ export const AppLayout = () => {
         
       }}
     >
-      {/* NOTE: Header/Navbar completamente blanco con todos los elementos */}
-      <header className="w-full shadow-sm " style={{ position: 'sticky', top: 0, zIndex: 1000, borderBottom: '1px solid #00bcd4' }}>
-        <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 ">
-          <div className="flex justify-between items-center h-12 w-full py-1">
-            {/* NOTE: Logo a la izquierda */}
+      {/* NOTE: Header/Navbar con diseño público o privado según el estado del usuario */}
+      <header 
+        style={{ 
+          position: 'sticky', 
+          top: 0, 
+          zIndex: 1000, 
+          backgroundColor: 'white',
+          borderBottom: '1px solid #e5e7eb',
+        }}
+      >
+        <Box
+          sx={{
+            maxWidth: '1400px',
+            mx: 'auto',
+            px: { xs: 2, sm: 4, md: 6 },
+            py: 2,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 2,
+            }}
+          >
+            {/* NOTE: Logo MEDICONES a la izquierda */}
             <Box
               onClick={() => navigate(ROUTES.HOME)}
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: { xs: 1, sm: 1.5 },
+                gap: 1.5,
                 cursor: 'pointer',
                 flexShrink: 0,
               }}
             >
               <Box
                 sx={{
-                  width: { xs: 28, sm: 32 },
-                  height: { xs: 28, sm: 32 },
-                  borderRadius: 1.5,
-                  backgroundColor: '#e0f2fe',
+                  width: 40,
+                  height: 40,
+                  borderRadius: 1,
+                  backgroundColor: '#06b6d4',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Favorite
+                <Typography
                   sx={{
-                    fontSize: { xs: 16, sm: 18 },
-                    color: '#ef4444',
+                    color: 'white',
+                    fontWeight: 700,
+                    fontSize: '1.25rem',
                   }}
-                />
+                >
+                  M
+                </Typography>
               </Box>
               <Typography
                 sx={{
-                  fontSize: { xs: '1rem', sm: '1.125rem' },
+                  fontSize: '1.5rem',
                   fontWeight: 700,
-                  color: '#0e7490',
+                  color: '#1f2937',
                   display: { xs: 'none', sm: 'block' },
                 }}
               >
-                Medify
+                MEDICONES
               </Typography>
             </Box>
 
-            {/* NOTE: Navegación principal en el centro (oculta en mobile, visible en desktop) */}
+            {/* NOTE: Navegación centrada (Servicios, Beneficios, Contacto) - siempre visible */}
             <Box
               sx={{
                 display: { xs: 'none', md: 'flex' },
                 alignItems: 'center',
-                flex: 1,
-                justifyContent: 'center',
-                mx: { md: 2, lg: 4 },
+                gap: 4,
+                position: 'absolute',
+                left: '50%',
+                transform: 'translateX(-50%)',
               }}
             >
-              <NavigationBar />
-            </Box>
-
-            {/* NOTE: Acciones del usuario a la derecha (Mis Citas, Perfil y Cerrar sesión) */}
-            {user && (
-              <Box
+              <Button
+                onClick={() => navigate(ROUTES.HOME)}
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'flex-end',
-                  gap: { xs: 0.5, sm: 1.5 },
-                  flexShrink: 0,
+                  textTransform: 'none',
+                  color: '#1f2937',
+                  fontSize: '0.9375rem',
+                  fontWeight: 400,
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                    color: '#06b6d4',
+                  },
                 }}
               >
-                <Button
-                  startIcon={<CalendarToday />}
-                  onClick={() => navigate(ROUTES.APPOINTMENTS)}
-                  size="small"
-                  sx={{
-                    textTransform: 'none',
-                    color: '#4b5563',
-                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                    py: 0.5,
-                    px: { xs: 0.5, sm: 1 },
-                    display: { xs: 'none', sm: 'flex' },
-                    '&:hover': {
-                      backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                    },
-                    '& .MuiSvgIcon-root': {
-                      color: '#4b5563',
-                      fontSize: { xs: 16, sm: 18 },
-                    },
-                  }}
-                >
-                  Mis Citas
-                </Button>
-                <Button
-                  onClick={() => navigate(ROUTES.PROFILE)}
-                  size="small"
-                  sx={{
-                    minWidth: 'auto',
-                    width: { xs: 32, sm: 36 },
-                    height: { xs: 32, sm: 36 },
-                    borderRadius: 1,
-                    backgroundColor: '#e0e0e0',
-                    color: '#4b5563',
-                    padding: 0,
-                    '&:hover': {
-                      backgroundColor: '#d0d0d0',
-                    },
-                    '& .MuiSvgIcon-root': {
-                      color: '#4b5563',
-                      fontSize: { xs: 18, sm: 20 },
-                    },
-                  }}
-                >
-                  <Person />
-                </Button>
+                Servicios
+              </Button>
+              <Button
+                onClick={() => navigate(ROUTES.HOME)}
+                sx={{
+                  textTransform: 'none',
+                  color: '#1f2937',
+                  fontSize: '0.9375rem',
+                  fontWeight: 400,
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                    color: '#06b6d4',
+                  },
+                }}
+              >
+                Beneficios
+              </Button>
+              <Button
+                onClick={() => navigate(ROUTES.HOME)}
+                sx={{
+                  textTransform: 'none',
+                  color: '#1f2937',
+                  fontSize: '0.9375rem',
+                  fontWeight: 400,
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                    color: '#06b6d4',
+                  },
+                }}
+              >
+                Contacto
+              </Button>
+            </Box>
+
+            {/* NOTE: Botones de acción a la derecha */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                flexShrink: 0,
+              }}
+            >
+              {!user ? (
+                // Header público: Iniciar sesión y Registrarse
+                <>
+                  <Button
+                    onClick={() => navigate(ROUTES.REGISTER)}
+                    sx={{
+                      textTransform: 'none',
+                      color: '#1f2937',
+                      fontSize: '0.9375rem',
+                      fontWeight: 500,
+                      px: 2,
+                      py: 0.75,
+                      '&:hover': {
+                        backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                      },
+                    }}
+                  >
+                    Iniciar sesión
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={() => navigate(ROUTES.REGISTER)}
+                    sx={{
+                      textTransform: 'none',
+                      backgroundColor: '#06b6d4',
+                      color: 'white',
+                      fontSize: '0.9375rem',
+                      fontWeight: 500,
+                      px: 2.5,
+                      py: 0.75,
+                      borderRadius: 1,
+                      '&:hover': {
+                        backgroundColor: '#0891b2',
+                      },
+                    }}
+                  >
+                    Registrarse
+                  </Button>
+                </>
+              ) : (
+                // Header con usuario: solo Cerrar sesión
                 <Button
                   onClick={handleLogout}
-                  size="small"
                   sx={{
                     textTransform: 'none',
-                    color: '#4b5563',
-                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                    py: 0.5,
-                    px: { xs: 0.5, sm: 1 },
-                    display: { xs: 'none', md: 'block' },
+                    color: '#1f2937',
+                    fontSize: '0.9375rem',
+                    fontWeight: 500,
+                    px: 2,
+                    py: 0.75,
                     '&:hover': {
                       backgroundColor: 'rgba(0, 0, 0, 0.04)',
                     },
@@ -162,39 +221,21 @@ export const AppLayout = () => {
                 >
                   Cerrar sesión
                 </Button>
-              </Box>
-            )}
-          </div>
-        </div>
+              )}
+            </Box>
+          </Box>
+        </Box>
       </header>
 
-      <Box
-        sx={{
-          display: 'flex',
+      {/* NOTE: Contenido principal - sin padding porque cada página lo maneja */}
+      <main
+        style={{
           flex: 1,
           width: '100%',
         }}
       >
-        {/* NOTE: Sidebar colapsable (solo visible en mobile cuando está abierto) */}
-        {sidebarOpen && (
-          <aside className="w-64 bg-white shadow-sm md:hidden" style={{ position: 'sticky', top: '48px', height: 'calc(100vh - 48px)', overflowY: 'auto' }}>
-            <nav className="p-4">
-              {/* NOTE: En mobile, mostrar la navegación en el sidebar */}
-              <NavigationBar />
-            </nav>
-          </aside>
-        )}
-
-        {/* NOTE: Contenido principal - sin padding porque cada página lo maneja */}
-        <main
-          style={{
-            flex: 1,
-            width: '100%',
-          }}
-        >
-          <Outlet />
-        </main>
-      </Box>
+        <Outlet />
+      </main>
     </Box>
   );
 };

@@ -14,8 +14,6 @@ import { AmbulancesListPage } from "../../features/ambulance/presentation/pages/
 import { AmbulanceTrackingPage } from "../../features/ambulance/presentation/pages/AmbulanceTrackingPage";
 import { RequestAmbulancePage } from "../../features/ambulance/presentation/pages/RequestAmbulancePage";
 import { AppointmentsPage } from "../../features/appointments/presentation/pages/AppointmentsPage";
-import { ForgotPasswordPage } from "../../features/auth/presentation/pages/ForgotPasswordPage";
-import { LoginPage } from "../../features/auth/presentation/pages/LoginPage";
 import { RegisterPage } from "../../features/auth/presentation/pages/RegisterPage";
 import { CheckoutPage } from "../../features/booking/presentation/pages/CheckoutPage";
 import { DoctorProfilePage } from "../../features/doctors/presentation/pages/DoctorProfilePage";
@@ -33,17 +31,30 @@ import { SpecialtiesPage } from "../../features/search/presentation/pages/Specia
 import { SuppliesListPage } from "../../features/supplies/presentation/pages/SuppliesListPage";
 import { SupplyStoreDetailPage } from "../../features/supplies/presentation/pages/SupplyStoreDetailPage";
 
-// const RegisterPage = () => <div>Register Page</div>;
-
 export const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
         {/* Rutas públicas */}
         <Route element={<AuthLayout />}>
-          <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        </Route>
+
+        {/* Rutas públicas con AppLayout */}
+        <Route element={<AppLayout />}>
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/services" element={<ServicesCatalogPage />} />
+          <Route path="/specialties" element={<SpecialtiesPage />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/pharmacies" element={<PharmaciesListPage />} />
+          <Route path="/pharmacies/:id" element={<PharmacyDetailPage />} />
+          <Route path="/pharmacy-branch/:id" element={<BranchDetailPage />} />
+          <Route path="/laboratories" element={<LaboratoriesPage />} />
+          <Route path="/laboratories/:id" element={<LaboratoryDetailPage />} />
+          <Route path="/ambulances" element={<AmbulancesListPage />} />
+          <Route path="/ambulances/:id" element={<AmbulanceDetailPage />} />
+          <Route path="/supplies" element={<SuppliesListPage />} />
+          <Route path="/supplies/:id" element={<SupplyStoreDetailPage />} />
         </Route>
 
         {/* Rutas protegidas */}
@@ -54,37 +65,14 @@ export const AppRouter = () => {
             </ProtectedRoute>
           }
         >
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/services" element={<ServicesCatalogPage />} />
-          <Route path="/specialties" element={<SpecialtiesPage />} />
-          <Route path="/search" element={<SearchPage />} />
           <Route path="/doctor/:id" element={<DoctorProfilePage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/pharmacies" element={<PharmaciesListPage />} />
-          <Route path="/pharmacies/:id" element={<PharmacyDetailPage />} />
-          <Route path="/pharmacy-branch/:id" element={<BranchDetailPage />} />
-          <Route path="/laboratories" element={<LaboratoriesPage />} />
-          <Route path="/laboratories/:id" element={<LaboratoryDetailPage />} />
-          <Route path="/ambulances" element={<AmbulancesListPage />} />
-          <Route path="/ambulances/:id" element={<AmbulanceDetailPage />} />
-          <Route path="/supplies" element={<SuppliesListPage />} />
-          <Route path="/supplies/:id" element={<SupplyStoreDetailPage />} />
           <Route path="/appointments" element={<AppointmentsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route
             path="/specialties/:specialtyName"
             element={<DoctorsListPage />}
           />
-        </Route>
-
-        {/* Rutas de ambulancia */}
-        <Route
-          element={
-            <ProtectedRoute>
-              <AppLayout />
-            </ProtectedRoute>
-          }
-        >
           <Route path="/ambulance/request" element={<RequestAmbulancePage />} />
           <Route
             path="/ambulance/tracking/:id"

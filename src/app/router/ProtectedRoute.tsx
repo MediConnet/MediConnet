@@ -13,9 +13,9 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { isAuthenticated } = authStore;
   const location = useLocation();
 
-  // NOTE: Si no está autenticado, redirige a login guardando la ruta original
+  // NOTE: Si no está autenticado, redirige a home
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/home" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;
