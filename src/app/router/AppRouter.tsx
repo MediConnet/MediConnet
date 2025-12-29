@@ -1,7 +1,13 @@
 // NOTE: Configuración principal de rutas de la aplicación
 // TODO: Agregar lazy loading de componentes para mejor performance
 
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+} from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
 
 // Layouts
@@ -9,6 +15,7 @@ import { AppLayout } from "../../shared/layouts/AppLayout";
 import { AuthLayout } from "../../shared/layouts/AuthLayout";
 
 // Pages
+import { AdminDashboardPage } from "../../features/admin-dashboard/presentation/pages/AdminDashboardPage";
 import { AmbulanceDetailPage } from "../../features/ambulance/presentation/pages/AmbulanceDetailPage";
 import { AmbulancesListPage } from "../../features/ambulance/presentation/pages/AmbulancesListPage";
 import { AmbulanceTrackingPage } from "../../features/ambulance/presentation/pages/AmbulanceTrackingPage";
@@ -55,6 +62,11 @@ export const AppRouter = () => {
           <Route path="/ambulances/:id" element={<AmbulanceDetailPage />} />
           <Route path="/supplies" element={<SuppliesListPage />} />
           <Route path="/supplies/:id" element={<SupplyStoreDetailPage />} />
+        </Route>
+
+        {/* Rutas de Admin Dashboard de momento pública*/}
+        <Route path="/admin" element={<Outlet />}>
+          <Route path="dashboard" element={<AdminDashboardPage />} />
         </Route>
 
         {/* Rutas protegidas */}

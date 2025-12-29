@@ -1,11 +1,20 @@
+export interface ActivityItem {
+  id: string;
+  type: 'info' | 'success' | 'warning' | 'error'; 
+  message: string;
+  timestamp: string;
+}
+
 export interface DashboardStats {
-  totalServices: number;
-  usersInApp: number;
+  totalServices: { value: number; trend: string }; 
+  usersInApp: { value: number; trend: string };
   monthlyContacts: number;
   totalCities: number;
-  pendingRequests: number;
-  approvedRequests: number;
-  rejectedRequests: number;
+  requestStatus: {
+    pending: number;
+    approved: number;
+    rejected: number;
+  };
   servicesByType: {
     doctors: number;
     pharmacies: number;
@@ -13,4 +22,5 @@ export interface DashboardStats {
     ambulances: number;
     supplies: number;
   };
+  recentActivity: ActivityItem[];
 }
