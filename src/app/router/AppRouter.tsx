@@ -21,6 +21,7 @@ import { AmbulancesListPage } from "../../features/ambulance/presentation/pages/
 import { AmbulanceTrackingPage } from "../../features/ambulance/presentation/pages/AmbulanceTrackingPage";
 import { RequestAmbulancePage } from "../../features/ambulance/presentation/pages/RequestAmbulancePage";
 import { AppointmentsPage } from "../../features/appointments/presentation/pages/AppointmentsPage";
+import { LoginPage } from "../../features/auth/presentation/pages/LoginPage";
 import { RegisterPage } from "../../features/auth/presentation/pages/RegisterPage";
 import { CheckoutPage } from "../../features/booking/presentation/pages/CheckoutPage";
 import { DoctorProfilePage } from "../../features/doctors/presentation/pages/DoctorProfilePage";
@@ -44,6 +45,7 @@ export const AppRouter = () => {
       <Routes>
         {/* Rutas públicas */}
         <Route element={<AuthLayout />}>
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
         </Route>
 

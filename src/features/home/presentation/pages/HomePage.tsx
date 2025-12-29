@@ -312,7 +312,7 @@ export const HomePage = () => {
             </Button>
             <Button
               variant="outlined"
-              onClick={() => navigate(ROUTES.REGISTER)}
+              onClick={() => navigate(ROUTES.LOGIN)}
               sx={{
                 borderColor: '#06b6d4',
                 color: '#06b6d4',
