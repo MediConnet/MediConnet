@@ -49,17 +49,38 @@ const getColumns = (): GridColDef<ProviderRequest>[] => [
   {
     field: "providerName",
     headerName: "Proveedor",
-    width: 250,
+    width: 300,
     renderCell: (params: GridRenderCellParams<ProviderRequest>) => (
-      <Stack direction="row" spacing={2} alignItems="center">
+      <Stack
+        direction="row"
+        spacing={2}
+        alignItems="center"
+        sx={{ height: "100%" }}
+      >
         <Avatar src={params.row.avatarUrl} alt={params.row.providerName}>
           {params.row.providerName.charAt(0)}
         </Avatar>
-        <Box>
-          <Typography variant="subtitle2" fontWeight={600}>
+
+        {/* Contenedor de texto ajustado */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+          }}
+        >
+          <Typography
+            variant="subtitle2"
+            fontWeight={600}
+            sx={{ lineHeight: 1.2 }}
+          >
             {params.row.providerName}
           </Typography>
-          <Typography variant="caption" color="text.secondary">
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ lineHeight: 1.2 }}
+          >
             {params.row.email}
           </Typography>
         </Box>
@@ -73,15 +94,26 @@ const getColumns = (): GridColDef<ProviderRequest>[] => [
     renderCell: (params) => {
       const type = params.value as ServiceType;
       let icon = null;
-      // Asignamos íconos según el tipo (puedes mover esto a un helper separado)
-      if (type === "doctor") icon = <LocalHospital color="primary" />;
-      if (type === "pharmacy") icon = <LocalPharmacy color="success" />;
-      if (type === "laboratory") icon = <Science color="info" />;
-      if (type === "ambulance") icon = <AirportShuttle color="error" />;
-      if (type === "supplies") icon = <Inventory color="warning" />;
+
+      // Mapeo de íconos
+      if (type === "doctor")
+        icon = <LocalHospital color="primary" fontSize="small" />;
+      if (type === "pharmacy")
+        icon = <LocalPharmacy color="success" fontSize="small" />;
+      if (type === "laboratory")
+        icon = <Science color="info" fontSize="small" />;
+      if (type === "ambulance")
+        icon = <AirportShuttle color="error" fontSize="small" />;
+      if (type === "supplies")
+        icon = <Inventory color="warning" fontSize="small" />;
 
       return (
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          sx={{ height: "100%" }}
+        >
           {icon}
           <span className="capitalize">{type}</span>
         </Stack>
@@ -106,7 +138,9 @@ const getColumns = (): GridColDef<ProviderRequest>[] => [
     headerName: "Estado",
     width: 150,
     renderCell: (params: GridRenderCellParams<ProviderRequest>) => (
-      <RequestStatusBadge status={params.row.status} />
+      <Box sx={{ display: "flex", alignItems: "center", height: "100%" }}>
+        <RequestStatusBadge status={params.row.status} />
+      </Box>
     ),
   },
   {
@@ -115,10 +149,14 @@ const getColumns = (): GridColDef<ProviderRequest>[] => [
     sortable: false,
     width: 150,
     renderCell: (params: GridRenderCellParams<ProviderRequest>) => {
-      // Solo mostramos botones de aprobar/rechazar si está pendiente
       const isPending = params.row.status === "PENDING";
       return (
-        <Stack direction="row" spacing={1}>
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          sx={{ height: "100%" }}
+        >
           <IconButton size="small" title="Ver detalles" color="primary">
             <Visibility fontSize="small" />
           </IconButton>
@@ -139,7 +177,6 @@ const getColumns = (): GridColDef<ProviderRequest>[] => [
 ];
 
 export const RequestsPage = () => {
-  // Usamos el hook para traer los datos
   const { data: requests, isLoading } = useProviderRequests();
 
   const columns = getColumns();
@@ -171,7 +208,7 @@ export const RequestsPage = () => {
           </Button>
         </Stack>
 
-        {/* Barra de Filtros (Visual por ahora) */}
+        {/* Barra de Filtros */}
         <Stack
           direction={{ xs: "column", md: "row" }}
           spacing={2}
@@ -203,7 +240,11 @@ export const RequestsPage = () => {
             type="date"
             size="small"
             sx={{ minWidth: 150 }}
-            InputLabelProps={{ shrink: true }}
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+              },
+            }}
             label="Desde fecha"
           />
         </Stack>
@@ -211,7 +252,7 @@ export const RequestsPage = () => {
         {/* Tabla de Datos (DataGrid) */}
         <Box
           sx={{
-            height: 500,
+            height: 600,
             width: "100%",
             bgcolor: "white",
             borderRadius: 2,
@@ -219,9 +260,10 @@ export const RequestsPage = () => {
           }}
         >
           <DataGrid
-            rows={requests || []} // Pasamos los mocks
+            rows={requests || []}
             columns={columns}
             loading={isLoading}
+            rowHeight={80}
             initialState={{
               pagination: {
                 paginationModel: { page: 0, pageSize: 10 },
@@ -232,6 +274,10 @@ export const RequestsPage = () => {
             disableRowSelectionOnClick
             sx={{
               border: "none",
+              "& .MuiDataGrid-cell": {
+                display: "flex",
+                alignItems: "center",
+              },
               "& .MuiDataGrid-cell:focus": { outline: "none" },
               "& .MuiDataGrid-columnHeader:focus": { outline: "none" },
             }}

@@ -23,5 +23,5 @@ const MOCK_STATS: DashboardStats = {
 };
 
 export const getDashboardStatsAPI = async (): Promise<DashboardStats> => {
-  return new Promise((resolve) => setTimeout(() => resolve(MOCK_STATS), 800));
+  return Promise.resolve(MOCK_STATS);
 };
