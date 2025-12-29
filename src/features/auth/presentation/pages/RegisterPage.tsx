@@ -1,359 +1,729 @@
 import {
-  CalendarToday,
-  Email as EmailIcon,
-  Favorite,
-  LocalHospital,
-  LocalShipping,
-  Lock as LockIcon,
-  Person,
-  Visibility,
-  VisibilityOff,
-} from "@mui/icons-material";
-import {
-  Alert,
   Box,
-  Button,
   Card,
-  CardContent,
-  IconButton,
-  InputAdornment,
-  Link,
-  TextField,
   Typography,
+  Button,
+  TextField,
+  CardContent,
+  CircularProgress,
 } from "@mui/material";
 import { useState } from "react";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import {
+  LocalHospital,
+  Medication,
+  Science,
+  LocalShipping,
+  Inventory,
+  ArrowBack,
+  ArrowForward,
+  CheckCircle,
+  CloudUpload,
+} from "@mui/icons-material";
 import { ROUTES } from "../../../../app/config/constants";
-import { MediConnectLogo } from "../components/MediConnectLogo";
+import { useRegisterProfessional } from "../hooks/useRegisterProfessional";
+
+type ServiceType = "doctor" | "pharmacy" | "lab" | "ambulance" | "supplies";
+
+const serviceTypes: ServiceType[] = ["doctor", "pharmacy", "lab", "ambulance", "supplies"];
+
+const serviceLabels: Record<ServiceType, string> = {
+  doctor: "Médico",
+  pharmacy: "Farmacia",
+  lab: "Laboratorio",
+  ambulance: "Ambulancia",
+  supplies: "Insumos Médicos",
+};
+
+const serviceDescriptions: Record<ServiceType, string> = {
+  doctor: "Consultas médicas, especialistas y atención personalizada",
+  pharmacy: "Venta de medicamentos y productos de salud",
+  lab: "Análisis clínicos y estudios de laboratorio",
+  ambulance: "Servicios de emergencia y traslados médicos",
+  supplies: "Equipos médicos, suministros y material sanitario",
+};
+
+const serviceIcons: Record<ServiceType, React.ReactNode> = {
+  doctor: <LocalHospital sx={{ fontSize: 40 }} />,
+  pharmacy: <Medication sx={{ fontSize: 40 }} />,
+  lab: <Science sx={{ fontSize: 40 }} />,
+  ambulance: <LocalShipping sx={{ fontSize: 40 }} />,
+  supplies: <Inventory sx={{ fontSize: 40 }} />,
+};
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { submit, loading } = useRegisterProfessional();
 
-  // Estados
-  const [isLoading, setIsLoading] = useState(false);
-  const [formError, setFormError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const initialType = searchParams.get("tipo") as ServiceType | null;
+  const [step, setStep] = useState(initialType ? 1 : 0);
+  const [selectedType, setSelectedType] = useState<ServiceType | null>(initialType);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: "",
+    // Personal Info
+    nombreCompleto: "",
     email: "",
+    telefono: "",
+    whatsapp: "",
     password: "",
     confirmPassword: "",
+    // Service Info
+    nombreServicio: "",
+    especialidad: "",
+    descripcion: "",
+    direccion: "",
+    ciudad: "",
+    tarifaConsulta: "",
+    // Social
+    facebook: "",
+    instagram: "",
   });
+
+  const handleTypeSelect = (type: ServiceType) => {
+    setSelectedType(type);
+    setStep(1);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (formError) setFormError("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError("");
+    setIsSubmitting(true);
 
-    if (
-      !formData.name ||
-      !formData.email ||
-      !formData.password ||
-      !formData.confirmPassword
-    ) {
-      setFormError("Por favor, completa todos los campos.");
-      return;
-    }
-    if (formData.password.length < 6) {
-      setFormError("La contraseña debe tener al menos 6 caracteres.");
-      return;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      setFormError("Las contraseñas no coinciden.");
-      return;
-    }
+    try {
+      const professionalData = {
+        type: selectedType!,
+        name: formData.nombreCompleto,
+        email: formData.email,
+        phone: formData.telefono,
+        whatsapp: formData.whatsapp,
+        serviceName: formData.nombreServicio,
+        address: formData.direccion,
+        city: formData.ciudad,
+        price: formData.tarifaConsulta,
+        description: formData.descripcion,
+      };
 
-    setIsLoading(true);
-    // Simulación de registro
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
-    navigate(ROUTES.HOME);
+      await submit(professionalData);
+      setStep(3); // Step 4 (índice 3) - Success
+    } catch (error) {
+      console.error("Error al enviar solicitud:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <Box
+      minHeight="100vh"
       sx={{
-        height: "100vh",
-        width: "100vw",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        // Mismo fondo degradado que Login
-        background:
-          "linear-gradient(180deg, #f0fdfa 0%, #ccfbf1 50%, #99f6e4 100%)",
+        background: "linear-gradient(180deg, #ffffff 0%, #ecfdf5 100%)",
         position: "relative",
         overflow: "hidden",
-        m: 0,
-        p: 0,
+        py: 4,
+        px: 2,
       }}
     >
-      {/* NOTE: Patrón de cuadrícula de fondo */}
+      {/* Background Effects */}
       <Box
         sx={{
           position: "absolute",
           top: 0,
+          right: 0,
+          width: "500px",
+          height: "500px",
+          background: "rgba(20, 184, 166, 0.05)",
+          borderRadius: "50%",
+          filter: "blur(80px)",
+          zIndex: 0,
+        }}
+      />
+      <Box
+        sx={{
+          position: "absolute",
+          bottom: 0,
           left: 0,
-          width: "100%",
-          height: "100%",
-          opacity: 0.2,
-          backgroundImage: `
-            linear-gradient(rgba(20, 184, 166, 0.08) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(20, 184, 166, 0.08) 1px, transparent 1px)
-          `,
-          backgroundSize: "40px 40px",
+          width: "400px",
+          height: "400px",
+          background: "rgba(20, 184, 166, 0.05)",
+          borderRadius: "50%",
+          filter: "blur(80px)",
+          zIndex: 0,
         }}
       />
 
-      {/* NOTE: Iconos flotantes (Copia exacta del Login) */}
-      <LocalHospital
+      <Box
         sx={{
-          position: "absolute",
-          top: "10%",
-          left: "10%",
-          fontSize: 80,
-          color: "rgba(20, 184, 166, 0.12)",
-          animation: "float 6s ease-in-out infinite",
-        }}
-      />
-      <Favorite
-        sx={{
-          position: "absolute",
-          top: "15%",
-          right: "10%",
-          fontSize: 60,
-          color: "rgba(20, 184, 166, 0.12)",
-          animation: "float 8s ease-in-out infinite",
-          animationDelay: "1s",
-        }}
-      />
-      <LocalShipping
-        sx={{
-          position: "absolute",
-          bottom: "15%",
-          left: "8%",
-          fontSize: 70,
-          color: "rgba(20, 184, 166, 0.12)",
-          animation: "float 7s ease-in-out infinite",
-          animationDelay: "2s",
-        }}
-      />
-      <CalendarToday
-        sx={{
-          position: "absolute",
-          bottom: "10%",
-          right: "12%",
-          fontSize: 65,
-          color: "rgba(20, 184, 166, 0.12)",
-          animation: "float 9s ease-in-out infinite",
-          animationDelay: "0.5s",
-        }}
-      />
-
-      <Card
-        sx={{
-          maxWidth: 450,
-          width: "100%",
-          borderRadius: 3,
-          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.1)",
+          maxWidth: "1200px",
+          mx: "auto",
           position: "relative",
           zIndex: 1,
-          mx: 2,
-          maxHeight: "90vh",
-          overflowY: "auto",
         }}
       >
-        <CardContent sx={{ p: 4, "&:last-child": { pb: 4 } }}>
-          {/* Logo */}
-          <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
-            <MediConnectLogo />
-          </Box>
-
-          {/* Título */}
-          <Typography
-            variant="h5"
-            component="h1"
-            align="center"
-            gutterBottom
-            sx={{ fontWeight: 600, mb: 0.5, color: "text.primary" }}
-          >
-            Únete a
-          </Typography>
-          <Typography
-            variant="h4"
-            component="h2"
-            align="center"
-            gutterBottom
+        {/* Header */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 4,
+            px: { xs: 2, md: 4 },
+          }}
+        >
+          <Button
+            variant="text"
+            startIcon={<ArrowBack />}
+            onClick={() => (step > 0 ? setStep(step - 1) : navigate(ROUTES.HOME))}
             sx={{
-              fontWeight: 700,
-              mb: 1,
-              background: "linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%)",
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
+              color: "#14b8a6",
+              fontWeight: 600,
+              textTransform: "uppercase",
+              "&:hover": {
+                backgroundColor: "rgba(20, 184, 166, 0.1)",
+              },
             }}
           >
-            MediConnect
-          </Typography>
-          <Typography
-            variant="body2"
-            align="center"
-            color="text.secondary"
-            sx={{ mb: 4 }}
+            {step > 0 ? "Atrás" : "Volver al inicio"}
+          </Button>
+
+          {/* Progress Indicator */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {[0, 1, 2].map((s) => (
+              <Box
+                key={s}
+                sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: "50%",
+                  backgroundColor: step >= s ? "#14b8a6" : "#d1fae5",
+                  transition: "all 0.3s ease",
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
+
+        {/* Step 0: Select Service Type */}
+        {step === 0 && (
+          <Box
+            sx={{
+              animation: "fadeIn 0.5s ease-in",
+              "@keyframes fadeIn": {
+                from: { opacity: 0, transform: "translateY(20px)" },
+                to: { opacity: 1, transform: "translateY(0)" },
+              },
+            }}
           >
-            Crea tu cuenta en segundos
-          </Typography>
+            <Box sx={{ textAlign: "center", mb: 6 }}>
+              <Typography
+                variant="h3"
+                sx={{
+                  fontWeight: 700,
+                  mb: 2,
+                  fontSize: { xs: "2rem", md: "2.5rem" },
+                }}
+              >
+                ¿Qué tipo de servicio ofreces?
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  color: "text.secondary",
+                  fontSize: { xs: "1rem", md: "1.125rem" },
+                }}
+              >
+                Selecciona el tipo de servicio que deseas registrar en MEDICONES
+              </Typography>
+            </Box>
 
-          {/* Alerta de Error */}
-          {formError && (
-            <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-              {formError}
-            </Alert>
-          )}
-
-          {/* Formulario */}
-          <Box component="form" onSubmit={handleSubmit}>
-            <TextField
-              fullWidth
-              label="Nombre completo"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              margin="normal"
-              required
-              sx={{ mb: 1 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Person sx={{ color: "grey.500" }} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-
-            <TextField
-              fullWidth
-              label="Correo electrónico"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleChange}
-              margin="normal"
-              required
-              sx={{ mb: 1 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <EmailIcon sx={{ color: "grey.500" }} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-
-            <TextField
-              fullWidth
-              label="Contraseña"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              value={formData.password}
-              onChange={handleChange}
-              margin="normal"
-              required
-              sx={{ mb: 1 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LockIcon sx={{ color: "grey.500" }} />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                      size="small"
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-
-            <TextField
-              fullWidth
-              label="Confirmar contraseña"
-              name="confirmPassword"
-              type="password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              margin="normal"
-              required
-              sx={{ mb: 1 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LockIcon sx={{ color: "grey.500" }} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              disabled={isLoading}
+            <Box
               sx={{
-                mt: 3,
-                mb: 3,
-                py: 1.5,
-                background: "linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%)",
-                textTransform: "none",
-                fontSize: "1rem",
-                fontWeight: 600,
-                borderRadius: 2,
-                color: "white",
-                boxShadow: "0 4px 12px rgba(20, 184, 166, 0.3)",
-                "&:hover": {
-                  background:
-                    "linear-gradient(135deg, #0d9488 0%, #0891b2 100%)",
-                  boxShadow: "0 6px 16px rgba(20, 184, 166, 0.4)",
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "repeat(2, 1fr)",
+                  lg: "repeat(3, 1fr)",
                 },
-                "&:disabled": {
-                  background: "grey.300",
+                gap: 3,
+              }}
+            >
+              {serviceTypes.map((type, index) => (
+                <Card
+                  key={type}
+                  onClick={() => handleTypeSelect(type)}
+                  sx={{
+                    p: 4,
+                    borderRadius: 3,
+                    textAlign: "center",
+                    cursor: "pointer",
+                    background: selectedType === type ? "#f0fdfa" : "#f8fffd",
+                    border: selectedType === type ? "2px solid #14b8a6" : "2px solid transparent",
+                    transition: "all 0.3s ease",
+                    animation: `slideUp 0.5s ease ${index * 0.1}s both`,
+                    "@keyframes slideUp": {
+                      from: {
+                        opacity: 0,
+                        transform: "translateY(30px)",
+                      },
+                      to: {
+                        opacity: 1,
+                        transform: "translateY(0)",
+                      },
+                    },
+                    "&:hover": {
+                      boxShadow: 6,
+                      transform: "translateY(-8px)",
+                      borderColor: "#14b8a6",
+                    },
+                  }}
+                >
+                  <CardContent>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 80,
+                        height: 80,
+                        borderRadius: 2,
+                        backgroundColor: "rgba(20, 184, 166, 0.1)",
+                        mx: "auto",
+                        mb: 3,
+                        color: "#14b8a6",
+                      }}
+                    >
+                      {serviceIcons[type]}
+                    </Box>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 600, mb: 1 }}
+                    >
+                      {serviceLabels[type]}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                    >
+                      {serviceDescriptions[type]}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              ))}
+            </Box>
+          </Box>
+        )}
+
+        {/* Step 1: Personal Information */}
+        {step === 1 && selectedType && (
+          <Card
+            sx={{
+              borderRadius: 4,
+              p: { xs: 3, md: 5 },
+              boxShadow: "0 20px 60px rgba(0,0,0,.08)",
+              animation: "fadeIn 0.5s ease-in",
+              "@keyframes fadeIn": {
+                from: { opacity: 0, transform: "translateY(20px)" },
+                to: { opacity: 1, transform: "translateY(0)" },
+              },
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+              <Box
+                sx={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 2,
+                  backgroundColor: "rgba(20, 184, 166, 0.1)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#14b8a6",
+                }}
+              >
+                {serviceIcons[selectedType]}
+              </Box>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                  Registro de {serviceLabels[selectedType]}
+                </Typography>
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  Información personal y de contacto
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box component="form" onSubmit={(e) => { e.preventDefault(); setStep(2); }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+                  gap: 3,
+                  mb: 3,
+                }}
+              >
+                <TextField
+                  label="Nombre completo *"
+                  name="nombreCompleto"
+                  value={formData.nombreCompleto}
+                  onChange={handleChange}
+                  required
+                  fullWidth
+                />
+                <TextField
+                  label="Correo electrónico *"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  fullWidth
+                />
+                <TextField
+                  label="Teléfono *"
+                  name="telefono"
+                  value={formData.telefono}
+                  onChange={handleChange}
+                  required
+                  fullWidth
+                />
+                <TextField
+                  label="WhatsApp *"
+                  name="whatsapp"
+                  value={formData.whatsapp}
+                  onChange={handleChange}
+                  required
+                  fullWidth
+                />
+              </Box>
+
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, mt: 3 }}>
+                Contraseña
+              </Typography>
+
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+                  gap: 3,
+                }}
+              >
+                <TextField
+                  label="Contraseña *"
+                  name="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  fullWidth
+                />
+                <TextField
+                  label="Confirmar contraseña *"
+                  name="confirmPassword"
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                  fullWidth
+                />
+              </Box>
+
+              <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 4 }}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  endIcon={<ArrowForward />}
+                  sx={{
+                    px: 5,
+                    py: 1.5,
+                    backgroundColor: "#14b8a6",
+                    "&:hover": {
+                      backgroundColor: "#0d9488",
+                    },
+                  }}
+                >
+                  Continuar
+                </Button>
+              </Box>
+            </Box>
+          </Card>
+        )}
+
+        {/* Step 2: Service Details */}
+        {step === 2 && selectedType && (
+          <Card
+            sx={{
+              borderRadius: 4,
+              p: { xs: 3, md: 5 },
+              boxShadow: "0 20px 60px rgba(0,0,0,.08)",
+              animation: "fadeIn 0.5s ease-in",
+              "@keyframes fadeIn": {
+                from: { opacity: 0, transform: "translateY(20px)" },
+                to: { opacity: 1, transform: "translateY(0)" },
+              },
+            }}
+          >
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+                Información del Servicio
+              </Typography>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                Detalles sobre tu {serviceLabels[selectedType].toLowerCase()}
+              </Typography>
+            </Box>
+
+            <Box component="form" onSubmit={handleSubmit}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+                  gap: 3,
+                  mb: 3,
+                }}
+              >
+                <TextField
+                  label="Nombre del servicio *"
+                  name="nombreServicio"
+                  placeholder={
+                    selectedType === "doctor"
+                      ? "Consultorio Dr. Pérez"
+                      : "Nombre del establecimiento"
+                  }
+                  value={formData.nombreServicio}
+                  onChange={handleChange}
+                  required
+                  fullWidth
+                />
+                {selectedType === "doctor" && (
+                  <TextField
+                    label="Especialidad *"
+                    name="especialidad"
+                    placeholder="Cardiología, Pediatría, etc."
+                    value={formData.especialidad}
+                    onChange={handleChange}
+                    required
+                    fullWidth
+                  />
+                )}
+                <TextField
+                  label="Dirección *"
+                  name="direccion"
+                  placeholder="Calle Principal #123"
+                  value={formData.direccion}
+                  onChange={handleChange}
+                  required
+                  fullWidth
+                />
+                <TextField
+                  label="Ciudad *"
+                  name="ciudad"
+                  placeholder="Tu ciudad"
+                  value={formData.ciudad}
+                  onChange={handleChange}
+                  required
+                  fullWidth
+                />
+                <TextField
+                  label="Tarifa de consulta"
+                  name="tarifaConsulta"
+                  placeholder="$50.00"
+                  value={formData.tarifaConsulta}
+                  onChange={handleChange}
+                  fullWidth
+                />
+              </Box>
+
+              <TextField
+                label="Descripción del servicio *"
+                name="descripcion"
+                placeholder="Describe brevemente los servicios que ofreces..."
+                value={formData.descripcion}
+                onChange={handleChange}
+                required
+                multiline
+                rows={4}
+                fullWidth
+                sx={{ mb: 3 }}
+              />
+
+              {/* Documents Upload */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+                  Documentos de respaldo
+                </Typography>
+                <Box
+                  sx={{
+                    border: "2px dashed #d1fae5",
+                    borderRadius: 3,
+                    p: 4,
+                    textAlign: "center",
+                    backgroundColor: "#f8fffd",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    "&:hover": {
+                      borderColor: "#14b8a6",
+                      backgroundColor: "#f0fdfa",
+                    },
+                  }}
+                >
+                  <CloudUpload sx={{ fontSize: 40, color: "#94a3b8", mb: 2 }} />
+                  <Typography sx={{ mb: 1 }}>
+                    Arrastra archivos aquí o haz clic para subir
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    Licencias, certificados, títulos profesionales
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Social Networks */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: "text.secondary" }}>
+                  Redes sociales (opcional)
+                </Typography>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+                    gap: 3,
+                  }}
+                >
+                  <TextField
+                    label="Facebook"
+                    name="facebook"
+                    placeholder="facebook.com/tupagina"
+                    value={formData.facebook}
+                    onChange={handleChange}
+                    fullWidth
+                  />
+                  <TextField
+                    label="Instagram"
+                    name="instagram"
+                    placeholder="@tucuenta"
+                    value={formData.instagram}
+                    onChange={handleChange}
+                    fullWidth
+                  />
+                </Box>
+              </Box>
+
+              <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setStep(1)}
+                  sx={{
+                    borderColor: "#14b8a6",
+                    color: "#14b8a6",
+                    "&:hover": {
+                      borderColor: "#0d9488",
+                      backgroundColor: "rgba(20, 184, 166, 0.1)",
+                    },
+                  }}
+                >
+                  Atrás
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={isSubmitting || loading}
+                  sx={{
+                    px: 5,
+                    backgroundColor: "#14b8a6",
+                    "&:hover": {
+                      backgroundColor: "#0d9488",
+                    },
+                  }}
+                >
+                  {isSubmitting || loading ? (
+                    <>
+                      <CircularProgress size={20} sx={{ mr: 1, color: "white" }} />
+                      Enviando...
+                    </>
+                  ) : (
+                    "Enviar solicitud"
+                  )}
+                </Button>
+              </Box>
+            </Box>
+          </Card>
+        )}
+
+        {/* Step 3: Success */}
+        {step === 3 && (
+          <Box
+            sx={{
+              textAlign: "center",
+              animation: "scaleIn 0.5s ease-in",
+              "@keyframes scaleIn": {
+                from: {
+                  opacity: 0,
+                  transform: "scale(0.9)",
+                },
+                to: {
+                  opacity: 1,
+                  transform: "scale(1)",
+                },
+              },
+            }}
+          >
+            <Box
+              sx={{
+                width: 96,
+                height: 96,
+                borderRadius: "50%",
+                backgroundColor: "rgba(34, 197, 94, 0.1)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mx: "auto",
+                mb: 4,
+              }}
+            >
+              <CheckCircle sx={{ fontSize: 48, color: "#22c55e" }} />
+            </Box>
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: 700,
+                mb: 2,
+                fontSize: { xs: "2rem", md: "2.5rem" },
+              }}
+            >
+              ¡Solicitud Enviada!
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{
+                color: "text.secondary",
+                mb: 4,
+                maxWidth: "500px",
+                mx: "auto",
+                fontSize: { xs: "1rem", md: "1.125rem" },
+              }}
+            >
+              Tu solicitud será revisada por el administrador. Recibirás una notificación por correo cuando sea aprobada.
+            </Typography>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => navigate(ROUTES.HOME)}
+              sx={{
+                px: 5,
+                py: 1.5,
+                backgroundColor: "#14b8a6",
+                "&:hover": {
+                  backgroundColor: "#0d9488",
                 },
               }}
             >
-              {isLoading ? "Creando cuenta..." : "Crear cuenta"}
+              Volver al inicio
             </Button>
           </Box>
-
-          <Typography
-            variant="body2"
-            align="center"
-            sx={{ color: "text.secondary" }}
-          >
-            ¿Ya tienes cuenta?{" "}
-            <Link
-              component={RouterLink}
-              to={ROUTES.HOME}
-              underline="always"
-              sx={{
-                color: "#14b8a6",
-                fontWeight: 700,
-                textDecorationColor: "#14b8a6",
-              }}
-            >
-              Inicia sesión
-            </Link>
-          </Typography>
-        </CardContent>
-      </Card>
+        )}
+      </Box>
     </Box>
   );
 };
