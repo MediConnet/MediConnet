@@ -1,501 +1,524 @@
-// NOTE: Página de login con Material UI
-// TODO: Integrar con backend cuando esté listo
-// TODO: Agregar validación de formulario más robusta
-
 import { useState } from 'react';
-import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
-  CalendarToday,
-  Email as EmailIcon,
-  Favorite,
-  Google as GoogleIcon,
-  LocalHospital,
-  LocalShipping,
-  Lock as LockIcon,
-  Visibility,
-  VisibilityOff,
-} from "@mui/icons-material";
-import {
-  Alert,
   Box,
   Button,
   Card,
   CardContent,
-  Checkbox,
-  FormControlLabel,
-  IconButton,
-  InputAdornment,
-  Link,
   TextField,
   Typography,
+  InputAdornment,
+  IconButton,
+  Link,
+  CircularProgress,
 } from '@mui/material';
+import {
+  ArrowBack,
+  Visibility,
+  VisibilityOff,
+  Email as EmailIcon,
+  Lock as LockIcon,
+} from '@mui/icons-material';
 import { useAuthStore } from '../../../../app/store/auth.store';
-import { MediConnectLogo } from '../components/MediConnectLogo';
 import { ROUTES } from '../../../../app/config/constants';
+
+// Mock users para cuentas de prueba
+const mockUsers = [
+  {
+    id: '1',
+    email: 'admin@medicones.com',
+    password: 'admin123',
+    nombre: 'Administrador',
+    role: 'admin' as const,
+    tipo: null as string | null,
+  },
+  {
+    id: '2',
+    email: 'doctor@medicones.com',
+    password: 'doctor123',
+    nombre: 'Dr. Juan Pérez',
+    role: 'profesional' as const,
+    tipo: 'doctor' as string,
+  },
+  {
+    id: '3',
+    email: 'farmacia@medicones.com',
+    password: 'farmacia123',
+    nombre: 'Farmacia Central',
+    role: 'profesional' as const,
+    tipo: 'pharmacy' as string,
+  },
+  {
+    id: '4',
+    email: 'lab@medicones.com',
+    password: 'lab123',
+    nombre: 'Laboratorio Clínico',
+    role: 'profesional' as const,
+    tipo: 'lab' as string,
+  },
+  {
+    id: '5',
+    email: 'ambulancia@medicones.com',
+    password: 'ambulancia123',
+    nombre: 'Servicio de Ambulancias',
+    role: 'profesional' as const,
+    tipo: 'ambulance' as string,
+  },
+];
+
+const serviceLabels: Record<string, string> = {
+  doctor: 'Médico',
+  pharmacy: 'Farmacia',
+  lab: 'Laboratorio',
+  ambulance: 'Ambulancia',
+  supplies: 'Insumos Médicos',
+};
+
+// Función para autenticar usuario
+const authenticateUser = (email: string, password: string) => {
+  return mockUsers.find(
+    (user) => user.email === email && user.password === password
+  ) || null;
+};
 
 export const LoginPage = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-
-  // 1. Recuperamos el store mock
   const authStore = useAuthStore();
 
-  // 2. Estados LOCALES para la UI
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const from =
-    (location.state as { from?: { pathname: string } })?.from?.pathname ||
-    "/home";
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setIsLoading(true);
 
     try {
-      // Simulamos llamada (delay de 1 segundo)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Simular delay de red
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
-      if (email && password) {
-        // Usamos el método login del mock
+      const user = authenticateUser(formData.email, formData.password);
+
+      if (user) {
+        // Login usando el store
         authStore.login(
           {
-            id: "1",
-            email: email,
-            name: "Usuario Prueba",
-            role: "patient",
+            id: user.id,
+            email: user.email,
+            name: user.nombre,
+            role: user.role === 'admin' ? 'admin' : 'patient',
           },
-          "mock-token"
+          'mock-token'
         );
 
-        navigate(from, { replace: true });
+        if (user.role === 'admin') {
+          // TODO: Navegar a panel de administración cuando esté listo
+          navigate(ROUTES.HOME);
+        } else {
+          navigate(ROUTES.HOME);
+        }
       } else {
-        throw new Error("Faltan datos");
+        // Mostrar error (podrías usar un toast aquí)
+        console.error('Credenciales incorrectas');
       }
-    } catch (err) {
-      console.error(err);
-      setError("Credenciales inválidas. Intenta de nuevo.");
+    } catch (error) {
+      console.error('Error al iniciar sesión:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleGoogleLogin = () => {
-    // TODO: Implementar autenticación con Google real
-    console.log("Google login clicked");
+  const handleQuickLogin = (email: string, password: string) => {
+    setFormData({ email, password });
   };
 
   return (
     <Box
       sx={{
-        height: '100vh',
-        width: '100%',
+        minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(180deg, #f0fdfa 0%, #ccfbf1 50%, #99f6e4 100%)',
+        p: 2,
         position: 'relative',
         overflow: 'hidden',
-        m: 0,
-        p: { xs: 1.5, sm: 2, md: 3 },
-        boxSizing: 'border-box',
+        backgroundColor: '#f9fafb',
       }}
     >
-      {/* NOTE: Patrón de cuadrícula de fondo */}
+      {/* Background Effects */}
       <Box
         sx={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          opacity: 0.2,
+          position: 'absolute',
+          inset: 0,
+          opacity: 0.3,
           backgroundImage: `
-            linear-gradient(rgba(20, 184, 166, 0.08) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(20, 184, 166, 0.08) 1px, transparent 1px)
+            linear-gradient(rgba(6, 182, 212, 0.08) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(6, 182, 212, 0.08) 1px, transparent 1px)
           `,
-          backgroundSize: { xs: '30px 30px', sm: '40px 40px' },
+          backgroundSize: '40px 40px',
+        }}
+      />
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          width: '500px',
+          height: '500px',
+          background: 'rgba(6, 182, 212, 0.05)',
+          borderRadius: '50%',
+          filter: 'blur(80px)',
+        }}
+      />
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          width: '400px',
+          height: '400px',
+          background: 'rgba(6, 182, 212, 0.05)',
+          borderRadius: '50%',
+          filter: 'blur(80px)',
         }}
       />
 
-      {/* NOTE: Iconos médicos flotantes animados en el fondo - ocultos en móviles muy pequeños */}
-      <LocalHospital
+      <Box
         sx={{
-          position: 'absolute',
-          top: { xs: '5%', sm: '10%' },
-          left: { xs: '5%', sm: '10%' },
-          fontSize: { xs: 40, sm: 60, md: 80 },
-          color: 'rgba(20, 184, 166, 0.12)',
-          animation: 'float 6s ease-in-out infinite',
-          display: { xs: 'none', sm: 'block' },
-        }}
-      />
-      <Favorite
-        sx={{
-          position: 'absolute',
-          top: { xs: '8%', sm: '15%' },
-          right: { xs: '5%', sm: '10%' },
-          fontSize: { xs: 30, sm: 45, md: 60 },
-          color: 'rgba(20, 184, 166, 0.12)',
-          animation: 'float 8s ease-in-out infinite',
-          animationDelay: '1s',
-          display: { xs: 'none', sm: 'block' },
-        }}
-      />
-      <LocalShipping
-        sx={{
-          position: 'absolute',
-          bottom: { xs: '10%', sm: '15%' },
-          left: { xs: '5%', sm: '8%' },
-          fontSize: { xs: 35, sm: 50, md: 70 },
-          color: 'rgba(20, 184, 166, 0.12)',
-          animation: 'float 7s ease-in-out infinite',
-          animationDelay: '2s',
-          display: { xs: 'none', sm: 'block' },
-        }}
-      />
-      <CalendarToday
-        sx={{
-          position: 'absolute',
-          bottom: { xs: '8%', sm: '10%' },
-          right: { xs: '5%', sm: '12%' },
-          fontSize: { xs: 32, sm: 48, md: 65 },
-          color: 'rgba(20, 184, 166, 0.12)',
-          animation: 'float 9s ease-in-out infinite',
-          animationDelay: '0.5s',
-          display: { xs: 'none', sm: 'block' },
-        }}
-      />
-
-      <Card
-        sx={{
-          maxWidth: { xs: '100%', sm: 420, md: 450 },
-          width: '100%',
-          maxHeight: '95vh',
-          borderRadius: { xs: 2, sm: 3 },
-          boxShadow: { xs: '0 10px 40px rgba(0, 0, 0, 0.1)', sm: '0 20px 60px rgba(0, 0, 0, 0.1)' },
           position: 'relative',
           zIndex: 1,
-          overflow: 'auto',
-          '&::-webkit-scrollbar': {
-            display: 'none',
+          width: '100%',
+          maxWidth: '500px',
+          animation: 'scaleIn 0.5s ease-out',
+          '@keyframes scaleIn': {
+            from: {
+              opacity: 0,
+              transform: 'scale(0.95)',
+            },
+            to: {
+              opacity: 1,
+              transform: 'scale(1)',
+            },
           },
-          scrollbarWidth: 'none',
         }}
       >
-        <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 }, '&:last-child': { pb: { xs: 2, sm: 2.5, md: 3 } } }}>
-          {/* NOTE: Logo de MediConnect */}
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: { xs: 0.75, sm: 1 } }}>
-            <MediConnectLogo />
-          </Box>
+        {/* Back Button */}
+        <Button
+          variant="text"
+          startIcon={<ArrowBack />}
+          onClick={() => navigate(ROUTES.HOME)}
+          sx={{
+            mb: 3,
+            color: '#14b8a6',
+            fontWeight: 500,
+            textTransform: 'none',
+            '&:hover': {
+              backgroundColor: 'rgba(20, 184, 166, 0.1)',
+            },
+          }}
+        >
+          Volver al inicio
+        </Button>
 
-          {/* NOTE: Título de bienvenida */}
-          <Typography 
-            variant="h5" 
-            component="h1" 
-            align="center" 
-            gutterBottom 
-            sx={{ fontWeight: 600, mb: 0.25, color: 'text.primary', fontSize: { xs: '0.9375rem', sm: '1rem', md: '1.125rem' } }}
-          >
-            Bienvenido a
-          </Typography>
-          <Typography 
-            variant="h4" 
-            component="h2" 
-            align="center" 
-            gutterBottom 
-            sx={{ 
-              fontWeight: 700, 
-              mb: { xs: 0.25, sm: 0.5 },
-              fontSize: { xs: '1.25rem', sm: '1.375rem', md: '1.5rem' }, 
-              background: 'linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            MediConnect
-          </Typography>
-          <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: { xs: 1.25, sm: 1.5 }, fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}>
-            Inicia sesión para continuar
-          </Typography>
-
-          {/* NOTE: Botón de Google */}
-          <Button
-            fullWidth
-            variant="outlined"
-            startIcon={<GoogleIcon />}
-            onClick={handleGoogleLogin}
-            sx={{
-              mb: { xs: 0.75, sm: 1 },
-              py: { xs: 0.625, sm: 0.75 },
-              borderColor: 'grey.300',
-              color: 'text.primary',
-              textTransform: 'none',
-              borderRadius: 2,
-              fontSize: { xs: '0.75rem', sm: '0.8125rem' },
-              '&:hover': {
-                borderColor: 'grey.400',
-                bgcolor: 'grey.50',
-              },
-              '& .MuiSvgIcon-root': {
-                fontSize: { xs: 14, sm: 16 },
-              },
-            }}
-          >
-            Continuar con Google
-          </Button>
-
-          {/* NOTE: Separador circular */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', my: { xs: 0.75, sm: 1 } }}>
-            <Box
-              sx={{
-                width: { xs: 4, sm: 5 },
-                height: { xs: 4, sm: 5 },
-                borderRadius: '50%',
-                bgcolor: 'grey.300',
-              }}
-            />
-          </Box>
-
-          {error && (
-            <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-              {error}
-            </Alert>
-          )}
-
-          {/* NOTE: Formulario de login */}
-          <Box component="form" onSubmit={handleSubmit}>
-            <TextField
-              fullWidth
-              label="Correo electrónico"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com"
-              margin="dense"
-              required
-              error={!!error}
-              sx={{ mb: 0.75 }}
-              size="small"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <EmailIcon sx={{ color: 'grey.500', fontSize: { xs: 16, sm: 18 } }} />
-                  </InputAdornment>
-                ),
-              }}
-              InputLabelProps={{
-                sx: { fontSize: { xs: '0.8125rem', sm: '0.875rem' } },
-              }}
-            />
-
-            <TextField
-              fullWidth
-              label="Contraseña"
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-              margin="dense"
-              required
-              error={!!error}
-              helperText={error}
-              sx={{ mb: 0.75 }}
-              size="small"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LockIcon sx={{ color: 'grey.500', fontSize: { xs: 16, sm: 18 } }} />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                      size="small"
-                      sx={{ '& .MuiSvgIcon-root': { fontSize: { xs: 16, sm: 18 } } }}
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              InputLabelProps={{
-                sx: { fontSize: { xs: '0.8125rem', sm: '0.875rem' } },
-              }}
-            />
-
-            {/* NOTE: Recordarme y Olvidé contraseña */}
-            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: { xs: 0.5, sm: 0 }, mt: 0.5, mb: { xs: 1.25, sm: 1.5 } }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    size="small"
-                    sx={{ '& .MuiSvgIcon-root': { fontSize: { xs: 16, sm: 18 } } }}
-                  />
-                }
-                label={
-                  <Typography variant="body2" sx={{ fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}>
-                    Recordarme
-                  </Typography>
-                }
-                sx={{ m: 0 }}
-              />
-              <Link
-                component={RouterLink}
-                to={ROUTES.FORGOT_PASSWORD}
-                underline="hover"
-                sx={{ 
-                  fontSize: { xs: '0.75rem', sm: '0.8125rem' }, 
-                  color: 'primary.main',
-                  fontWeight: 500,
-                  whiteSpace: 'nowrap',
+        <Card
+          sx={{
+            borderRadius: 3,
+            p: 2,
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(10px)',
+          }}
+        >
+          <CardContent sx={{ textAlign: 'center', p: 4 }}>
+            {/* Logo */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+              <Box
+                sx={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 2,
+                  backgroundColor: '#14b8a6',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                ¿Olvidaste tu contraseña?
-              </Link>
+                <Typography
+                  sx={{
+                    color: 'white',
+                    fontWeight: 700,
+                    fontSize: '2rem',
+                  }}
+                >
+                  M
+                </Typography>
+              </Box>
             </Box>
 
-            {/* NOTE: Botón de login */}
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              disabled={isLoading}
+            {/* Title */}
+            <Typography
+              variant="h4"
               sx={{
-                mt: 0.5,
-                mb: { xs: 1.25, sm: 1.5 },
-                py: { xs: 0.875, sm: 1 },
-                background: 'linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%)',
-                textTransform: 'none',
-                fontSize: { xs: '0.8125rem', sm: '0.875rem' },
-                fontWeight: 600,
-                borderRadius: 2,
-                color: "white",
-                boxShadow: "0 4px 12px rgba(20, 184, 166, 0.3)",
-                "&:hover": {
-                  background:
-                    "linear-gradient(135deg, #0d9488 0%, #0891b2 100%)",
-                  boxShadow: "0 6px 16px rgba(20, 184, 166, 0.4)",
-                },
-                "&:disabled": {
-                  background: "grey.300",
-                },
-              }}
-            >
-              {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
-            </Button>
-          </Box>
-
-          {/* NOTE: Link de registro */}
-          <Typography variant="body2" align="center" sx={{ color: 'text.secondary', mb: { xs: 1.25, sm: 1.5 }, fontSize: { xs: '0.75rem', sm: '0.8125rem' } }}>
-            ¿No tienes cuenta?{' '}
-            <Link
-              component={RouterLink}
-              to="/register"
-              underline="always"
-              sx={{
-                color: "#14b8a6",
                 fontWeight: 700,
-                textDecorationColor: '#14b8a6',
-                fontSize: { xs: '0.75rem', sm: '0.8125rem' },
+                mb: 1,
+                color: '#1f2937',
+                fontSize: '1.75rem',
               }}
             >
-              Regístrate gratis
-            </Link>
-          </Typography>
-
-          {/* NOTE: Botones de categorías */}
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 0.625, sm: 0.75 }, justifyContent: 'center', mt: { xs: 0.5, sm: 0 } }}>
-            {/* Botón Médicos */}
-            <Button
-              variant="contained"
-              startIcon={<LocalHospital />}
+              Iniciar Sesión
+            </Typography>
+            <Typography
+              variant="body2"
               sx={{
-                flex: { xs: 'none', sm: 1 },
-                width: { xs: '100%', sm: 'auto' },
-                py: { xs: 0.625, sm: 0.75 },
-                background: 'linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%)',
-                color: 'white',
-                textTransform: 'none',
-                borderRadius: 2,
-                fontSize: { xs: '0.75rem', sm: '0.8125rem' },
-                fontWeight: 600,
-                "&:hover": {
-                  background:
-                    "linear-gradient(135deg, #0d9488 0%, #0891b2 100%)",
-                },
-                '& .MuiSvgIcon-root': {
-                  fontSize: { xs: 14, sm: 16 },
-                },
+                color: '#6b7280',
+                mb: 4,
+                fontSize: '0.9375rem',
               }}
             >
-              Médicos
-            </Button>
+              Accede a tu panel de gestión de servicios
+            </Typography>
 
-            {/* Botón Citas */}
-            <Button
-              variant="outlined"
-              startIcon={<CalendarToday />}
-              sx={{
-                flex: { xs: 'none', sm: 1 },
-                width: { xs: '100%', sm: 'auto' },
-                py: { xs: 0.625, sm: 0.75 },
-                borderColor: '#14b8a6',
-                color: '#14b8a6',
-                textTransform: 'none',
-                borderRadius: 2,
-                fontSize: { xs: '0.75rem', sm: '0.8125rem' },
-                fontWeight: 600,
-                bgcolor: "white",
-                "&:hover": {
-                  borderColor: "#0d9488",
-                  bgcolor: "#f0fdfa",
-                },
-                '& .MuiSvgIcon-root': {
-                  fontSize: { xs: 14, sm: 16 },
-                },
-              }}
-            >
-              Citas
-            </Button>
+            {/* Form */}
+            <Box component="form" onSubmit={handleSubmit} sx={{ mb: 3 }}>
+              <Box sx={{ mb: 2 }}>
+                <TextField
+                  fullWidth
+                  label="Correo electrónico"
+                  type="email"
+                  placeholder="tu@email.com"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  required
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                    },
+                  }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <EmailIcon sx={{ color: '#9ca3af', fontSize: 20 }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Box>
 
-            {/* Botón Ambulancias */}
-            <Button
-              variant="contained"
-              startIcon={<LocalShipping />}
+              <Box sx={{ mb: 2 }}>
+                <TextField
+                  fullWidth
+                  label="Contraseña"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
+                  required
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                    },
+                  }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LockIcon sx={{ color: '#9ca3af', fontSize: 20 }} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowPassword(!showPassword)}
+                          edge="end"
+                          sx={{ color: '#9ca3af' }}
+                        >
+                          {showPassword ? (
+                            <VisibilityOff sx={{ fontSize: 20 }} />
+                          ) : (
+                            <Visibility sx={{ fontSize: 20 }} />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Box>
+
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+                <Link
+                  component={RouterLink}
+                  to={ROUTES.FORGOT_PASSWORD}
+                  sx={{
+                    color: '#14b8a6',
+                    fontSize: '0.875rem',
+                    textDecoration: 'none',
+                    fontWeight: 500,
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    },
+                  }}
+                >
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </Box>
+
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                disabled={isLoading}
+                sx={{
+                  py: 1.5,
+                  backgroundColor: '#14b8a6',
+                  color: 'white',
+                  textTransform: 'none',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  borderRadius: 2,
+                  '&:hover': {
+                    backgroundColor: '#0d9488',
+                  },
+                  '&:disabled': {
+                    backgroundColor: '#cbd5e1',
+                  },
+                }}
+              >
+                {isLoading ? (
+                  <>
+                    <CircularProgress size={20} sx={{ mr: 1, color: 'white' }} />
+                    Iniciando sesión...
+                  </>
+                ) : (
+                  'Iniciar sesión'
+                )}
+              </Button>
+            </Box>
+
+            {/* Register Link */}
+            <Box sx={{ textAlign: 'center', mb: 3 }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: '#6b7280',
+                  fontSize: '0.875rem',
+                }}
+              >
+                ¿No tienes cuenta?{' '}
+                <Link
+                  component={RouterLink}
+                  to={ROUTES.REGISTER}
+                  sx={{
+                    color: '#14b8a6',
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    },
+                  }}
+                >
+                  Solicitar registro
+                </Link>
+              </Typography>
+            </Box>
+
+            {/* Demo Accounts */}
+            <Box
               sx={{
-                flex: { xs: 'none', sm: 1 },
-                width: { xs: '100%', sm: 'auto' },
-                py: { xs: 0.625, sm: 0.75 },
-                background: 'linear-gradient(135deg, #f87171 0%, #ef4444 100%)',
-                color: 'white',
-                textTransform: 'none',
+                mt: 3,
+                p: 3,
                 borderRadius: 2,
-                fontSize: { xs: '0.75rem', sm: '0.8125rem' },
-                fontWeight: 600,
-                "&:hover": {
-                  background:
-                    "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
-                },
-                '& .MuiSvgIcon-root': {
-                  fontSize: { xs: 14, sm: 16 },
-                },
+                backgroundColor: 'rgba(236, 253, 245, 0.5)',
+                border: '1px solid rgba(6, 182, 212, 0.2)',
               }}
             >
-              Ambulancias
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 600,
+                  textAlign: 'center',
+                  mb: 2,
+                  color: '#1f2937',
+                  fontSize: '0.875rem',
+                }}
+              >
+                Cuentas de prueba (clic para usar):
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {/* Admin */}
+                <Button
+                  type="button"
+                  onClick={() => handleQuickLogin('admin@medicones.com', 'admin123')}
+                  sx={{
+                    width: '100%',
+                    textAlign: 'left',
+                    p: 1.5,
+                    borderRadius: 1.5,
+                    backgroundColor: 'transparent',
+                    color: '#1f2937',
+                    textTransform: 'none',
+                    justifyContent: 'flex-start',
+                    fontSize: '0.875rem',
+                    '&:hover': {
+                      backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                    },
+                  }}
+                >
+                  <Typography
+                    component="span"
+                    sx={{ fontWeight: 600, color: '#14b8a6', mr: 1 }}
+                  >
+                    Administrador:
+                  </Typography>
+                  <Typography component="span" sx={{ color: '#6b7280' }}>
+                    admin@medicones.com
+                  </Typography>
+                </Button>
+
+                {/* Service types */}
+                {mockUsers
+                  .filter((u) => u.role === 'profesional')
+                  .map((user) => (
+                    <Button
+                      key={user.id}
+                      type="button"
+                      onClick={() => handleQuickLogin(user.email, user.password)}
+                      sx={{
+                        width: '100%',
+                        textAlign: 'left',
+                        p: 1.5,
+                        borderRadius: 1.5,
+                        backgroundColor: 'transparent',
+                        color: '#1f2937',
+                        textTransform: 'none',
+                        justifyContent: 'flex-start',
+                        fontSize: '0.875rem',
+                        '&:hover': {
+                          backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                        },
+                      }}
+                    >
+                      <Typography
+                        component="span"
+                        sx={{ fontWeight: 600, color: '#14b8a6', mr: 1 }}
+                      >
+                        {user.tipo ? serviceLabels[user.tipo] : 'Profesional'}:
+                      </Typography>
+                      <Typography component="span" sx={{ color: '#6b7280' }}>
+                        {user.email}
+                      </Typography>
+                    </Button>
+                  ))}
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
     </Box>
   );
 };

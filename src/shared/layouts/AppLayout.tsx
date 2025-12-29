@@ -168,7 +168,7 @@ export const AppLayout = () => {
                 // Header público: Iniciar sesión y Registrarse
                 <>
                   <Button
-                    onClick={() => navigate(ROUTES.REGISTER)}
+                    onClick={() => navigate(ROUTES.LOGIN)}
                     sx={{
                       textTransform: 'none',
                       color: '#1f2937',
