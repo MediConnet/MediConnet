@@ -12,7 +12,7 @@ import {
   Alert,
 } from '@mui/material';
 import { Email as EmailIcon, ArrowBack } from '@mui/icons-material';
-import { useSendResetPassword } from '../hooks/useAuth';
+import { useSendResetPassword } from '../hooks/useSendResetPassword';
 import { ROUTES } from '../../../../app/config/constants';
 
 export const ForgotPasswordPage = () => {
