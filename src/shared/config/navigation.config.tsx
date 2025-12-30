@@ -7,6 +7,7 @@ import {
   Settings,
   StarRate,
   Timeline,
+  CalendarToday,
 } from "@mui/icons-material";
 
 // Definimos los tipos de roles permitidos en el dashboard
@@ -29,10 +30,11 @@ export const ADMIN_MENU: MenuItem[] = [
 
 // Menú para el PROVEEDOR (Médico/Farmacia)
 export const PROVIDER_MENU: MenuItem[] = [
-  { icon: <Person />, label: "Mi Perfil", path: "/provider/profile" },
-  { icon: <Campaign />, label: "Anuncios", path: "/provider/ads" },
-  { icon: <StarRate />, label: "Reseñas", path: "/provider/reviews" },
-  { icon: <Settings />, label: "Configuración", path: "/provider/settings" },
+  { icon: <Person />, label: "Mi Perfil", path: "/doctor/dashboard?tab=profile" },
+  { icon: <Campaign />, label: "Anuncios", path: "/doctor/dashboard?tab=ads" },
+  { icon: <StarRate />, label: "Reseñas", path: "/doctor/dashboard?tab=reviews" },
+  { icon: <CalendarToday />, label: "Citas", path: "/doctor/dashboard?tab=appointments" },
+  { icon: <Settings />, label: "Configuración", path: "/doctor/dashboard?tab=settings" },
 ];
 
 // Función helper para obtener el menú según el rol
