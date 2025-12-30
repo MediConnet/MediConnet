@@ -1,6 +1,3 @@
-// NOTE: Configuración principal de rutas de la aplicación
-// TODO: Agregar lazy loading de componentes para mejor performance
-
 import {
   BrowserRouter,
   Navigate,
@@ -16,33 +13,41 @@ import { ProtectedRoute } from "./ProtectedRoute";
 import { AppLayout } from "../../shared/layouts/AppLayout";
 import { AuthLayout } from "../../shared/layouts/AuthLayout";
 
-// Pages
-import { ActivityPage } from "../../features/activity-history/presentation/pages/ActivityPage";
-import { AdminDashboardPage } from "../../features/admin-dashboard/presentation/pages/AdminDashboardPage";
-// import { AmbulanceDashboardPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceDashboardPage";
-// import { AmbulanceReviewsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceReviewsPage";
-// import { AmbulanceSettingsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceSettingsPage";
-import { AppointmentsPage } from "../../features/appointments/presentation/pages/AppointmentsPage";
+// Pages - Auth & General
 import { LoginPage } from "../../features/auth/presentation/pages/LoginPage";
 import { RegisterPage } from "../../features/auth/presentation/pages/RegisterPage";
-import { CheckoutPage } from "../../features/booking/presentation/pages/CheckoutPage";
+import { HomePage } from "../../features/home/presentation/pages/HomePage";
+import { ServicesCatalogPage } from "../../features/home/presentation/pages/ServicesCatalogPage";
+import { ProfilePage } from "../../features/profile/pages/ProfilePage";
+
+// Pages - Admin
+import { ActivityPage } from "../../features/activity-history/presentation/pages/ActivityPage";
+import { AdminDashboardPage } from "../../features/admin-dashboard/presentation/pages/AdminDashboardPage";
+import { RequestsPage } from "../../features/provider-requests/presentation/pages/RequestsPage";
+import { ServicesDashboardPage } from "../../features/services-dashboard/presentation/pages/ServicesDashboardPage";
+import { SettingsPage } from "../../features/settings/presentation/pages/SettingsPage";
+
+// Pages - Doctor
+import { AppointmentsPage } from "../../features/appointments/presentation/pages/AppointmentsPage";
 import { DoctorDashboardPage } from "../../features/doctors/presentation/pages/DoctorDashboardPage";
 import { DoctorProfilePage } from "../../features/doctors/presentation/pages/DoctorProfilePage";
 import { DoctorsListPage } from "../../features/doctors/presentation/pages/DoctorsListPage";
-import { HomePage } from "../../features/home/presentation/pages/HomePage";
-import { ServicesCatalogPage } from "../../features/home/presentation/pages/ServicesCatalogPage";
-// import { LaboratoriesPage } from "../../features/laboratories/presentation/pages/LaboratoriesPage";
-// import { LaboratoryDetailPage } from "../../features/laboratories/presentation/pages/LaboratoryDetailPage";
+
+// Pages - Ambulancia
+import { AmbulanceDashboardPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceDashboardPage";
+import { AmbulanceReviewsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceReviewsPage";
+import { AmbulanceSettingsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceSettingsPage";
+
+// Pages - Farmacia
+import { PharmacyDashboardPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyDashboardPage";
+
+// Pages - Laboratorio
 import { LaboratoryDashboardPage } from "../../features/laboratories/presentation/pages/LaboratoryDashboardPage";
-import { BranchDetailPage } from "../../features/pharmacies/presentation/pages/BranchDetailPage";
-import { PharmaciesListPage } from "../../features/pharmacies/presentation/pages/PharmaciesListPage";
-import { PharmacyDetailPage } from "../../features/pharmacies/presentation/pages/PharmacyDetailPage";
-import { ProfilePage } from "../../features/profile/pages/ProfilePage";
-import { RequestsPage } from "../../features/provider-requests/presentation/pages/RequestsPage";
+
+// Pages - Insumos & Checkout & Search
+import { CheckoutPage } from "../../features/booking/presentation/pages/CheckoutPage";
 import { SearchPage } from "../../features/search/presentation/pages/SearchPage";
 import { SpecialtiesPage } from "../../features/search/presentation/pages/SpecialtiesPage";
-import { ServicesDashboardPage } from "../../features/services-dashboard/presentation/pages/ServicesDashboardPage";
-import { SettingsPage } from "../../features/settings/presentation/pages/SettingsPage";
 import { SuppliesListPage } from "../../features/supplies/presentation/pages/SuppliesListPage";
 import { SupplyStoreDetailPage } from "../../features/supplies/presentation/pages/SupplyStoreDetailPage";
 
@@ -50,26 +55,23 @@ export const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Rutas públicas */}
+        {/* --- Rutas públicas (Auth) --- */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
         </Route>
 
-        {/* Rutas públicas con AppLayout */}
+        {/* --- Rutas públicas con Layout Principal --- */}
         <Route element={<AppLayout />}>
           <Route path="/home" element={<HomePage />} />
           <Route path="/services" element={<ServicesCatalogPage />} />
           <Route path="/specialties" element={<SpecialtiesPage />} />
           <Route path="/search" element={<SearchPage />} />
-          <Route path="/pharmacies" element={<PharmaciesListPage />} />
-          <Route path="/pharmacies/:id" element={<PharmacyDetailPage />} />
-          <Route path="/pharmacy-branch/:id" element={<BranchDetailPage />} />
           <Route path="/supplies" element={<SuppliesListPage />} />
           <Route path="/supplies/:id" element={<SupplyStoreDetailPage />} />
         </Route>
 
-        {/* Rutas de Admin Dashboard */}
+        {/* --- Panel de Administrador --- */}
         <Route path="/admin" element={<Outlet />}>
           <Route path="dashboard" element={<AdminDashboardPage />} />
           <Route path="requests" element={<RequestsPage />} />
@@ -78,7 +80,7 @@ export const AppRouter = () => {
           <Route path="settings" element={<SettingsPage />} />
         </Route>
 
-        {/* Ruta del Doctor Dashboard */}
+        {/* --- Panel de Doctor (Root level path) --- */}
         <Route
           path="/doctor"
           element={
@@ -90,7 +92,7 @@ export const AppRouter = () => {
           <Route path="dashboard" element={<DoctorDashboardPage />} />
         </Route>
 
-        {/* Ruta del Laboratory Dashboard - Solo accesible para laboratorios */}
+        {/* --- Panel de Laboratorio --- */}
         <Route
           path="/laboratory"
           element={
@@ -102,7 +104,22 @@ export const AppRouter = () => {
           <Route path="dashboard" element={<LaboratoryDashboardPage />} />
         </Route>
 
-        {/* Rutas protegidas */}
+        {/* --- RUTAS DE PROVEEDORES (Estructura Anidada) --- */}
+        <Route path="/provider" element={<Outlet />}>
+          {/* 1. Panel Ambulancia */}
+          <Route path="ambulance">
+            <Route path="dashboard" element={<AmbulanceDashboardPage />} />
+            <Route path="reviews" element={<AmbulanceReviewsPage />} />
+            <Route path="settings" element={<AmbulanceSettingsPage />} />
+          </Route>
+
+          {/* 2. Panel Farmacia */}
+          <Route path="pharmacy">
+            <Route path="dashboard" element={<PharmacyDashboardPage />} />
+          </Route>
+        </Route>
+
+        {/* --- Rutas Protegidas Generales (Pacientes) --- */}
         <Route
           element={
             <ProtectedRoute>
@@ -120,7 +137,7 @@ export const AppRouter = () => {
           />
         </Route>
 
-        {/* Ruta por defecto */}
+        {/* --- Fallback --- */}
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>

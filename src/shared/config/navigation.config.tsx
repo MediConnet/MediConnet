@@ -1,8 +1,11 @@
 import {
   Assignment,
+  Biotech,
   CalendarToday,
   Campaign,
   Dashboard,
+  LocalPharmacy,
+  LocalShipping,
   MedicalServices,
   Person,
   Settings,
@@ -10,7 +13,12 @@ import {
   Timeline,
 } from "@mui/icons-material";
 
-export type UserRole = "ADMIN" | "PROVIDER" | "PATIENT" | string;
+export type UserRole =
+  | "ADMIN"
+  | "PROVIDER"
+  | "PATIENT"
+  | "PROFESIONAL"
+  | string;
 
 export interface MenuItem {
   icon: React.ReactNode;
@@ -18,7 +26,7 @@ export interface MenuItem {
   path: string;
 }
 
-// --- 1. MENÚ ADMIN (Se mantiene igual) ---
+// --- 1. MENÚ ADMIN ---
 export const ADMIN_MENU: MenuItem[] = [
   { icon: <Dashboard />, label: "Dashboard", path: "/admin/dashboard" },
   { icon: <Assignment />, label: "Solicitudes", path: "/admin/requests" },
@@ -27,9 +35,13 @@ export const ADMIN_MENU: MenuItem[] = [
   { icon: <Settings />, label: "Configuración", path: "/admin/settings" },
 ];
 
-// Menú para el PROVEEDOR (Médico/Farmacia/Laboratorio)
-export const PROVIDER_MENU: MenuItem[] = [
-  { icon: <Person />, label: "Mi Perfil", path: "/doctor/dashboard?tab=profile" },
+// --- 2. MENÚ DOCTOR (Tabs) ---
+export const DOCTOR_MENU: MenuItem[] = [
+  {
+    icon: <Person />,
+    label: "Mi Perfil",
+    path: "/doctor/dashboard?tab=profile",
+  },
   { icon: <Campaign />, label: "Anuncios", path: "/doctor/dashboard?tab=ads" },
   {
     icon: <StarRate />,
@@ -48,22 +60,98 @@ export const PROVIDER_MENU: MenuItem[] = [
   },
 ];
 
-// Función helper para obtener el menú según el rol
-export const getMenuByRole = (role: UserRole, userType?: string | null): MenuItem[] => {
-  switch (role) {
+// --- 3. MENÚ AMBULANCIA (Sub-rutas) ---
+export const AMBULANCE_MENU: MenuItem[] = [
+  {
+    icon: <LocalShipping />,
+    label: "Mi Unidad",
+    path: "/provider/ambulance/dashboard",
+  },
+  { icon: <StarRate />, label: "Reseñas", path: "/provider/ambulance/reviews" },
+  {
+    icon: <Settings />,
+    label: "Configuración",
+    path: "/provider/ambulance/settings",
+  },
+];
+
+// --- 4. MENÚ FARMACIA (Sub-rutas) ---
+export const PHARMACY_MENU: MenuItem[] = [
+  {
+    icon: <LocalPharmacy />,
+    label: "Mi Farmacia",
+    path: "/provider/pharmacy/dashboard",
+  },
+  {
+    icon: <StarRate />,
+    label: "Reseñas",
+    path: "/provider/pharmacy/dashboard",
+  }, // Temporal
+  {
+    icon: <Settings />,
+    label: "Configuración",
+    path: "/provider/pharmacy/dashboard",
+  }, // Temporal
+];
+
+// --- 5. MENÚ LABORATORIO (Tabs - Igual que Doctor) ---
+export const LAB_MENU: MenuItem[] = [
+  {
+    icon: <Biotech />,
+    label: "Mi Laboratorio",
+    path: "/laboratory/dashboard?tab=profile",
+  },
+  {
+    icon: <Campaign />,
+    label: "Anuncios",
+    path: "/laboratory/dashboard?tab=ads",
+  },
+  {
+    icon: <StarRate />,
+    label: "Reseñas",
+    path: "/laboratory/dashboard?tab=reviews",
+  },
+  {
+    icon: <CalendarToday />,
+    label: "Citas",
+    path: "/laboratory/dashboard?tab=appointments",
+  },
+  {
+    icon: <Settings />,
+    label: "Configuración",
+    path: "/laboratory/dashboard?tab=settings",
+  },
+];
+
+// --- FUNCIÓN HELPER ---
+export const getMenuByRole = (
+  role: UserRole,
+  providerType?: string | null
+): MenuItem[] => {
+  const normalizedRole = role.toUpperCase();
+
+  switch (normalizedRole) {
     case "ADMIN":
       return ADMIN_MENU;
 
     case "PROVIDER":
-      // Si es laboratorio, usar rutas de laboratorio
-      if (userType === 'lab') {
-        return PROVIDER_MENU.map(item => ({
-          ...item,
-          path: item.path.replace('/doctor/dashboard', '/laboratory/dashboard')
-        }));
+    case "PROFESIONAL":
+      switch (providerType) {
+        case "doctor":
+          return DOCTOR_MENU;
+        case "ambulance":
+          return AMBULANCE_MENU;
+        case "pharmacy":
+          return PHARMACY_MENU;
+        case "lab":
+          return LAB_MENU;
+        default:
+          return [];
       }
-      // Por defecto, usar rutas de doctor
-      return PROVIDER_MENU;
+
+    case "PATIENT":
+      return [];
+
     default:
       return [];
   }
