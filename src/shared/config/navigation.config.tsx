@@ -27,13 +27,9 @@ export const ADMIN_MENU: MenuItem[] = [
   { icon: <Settings />, label: "Configuración", path: "/admin/settings" },
 ];
 
-// --- 2. MENÚ DOCTOR (Existente - basado en tabs) ---
-export const DOCTOR_MENU: MenuItem[] = [
-  {
-    icon: <Person />,
-    label: "Mi Perfil",
-    path: "/doctor/dashboard?tab=profile",
-  },
+// Menú para el PROVEEDOR (Médico/Farmacia/Laboratorio)
+export const PROVIDER_MENU: MenuItem[] = [
+  { icon: <Person />, label: "Mi Perfil", path: "/doctor/dashboard?tab=profile" },
   { icon: <Campaign />, label: "Anuncios", path: "/doctor/dashboard?tab=ads" },
   {
     icon: <StarRate />,
@@ -52,44 +48,22 @@ export const DOCTOR_MENU: MenuItem[] = [
   },
 ];
 
-// --- 3. MENÚ AMBULANCIA (Nuevo - basado en rutas directas) ---
-export const AMBULANCE_MENU: MenuItem[] = [
-  {
-    icon: <Person />,
-    label: "Mi Perfil",
-    path: "/provider/ambulance/dashboard",
-  },
-  { icon: <StarRate />, label: "Reseñas", path: "/provider/ambulance/reviews" },
-  {
-    icon: <Settings />,
-    label: "Configuración",
-    path: "/provider/ambulance/settings",
-  },
-];
-
-// --- FUNCIÓN HELPER DINÁMICA ---
-export const getMenuByRole = (
-  role: UserRole,
-  providerType?: string | null
-): MenuItem[] => {
-  const normalizedRole = role.toUpperCase();
-
-  switch (normalizedRole) {
+// Función helper para obtener el menú según el rol
+export const getMenuByRole = (role: UserRole, userType?: string | null): MenuItem[] => {
+  switch (role) {
     case "ADMIN":
       return ADMIN_MENU;
 
     case "PROVIDER":
-    case "PROFESIONAL":
-      if (providerType === "ambulance") {
-        return AMBULANCE_MENU;
+      // Si es laboratorio, usar rutas de laboratorio
+      if (userType === 'lab') {
+        return PROVIDER_MENU.map(item => ({
+          ...item,
+          path: item.path.replace('/doctor/dashboard', '/laboratory/dashboard')
+        }));
       }
-
-      if (providerType === "doctor") {
-        return DOCTOR_MENU;
-      }
-
-      return DOCTOR_MENU;
-
+      // Por defecto, usar rutas de doctor
+      return PROVIDER_MENU;
     default:
       return [];
   }

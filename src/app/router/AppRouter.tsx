@@ -9,7 +9,7 @@ import {
   Routes,
 } from "react-router-dom";
 import { DoctorRoute } from "./DoctorRoute";
-import { ProtectedRoute } from "./ProtectedRoute";
+import { LaboratoryRoute } from "./LaboratoryRoute";
 
 // Layouts
 import { AppLayout } from "../../shared/layouts/AppLayout";
@@ -30,6 +30,9 @@ import { DoctorProfilePage } from "../../features/doctors/presentation/pages/Doc
 import { DoctorsListPage } from "../../features/doctors/presentation/pages/DoctorsListPage";
 import { HomePage } from "../../features/home/presentation/pages/HomePage";
 import { ServicesCatalogPage } from "../../features/home/presentation/pages/ServicesCatalogPage";
+import { LaboratoriesPage } from "../../features/laboratories/presentation/pages/LaboratoriesPage";
+import { LaboratoryDetailPage } from "../../features/laboratories/presentation/pages/LaboratoryDetailPage";
+import { LaboratoryDashboardPage } from "../../features/laboratories/presentation/pages/LaboratoryDashboardPage";
 import { BranchDetailPage } from "../../features/pharmacies/presentation/pages/BranchDetailPage";
 import { PharmaciesListPage } from "../../features/pharmacies/presentation/pages/PharmaciesListPage";
 import { PharmacyDetailPage } from "../../features/pharmacies/presentation/pages/PharmacyDetailPage";
@@ -86,13 +89,16 @@ export const AppRouter = () => {
           <Route path="dashboard" element={<DoctorDashboardPage />} />
         </Route>
 
-        {/* Rutas del Panel de Ambulancias */}
-        <Route path="/provider" element={<Outlet />}>
-          <Route path="ambulance">
-            <Route path="dashboard" element={<AmbulanceDashboardPage />} />
-            <Route path="reviews" element={<AmbulanceReviewsPage />} />
-            <Route path="settings" element={<AmbulanceSettingsPage />} />
-          </Route>
+        {/* Ruta del Laboratory Dashboard - Solo accesible para laboratorios */}
+        <Route
+          path="/laboratory"
+          element={
+            <LaboratoryRoute>
+              <Outlet />
+            </LaboratoryRoute>
+          }
+        >
+          <Route path="dashboard" element={<LaboratoryDashboardPage />} />
         </Route>
 
         {/* Rutas protegidas */}
