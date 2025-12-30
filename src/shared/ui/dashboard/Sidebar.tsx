@@ -1,5 +1,7 @@
 import { Logout } from "@mui/icons-material";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ROUTES } from "../../../app/config/constants";
+import { useAuthStore } from "../../../app/store/auth.store";
 import { getMenuByRole, type UserRole } from "../../config/navigation.config";
 
 interface SidebarProps {
@@ -10,6 +12,13 @@ interface SidebarProps {
 export const Sidebar = ({ role, isOpen }: SidebarProps) => {
   const menuItems = getMenuByRole(role);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuthStore();
+
+  const handleLogout = () => {
+    logout();
+    navigate(ROUTES.LOGIN);
+  };
 
   return (
     <aside
@@ -23,7 +32,6 @@ export const Sidebar = ({ role, isOpen }: SidebarProps) => {
           isOpen ? "px-6 gap-2" : "justify-center px-0"
         }`}
       >
-        {/* ... código del logo ... */}
         <div className="bg-emerald-500 p-2 rounded-lg shrink-0">
           <span className="text-white font-bold text-xl">M</span>
         </div>
@@ -73,7 +81,8 @@ export const Sidebar = ({ role, isOpen }: SidebarProps) => {
       <div className="p-3 border-t border-gray-200">
         {/* ... botón logout ... */}
         <button
-          className={`flex items-center w-full text-red-500 hover:bg-red-50 rounded-lg transition-colors h-12 ${
+          onClick={handleLogout}
+          className={`flex items-center w-full text-red-500 hover:bg-red-50 rounded-lg transition-colors h-12 cursor-pointer ${
             isOpen ? "px-4 gap-3" : "justify-center px-0"
           }`}
         >
