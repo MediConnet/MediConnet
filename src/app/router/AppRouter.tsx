@@ -41,6 +41,7 @@ import { RequestsPage } from "../../features/provider-requests/presentation/page
 import { SearchPage } from "../../features/search/presentation/pages/SearchPage";
 import { SpecialtiesPage } from "../../features/search/presentation/pages/SpecialtiesPage";
 import { ServicesDashboardPage } from "../../features/services-dashboard/presentation/pages/ServicesDashboardPage";
+import { SettingsPage } from "../../features/settings/presentation/pages/SettingsPage";
 import { SuppliesListPage } from "../../features/supplies/presentation/pages/SuppliesListPage";
 import { SupplyStoreDetailPage } from "../../features/supplies/presentation/pages/SupplyStoreDetailPage";
 
@@ -77,6 +78,7 @@ export const AppRouter = () => {
           <Route path="requests" element={<RequestsPage />} />
           <Route path="services" element={<ServicesDashboardPage />} />
           <Route path="activity" element={<ActivityPage />} />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
 
         {/* Ruta del Doctor Dashboard - Solo accesible para doctores (debe ir antes de /doctor/:id) */}
