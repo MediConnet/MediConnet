@@ -1,5 +1,6 @@
 import {
   Assignment,
+  CalendarToday,
   Campaign,
   Dashboard,
   MedicalServices,
@@ -7,11 +8,9 @@ import {
   Settings,
   StarRate,
   Timeline,
-  CalendarToday,
 } from "@mui/icons-material";
 
-// Definimos los tipos de roles permitidos en el dashboard
-export type UserRole = "ADMIN" | "PROVIDER";
+export type UserRole = "ADMIN" | "PROVIDER" | "PATIENT" | string;
 
 export interface MenuItem {
   icon: React.ReactNode;
@@ -19,7 +18,7 @@ export interface MenuItem {
   path: string;
 }
 
-// Menú para el ADMIN
+// --- 1. MENÚ ADMIN (Se mantiene igual) ---
 export const ADMIN_MENU: MenuItem[] = [
   { icon: <Dashboard />, label: "Dashboard", path: "/admin/dashboard" },
   { icon: <Assignment />, label: "Solicitudes", path: "/admin/requests" },
@@ -28,22 +27,69 @@ export const ADMIN_MENU: MenuItem[] = [
   { icon: <Settings />, label: "Configuración", path: "/admin/settings" },
 ];
 
-// Menú para el PROVEEDOR (Médico/Farmacia)
-export const PROVIDER_MENU: MenuItem[] = [
-  { icon: <Person />, label: "Mi Perfil", path: "/doctor/dashboard?tab=profile" },
+// --- 2. MENÚ DOCTOR (Existente - basado en tabs) ---
+export const DOCTOR_MENU: MenuItem[] = [
+  {
+    icon: <Person />,
+    label: "Mi Perfil",
+    path: "/doctor/dashboard?tab=profile",
+  },
   { icon: <Campaign />, label: "Anuncios", path: "/doctor/dashboard?tab=ads" },
-  { icon: <StarRate />, label: "Reseñas", path: "/doctor/dashboard?tab=reviews" },
-  { icon: <CalendarToday />, label: "Citas", path: "/doctor/dashboard?tab=appointments" },
-  { icon: <Settings />, label: "Configuración", path: "/doctor/dashboard?tab=settings" },
+  {
+    icon: <StarRate />,
+    label: "Reseñas",
+    path: "/doctor/dashboard?tab=reviews",
+  },
+  {
+    icon: <CalendarToday />,
+    label: "Citas",
+    path: "/doctor/dashboard?tab=appointments",
+  },
+  {
+    icon: <Settings />,
+    label: "Configuración",
+    path: "/doctor/dashboard?tab=settings",
+  },
 ];
 
-// Función helper para obtener el menú según el rol
-export const getMenuByRole = (role: UserRole): MenuItem[] => {
-  switch (role) {
+// --- 3. MENÚ AMBULANCIA (Nuevo - basado en rutas directas) ---
+export const AMBULANCE_MENU: MenuItem[] = [
+  {
+    icon: <Person />,
+    label: "Mi Perfil",
+    path: "/provider/ambulance/dashboard",
+  },
+  { icon: <StarRate />, label: "Reseñas", path: "/provider/ambulance/reviews" },
+  {
+    icon: <Settings />,
+    label: "Configuración",
+    path: "/provider/ambulance/settings",
+  },
+];
+
+// --- FUNCIÓN HELPER DINÁMICA ---
+export const getMenuByRole = (
+  role: UserRole,
+  providerType?: string | null
+): MenuItem[] => {
+  const normalizedRole = role.toUpperCase();
+
+  switch (normalizedRole) {
     case "ADMIN":
       return ADMIN_MENU;
+
     case "PROVIDER":
-      return PROVIDER_MENU;
+    case "PROFESIONAL":
+      if (providerType === "ambulance") {
+        return AMBULANCE_MENU;
+      }
+
+      if (providerType === "doctor") {
+        return DOCTOR_MENU;
+      }
+
+      return DOCTOR_MENU;
+
     default:
       return [];
   }

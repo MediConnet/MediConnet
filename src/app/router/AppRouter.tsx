@@ -8,8 +8,8 @@ import {
   Route,
   Routes,
 } from "react-router-dom";
-import { ProtectedRoute } from "./ProtectedRoute";
 import { DoctorRoute } from "./DoctorRoute";
+import { ProtectedRoute } from "./ProtectedRoute";
 
 // Layouts
 import { AppLayout } from "../../shared/layouts/AppLayout";
@@ -18,10 +18,9 @@ import { AuthLayout } from "../../shared/layouts/AuthLayout";
 // Pages
 import { ActivityPage } from "../../features/activity-history/presentation/pages/ActivityPage";
 import { AdminDashboardPage } from "../../features/admin-dashboard/presentation/pages/AdminDashboardPage";
-import { AmbulanceDetailPage } from "../../features/ambulance/presentation/pages/AmbulanceDetailPage";
-import { AmbulancesListPage } from "../../features/ambulance/presentation/pages/AmbulancesListPage";
-import { AmbulanceTrackingPage } from "../../features/ambulance/presentation/pages/AmbulanceTrackingPage";
-import { RequestAmbulancePage } from "../../features/ambulance/presentation/pages/RequestAmbulancePage";
+import { AmbulanceDashboardPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceDashboardPage";
+import { AmbulanceReviewsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceReviewsPage";
+import { AmbulanceSettingsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceSettingsPage";
 import { AppointmentsPage } from "../../features/appointments/presentation/pages/AppointmentsPage";
 import { LoginPage } from "../../features/auth/presentation/pages/LoginPage";
 import { RegisterPage } from "../../features/auth/presentation/pages/RegisterPage";
@@ -31,8 +30,6 @@ import { DoctorProfilePage } from "../../features/doctors/presentation/pages/Doc
 import { DoctorsListPage } from "../../features/doctors/presentation/pages/DoctorsListPage";
 import { HomePage } from "../../features/home/presentation/pages/HomePage";
 import { ServicesCatalogPage } from "../../features/home/presentation/pages/ServicesCatalogPage";
-import { LaboratoriesPage } from "../../features/laboratories/ui/pages/LaboratoriesPage";
-import { LaboratoryDetailPage } from "../../features/laboratories/ui/pages/LaboratoryDetailPage";
 import { BranchDetailPage } from "../../features/pharmacies/presentation/pages/BranchDetailPage";
 import { PharmaciesListPage } from "../../features/pharmacies/presentation/pages/PharmaciesListPage";
 import { PharmacyDetailPage } from "../../features/pharmacies/presentation/pages/PharmacyDetailPage";
@@ -64,15 +61,11 @@ export const AppRouter = () => {
           <Route path="/pharmacies" element={<PharmaciesListPage />} />
           <Route path="/pharmacies/:id" element={<PharmacyDetailPage />} />
           <Route path="/pharmacy-branch/:id" element={<BranchDetailPage />} />
-          <Route path="/laboratories" element={<LaboratoriesPage />} />
-          <Route path="/laboratories/:id" element={<LaboratoryDetailPage />} />
-          <Route path="/ambulances" element={<AmbulancesListPage />} />
-          <Route path="/ambulances/:id" element={<AmbulanceDetailPage />} />
           <Route path="/supplies" element={<SuppliesListPage />} />
           <Route path="/supplies/:id" element={<SupplyStoreDetailPage />} />
         </Route>
 
-        {/* Rutas de Admin Dashboard (públicas de momento)*/}
+        {/* Rutas de Admin Dashboard */}
         <Route path="/admin" element={<Outlet />}>
           <Route path="dashboard" element={<AdminDashboardPage />} />
           <Route path="requests" element={<RequestsPage />} />
@@ -81,7 +74,7 @@ export const AppRouter = () => {
           <Route path="settings" element={<SettingsPage />} />
         </Route>
 
-        {/* Ruta del Doctor Dashboard - Solo accesible para doctores (debe ir antes de /doctor/:id) */}
+        {/* Ruta del Doctor Dashboard */}
         <Route
           path="/doctor"
           element={
@@ -91,6 +84,15 @@ export const AppRouter = () => {
           }
         >
           <Route path="dashboard" element={<DoctorDashboardPage />} />
+        </Route>
+
+        {/* Rutas del Panel de Ambulancias */}
+        <Route path="/provider" element={<Outlet />}>
+          <Route path="ambulance">
+            <Route path="dashboard" element={<AmbulanceDashboardPage />} />
+            <Route path="reviews" element={<AmbulanceReviewsPage />} />
+            <Route path="settings" element={<AmbulanceSettingsPage />} />
+          </Route>
         </Route>
 
         {/* Rutas protegidas */}
@@ -108,11 +110,6 @@ export const AppRouter = () => {
           <Route
             path="/specialties/:specialtyName"
             element={<DoctorsListPage />}
-          />
-          <Route path="/ambulance/request" element={<RequestAmbulancePage />} />
-          <Route
-            path="/ambulance/tracking/:id"
-            element={<AmbulanceTrackingPage />}
           />
         </Route>
 
