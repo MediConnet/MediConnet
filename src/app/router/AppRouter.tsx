@@ -30,8 +30,6 @@ import { DoctorProfilePage } from "../../features/doctors/presentation/pages/Doc
 import { DoctorsListPage } from "../../features/doctors/presentation/pages/DoctorsListPage";
 import { HomePage } from "../../features/home/presentation/pages/HomePage";
 import { ServicesCatalogPage } from "../../features/home/presentation/pages/ServicesCatalogPage";
-import { LaboratoriesPage } from "../../features/laboratories/ui/pages/LaboratoriesPage";
-import { LaboratoryDetailPage } from "../../features/laboratories/ui/pages/LaboratoryDetailPage";
 import { BranchDetailPage } from "../../features/pharmacies/presentation/pages/BranchDetailPage";
 import { PharmaciesListPage } from "../../features/pharmacies/presentation/pages/PharmaciesListPage";
 import { PharmacyDetailPage } from "../../features/pharmacies/presentation/pages/PharmacyDetailPage";
@@ -63,8 +61,6 @@ export const AppRouter = () => {
           <Route path="/pharmacies" element={<PharmaciesListPage />} />
           <Route path="/pharmacies/:id" element={<PharmacyDetailPage />} />
           <Route path="/pharmacy-branch/:id" element={<BranchDetailPage />} />
-          <Route path="/laboratories" element={<LaboratoriesPage />} />
-          <Route path="/laboratories/:id" element={<LaboratoryDetailPage />} />
           <Route path="/supplies" element={<SuppliesListPage />} />
           <Route path="/supplies/:id" element={<SupplyStoreDetailPage />} />
         </Route>
