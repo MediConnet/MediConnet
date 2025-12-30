@@ -60,7 +60,11 @@ export const AMBULANCE_MENU: MenuItem[] = [
     path: "/provider/ambulance/dashboard",
   },
   { icon: <StarRate />, label: "Reseñas", path: "/provider/ambulance/reviews" },
-  { icon: <Settings />, label: "Configuración", path: "/provider/settings" },
+  {
+    icon: <Settings />,
+    label: "Configuración",
+    path: "/provider/ambulance/settings",
+  },
 ];
 
 // --- FUNCIÓN HELPER DINÁMICA ---

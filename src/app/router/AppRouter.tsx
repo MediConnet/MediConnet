@@ -20,6 +20,7 @@ import { ActivityPage } from "../../features/activity-history/presentation/pages
 import { AdminDashboardPage } from "../../features/admin-dashboard/presentation/pages/AdminDashboardPage";
 import { AmbulanceDashboardPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceDashboardPage";
 import { AmbulanceReviewsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceReviewsPage";
+import { AmbulanceSettingsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceSettingsPage";
 import { AppointmentsPage } from "../../features/appointments/presentation/pages/AppointmentsPage";
 import { LoginPage } from "../../features/auth/presentation/pages/LoginPage";
 import { RegisterPage } from "../../features/auth/presentation/pages/RegisterPage";
@@ -94,6 +95,7 @@ export const AppRouter = () => {
           <Route path="ambulance">
             <Route path="dashboard" element={<AmbulanceDashboardPage />} />
             <Route path="reviews" element={<AmbulanceReviewsPage />} />
+            <Route path="settings" element={<AmbulanceSettingsPage />} />
           </Route>
         </Route>
 
