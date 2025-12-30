@@ -69,22 +69,9 @@ export const AmbulanceSettingsPage = () => {
           <Typography variant="h5" fontWeight={700} color="text.primary">
             Panel Profesional
           </Typography>
-          <Box
-            sx={{
-              px: 2,
-              py: 0.5,
-              bgcolor: "success.light",
-              color: "success.contrastText",
-              borderRadius: 10,
-              fontSize: "0.75rem",
-              fontWeight: 700,
-            }}
-          >
-            Servicio Activo
-          </Box>
         </Box>
 
-        {/* SECTION 1: KPIS (Reutilizados) */}
+        {/* SECTION 1: KPIS */}
         <Grid2 container spacing={3} mb={4}>
           <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
             <KPICard

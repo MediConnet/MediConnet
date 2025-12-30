@@ -53,19 +53,6 @@ export const AmbulanceReviewsPage = () => {
           <Typography variant="h5" fontWeight={700} color="text.primary">
             Panel Profesional
           </Typography>
-          <Box
-            sx={{
-              px: 2,
-              py: 0.5,
-              bgcolor: "success.light",
-              color: "success.contrastText",
-              borderRadius: 10,
-              fontSize: "0.75rem",
-              fontWeight: 700,
-            }}
-          >
-            Servicio Activo
-          </Box>
         </Box>
 
         {/* SECTION 1: KPIS (Reutilizados para consistencia visual) */}

@@ -1,7 +1,6 @@
 import { ContactPhone, Star, Visibility } from "@mui/icons-material";
 import {
   Box,
-  Chip,
   Divider,
   Paper,
   Skeleton,
@@ -72,12 +71,6 @@ export const PharmacySettingsPage = () => {
           <Typography variant="h5" fontWeight={700} color="text.primary">
             Panel de Farmacia
           </Typography>
-          <Chip
-            label="Servicio Activo"
-            color="success"
-            size="small"
-            sx={{ fontWeight: 700 }}
-          />
         </Box>
 
         {/* SECTION 1: KPIS (Contexto visual) */}

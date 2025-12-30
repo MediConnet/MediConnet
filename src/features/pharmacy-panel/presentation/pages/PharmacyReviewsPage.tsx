@@ -1,12 +1,5 @@
 import { ContactPhone, Star, Visibility } from "@mui/icons-material";
-import {
-  Box,
-  Chip,
-  Paper,
-  Skeleton,
-  Typography,
-  useTheme,
-} from "@mui/material";
+import { Box, Paper, Skeleton, Typography, useTheme } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { KPICard } from "../components/KPICard"; // Usamos el KPI Card de Farmacia
@@ -65,12 +58,6 @@ export const PharmacyReviewsPage = () => {
           <Typography variant="h5" fontWeight={700} color="text.primary">
             Panel de Farmacia
           </Typography>
-          <Chip
-            label="Servicio Activo"
-            color="success"
-            size="small"
-            sx={{ fontWeight: 700 }}
-          />
         </Box>
 
         {/* SECTION 1: KPIS (Resumen) */}
