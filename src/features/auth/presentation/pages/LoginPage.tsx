@@ -122,11 +122,11 @@ export const LoginPage = () => {
           "mock-token"
         );
 
-<<<<<<< HEAD
-        // 2. Lógica de Redirección
+        // 2. Lógica de Redirección (UNIFICADA Y LIMPIA)
         if (user.role === "admin") {
           navigate("/admin/dashboard");
         } else if (user.role === "profesional") {
+          // Switch para manejar todos los tipos de proveedores
           switch (user.tipo) {
             case "doctor":
               navigate("/doctor/dashboard");
@@ -137,17 +137,12 @@ export const LoginPage = () => {
             case "pharmacy":
               navigate("/provider/pharmacy/dashboard");
               break;
+            case "lab": // ✅ Ruta unificada de laboratorio
+              navigate("/provider/laboratory/dashboard");
+              break;
             default:
               navigate(ROUTES.HOME);
           }
-=======
-        if (user.role === 'admin') {
-          navigate('/admin/dashboard');
-        } else if (user.role === 'profesional' && user.tipo === 'doctor') {
-          navigate('/doctor/dashboard');
-        } else if (user.role === 'profesional' && user.tipo === 'lab') {
-          navigate('/laboratory/dashboard');
->>>>>>> develop
         } else {
           navigate(ROUTES.HOME);
         }
