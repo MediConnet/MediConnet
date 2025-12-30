@@ -1,5 +1,3 @@
-// NOTE: Configuración principal de rutas de la aplicación
-
 import {
   BrowserRouter,
   Navigate,
@@ -63,14 +61,12 @@ export const AppRouter = () => {
           <Route path="/register" element={<RegisterPage />} />
         </Route>
 
-        {/* --- Rutas públicas con Layout Principal (Búsqueda y Catálogos) --- */}
+        {/* --- Rutas públicas con Layout Principal --- */}
         <Route element={<AppLayout />}>
           <Route path="/home" element={<HomePage />} />
           <Route path="/services" element={<ServicesCatalogPage />} />
           <Route path="/specialties" element={<SpecialtiesPage />} />
           <Route path="/search" element={<SearchPage />} />
-
-          {/* Insumos */}
           <Route path="/supplies" element={<SuppliesListPage />} />
           <Route path="/supplies/:id" element={<SupplyStoreDetailPage />} />
         </Route>
@@ -84,7 +80,7 @@ export const AppRouter = () => {
           <Route path="settings" element={<SettingsPage />} />
         </Route>
 
-        {/* --- Panel de Doctor --- */}
+        {/* --- Panel de Doctor (Root level path) --- */}
         <Route
           path="/doctor"
           element={
@@ -96,8 +92,19 @@ export const AppRouter = () => {
           <Route path="dashboard" element={<DoctorDashboardPage />} />
         </Route>
 
-        {/* --- RUTAS UNIFICADAS DE PROVEEDORES --- */}
-        {/* Aquí entran Ambulancia, Farmacia y Laboratorio */}
+        {/* --- Panel de Laboratorio --- */}
+        <Route
+          path="/laboratory"
+          element={
+            <LaboratoryRoute>
+              <Outlet />
+            </LaboratoryRoute>
+          }
+        >
+          <Route path="dashboard" element={<LaboratoryDashboardPage />} />
+        </Route>
+
+        {/* --- RUTAS DE PROVEEDORES (Estructura Anidada) --- */}
         <Route path="/provider" element={<Outlet />}>
           {/* 1. Panel Ambulancia */}
           <Route path="ambulance">
@@ -109,18 +116,6 @@ export const AppRouter = () => {
           {/* 2. Panel Farmacia */}
           <Route path="pharmacy">
             <Route path="dashboard" element={<PharmacyDashboardPage />} />
-          </Route>
-
-          {/* 3. Panel Laboratorio (Protegido por LaboratoryRoute) */}
-          <Route
-            path="laboratory"
-            element={
-              <LaboratoryRoute>
-                <Outlet />
-              </LaboratoryRoute>
-            }
-          >
-            <Route path="dashboard" element={<LaboratoryDashboardPage />} />
           </Route>
         </Route>
 

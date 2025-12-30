@@ -35,7 +35,7 @@ export const ADMIN_MENU: MenuItem[] = [
   { icon: <Settings />, label: "Configuración", path: "/admin/settings" },
 ];
 
-// --- 2. MENÚ DOCTOR ---
+// --- 2. MENÚ DOCTOR (Tabs) ---
 export const DOCTOR_MENU: MenuItem[] = [
   {
     icon: <Person />,
@@ -60,7 +60,7 @@ export const DOCTOR_MENU: MenuItem[] = [
   },
 ];
 
-// --- 3. MENÚ AMBULANCIA (✅ Aquí están) ---
+// --- 3. MENÚ AMBULANCIA (Sub-rutas) ---
 export const AMBULANCE_MENU: MenuItem[] = [
   {
     icon: <LocalShipping />,
@@ -75,7 +75,7 @@ export const AMBULANCE_MENU: MenuItem[] = [
   },
 ];
 
-// --- 4. MENÚ FARMACIA ---
+// --- 4. MENÚ FARMACIA (Sub-rutas) ---
 export const PHARMACY_MENU: MenuItem[] = [
   {
     icon: <LocalPharmacy />,
@@ -86,34 +86,44 @@ export const PHARMACY_MENU: MenuItem[] = [
     icon: <StarRate />,
     label: "Reseñas",
     path: "/provider/pharmacy/dashboard",
-  },
+  }, // Temporal
   {
     icon: <Settings />,
     label: "Configuración",
     path: "/provider/pharmacy/dashboard",
-  },
+  }, // Temporal
 ];
 
-// --- 5. MENÚ LABORATORIO ---
+// --- 5. MENÚ LABORATORIO (Tabs - Igual que Doctor) ---
 export const LAB_MENU: MenuItem[] = [
   {
     icon: <Biotech />,
     label: "Mi Laboratorio",
-    path: "/provider/laboratory/dashboard",
+    path: "/laboratory/dashboard?tab=profile",
+  },
+  {
+    icon: <Campaign />,
+    label: "Anuncios",
+    path: "/laboratory/dashboard?tab=ads",
   },
   {
     icon: <StarRate />,
     label: "Reseñas",
-    path: "/provider/laboratory/dashboard",
+    path: "/laboratory/dashboard?tab=reviews",
+  },
+  {
+    icon: <CalendarToday />,
+    label: "Citas",
+    path: "/laboratory/dashboard?tab=appointments",
   },
   {
     icon: <Settings />,
     label: "Configuración",
-    path: "/provider/laboratory/dashboard",
+    path: "/laboratory/dashboard?tab=settings",
   },
 ];
 
-// --- FUNCIÓN HELPER DINÁMICA ---
+// --- FUNCIÓN HELPER ---
 export const getMenuByRole = (
   role: UserRole,
   providerType?: string | null
@@ -129,16 +139,12 @@ export const getMenuByRole = (
       switch (providerType) {
         case "doctor":
           return DOCTOR_MENU;
-
         case "ambulance":
           return AMBULANCE_MENU;
-
         case "pharmacy":
           return PHARMACY_MENU;
-
         case "lab":
           return LAB_MENU;
-
         default:
           return [];
       }
