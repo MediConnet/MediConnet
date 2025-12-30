@@ -10,6 +10,7 @@ import {
 } from "react-router-dom";
 import { DoctorRoute } from "./DoctorRoute";
 import { LaboratoryRoute } from "./LaboratoryRoute";
+import { ProtectedRoute } from "./ProtectedRoute";
 
 // Layouts
 import { AppLayout } from "../../shared/layouts/AppLayout";
@@ -18,9 +19,9 @@ import { AuthLayout } from "../../shared/layouts/AuthLayout";
 // Pages
 import { ActivityPage } from "../../features/activity-history/presentation/pages/ActivityPage";
 import { AdminDashboardPage } from "../../features/admin-dashboard/presentation/pages/AdminDashboardPage";
-import { AmbulanceDashboardPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceDashboardPage";
-import { AmbulanceReviewsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceReviewsPage";
-import { AmbulanceSettingsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceSettingsPage";
+// import { AmbulanceDashboardPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceDashboardPage";
+// import { AmbulanceReviewsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceReviewsPage";
+// import { AmbulanceSettingsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceSettingsPage";
 import { AppointmentsPage } from "../../features/appointments/presentation/pages/AppointmentsPage";
 import { LoginPage } from "../../features/auth/presentation/pages/LoginPage";
 import { RegisterPage } from "../../features/auth/presentation/pages/RegisterPage";
@@ -30,8 +31,8 @@ import { DoctorProfilePage } from "../../features/doctors/presentation/pages/Doc
 import { DoctorsListPage } from "../../features/doctors/presentation/pages/DoctorsListPage";
 import { HomePage } from "../../features/home/presentation/pages/HomePage";
 import { ServicesCatalogPage } from "../../features/home/presentation/pages/ServicesCatalogPage";
-import { LaboratoriesPage } from "../../features/laboratories/presentation/pages/LaboratoriesPage";
-import { LaboratoryDetailPage } from "../../features/laboratories/presentation/pages/LaboratoryDetailPage";
+// import { LaboratoriesPage } from "../../features/laboratories/presentation/pages/LaboratoriesPage";
+// import { LaboratoryDetailPage } from "../../features/laboratories/presentation/pages/LaboratoryDetailPage";
 import { LaboratoryDashboardPage } from "../../features/laboratories/presentation/pages/LaboratoryDashboardPage";
 import { BranchDetailPage } from "../../features/pharmacies/presentation/pages/BranchDetailPage";
 import { PharmaciesListPage } from "../../features/pharmacies/presentation/pages/PharmaciesListPage";

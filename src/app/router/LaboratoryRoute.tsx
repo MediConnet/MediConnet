@@ -19,7 +19,13 @@ export const LaboratoryRoute = ({ children }: LaboratoryRouteProps) => {
   }
 
   // NOTE: Verifica que el usuario sea un laboratorio
-  if (!user || user.role !== 'patient' || user.tipo !== 'lab') {
+  const hasValidRole =
+    user?.role === "provider" ||
+    user?.role === "patient" ||
+    user?.role === "profesional";
+  const isLabType = user?.tipo === "lab";
+
+  if (!user || !hasValidRole || !isLabType) {
     // Si no es laboratorio, redirige a home
     return <Navigate to="/home" replace />;
   }
