@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 interface StatusCardProps {
   label: string;
   count: number;
-  colorClass: string; // 'text-orange-500'
-  bgClass: string; // 'bg-orange-50'
+  colorClass: string;
+  bgClass: string;
   icon: ReactNode;
 }
 

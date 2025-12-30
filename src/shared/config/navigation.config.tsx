@@ -18,7 +18,7 @@ export interface MenuItem {
   path: string;
 }
 
-// --- 1. MENÚ ADMIN (Se mantiene igual) ---
+// --- 1. MENÚ ADMIN ---
 export const ADMIN_MENU: MenuItem[] = [
   { icon: <Dashboard />, label: "Dashboard", path: "/admin/dashboard" },
   { icon: <Assignment />, label: "Solicitudes", path: "/admin/requests" },
@@ -27,7 +27,7 @@ export const ADMIN_MENU: MenuItem[] = [
   { icon: <Settings />, label: "Configuración", path: "/admin/settings" },
 ];
 
-// --- 2. MENÚ DOCTOR (Existente - basado en tabs) ---
+// --- 2. MENÚ DOCTOR ---
 export const DOCTOR_MENU: MenuItem[] = [
   {
     icon: <Person />,
@@ -52,7 +52,7 @@ export const DOCTOR_MENU: MenuItem[] = [
   },
 ];
 
-// --- 3. MENÚ AMBULANCIA (Nuevo - basado en rutas directas) ---
+// --- 3. MENÚ AMBULANCIA ---
 export const AMBULANCE_MENU: MenuItem[] = [
   {
     icon: <Person />,
@@ -64,6 +64,21 @@ export const AMBULANCE_MENU: MenuItem[] = [
     icon: <Settings />,
     label: "Configuración",
     path: "/provider/ambulance/settings",
+  },
+];
+
+// --- 4. MENÚ FARMACIA ---
+export const PHARMACY_MENU: MenuItem[] = [
+  {
+    icon: <Person />,
+    label: "Mi Farmacia",
+    path: "/provider/pharmacy/dashboard",
+  },
+  { icon: <StarRate />, label: "Reseñas", path: "/provider/pharmacy/reviews" },
+  {
+    icon: <Settings />,
+    label: "Configuración",
+    path: "/provider/pharmacy/settings",
   },
 ];
 
@@ -82,6 +97,10 @@ export const getMenuByRole = (
     case "PROFESIONAL":
       if (providerType === "ambulance") {
         return AMBULANCE_MENU;
+      }
+
+      if (providerType === "pharmacy") {
+        return PHARMACY_MENU;
       }
 
       if (providerType === "doctor") {

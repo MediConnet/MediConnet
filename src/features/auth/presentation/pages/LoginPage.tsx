@@ -133,6 +133,9 @@ export const LoginPage = () => {
             case "ambulance":
               navigate("/provider/ambulance/dashboard");
               break;
+            case "pharmacy":
+              navigate("/provider/pharmacy/dashboard");
+              break;
             default:
               navigate(ROUTES.HOME);
           }

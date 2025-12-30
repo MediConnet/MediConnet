@@ -30,9 +30,7 @@ import { DoctorProfilePage } from "../../features/doctors/presentation/pages/Doc
 import { DoctorsListPage } from "../../features/doctors/presentation/pages/DoctorsListPage";
 import { HomePage } from "../../features/home/presentation/pages/HomePage";
 import { ServicesCatalogPage } from "../../features/home/presentation/pages/ServicesCatalogPage";
-import { BranchDetailPage } from "../../features/pharmacies/presentation/pages/BranchDetailPage";
-import { PharmaciesListPage } from "../../features/pharmacies/presentation/pages/PharmaciesListPage";
-import { PharmacyDetailPage } from "../../features/pharmacies/presentation/pages/PharmacyDetailPage";
+import { PharmacyDashboardPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyDashboardPage";
 import { ProfilePage } from "../../features/profile/pages/ProfilePage";
 import { RequestsPage } from "../../features/provider-requests/presentation/pages/RequestsPage";
 import { SearchPage } from "../../features/search/presentation/pages/SearchPage";
@@ -58,9 +56,6 @@ export const AppRouter = () => {
           <Route path="/services" element={<ServicesCatalogPage />} />
           <Route path="/specialties" element={<SpecialtiesPage />} />
           <Route path="/search" element={<SearchPage />} />
-          <Route path="/pharmacies" element={<PharmaciesListPage />} />
-          <Route path="/pharmacies/:id" element={<PharmacyDetailPage />} />
-          <Route path="/pharmacy-branch/:id" element={<BranchDetailPage />} />
           <Route path="/supplies" element={<SuppliesListPage />} />
           <Route path="/supplies/:id" element={<SupplyStoreDetailPage />} />
         </Route>
@@ -86,12 +81,18 @@ export const AppRouter = () => {
           <Route path="dashboard" element={<DoctorDashboardPage />} />
         </Route>
 
-        {/* Rutas del Panel de Ambulancias */}
+        {/* Rutas de Proveedores (Ambulancias y Farmacias) */}
         <Route path="/provider" element={<Outlet />}>
+          {/* Ambulancia */}
           <Route path="ambulance">
             <Route path="dashboard" element={<AmbulanceDashboardPage />} />
             <Route path="reviews" element={<AmbulanceReviewsPage />} />
             <Route path="settings" element={<AmbulanceSettingsPage />} />
+          </Route>
+
+          {/* Farmacia (AHORA DENTRO DE /provider) */}
+          <Route path="pharmacy">
+            <Route path="dashboard" element={<PharmacyDashboardPage />} />
           </Route>
         </Route>
 
