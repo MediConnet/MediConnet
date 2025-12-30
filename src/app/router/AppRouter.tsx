@@ -9,6 +9,7 @@ import {
   Routes,
 } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
+import { DoctorRoute } from "./DoctorRoute";
 
 // Layouts
 import { AppLayout } from "../../shared/layouts/AppLayout";
@@ -21,6 +22,7 @@ import { AppointmentsPage } from "../../features/appointments/presentation/pages
 import { LoginPage } from "../../features/auth/presentation/pages/LoginPage";
 import { RegisterPage } from "../../features/auth/presentation/pages/RegisterPage";
 import { CheckoutPage } from "../../features/booking/presentation/pages/CheckoutPage";
+import { DoctorDashboardPage } from "../../features/doctors/presentation/pages/DoctorDashboardPage";
 import { DoctorProfilePage } from "../../features/doctors/presentation/pages/DoctorProfilePage";
 import { DoctorsListPage } from "../../features/doctors/presentation/pages/DoctorsListPage";
 import { HomePage } from "../../features/home/presentation/pages/HomePage";
@@ -71,6 +73,18 @@ export const AppRouter = () => {
           <Route path="services" element={<ServicesDashboardPage />} />
           <Route path="activity" element={<ActivityPage />} />
           <Route path="settings" element={<SettingsPage />} />
+        </Route>
+
+        {/* Ruta del Doctor Dashboard - Solo accesible para doctores (debe ir antes de /doctor/:id) */}
+        <Route
+          path="/doctor"
+          element={
+            <DoctorRoute>
+              <Outlet />
+            </DoctorRoute>
+          }
+        >
+          <Route path="dashboard" element={<DoctorDashboardPage />} />
         </Route>
 
         {/* Rutas protegidas */}

@@ -103,19 +103,30 @@ export const LoginPage = () => {
       const user = authenticateUser(formData.email, formData.password);
 
       if (user) {
+        // Determinar el role para el store
+        let roleForStore = 'patient';
+        if (user.role === 'admin') {
+          roleForStore = 'admin';
+        } else if (user.role === 'profesional') {
+          roleForStore = 'patient'; // Los profesionales se guardan como 'patient' pero con tipo
+        }
+
         // Login usando el store
         authStore.login(
           {
             id: user.id,
             email: user.email,
             name: user.nombre,
-            role: user.role === 'admin' ? 'admin' : 'patient',
+            role: roleForStore,
+            tipo: user.tipo || null,
           },
           'mock-token'
         );
 
         if (user.role === 'admin') {
           navigate('/admin/dashboard');
+        } else if (user.role === 'profesional' && user.tipo === 'doctor') {
+          navigate('/doctor/dashboard');
         } else {
           navigate(ROUTES.HOME);
         }
