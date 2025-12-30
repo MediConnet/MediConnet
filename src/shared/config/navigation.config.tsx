@@ -85,16 +85,16 @@ export const PHARMACY_MENU: MenuItem[] = [
   {
     icon: <StarRate />,
     label: "Reseñas",
-    path: "/provider/pharmacy/dashboard",
-  }, // Temporal
+    path: "/provider/pharmacy/reviews",
+  },
   {
     icon: <Settings />,
     label: "Configuración",
-    path: "/provider/pharmacy/dashboard",
-  }, // Temporal
+    path: "/provider/pharmacy/settings",
+  },
 ];
 
-// --- 5. MENÚ LABORATORIO (Tabs - Igual que Doctor) ---
+// --- 5. MENÚ LABORATORIO ---
 export const LAB_MENU: MenuItem[] = [
   {
     icon: <Biotech />,
