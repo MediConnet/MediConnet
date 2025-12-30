@@ -1,8 +1,8 @@
 import { Logout } from "@mui/icons-material";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { getMenuByRole, type UserRole } from "../../config/navigation.config";
-import { useAuthStore } from "../../../app/store/auth.store";
 import { ROUTES } from "../../../app/config/constants";
+import { useAuthStore } from "../../../app/store/auth.store";
+import { getMenuByRole, type UserRole } from "../../config/navigation.config";
 
 interface SidebarProps {
   role: UserRole;
@@ -10,11 +10,14 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ role, isOpen }: SidebarProps) => {
-  const menuItems = getMenuByRole(role);
+  // 1. Obtenemos el usuario para saber su tipo
+  const { user, logout } = useAuthStore();
+
+  // 2. Generamos el menú
+  const menuItems = getMenuByRole(role, user?.tipo);
+
   const location = useLocation();
   const navigate = useNavigate();
-  const authStore = useAuthStore();
-  const { logout } = authStore;
 
   const handleLogout = () => {
     logout();
@@ -33,7 +36,6 @@ export const Sidebar = ({ role, isOpen }: SidebarProps) => {
           isOpen ? "px-6 gap-2" : "justify-center px-0"
         }`}
       >
-        {/* ... código del logo ... */}
         <div className="bg-teal-500 p-2 rounded-lg shrink-0">
           <span className="text-white font-bold text-xl">M</span>
         </div>
@@ -43,19 +45,28 @@ export const Sidebar = ({ role, isOpen }: SidebarProps) => {
           }`}
         >
           <h1 className="text-xl font-bold text-gray-800 whitespace-nowrap">
-            MEDICONES
+            MEDICONNECT
           </h1>
         </div>
       </div>
 
+      {/* ... MENU ITEMS ... */}
       <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto overflow-x-hidden">
         {menuItems.map((item, index) => {
-          // Para rutas con query params, verificar si el tab coincide
-          const pathWithoutQuery = item.path.split('?')[0];
-          const tabParam = item.path.includes('tab=') ? item.path.split('tab=')[1] : null;
-          const currentTab = tabParam ? location.search.includes(`tab=${tabParam}`) : false;
-          const isActive = location.pathname.startsWith(pathWithoutQuery) && 
-            (tabParam ? currentTab : !location.search.includes('tab='));
+          const pathWithoutQuery = item.path.split("?")[0];
+          const tabParam = item.path.includes("tab=")
+            ? item.path.split("tab=")[1]
+            : null;
+          const currentTab = tabParam
+            ? location.search.includes(`tab=${tabParam}`)
+            : false;
+
+          const isActive =
+            location.pathname.startsWith(pathWithoutQuery) &&
+            (tabParam
+              ? currentTab
+              : !location.search.includes("tab=") ||
+                location.pathname !== pathWithoutQuery);
 
           return (
             <Link
@@ -85,11 +96,11 @@ export const Sidebar = ({ role, isOpen }: SidebarProps) => {
         })}
       </nav>
 
+      {/* ... BOTÓN CERRAR SESIÓN ... */}
       <div className="p-3 border-t border-gray-200">
-        {/* ... botón logout ... */}
         <button
           onClick={handleLogout}
-          className={`flex items-center w-full text-red-500 hover:bg-red-50 rounded-lg transition-colors h-12 ${
+          className={`flex items-center w-full text-red-500 hover:bg-red-50 rounded-lg transition-colors h-12 cursor-pointer ${
             isOpen ? "px-4 gap-3" : "justify-center px-0"
           }`}
         >

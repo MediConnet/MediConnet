@@ -11,15 +11,18 @@ import {
   Paper,
   Skeleton,
   Stack,
-  TextField,
   Typography,
+  useTheme,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
+import { useEffect, useState } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
+import type { AmbulanceProfile } from "../../domain/ambulance-profile.entity";
+import { EditProfileModal } from "../components/EditProfileModal"; // ✅ Importamos el modal separado
 import { KPICard } from "../components/KPICard";
 import { useAmbulanceProfile } from "../hooks/useAmbulanceProfile";
 
-// Mock del usuario logueado (Ambulancia)
+// Mock del usuario logueado
 const AMBULANCE_USER = {
   name: "Ambulancias Vida",
   roleLabel: "Proveedor",
@@ -28,14 +31,40 @@ const AMBULANCE_USER = {
 };
 
 export const AmbulanceDashboardPage = () => {
-  const { profile, isLoading } = useAmbulanceProfile();
+  const theme = useTheme();
+  const { profile: fetchedProfile, isLoading } = useAmbulanceProfile();
+
+  // Estado local para los datos mostrados
+  const [profile, setProfile] = useState<AmbulanceProfile | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
+  // Sincronizar cuando llega la data del hook
+  useEffect(() => {
+    if (fetchedProfile) {
+      setProfile(fetchedProfile);
+    }
+  }, [fetchedProfile]);
+
+  // Función para guardar cambios (callback del modal)
+  const handleSaveChanges = (updatedProfile: AmbulanceProfile) => {
+    setProfile(updatedProfile);
+    // Aquí podrías añadir la llamada al API para persistir: updateProfile(updatedProfile)
+  };
 
   if (isLoading || !profile) {
     return (
       <DashboardLayout role="PROVIDER" userProfile={AMBULANCE_USER}>
         <Box p={3}>
-          <Skeleton variant="rectangular" height={200} sx={{ mb: 2 }} />
-          <Skeleton variant="rectangular" height={400} />
+          <Skeleton
+            variant="rectangular"
+            height={150}
+            sx={{ mb: 3, borderRadius: 3 }}
+          />
+          <Skeleton
+            variant="rectangular"
+            height={400}
+            sx={{ borderRadius: 3 }}
+          />
         </Box>
       </DashboardLayout>
     );
@@ -51,14 +80,9 @@ export const AmbulanceDashboardPage = () => {
           justifyContent="space-between"
           alignItems="center"
         >
-          <Box>
-            <Typography variant="h5" fontWeight={700} gutterBottom>
-              Panel Profesional
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Gestiona tu presencia en la app de Mediciones
-            </Typography>
-          </Box>
+          <Typography variant="h5" fontWeight={700} color="text.primary">
+            Panel Profesional
+          </Typography>
           <Box
             sx={{
               px: 2,
@@ -67,42 +91,42 @@ export const AmbulanceDashboardPage = () => {
               color: "success.contrastText",
               borderRadius: 10,
               fontSize: "0.75rem",
-              fontWeight: 600,
+              fontWeight: 700,
             }}
           >
             Servicio Activo
           </Box>
         </Box>
 
-        {/* SECCIÓN 1: KPIs (Tarjetas Superiores) */}
+        {/* SECTION 1: KPIS */}
         <Grid2 container spacing={3} mb={4}>
           <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
             <KPICard
               title="Visitas al perfil"
               value={profile.stats.profileViews}
-              icon={<Visibility sx={{ color: "#009688" }} />}
-              iconColor="#E0F2F1"
+              icon={<Visibility sx={{ color: theme.palette.primary.main }} />}
+              iconColor={theme.palette.primary.light + "20"}
             />
           </Grid2>
           <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
             <KPICard
-              title="Contactos (Leads)"
+              title="Contactos"
               value={profile.stats.contactClicks}
-              icon={<ContactPhone sx={{ color: "#2196F3" }} />}
-              iconColor="#E3F2FD"
+              icon={<ContactPhone sx={{ color: theme.palette.info.main }} />}
+              iconColor={theme.palette.info.light + "20"}
             />
           </Grid2>
           <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
             <KPICard
               title="Reseñas"
               value={profile.stats.totalReviews}
-              icon={<Star sx={{ color: "#FF9800" }} />}
-              iconColor="#FFF3E0"
+              icon={<Star sx={{ color: theme.palette.warning.main }} />}
+              iconColor={theme.palette.warning.light + "20"}
             />
           </Grid2>
           <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
             <KPICard
-              title="Rating Promedio"
+              title="Rating"
               value={profile.stats.averageRating}
               icon={<Star sx={{ color: "#FFC107" }} />}
               iconColor="#FFF8E1"
@@ -110,9 +134,9 @@ export const AmbulanceDashboardPage = () => {
           </Grid2>
         </Grid2>
 
-        {/* SECCIÓN 2: Contenido Principal (Formulario y Preview) */}
+        {/* SECTION 2: MAIN CONTENT */}
         <Grid2 container spacing={4}>
-          {/* COLUMNA IZQUIERDA: Formulario de Edición */}
+          {/* LEFT COLUMN: Profile Info (Read Only) */}
           <Grid2 size={{ xs: 12, lg: 8 }}>
             <Paper
               elevation={0}
@@ -120,154 +144,243 @@ export const AmbulanceDashboardPage = () => {
                 p: 4,
                 borderRadius: 3,
                 border: "1px solid",
-                borderColor: "grey.100",
+                borderColor: "grey.200",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
               }}
             >
-              <Box display="flex" justifyContent="space-between" mb={3}>
-                <Typography variant="h6" fontWeight={700}>
-                  Información del Perfil
-                </Typography>
-                <Button variant="outlined" startIcon={<Edit />} size="small">
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                mb={4}
+              >
+                <Box>
+                  <Typography variant="h6" fontWeight={700}>
+                    Información del Perfil
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Gestiona los datos visibles en la app
+                  </Typography>
+                </Box>
+                <Button
+                  variant="outlined"
+                  startIcon={<Edit />}
+                  onClick={() => setIsEditOpen(true)}
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: "none",
+                    fontWeight: 600,
+                  }}
+                >
                   Editar
                 </Button>
               </Box>
 
               <Stack spacing={3}>
-                {/* Fila 1 */}
-                <Grid2 container spacing={2}>
+                <Grid2 container spacing={3}>
                   <Grid2 size={{ xs: 12, md: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Nombre Comercial"
-                      defaultValue={profile.commercialName}
-                      slotProps={{
-                        input: { readOnly: true },
-                      }}
-                    />
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                    >
+                      Nombre Comercial
+                    </Typography>
+                    <Typography variant="body1" fontWeight={500} mt={0.5}>
+                      {profile.commercialName}
+                    </Typography>
                   </Grid2>
                   <Grid2 size={{ xs: 12, md: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Teléfono Emergencia"
-                      defaultValue={profile.emergencyPhone}
-                      slotProps={{
-                        input: { readOnly: true },
-                      }}
-                    />
-                  </Grid2>
-                </Grid2>
-
-                {/* Fila 2 */}
-                <Grid2 container spacing={2}>
-                  <Grid2 size={{ xs: 12, md: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="WhatsApp Corporativo"
-                      defaultValue={profile.whatsappContact}
-                      slotProps={{
-                        input: { readOnly: true },
-                      }}
-                    />
-                  </Grid2>
-                  <Grid2 size={{ xs: 12, md: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Dirección Base"
-                      defaultValue={profile.address}
-                      slotProps={{
-                        input: { readOnly: true },
-                      }}
-                    />
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                    >
+                      Teléfono Emergencia
+                    </Typography>
+                    <Typography variant="body1" fontWeight={500} mt={0.5}>
+                      {profile.emergencyPhone}
+                    </Typography>
                   </Grid2>
                 </Grid2>
 
-                <TextField
-                  fullWidth
-                  label="Descripción Corta"
-                  multiline
-                  rows={3}
-                  defaultValue={profile.shortDescription}
-                  helperText="Este texto aparecerá en la búsqueda de la app"
-                  slotProps={{
-                    input: { readOnly: true },
-                  }}
-                />
+                <Grid2 container spacing={3}>
+                  <Grid2 size={{ xs: 12, md: 6 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                    >
+                      Email de contacto
+                    </Typography>
+                    <Typography variant="body1" fontWeight={500} mt={0.5}>
+                      ambulancia@medicones.com
+                    </Typography>
+                  </Grid2>
+                  <Grid2 size={{ xs: 12, md: 6 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                    >
+                      WhatsApp
+                    </Typography>
+                    <Typography variant="body1" fontWeight={500} mt={0.5}>
+                      {profile.whatsappContact}
+                    </Typography>
+                  </Grid2>
+                </Grid2>
+
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    fontWeight={600}
+                  >
+                    Dirección Base
+                  </Typography>
+                  <Typography variant="body1" fontWeight={500} mt={0.5}>
+                    {profile.address}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    fontWeight={600}
+                  >
+                    Descripción
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    mt={0.5}
+                    sx={{ lineHeight: 1.6 }}
+                  >
+                    {profile.shortDescription}
+                  </Typography>
+                </Box>
               </Stack>
             </Paper>
           </Grid2>
 
-          {/* COLUMNA DERECHA: Vista Previa en App */}
+          {/* RIGHT COLUMN: Preview */}
           <Grid2 size={{ xs: 12, lg: 4 }}>
-            <Typography variant="subtitle1" fontWeight={600} mb={2}>
-              Vista previa en App
-            </Typography>
-
-            {/* Simulador de Tarjeta de App Móvil */}
             <Paper
-              elevation={3}
+              elevation={0}
               sx={{
-                p: 0,
-                borderRadius: 4,
-                overflow: "hidden",
-                maxWidth: 320,
-                mx: "auto",
-                bgcolor: "white",
+                p: 3,
+                borderRadius: 3,
+                border: "1px solid",
+                borderColor: "grey.200",
+                height: "100%",
               }}
             >
-              {/* Imagen Banner */}
+              <Typography variant="h6" fontWeight={700} mb={3}>
+                Vista previa en App
+              </Typography>
+
+              {/* Phone Card Simulator */}
               <Box
                 sx={{
-                  height: 160,
-                  width: "100%",
-                  bgcolor: "grey.200",
-                  backgroundImage: `url(${profile.bannerUrl})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
+                  border: "1px dashed",
+                  borderColor: "grey.300",
+                  borderRadius: 4,
+                  p: 2,
+                  bgcolor: "grey.50",
                 }}
-              />
-
-              <Box p={2}>
-                <Typography variant="h6" fontWeight={700} fontSize="1rem">
-                  {profile.commercialName}
-                </Typography>
-
-                <Stack
-                  direction="row"
-                  alignItems="center"
-                  spacing={0.5}
-                  mt={0.5}
+              >
+                <Paper
+                  elevation={3}
+                  sx={{
+                    borderRadius: 3,
+                    overflow: "hidden",
+                    maxWidth: 320,
+                    mx: "auto",
+                    bgcolor: "white",
+                  }}
                 >
-                  <Star sx={{ fontSize: 16, color: "#FFC107" }} />
-                  <Typography variant="caption" fontWeight={600}>
-                    {profile.stats.averageRating}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    ({profile.stats.totalReviews} reseñas)
-                  </Typography>
-                </Stack>
+                  <Box
+                    sx={{
+                      height: 140,
+                      width: "100%",
+                      bgcolor: "grey.200",
+                      backgroundImage: `url(${profile.bannerUrl})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                  />
 
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  display="block"
-                  mt={1}
-                >
-                  {profile.address}
-                </Typography>
+                  <Box p={2}>
+                    <Typography variant="h6" fontWeight={700} fontSize="1rem">
+                      {profile.commercialName}
+                    </Typography>
 
-                <Button
-                  fullWidth
-                  variant="contained"
-                  color="success"
-                  startIcon={<WhatsApp />}
-                  sx={{ mt: 2, borderRadius: 2, textTransform: "none" }}
-                >
-                  Contactar
-                </Button>
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      spacing={0.5}
+                      mt={0.5}
+                    >
+                      <Star sx={{ fontSize: 16, color: "#FFC107" }} />
+                      <Typography variant="caption" fontWeight={600}>
+                        {profile.stats.averageRating}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        ({profile.stats.totalReviews})
+                      </Typography>
+                    </Stack>
+
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      mt={1}
+                      sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                    >
+                      📍 {profile.address}
+                    </Typography>
+
+                    <Typography
+                      variant="caption"
+                      color="primary.main"
+                      fontWeight={600}
+                      display="block"
+                      mt={1}
+                    >
+                      📞 {profile.emergencyPhone}
+                    </Typography>
+
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      color="success"
+                      startIcon={<WhatsApp />}
+                      size="small"
+                      sx={{
+                        mt: 2,
+                        borderRadius: 2,
+                        textTransform: "none",
+                        boxShadow: "none",
+                      }}
+                    >
+                      Contactar
+                    </Button>
+                  </Box>
+                </Paper>
               </Box>
             </Paper>
           </Grid2>
         </Grid2>
+
+        {/* COMPONENTE DE MODAL */}
+        <EditProfileModal
+          open={isEditOpen}
+          onClose={() => setIsEditOpen(false)}
+          initialData={profile}
+          onSave={handleSaveChanges}
+        />
       </Box>
     </DashboardLayout>
   );

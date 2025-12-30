@@ -8,8 +8,8 @@ import {
   Route,
   Routes,
 } from "react-router-dom";
-import { ProtectedRoute } from "./ProtectedRoute";
 import { DoctorRoute } from "./DoctorRoute";
+import { ProtectedRoute } from "./ProtectedRoute";
 
 // Layouts
 import { AppLayout } from "../../shared/layouts/AppLayout";
@@ -18,6 +18,7 @@ import { AuthLayout } from "../../shared/layouts/AuthLayout";
 // Pages
 import { ActivityPage } from "../../features/activity-history/presentation/pages/ActivityPage";
 import { AdminDashboardPage } from "../../features/admin-dashboard/presentation/pages/AdminDashboardPage";
+import { AmbulanceDashboardPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceDashboardPage";
 import { AppointmentsPage } from "../../features/appointments/presentation/pages/AppointmentsPage";
 import { LoginPage } from "../../features/auth/presentation/pages/LoginPage";
 import { RegisterPage } from "../../features/auth/presentation/pages/RegisterPage";
@@ -66,7 +67,7 @@ export const AppRouter = () => {
           <Route path="/supplies/:id" element={<SupplyStoreDetailPage />} />
         </Route>
 
-        {/* Rutas de Admin Dashboard (públicas de momento)*/}
+        {/* Rutas de Admin Dashboard */}
         <Route path="/admin" element={<Outlet />}>
           <Route path="dashboard" element={<AdminDashboardPage />} />
           <Route path="requests" element={<RequestsPage />} />
@@ -75,7 +76,7 @@ export const AppRouter = () => {
           <Route path="settings" element={<SettingsPage />} />
         </Route>
 
-        {/* Ruta del Doctor Dashboard - Solo accesible para doctores (debe ir antes de /doctor/:id) */}
+        {/* Ruta del Doctor Dashboard */}
         <Route
           path="/doctor"
           element={
@@ -85,6 +86,12 @@ export const AppRouter = () => {
           }
         >
           <Route path="dashboard" element={<DoctorDashboardPage />} />
+        </Route>
+
+        <Route path="/provider" element={<Outlet />}>
+          <Route path="ambulance">
+            <Route path="dashboard" element={<AmbulanceDashboardPage />} />
+          </Route>
         </Route>
 
         {/* Rutas protegidas */}
