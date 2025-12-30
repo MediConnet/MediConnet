@@ -1,6 +1,8 @@
 import { Logout } from "@mui/icons-material";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getMenuByRole, type UserRole } from "../../config/navigation.config";
+import { useAuthStore } from "../../../app/store/auth.store";
+import { ROUTES } from "../../../app/config/constants";
 
 interface SidebarProps {
   role: UserRole;
@@ -10,6 +12,14 @@ interface SidebarProps {
 export const Sidebar = ({ role, isOpen }: SidebarProps) => {
   const menuItems = getMenuByRole(role);
   const location = useLocation();
+  const navigate = useNavigate();
+  const authStore = useAuthStore();
+  const { logout } = authStore;
+
+  const handleLogout = () => {
+    logout();
+    navigate(ROUTES.HOME);
+  };
 
   return (
     <aside
@@ -24,7 +34,7 @@ export const Sidebar = ({ role, isOpen }: SidebarProps) => {
         }`}
       >
         {/* ... código del logo ... */}
-        <div className="bg-emerald-500 p-2 rounded-lg shrink-0">
+        <div className="bg-teal-500 p-2 rounded-lg shrink-0">
           <span className="text-white font-bold text-xl">M</span>
         </div>
         <div
@@ -33,14 +43,19 @@ export const Sidebar = ({ role, isOpen }: SidebarProps) => {
           }`}
         >
           <h1 className="text-xl font-bold text-gray-800 whitespace-nowrap">
-            MediConnect
+            MEDICONES
           </h1>
         </div>
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto overflow-x-hidden">
         {menuItems.map((item, index) => {
-          const isActive = location.pathname.startsWith(item.path);
+          // Para rutas con query params, verificar si el tab coincide
+          const pathWithoutQuery = item.path.split('?')[0];
+          const tabParam = item.path.includes('tab=') ? item.path.split('tab=')[1] : null;
+          const currentTab = tabParam ? location.search.includes(`tab=${tabParam}`) : false;
+          const isActive = location.pathname.startsWith(pathWithoutQuery) && 
+            (tabParam ? currentTab : !location.search.includes('tab='));
 
           return (
             <Link
@@ -51,7 +66,7 @@ export const Sidebar = ({ role, isOpen }: SidebarProps) => {
                 isOpen ? "px-4 gap-3" : "justify-center px-0"
               } ${
                 isActive
-                  ? "bg-emerald-50 text-emerald-600 font-medium"
+                  ? "bg-teal-50 text-teal-600 font-medium"
                   : "text-gray-600 hover:bg-gray-50"
               }`}
             >
@@ -73,6 +88,7 @@ export const Sidebar = ({ role, isOpen }: SidebarProps) => {
       <div className="p-3 border-t border-gray-200">
         {/* ... botón logout ... */}
         <button
+          onClick={handleLogout}
           className={`flex items-center w-full text-red-500 hover:bg-red-50 rounded-lg transition-colors h-12 ${
             isOpen ? "px-4 gap-3" : "justify-center px-0"
           }`}

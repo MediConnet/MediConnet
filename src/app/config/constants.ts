@@ -27,6 +27,7 @@ export const ROUTES = {
   SUPPLIES: '/supplies',
   SUPPLY_DETAIL: '/supplies/:id',
   PROFILE: '/profile',
+  DOCTOR_DASHBOARD: '/doctor/dashboard',
 } as const;
 
 export const USER_ROLES = {

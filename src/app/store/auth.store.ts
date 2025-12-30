@@ -6,6 +6,7 @@ interface User {
   email: string;
   name: string;
   role: string;
+  tipo?: string | null; // Tipo de profesional: 'doctor', 'pharmacy', 'lab', 'ambulance', 'supplies'
 }
 
 interface AuthState {
@@ -44,12 +45,19 @@ let authState: AuthState = {
 };
 
 // NOTE: Cargar estado desde localStorage al iniciar
-const savedToken = localStorage.getItem('auth-token');
-const savedUser = localStorage.getItem('auth-user');
-if (savedToken && savedUser) {
-  authState.token = savedToken;
-  authState.user = JSON.parse(savedUser);
-  authState.isAuthenticated = true;
+try {
+  const savedToken = localStorage.getItem('auth-token');
+  const savedUser = localStorage.getItem('auth-user');
+  if (savedToken && savedUser) {
+    authState.token = savedToken;
+    authState.user = JSON.parse(savedUser);
+    authState.isAuthenticated = true;
+  }
+} catch (error) {
+  console.error('Error loading auth state from localStorage:', error);
+  // Limpiar datos corruptos
+  localStorage.removeItem('auth-token');
+  localStorage.removeItem('auth-user');
 }
 
 // Hook temporal que simula el comportamiento de Zustand

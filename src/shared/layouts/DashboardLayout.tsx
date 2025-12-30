@@ -7,12 +7,20 @@ interface DashboardLayoutProps {
   children: ReactNode;
   role: UserRole;
   userProfile: UserHeaderProfile;
+  appointments?: Array<{
+    id: string;
+    patientName: string;
+    date: string;
+    time: string;
+    reason: string;
+  }>;
 }
 
 export const DashboardLayout = ({
   children,
   role,
   userProfile,
+  appointments = [],
 }: DashboardLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -30,6 +38,7 @@ export const DashboardLayout = ({
           user={userProfile}
           isMenuOpen={isSidebarOpen}
           onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+          appointments={appointments}
         />
 
         <main className="flex-1 p-8 mt-20">{children}</main>
