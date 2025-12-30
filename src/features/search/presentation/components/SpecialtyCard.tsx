@@ -12,7 +12,8 @@ export const SpecialtyCard = ({ specialty, onClick }: SpecialtyCardProps) => {
       onClick={() => onClick(specialty.id)}
     >
       <div
-        className={`${specialty.colorClass} w-full aspect-[4/3] rounded-2xl flex items-center justify-center shadow-sm mb-4 transition-shadow group-hover:shadow-md`}
+        className={`${specialty.colorClass} w-full rounded-2xl flex items-center justify-center shadow-sm mb-4 transition-shadow group-hover:shadow-md`}
+        style={{ aspectRatio: '4/3' }}
       >
         <span className="text-7xl text-white filter drop-shadow-sm transform group-hover:scale-110 transition-transform duration-300 flex items-center justify-center">
           {specialty.icon}
