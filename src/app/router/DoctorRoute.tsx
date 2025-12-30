@@ -1,8 +1,8 @@
 // NOTE: Guard de ruta que verifica que el usuario sea un doctor
-// Solo permite acceso a usuarios autenticados con role 'profesional' y tipo 'doctor'
+// Solo permite acceso a usuarios autenticados con role 'provider' (o 'patient' legacy) y tipo 'doctor'
 
-import { Navigate, useLocation } from 'react-router-dom';
-import { useAuthStore } from '../store/auth.store';
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuthStore } from "../store/auth.store";
 
 interface DoctorRouteProps {
   children: React.ReactNode;
@@ -18,12 +18,16 @@ export const DoctorRoute = ({ children }: DoctorRouteProps) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // NOTE: Verifica que el usuario sea un doctor
-  if (!user || user.role !== 'patient' || user.tipo !== 'doctor') {
-    // Si no es doctor, redirige a home
+  const hasValidRole =
+    user?.role === "provider" ||
+    user?.role === "patient" ||
+    user?.role === "profesional";
+  const isDoctorType = user?.tipo === "doctor";
+
+  if (!user || !hasValidRole || !isDoctorType) {
+    // Si no cumple las condiciones, redirige a home
     return <Navigate to="/home" replace />;
   }
 
   return <>{children}</>;
 };
-

@@ -1,84 +1,86 @@
-import { useState } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import {
+  ArrowBack,
+  Email as EmailIcon,
+  Lock as LockIcon,
+  Visibility,
+  VisibilityOff,
+} from "@mui/icons-material";
 import {
   Box,
   Button,
   Card,
   CardContent,
+  CircularProgress,
+  IconButton,
+  InputAdornment,
+  Link,
   TextField,
   Typography,
-  InputAdornment,
-  IconButton,
-  Link,
-  CircularProgress,
-} from '@mui/material';
-import {
-  ArrowBack,
-  Visibility,
-  VisibilityOff,
-  Email as EmailIcon,
-  Lock as LockIcon,
-} from '@mui/icons-material';
-import { useAuthStore } from '../../../../app/store/auth.store';
-import { ROUTES } from '../../../../app/config/constants';
+} from "@mui/material";
+import { useState } from "react";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { ROUTES } from "../../../../app/config/constants";
+import { useAuthStore } from "../../../../app/store/auth.store";
 
 // Mock users para cuentas de prueba
 const mockUsers = [
   {
-    id: '1',
-    email: 'admin@medicones.com',
-    password: 'admin123',
-    nombre: 'Administrador',
-    role: 'admin' as const,
+    id: "1",
+    email: "admin@medicones.com",
+    password: "admin123",
+    nombre: "Administrador",
+    role: "admin" as const,
     tipo: null as string | null,
   },
   {
-    id: '2',
-    email: 'doctor@medicones.com',
-    password: 'doctor123',
-    nombre: 'Dr. Juan Pérez',
-    role: 'profesional' as const,
-    tipo: 'doctor' as string,
+    id: "2",
+    email: "doctor@medicones.com",
+    password: "doctor123",
+    nombre: "Dr. Juan Pérez",
+    role: "profesional" as const,
+    tipo: "doctor" as string,
   },
   {
-    id: '3',
-    email: 'farmacia@medicones.com',
-    password: 'farmacia123',
-    nombre: 'Farmacia Central',
-    role: 'profesional' as const,
-    tipo: 'pharmacy' as string,
+    id: "3",
+    email: "farmacia@medicones.com",
+    password: "farmacia123",
+    nombre: "Farmacia Central",
+    role: "profesional" as const,
+    tipo: "pharmacy" as string,
   },
   {
-    id: '4',
-    email: 'lab@medicones.com',
-    password: 'lab123',
-    nombre: 'Laboratorio Clínico',
-    role: 'profesional' as const,
-    tipo: 'lab' as string,
+    id: "4",
+    email: "lab@medicones.com",
+    password: "lab123",
+    nombre: "Laboratorio Clínico",
+    role: "profesional" as const,
+    tipo: "lab" as string,
   },
   {
-    id: '5',
-    email: 'ambulancia@medicones.com',
-    password: 'ambulancia123',
-    nombre: 'Servicio de Ambulancias',
-    role: 'profesional' as const,
-    tipo: 'ambulance' as string,
+    id: "5",
+    email: "ambulancia@medicones.com",
+    password: "ambulancia123",
+    nombre: "Servicio de Ambulancias",
+    role: "profesional" as const,
+    tipo: "ambulance" as string,
   },
 ];
 
 const serviceLabels: Record<string, string> = {
-  doctor: 'Médico',
-  pharmacy: 'Farmacia',
-  lab: 'Laboratorio',
-  ambulance: 'Ambulancia',
-  supplies: 'Insumos Médicos',
+  doctor: "Médico",
+  pharmacy: "Farmacia",
+  lab: "Laboratorio",
+  ambulance: "Ambulancia",
+  supplies: "Insumos Médicos",
 };
 
 // Función para autenticar usuario
 const authenticateUser = (email: string, password: string) => {
-  return mockUsers.find(
-    (user) => user.email === email && user.password === password
-  ) || null;
+  return (
+    mockUsers.find(
+      (user) => user.email === email && user.password === password
+    ) || null
+  );
 };
 
 export const LoginPage = () => {
@@ -88,8 +90,8 @@ export const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -97,21 +99,18 @@ export const LoginPage = () => {
     setIsLoading(true);
 
     try {
-      // Simular delay de red
       await new Promise((resolve) => setTimeout(resolve, 800));
-
       const user = authenticateUser(formData.email, formData.password);
 
       if (user) {
-        // Determinar el role para el store
-        let roleForStore = 'patient';
-        if (user.role === 'admin') {
-          roleForStore = 'admin';
-        } else if (user.role === 'profesional') {
-          roleForStore = 'patient'; // Los profesionales se guardan como 'patient' pero con tipo
+        // 1. Determinar el role para el store
+        let roleForStore = "patient";
+        if (user.role === "admin") {
+          roleForStore = "admin";
+        } else if (user.role === "profesional") {
+          roleForStore = "provider";
         }
 
-        // Login usando el store
         authStore.login(
           {
             id: user.id,
@@ -120,7 +119,7 @@ export const LoginPage = () => {
             role: roleForStore,
             tipo: user.tipo || null,
           },
-          'mock-token'
+          "mock-token"
         );
 
         if (user.role === 'admin') {
@@ -133,11 +132,10 @@ export const LoginPage = () => {
           navigate(ROUTES.HOME);
         }
       } else {
-        // Mostrar error (podrías usar un toast aquí)
-        console.error('Credenciales incorrectas');
+        console.error("Credenciales incorrectas");
       }
     } catch (error) {
-      console.error('Error al iniciar sesión:', error);
+      console.error("Error al iniciar sesión:", error);
     } finally {
       setIsLoading(false);
     }
@@ -150,69 +148,69 @@ export const LoginPage = () => {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         p: 2,
-        position: 'relative',
-        overflow: 'hidden',
-        backgroundColor: '#f9fafb',
+        position: "relative",
+        overflow: "hidden",
+        backgroundColor: "#f9fafb",
       }}
     >
       {/* Background Effects */}
       <Box
         sx={{
-          position: 'absolute',
+          position: "absolute",
           inset: 0,
           opacity: 0.3,
           backgroundImage: `
             linear-gradient(rgba(6, 182, 212, 0.08) 1px, transparent 1px),
             linear-gradient(90deg, rgba(6, 182, 212, 0.08) 1px, transparent 1px)
           `,
-          backgroundSize: '40px 40px',
+          backgroundSize: "40px 40px",
         }}
       />
       <Box
         sx={{
-          position: 'absolute',
+          position: "absolute",
           top: 0,
           right: 0,
-          width: '500px',
-          height: '500px',
-          background: 'rgba(6, 182, 212, 0.05)',
-          borderRadius: '50%',
-          filter: 'blur(80px)',
+          width: "500px",
+          height: "500px",
+          background: "rgba(6, 182, 212, 0.05)",
+          borderRadius: "50%",
+          filter: "blur(80px)",
         }}
       />
       <Box
         sx={{
-          position: 'absolute',
+          position: "absolute",
           bottom: 0,
           left: 0,
-          width: '400px',
-          height: '400px',
-          background: 'rgba(6, 182, 212, 0.05)',
-          borderRadius: '50%',
-          filter: 'blur(80px)',
+          width: "400px",
+          height: "400px",
+          background: "rgba(6, 182, 212, 0.05)",
+          borderRadius: "50%",
+          filter: "blur(80px)",
         }}
       />
 
       <Box
         sx={{
-          position: 'relative',
+          position: "relative",
           zIndex: 1,
-          width: '100%',
-          maxWidth: '500px',
-          animation: 'scaleIn 0.5s ease-out',
-          '@keyframes scaleIn': {
+          width: "100%",
+          maxWidth: "500px",
+          animation: "scaleIn 0.5s ease-out",
+          "@keyframes scaleIn": {
             from: {
               opacity: 0,
-              transform: 'scale(0.95)',
+              transform: "scale(0.95)",
             },
             to: {
               opacity: 1,
-              transform: 'scale(1)',
+              transform: "scale(1)",
             },
           },
         }}
@@ -224,11 +222,11 @@ export const LoginPage = () => {
           onClick={() => navigate(ROUTES.HOME)}
           sx={{
             mb: 3,
-            color: '#14b8a6',
+            color: "#14b8a6",
             fontWeight: 500,
-            textTransform: 'none',
-            '&:hover': {
-              backgroundColor: 'rgba(20, 184, 166, 0.1)',
+            textTransform: "none",
+            "&:hover": {
+              backgroundColor: "rgba(20, 184, 166, 0.1)",
             },
           }}
         >
@@ -239,30 +237,30 @@ export const LoginPage = () => {
           sx={{
             borderRadius: 3,
             p: 2,
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(10px)',
+            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.1)",
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
+            backdropFilter: "blur(10px)",
           }}
         >
-          <CardContent sx={{ textAlign: 'center', p: 4 }}>
+          <CardContent sx={{ textAlign: "center", p: 4 }}>
             {/* Logo */}
-            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+            <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
               <Box
                 sx={{
                   width: 64,
                   height: 64,
                   borderRadius: 2,
-                  backgroundColor: '#14b8a6',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  backgroundColor: "#14b8a6",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 <Typography
                   sx={{
-                    color: 'white',
+                    color: "white",
                     fontWeight: 700,
-                    fontSize: '2rem',
+                    fontSize: "2rem",
                   }}
                 >
                   M
@@ -276,8 +274,8 @@ export const LoginPage = () => {
               sx={{
                 fontWeight: 700,
                 mb: 1,
-                color: '#1f2937',
-                fontSize: '1.75rem',
+                color: "#1f2937",
+                fontSize: "1.75rem",
               }}
             >
               Iniciar Sesión
@@ -285,9 +283,9 @@ export const LoginPage = () => {
             <Typography
               variant="body2"
               sx={{
-                color: '#6b7280',
+                color: "#6b7280",
                 mb: 4,
-                fontSize: '0.9375rem',
+                fontSize: "0.9375rem",
               }}
             >
               Accede a tu panel de gestión de servicios
@@ -307,14 +305,14 @@ export const LoginPage = () => {
                   }
                   required
                   sx={{
-                    '& .MuiOutlinedInput-root': {
+                    "& .MuiOutlinedInput-root": {
                       borderRadius: 2,
                     },
                   }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <EmailIcon sx={{ color: '#9ca3af', fontSize: 20 }} />
+                        <EmailIcon sx={{ color: "#9ca3af", fontSize: 20 }} />
                       </InputAdornment>
                     ),
                   }}
@@ -325,7 +323,7 @@ export const LoginPage = () => {
                 <TextField
                   fullWidth
                   label="Contraseña"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={(e) =>
@@ -333,14 +331,14 @@ export const LoginPage = () => {
                   }
                   required
                   sx={{
-                    '& .MuiOutlinedInput-root': {
+                    "& .MuiOutlinedInput-root": {
                       borderRadius: 2,
                     },
                   }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <LockIcon sx={{ color: '#9ca3af', fontSize: 20 }} />
+                        <LockIcon sx={{ color: "#9ca3af", fontSize: 20 }} />
                       </InputAdornment>
                     ),
                     endAdornment: (
@@ -348,7 +346,7 @@ export const LoginPage = () => {
                         <IconButton
                           onClick={() => setShowPassword(!showPassword)}
                           edge="end"
-                          sx={{ color: '#9ca3af' }}
+                          sx={{ color: "#9ca3af" }}
                         >
                           {showPassword ? (
                             <VisibilityOff sx={{ fontSize: 20 }} />
@@ -362,17 +360,17 @@ export const LoginPage = () => {
                 />
               </Box>
 
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+              <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
                 <Link
                   component={RouterLink}
                   to={ROUTES.FORGOT_PASSWORD}
                   sx={{
-                    color: '#14b8a6',
-                    fontSize: '0.875rem',
-                    textDecoration: 'none',
+                    color: "#14b8a6",
+                    fontSize: "0.875rem",
+                    textDecoration: "none",
                     fontWeight: 500,
-                    '&:hover': {
-                      textDecoration: 'underline',
+                    "&:hover": {
+                      textDecoration: "underline",
                     },
                   }}
                 >
@@ -387,50 +385,53 @@ export const LoginPage = () => {
                 disabled={isLoading}
                 sx={{
                   py: 1.5,
-                  backgroundColor: '#14b8a6',
-                  color: 'white',
-                  textTransform: 'none',
-                  fontSize: '1rem',
+                  backgroundColor: "#14b8a6",
+                  color: "white",
+                  textTransform: "none",
+                  fontSize: "1rem",
                   fontWeight: 600,
                   borderRadius: 2,
-                  '&:hover': {
-                    backgroundColor: '#0d9488',
+                  "&:hover": {
+                    backgroundColor: "#0d9488",
                   },
-                  '&:disabled': {
-                    backgroundColor: '#cbd5e1',
+                  "&:disabled": {
+                    backgroundColor: "#cbd5e1",
                   },
                 }}
               >
                 {isLoading ? (
                   <>
-                    <CircularProgress size={20} sx={{ mr: 1, color: 'white' }} />
+                    <CircularProgress
+                      size={20}
+                      sx={{ mr: 1, color: "white" }}
+                    />
                     Iniciando sesión...
                   </>
                 ) : (
-                  'Iniciar sesión'
+                  "Iniciar sesión"
                 )}
               </Button>
             </Box>
 
             {/* Register Link */}
-            <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Box sx={{ textAlign: "center", mb: 3 }}>
               <Typography
                 variant="body2"
                 sx={{
-                  color: '#6b7280',
-                  fontSize: '0.875rem',
+                  color: "#6b7280",
+                  fontSize: "0.875rem",
                 }}
               >
-                ¿No tienes cuenta?{' '}
+                ¿No tienes cuenta?{" "}
                 <Link
                   component={RouterLink}
                   to={ROUTES.REGISTER}
                   sx={{
-                    color: '#14b8a6',
+                    color: "#14b8a6",
                     fontWeight: 600,
-                    textDecoration: 'none',
-                    '&:hover': {
-                      textDecoration: 'underline',
+                    textDecoration: "none",
+                    "&:hover": {
+                      textDecoration: "underline",
                     },
                   }}
                 >
@@ -445,83 +446,87 @@ export const LoginPage = () => {
                 mt: 3,
                 p: 3,
                 borderRadius: 2,
-                backgroundColor: 'rgba(236, 253, 245, 0.5)',
-                border: '1px solid rgba(6, 182, 212, 0.2)',
+                backgroundColor: "rgba(236, 253, 245, 0.5)",
+                border: "1px solid rgba(6, 182, 212, 0.2)",
               }}
             >
               <Typography
                 variant="body2"
                 sx={{
                   fontWeight: 600,
-                  textAlign: 'center',
+                  textAlign: "center",
                   mb: 2,
-                  color: '#1f2937',
-                  fontSize: '0.875rem',
+                  color: "#1f2937",
+                  fontSize: "0.875rem",
                 }}
               >
                 Cuentas de prueba (clic para usar):
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 {/* Admin */}
                 <Button
                   type="button"
-                  onClick={() => handleQuickLogin('admin@medicones.com', 'admin123')}
+                  onClick={() =>
+                    handleQuickLogin("admin@medicones.com", "admin123")
+                  }
                   sx={{
-                    width: '100%',
-                    textAlign: 'left',
+                    width: "100%",
+                    textAlign: "left",
                     p: 1.5,
                     borderRadius: 1.5,
-                    backgroundColor: 'transparent',
-                    color: '#1f2937',
-                    textTransform: 'none',
-                    justifyContent: 'flex-start',
-                    fontSize: '0.875rem',
-                    '&:hover': {
-                      backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                    backgroundColor: "transparent",
+                    color: "#1f2937",
+                    textTransform: "none",
+                    justifyContent: "flex-start",
+                    fontSize: "0.875rem",
+                    "&:hover": {
+                      backgroundColor: "rgba(6, 182, 212, 0.1)",
                     },
                   }}
                 >
                   <Typography
                     component="span"
-                    sx={{ fontWeight: 600, color: '#14b8a6', mr: 1 }}
+                    sx={{ fontWeight: 600, color: "#14b8a6", mr: 1 }}
                   >
                     Administrador:
                   </Typography>
-                  <Typography component="span" sx={{ color: '#6b7280' }}>
+                  <Typography component="span" sx={{ color: "#6b7280" }}>
                     admin@medicones.com
                   </Typography>
                 </Button>
 
                 {/* Service types */}
                 {mockUsers
-                  .filter((u) => u.role === 'profesional')
+                  .filter((u) => u.role === "profesional")
                   .map((user) => (
                     <Button
                       key={user.id}
                       type="button"
-                      onClick={() => handleQuickLogin(user.email, user.password)}
+                      onClick={() =>
+                        handleQuickLogin(user.email, user.password)
+                      }
                       sx={{
-                        width: '100%',
-                        textAlign: 'left',
+                        width: "100%",
+                        textAlign: "left",
                         p: 1.5,
                         borderRadius: 1.5,
-                        backgroundColor: 'transparent',
-                        color: '#1f2937',
-                        textTransform: 'none',
-                        justifyContent: 'flex-start',
-                        fontSize: '0.875rem',
-                        '&:hover': {
-                          backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                        backgroundColor: "transparent",
+                        color: "#1f2937",
+                        textTransform: "none",
+                        justifyContent: "flex-start",
+                        fontSize: "0.875rem",
+                        "&:hover": {
+                          backgroundColor: "rgba(6, 182, 212, 0.1)",
                         },
                       }}
                     >
                       <Typography
                         component="span"
-                        sx={{ fontWeight: 600, color: '#14b8a6', mr: 1 }}
+                        sx={{ fontWeight: 600, color: "#14b8a6", mr: 1 }}
                       >
-                        {user.tipo ? serviceLabels[user.tipo] : 'Profesional'}:
+                        {user.tipo ? serviceLabels[user.tipo] : "Profesional"}:
                       </Typography>
-                      <Typography component="span" sx={{ color: '#6b7280' }}>
+                      <Typography component="span" sx={{ color: "#6b7280" }}>
                         {user.email}
                       </Typography>
                     </Button>
