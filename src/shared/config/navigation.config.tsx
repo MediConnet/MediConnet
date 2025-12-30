@@ -10,7 +10,12 @@ import {
   Timeline,
 } from "@mui/icons-material";
 
-export type UserRole = "ADMIN" | "PROVIDER" | "PATIENT" | string;
+export type UserRole =
+  | "ADMIN"
+  | "PROVIDER"
+  | "PATIENT"
+  | "PROFESIONAL"
+  | string;
 
 export interface MenuItem {
   icon: React.ReactNode;
@@ -27,7 +32,7 @@ export const ADMIN_MENU: MenuItem[] = [
   { icon: <Settings />, label: "Configuración", path: "/admin/settings" },
 ];
 
-// --- 2. MENÚ DOCTOR ---
+// --- 2. MENÚ DOCTOR (Usa query params ?tab=...) ---
 export const DOCTOR_MENU: MenuItem[] = [
   {
     icon: <Person />,
@@ -52,7 +57,7 @@ export const DOCTOR_MENU: MenuItem[] = [
   },
 ];
 
-// --- 3. MENÚ AMBULANCIA ---
+// --- 3. MENÚ AMBULANCIA (Usa sub-rutas /provider/ambulance/...) ---
 export const AMBULANCE_MENU: MenuItem[] = [
   {
     icon: <Person />,
@@ -67,19 +72,28 @@ export const AMBULANCE_MENU: MenuItem[] = [
   },
 ];
 
-// --- 4. MENÚ FARMACIA ---
+// --- 4. MENÚ FARMACIA (Usa sub-rutas /provider/pharmacy/...) ---
 export const PHARMACY_MENU: MenuItem[] = [
   {
     icon: <Person />,
     label: "Mi Farmacia",
     path: "/provider/pharmacy/dashboard",
   },
+  // Nota: Estas rutas deben existir en el AppRouter dentro de /provider/pharmacy
   { icon: <StarRate />, label: "Reseñas", path: "/provider/pharmacy/reviews" },
   {
     icon: <Settings />,
     label: "Configuración",
     path: "/provider/pharmacy/settings",
   },
+];
+
+// --- 5. MENÚ LABORATORIO (Usa ruta base /laboratory/...) ---
+export const LAB_MENU: MenuItem[] = [
+  { icon: <Person />, label: "Mi Laboratorio", path: "/laboratory/dashboard" },
+  // Asumiendo que el laboratorio tendrá estructura similar en el futuro:
+  { icon: <StarRate />, label: "Reseñas", path: "/laboratory/reviews" },
+  { icon: <Settings />, label: "Configuración", path: "/laboratory/settings" },
 ];
 
 // --- FUNCIÓN HELPER DINÁMICA ---
@@ -94,20 +108,24 @@ export const getMenuByRole = (
       return ADMIN_MENU;
 
     case "PROVIDER":
-    case "PROFESIONAL":
-      if (providerType === "ambulance") {
-        return AMBULANCE_MENU;
+    case "PROFESIONAL": // Soporte para el rol legacy si existe en BD
+      switch (providerType) {
+        case "doctor":
+          return DOCTOR_MENU;
+        case "ambulance":
+          return AMBULANCE_MENU;
+        case "pharmacy":
+          return PHARMACY_MENU;
+        case "lab":
+          return LAB_MENU;
+        default:
+          // Si es proveedor pero no tiene tipo definido, retornamos array vacío o un default
+          return [];
       }
 
-      if (providerType === "pharmacy") {
-        return PHARMACY_MENU;
-      }
-
-      if (providerType === "doctor") {
-        return DOCTOR_MENU;
-      }
-
-      return DOCTOR_MENU;
+    case "PATIENT":
+      // Retorna menú de paciente si lo tienes definido, o vacío
+      return [];
 
     default:
       return [];

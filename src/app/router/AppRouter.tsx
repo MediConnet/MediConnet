@@ -9,6 +9,7 @@ import {
   Routes,
 } from "react-router-dom";
 import { DoctorRoute } from "./DoctorRoute";
+import { LaboratoryRoute } from "./LaboratoryRoute";
 import { ProtectedRoute } from "./ProtectedRoute";
 
 // Layouts
@@ -30,6 +31,7 @@ import { DoctorProfilePage } from "../../features/doctors/presentation/pages/Doc
 import { DoctorsListPage } from "../../features/doctors/presentation/pages/DoctorsListPage";
 import { HomePage } from "../../features/home/presentation/pages/HomePage";
 import { ServicesCatalogPage } from "../../features/home/presentation/pages/ServicesCatalogPage";
+import { LaboratoryDashboardPage } from "../../features/laboratories/presentation/pages/LaboratoryDashboardPage";
 import { PharmacyDashboardPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyDashboardPage";
 import { ProfilePage } from "../../features/profile/pages/ProfilePage";
 import { RequestsPage } from "../../features/provider-requests/presentation/pages/RequestsPage";
@@ -90,10 +92,22 @@ export const AppRouter = () => {
             <Route path="settings" element={<AmbulanceSettingsPage />} />
           </Route>
 
-          {/* Farmacia (AHORA DENTRO DE /provider) */}
+          {/* Farmacia */}
           <Route path="pharmacy">
             <Route path="dashboard" element={<PharmacyDashboardPage />} />
           </Route>
+        </Route>
+
+        {/* Ruta del Laboratory Dashboard - Solo accesible para laboratorios */}
+        <Route
+          path="/laboratory"
+          element={
+            <LaboratoryRoute>
+              <Outlet />
+            </LaboratoryRoute>
+          }
+        >
+          <Route path="dashboard" element={<LaboratoryDashboardPage />} />
         </Route>
 
         {/* Rutas protegidas */}

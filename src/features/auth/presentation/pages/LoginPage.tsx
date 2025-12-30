@@ -122,6 +122,7 @@ export const LoginPage = () => {
           "mock-token"
         );
 
+<<<<<<< HEAD
         // 2. Lógica de Redirección
         if (user.role === "admin") {
           navigate("/admin/dashboard");
@@ -139,6 +140,14 @@ export const LoginPage = () => {
             default:
               navigate(ROUTES.HOME);
           }
+=======
+        if (user.role === 'admin') {
+          navigate('/admin/dashboard');
+        } else if (user.role === 'profesional' && user.tipo === 'doctor') {
+          navigate('/doctor/dashboard');
+        } else if (user.role === 'profesional' && user.tipo === 'lab') {
+          navigate('/laboratory/dashboard');
+>>>>>>> develop
         } else {
           navigate(ROUTES.HOME);
         }
