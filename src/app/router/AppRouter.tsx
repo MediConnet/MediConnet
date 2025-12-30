@@ -17,10 +17,6 @@ import { AuthLayout } from "../../shared/layouts/AuthLayout";
 // Pages
 import { ActivityPage } from "../../features/activity-history/presentation/pages/ActivityPage";
 import { AdminDashboardPage } from "../../features/admin-dashboard/presentation/pages/AdminDashboardPage";
-import { AmbulanceDetailPage } from "../../features/ambulance/presentation/pages/AmbulanceDetailPage";
-import { AmbulancesListPage } from "../../features/ambulance/presentation/pages/AmbulancesListPage";
-import { AmbulanceTrackingPage } from "../../features/ambulance/presentation/pages/AmbulanceTrackingPage";
-import { RequestAmbulancePage } from "../../features/ambulance/presentation/pages/RequestAmbulancePage";
 import { AppointmentsPage } from "../../features/appointments/presentation/pages/AppointmentsPage";
 import { LoginPage } from "../../features/auth/presentation/pages/LoginPage";
 import { RegisterPage } from "../../features/auth/presentation/pages/RegisterPage";
@@ -64,8 +60,6 @@ export const AppRouter = () => {
           <Route path="/pharmacy-branch/:id" element={<BranchDetailPage />} />
           <Route path="/laboratories" element={<LaboratoriesPage />} />
           <Route path="/laboratories/:id" element={<LaboratoryDetailPage />} />
-          <Route path="/ambulances" element={<AmbulancesListPage />} />
-          <Route path="/ambulances/:id" element={<AmbulanceDetailPage />} />
           <Route path="/supplies" element={<SuppliesListPage />} />
           <Route path="/supplies/:id" element={<SupplyStoreDetailPage />} />
         </Route>
@@ -94,11 +88,6 @@ export const AppRouter = () => {
           <Route
             path="/specialties/:specialtyName"
             element={<DoctorsListPage />}
-          />
-          <Route path="/ambulance/request" element={<RequestAmbulancePage />} />
-          <Route
-            path="/ambulance/tracking/:id"
-            element={<AmbulanceTrackingPage />}
           />
         </Route>
 
