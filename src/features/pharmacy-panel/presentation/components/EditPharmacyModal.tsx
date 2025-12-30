@@ -1,4 +1,10 @@
-import { CheckCircle, Close, CloudUpload, Save } from "@mui/icons-material";
+import {
+  AccessTime,
+  CheckCircle,
+  Close,
+  CloudUpload,
+  Save,
+} from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -6,8 +12,12 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
   FormControlLabel,
   IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
   Switch,
   TextField,
@@ -26,6 +36,8 @@ interface Props {
   onSave: (data: PharmacyProfile) => void;
 }
 
+const DAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
 export const EditPharmacyModal = ({
   open,
   onClose,
@@ -35,17 +47,38 @@ export const EditPharmacyModal = ({
   const theme = useTheme();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Estado del formulario principal
   const [formData, setFormData] = useState<PharmacyProfile | null>(null);
+
+  // Estado local para manejar los selectores de horario antes de guardar
+  const [scheduleState, setScheduleState] = useState({
+    startDay: "Lun",
+    endDay: "Vie",
+    startTime: "08:00",
+    endTime: "20:00",
+  });
+
   const [hasNewImage, setHasNewImage] = useState(false);
 
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
       setHasNewImage(false);
+
+      const daysParts = initialData.schedule.daysSummary.split(" - ");
+      const hoursParts = initialData.schedule.hoursSummary.split(" - ");
+
+      setScheduleState({
+        startDay: daysParts[0] || "Lun",
+        endDay: daysParts[1] || "Dom",
+        startTime: hoursParts[0] || "08:00",
+        endTime: hoursParts[1] || "20:00",
+      });
     }
   }, [initialData, open]);
 
-  // Helper genérico para inputs de texto
+  // --- HANDLERS ---
+
   const handleChange = (
     field: keyof PharmacyProfile,
     value: string | boolean
@@ -55,17 +88,26 @@ export const EditPharmacyModal = ({
     }
   };
 
-  // Helper específico para los campos anidados de horario
-  const handleScheduleChange = (
-    field: keyof PharmacyProfile["schedule"],
+  // Validador de Teléfonos (WhatsApp y Convencional)
+  const handlePhoneChange = (
+    field: keyof PharmacyProfile | "whatsappContact",
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = e.target.value;
+    // Solo números y máximo 10 caracteres
+    if (/^\d*$/.test(value) && value.length <= 10) {
+      if (formData) {
+        setFormData({ ...formData, [field]: value } as any);
+      }
+    }
+  };
+
+  // Handler para los selectores de horario
+  const handleScheduleSelectChange = (
+    field: keyof typeof scheduleState,
     value: string
   ) => {
-    if (formData) {
-      setFormData({
-        ...formData,
-        schedule: { ...formData.schedule, [field]: value },
-      });
-    }
+    setScheduleState((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleUploadClick = () => fileInputRef.current?.click();
@@ -81,7 +123,19 @@ export const EditPharmacyModal = ({
 
   const handleSave = () => {
     if (formData) {
-      onSave(formData);
+      // Construimos los strings finales del horario antes de guardar
+      const finalDaysSummary = `${scheduleState.startDay} - ${scheduleState.endDay}`;
+      const finalHoursSummary = `${scheduleState.startTime} - ${scheduleState.endTime}`;
+
+      const dataToSave = {
+        ...formData,
+        schedule: {
+          daysSummary: finalDaysSummary,
+          hoursSummary: finalHoursSummary,
+        },
+      };
+
+      onSave(dataToSave);
       onClose();
     }
   };
@@ -94,7 +148,11 @@ export const EditPharmacyModal = ({
       onClose={onClose}
       fullWidth
       maxWidth="md"
-      PaperProps={{ sx: { borderRadius: 3 } }}
+      slotProps={{
+        paper: {
+          sx: { borderRadius: 3 },
+        },
+      }}
     >
       <Box
         display="flex"
@@ -113,10 +171,10 @@ export const EditPharmacyModal = ({
 
       <DialogContent dividers>
         <Stack spacing={3} sx={{ mt: 1 }}>
-          {/* --- ZONA DE CARGA DE IMAGEN --- */}
+          {/* --- CARGA DE IMAGEN --- */}
           <Box>
             <Typography variant="subtitle2" fontWeight={600} mb={1}>
-              Imagen de Portada (Banner)
+              Imagen de Portada
             </Typography>
             <input
               type="file"
@@ -173,7 +231,7 @@ export const EditPharmacyModal = ({
             </Box>
           </Box>
 
-          {/* --- CAMPOS PRINCIPALES --- */}
+          {/* --- DATOS PRINCIPALES --- */}
           <Grid2 container spacing={2}>
             <Grid2 size={{ xs: 12, md: 6 }}>
               <TextField
@@ -186,9 +244,32 @@ export const EditPharmacyModal = ({
             <Grid2 size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
-                label="Teléfono de Contacto"
+                label="Teléfono Convencional"
                 value={formData.phone}
-                onChange={(e) => handleChange("phone", e.target.value)}
+                onChange={(e) => handlePhoneChange("phone", e as any)}
+                placeholder="Ej: 022345678"
+                slotProps={{
+                  input: { inputMode: "numeric" },
+                }}
+              />
+            </Grid2>
+          </Grid2>
+
+          {/* --- Teléfono WhatsApp --- */}
+          <Grid2 container spacing={2}>
+            <Grid2 size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                label="Número de WhatsApp (Para botón de contacto)"
+                value={formData.whatsappContact}
+                onChange={(e) =>
+                  handlePhoneChange("whatsappContact" as any, e as any)
+                }
+                placeholder="Ej: 0991234567"
+                helperText="Este número se usará para el botón de contacto directo"
+                slotProps={{
+                  input: { inputMode: "numeric" },
+                }}
               />
             </Grid2>
           </Grid2>
@@ -200,37 +281,112 @@ export const EditPharmacyModal = ({
             onChange={(e) => handleChange("address", e.target.value)}
           />
 
-          {/* --- SECCIÓN DE HORARIO Y DELIVERY --- */}
-          <Typography variant="h6" fontSize="1rem" fontWeight={700} pt={1}>
-            Configuración de Servicio
-          </Typography>
+          {/* --- SELECTORES DE HORARIO --- */}
+          <Box
+            sx={{
+              p: 2,
+              bgcolor: "grey.50",
+              borderRadius: 2,
+              border: "1px solid",
+              borderColor: "grey.200",
+            }}
+          >
+            <Typography
+              variant="subtitle2"
+              fontWeight={700}
+              mb={2}
+              display="flex"
+              alignItems="center"
+              gap={1}
+            >
+              <AccessTime fontSize="small" /> Configuración de Horario
+            </Typography>
 
-          <Grid2 container spacing={2}>
-            <Grid2 size={{ xs: 12, md: 6 }}>
-              <TextField
-                fullWidth
-                label="Días de Atención"
-                placeholder="Ej: Lunes - Viernes"
-                value={formData.schedule.daysSummary}
-                onChange={(e) =>
-                  handleScheduleChange("daysSummary", e.target.value)
-                }
-                helperText="Resumen de los días que abren"
-              />
+            {/* Días */}
+            <Grid2 container spacing={2} mb={2}>
+              <Grid2 size={{ xs: 6 }}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Día Inicio</InputLabel>
+                  <Select
+                    value={scheduleState.startDay}
+                    label="Día Inicio"
+                    onChange={(e) =>
+                      handleScheduleSelectChange("startDay", e.target.value)
+                    }
+                  >
+                    {DAYS.map((day) => (
+                      <MenuItem key={day} value={day}>
+                        {day}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid2>
+              <Grid2 size={{ xs: 6 }}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Día Fin</InputLabel>
+                  <Select
+                    value={scheduleState.endDay}
+                    label="Día Fin"
+                    onChange={(e) =>
+                      handleScheduleSelectChange("endDay", e.target.value)
+                    }
+                  >
+                    {DAYS.map((day) => (
+                      <MenuItem key={day} value={day}>
+                        {day}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid2>
             </Grid2>
-            <Grid2 size={{ xs: 12, md: 6 }}>
-              <TextField
-                fullWidth
-                label="Horario"
-                placeholder="Ej: 08:00 - 20:00"
-                value={formData.schedule.hoursSummary}
-                onChange={(e) =>
-                  handleScheduleChange("hoursSummary", e.target.value)
-                }
-                helperText="Rango de horas de operación"
-              />
+
+            {/* Horas */}
+            <Grid2 container spacing={2}>
+              <Grid2 size={{ xs: 6 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Hora Apertura"
+                  type="time"
+                  value={scheduleState.startTime}
+                  onChange={(e) =>
+                    handleScheduleSelectChange("startTime", e.target.value)
+                  }
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+              </Grid2>
+              <Grid2 size={{ xs: 6 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Hora Cierre"
+                  type="time"
+                  value={scheduleState.endTime}
+                  onChange={(e) =>
+                    handleScheduleSelectChange("endTime", e.target.value)
+                  }
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+              </Grid2>
             </Grid2>
-          </Grid2>
+
+            {/* Previsualización */}
+            <Typography
+              variant="caption"
+              display="block"
+              mt={1}
+              color="text.secondary"
+              textAlign="center"
+            >
+              Se mostrará como:{" "}
+              <strong>
+                {scheduleState.startDay} - {scheduleState.endDay} |{" "}
+                {scheduleState.startTime} - {scheduleState.endTime}
+              </strong>
+            </Typography>
+          </Box>
 
           <Box
             sx={{
@@ -266,8 +422,17 @@ export const EditPharmacyModal = ({
         <Button
           variant="contained"
           onClick={handleSave}
-          startIcon={<Save />}
-          sx={{ borderRadius: 2, px: 3 }}
+          startIcon={<Save sx={{ color: "white" }} />}
+          sx={{
+            borderRadius: 2,
+            px: 3,
+            color: "white",
+            fontWeight: 700,
+            boxShadow: "none",
+            "&:hover": {
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            },
+          }}
         >
           Guardar Cambios
         </Button>

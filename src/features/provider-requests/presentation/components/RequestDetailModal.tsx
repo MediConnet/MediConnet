@@ -1,4 +1,6 @@
 import {
+  Block,
+  Check,
   Close,
   Download,
   Image as ImageIcon,
@@ -15,7 +17,6 @@ import {
   Divider,
   IconButton,
   Paper,
-  Stack,
   Typography,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
@@ -51,7 +52,7 @@ export const RequestDetailModal = ({
         },
       }}
     >
-      {/* HEADER: Título y Botón Cerrar */}
+      {/* HEADER */}
       <DialogTitle
         sx={{
           display: "flex",
@@ -252,30 +253,39 @@ export const RequestDetailModal = ({
 
       <Divider />
 
-      {/* FOOTER: Acciones */}
-      <DialogActions sx={{ p: 3, justifyContent: "space-between" }}>
-        <Button variant="outlined" color="inherit">
-          Solicitar corrección
+      <DialogActions sx={{ p: 3, justifyContent: "flex-end", gap: 2 }}>
+        <Button
+          variant="outlined"
+          color="error"
+          size="large"
+          startIcon={<Block />}
+          onClick={() => onReject(request.id)}
+          sx={{
+            px: 3,
+            borderRadius: 2,
+            textTransform: "none",
+            fontWeight: 600,
+          }}
+        >
+          Rechazar Solicitud
         </Button>
-        <Stack direction="row" spacing={2}>
-          <Button
-            variant="contained"
-            color="error"
-            disableElevation
-            onClick={() => onReject(request.id)}
-          >
-            Rechazar
-          </Button>
-          <Button
-            variant="contained"
-            color="success"
-            disableElevation
-            onClick={() => onApprove(request.id)}
-            sx={{ color: "white" }}
-          >
-            Aprobar
-          </Button>
-        </Stack>
+        <Button
+          variant="contained"
+          color="success"
+          size="large"
+          startIcon={<Check />}
+          onClick={() => onApprove(request.id)}
+          sx={{
+            color: "white",
+            px: 4,
+            borderRadius: 2,
+            textTransform: "none",
+            fontWeight: 600,
+            boxShadow: "0 4px 12px rgba(46, 125, 50, 0.2)",
+          }}
+        >
+          Aprobar Solicitud
+        </Button>
       </DialogActions>
     </Dialog>
   );
