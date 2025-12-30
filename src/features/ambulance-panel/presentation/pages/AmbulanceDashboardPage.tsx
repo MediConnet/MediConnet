@@ -48,7 +48,7 @@ export const AmbulanceDashboardPage = () => {
   // Función para guardar cambios (callback del modal)
   const handleSaveChanges = (updatedProfile: AmbulanceProfile) => {
     setProfile(updatedProfile);
-    // Aquí podrías añadir la llamada al API para persistir: updateProfile(updatedProfile)
+    // TODO: Aquí iría la llamada al caso de uso para persistir los cambios
   };
 
   if (isLoading || !profile) {

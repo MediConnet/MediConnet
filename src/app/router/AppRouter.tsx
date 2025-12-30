@@ -19,6 +19,7 @@ import { AuthLayout } from "../../shared/layouts/AuthLayout";
 import { ActivityPage } from "../../features/activity-history/presentation/pages/ActivityPage";
 import { AdminDashboardPage } from "../../features/admin-dashboard/presentation/pages/AdminDashboardPage";
 import { AmbulanceDashboardPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceDashboardPage";
+import { AmbulanceReviewsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceReviewsPage";
 import { AppointmentsPage } from "../../features/appointments/presentation/pages/AppointmentsPage";
 import { LoginPage } from "../../features/auth/presentation/pages/LoginPage";
 import { RegisterPage } from "../../features/auth/presentation/pages/RegisterPage";
@@ -88,9 +89,11 @@ export const AppRouter = () => {
           <Route path="dashboard" element={<DoctorDashboardPage />} />
         </Route>
 
+        {/* Rutas del Panel de Ambulancias */}
         <Route path="/provider" element={<Outlet />}>
           <Route path="ambulance">
             <Route path="dashboard" element={<AmbulanceDashboardPage />} />
+            <Route path="reviews" element={<AmbulanceReviewsPage />} />
           </Route>
         </Route>
 

@@ -1,4 +1,4 @@
-import { Close, CloudUpload, Save } from "@mui/icons-material";
+import { CheckCircle, Close, CloudUpload, Save } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -13,7 +13,7 @@ import {
   alpha,
   useTheme,
 } from "@mui/material";
-import Grid2 from "@mui/material/Grid2"; // Usamos Grid2 como pediste
+import Grid2 from "@mui/material/Grid2";
 import { useEffect, useRef, useState } from "react";
 import type { AmbulanceProfile } from "../../domain/ambulance-profile.entity";
 
@@ -33,15 +33,13 @@ export const EditProfileModal = ({
   const theme = useTheme();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Estado local del formulario
   const [formData, setFormData] = useState<AmbulanceProfile | null>(null);
-  // Estado para previsualizar la imagen seleccionada localmente
-  const [previewImage, setPreviewImage] = useState<string>("");
+  const [hasNewImage, setHasNewImage] = useState(false); // Para mostrar feedback visual
 
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
-      setPreviewImage(initialData.bannerUrl);
+      setHasNewImage(false);
     }
   }, [initialData, open]);
 
@@ -51,22 +49,16 @@ export const EditProfileModal = ({
     }
   };
 
-  // Maneja el clic en la zona de carga para abrir el explorador de archivos
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
 
-  // Maneja la selección del archivo
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && formData) {
-      // 1. Crear URL temporal para previsualización inmediata
       const objectUrl = URL.createObjectURL(file);
-      setPreviewImage(objectUrl);
-
-      // 2. Aquí normalmente subirías el archivo al servidor.
-      // Por ahora, simulamos guardando la URL temporal en el form
       setFormData({ ...formData, bannerUrl: objectUrl });
+      setHasNewImage(true); // Marcamos que se seleccionó algo nuevo
     }
   };
 
@@ -104,13 +96,12 @@ export const EditProfileModal = ({
 
       <DialogContent dividers>
         <Stack spacing={3} sx={{ mt: 1 }}>
-          {/* --- ZONA DE CARGA DE IMAGEN --- */}
+          {/* --- ZONA DE CARGA DE IMAGEN (LIMPIA) --- */}
           <Box>
             <Typography variant="subtitle2" fontWeight={600} mb={1}>
               Imagen de Portada
             </Typography>
 
-            {/* Input oculto nativo */}
             <input
               type="file"
               accept="image/*"
@@ -119,79 +110,71 @@ export const EditProfileModal = ({
               onChange={handleFileChange}
             />
 
-            {/* Zona visual clicable */}
+            {/* Zona visual clicable SIN imagen de fondo */}
             <Box
               onClick={handleUploadClick}
               sx={{
-                border: `2px dashed ${theme.palette.grey[300]}`,
-                borderRadius: 2,
+                border: `2px dashed ${alpha(theme.palette.primary.main, 0.4)}`,
+                borderRadius: 3,
                 p: 3,
                 textAlign: "center",
                 cursor: "pointer",
                 transition: "all 0.2s",
-                bgcolor: alpha(theme.palette.primary.main, 0.02),
+                bgcolor: alpha(theme.palette.primary.main, 0.04),
                 "&:hover": {
                   borderColor: theme.palette.primary.main,
-                  bgcolor: alpha(theme.palette.primary.main, 0.05),
+                  bgcolor: alpha(theme.palette.primary.main, 0.08),
                 },
                 height: 180,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                backgroundImage: `url(${previewImage})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
                 position: "relative",
               }}
             >
-              {/* Overlay para que el texto se lea sobre la imagen */}
               <Box
                 sx={{
-                  position: "absolute",
-                  inset: 0,
-                  bgcolor: "rgba(255,255,255,0.7)",
-                  opacity: previewImage ? 0.8 : 0,
-                  transition: "opacity 0.2s",
-                  "&:hover": { opacity: 0.9 },
-                }}
-              />
-
-              <Box
-                sx={{
-                  position: "relative",
-                  zIndex: 1,
+                  width: 64,
+                  height: 64,
+                  borderRadius: "50%",
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  color: theme.palette.primary.main,
                   display: "flex",
-                  flexDirection: "column",
                   alignItems: "center",
+                  justifyContent: "center",
+                  mb: 2,
                 }}
               >
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: "50%",
-                    bgcolor: alpha(theme.palette.primary.main, 0.1),
-                    color: theme.palette.primary.main,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    mb: 1,
-                  }}
-                >
-                  <CloudUpload />
-                </Box>
-                <Typography
-                  variant="body2"
-                  fontWeight={600}
-                  color="text.primary"
-                >
-                  Click para subir imagen
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  SVG, PNG, JPG (Max. 800x400px)
-                </Typography>
+                <CloudUpload sx={{ fontSize: 32 }} />
               </Box>
+
+              <Typography
+                variant="subtitle1"
+                fontWeight={600}
+                color="primary.main"
+              >
+                Click para subir imagen
+              </Typography>
+              <Typography variant="body2" color="text.secondary" mb={1}>
+                SVG, PNG, JPG (Max. 800x400px)
+              </Typography>
+
+              {/* Feedback si se seleccionó una nueva imagen */}
+              {hasNewImage && (
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  spacing={1}
+                  mt={1}
+                  sx={{ color: "success.main" }}
+                >
+                  <CheckCircle fontSize="small" />
+                  <Typography variant="caption" fontWeight={600}>
+                    Nueva imagen seleccionada
+                  </Typography>
+                </Stack>
+              )}
             </Box>
           </Box>
 
