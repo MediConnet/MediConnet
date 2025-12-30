@@ -127,6 +127,8 @@ export const LoginPage = () => {
           navigate('/admin/dashboard');
         } else if (user.role === 'profesional' && user.tipo === 'doctor') {
           navigate('/doctor/dashboard');
+        } else if (user.role === 'profesional' && user.tipo === 'lab') {
+          navigate('/laboratory/dashboard');
         } else {
           navigate(ROUTES.HOME);
         }

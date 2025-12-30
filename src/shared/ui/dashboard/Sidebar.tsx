@@ -10,10 +10,11 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ role, isOpen }: SidebarProps) => {
-  const menuItems = getMenuByRole(role);
+  const authStore = useAuthStore();
+  const { user } = authStore;
+  const menuItems = getMenuByRole(role, user?.tipo);
   const location = useLocation();
   const navigate = useNavigate();
-  const authStore = useAuthStore();
   const { logout } = authStore;
 
   const handleLogout = () => {

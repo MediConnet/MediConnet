@@ -28,7 +28,7 @@ export const ADMIN_MENU: MenuItem[] = [
   { icon: <Settings />, label: "Configuración", path: "/admin/settings" },
 ];
 
-// Menú para el PROVEEDOR (Médico/Farmacia)
+// Menú para el PROVEEDOR (Médico/Farmacia/Laboratorio)
 export const PROVIDER_MENU: MenuItem[] = [
   { icon: <Person />, label: "Mi Perfil", path: "/doctor/dashboard?tab=profile" },
   { icon: <Campaign />, label: "Anuncios", path: "/doctor/dashboard?tab=ads" },
@@ -38,11 +38,19 @@ export const PROVIDER_MENU: MenuItem[] = [
 ];
 
 // Función helper para obtener el menú según el rol
-export const getMenuByRole = (role: UserRole): MenuItem[] => {
+export const getMenuByRole = (role: UserRole, userType?: string | null): MenuItem[] => {
   switch (role) {
     case "ADMIN":
       return ADMIN_MENU;
     case "PROVIDER":
+      // Si es laboratorio, usar rutas de laboratorio
+      if (userType === 'lab') {
+        return PROVIDER_MENU.map(item => ({
+          ...item,
+          path: item.path.replace('/doctor/dashboard', '/laboratory/dashboard')
+        }));
+      }
+      // Por defecto, usar rutas de doctor
       return PROVIDER_MENU;
     default:
       return [];
