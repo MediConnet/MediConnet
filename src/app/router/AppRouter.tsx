@@ -45,6 +45,7 @@ import { PharmacyDashboardPage } from "../../features/pharmacy-panel/presentatio
 import { LaboratoryDashboardPage } from "../../features/laboratories/presentation/pages/LaboratoryDashboardPage";
 
 // Pages - Insumos & Checkout & Search
+import { AmbulanceAdsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceAdsPage";
 import { CheckoutPage } from "../../features/booking/presentation/pages/CheckoutPage";
 import { PharmacyAdsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyAdsPage";
 import { PharmacyReviewsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyReviewsPage";
@@ -112,6 +113,7 @@ export const AppRouter = () => {
           {/* 1. Panel Ambulancia */}
           <Route path="ambulance">
             <Route path="dashboard" element={<AmbulanceDashboardPage />} />
+            <Route path="ads" element={<AmbulanceAdsPage />} />
             <Route path="reviews" element={<AmbulanceReviewsPage />} />
             <Route path="settings" element={<AmbulanceSettingsPage />} />
           </Route>

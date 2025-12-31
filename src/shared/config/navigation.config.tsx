@@ -67,7 +67,16 @@ export const AMBULANCE_MENU: MenuItem[] = [
     label: "Mi Unidad",
     path: "/provider/ambulance/dashboard",
   },
-  { icon: <StarRate />, label: "Reseñas", path: "/provider/ambulance/reviews" },
+  {
+    icon: <Campaign />,
+    label: "Anuncios",
+    path: "/provider/ambulance/ads",
+  },
+  {
+    icon: <StarRate />,
+    label: "Reseñas",
+    path: "/provider/ambulance/reviews",
+  },
   {
     icon: <Settings />,
     label: "Configuración",
