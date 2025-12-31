@@ -83,6 +83,11 @@ export const PHARMACY_MENU: MenuItem[] = [
     path: "/provider/pharmacy/dashboard",
   },
   {
+    icon: <Campaign />,
+    label: "Anuncios",
+    path: "/provider/pharmacy/ads",
+  },
+  {
     icon: <StarRate />,
     label: "Reseñas",
     path: "/provider/pharmacy/reviews",
