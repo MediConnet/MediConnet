@@ -64,6 +64,14 @@ const mockUsers = [
     role: "profesional" as const,
     tipo: "ambulance" as string,
   },
+  {
+    id: "6",
+    email: "insumos@medicones.com",
+    password: "insumos123",
+    nombre: "Insumos Médicos",
+    role: "profesional" as const,
+    tipo: "supplies" as string,
+  },
 ];
 
 const serviceLabels: Record<string, string> = {
@@ -144,6 +152,11 @@ export const LoginPage = () => {
             // CASO FARMACIA (Ruta provider)
             case "pharmacy":
               navigate("/provider/pharmacy/dashboard");
+              break;
+
+            // CASO INSUMOS MÉDICOS
+            case "supplies":
+              navigate("/supply/dashboard");
               break;
 
             default:

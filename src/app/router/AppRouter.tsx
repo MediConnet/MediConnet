@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import { DoctorRoute } from "./DoctorRoute";
 import { LaboratoryRoute } from "./LaboratoryRoute";
+import { SupplyRoute } from "./SupplyRoute";
 import { ProtectedRoute } from "./ProtectedRoute";
 
 // Layouts
@@ -43,6 +44,9 @@ import { PharmacyDashboardPage } from "../../features/pharmacy-panel/presentatio
 
 // Pages - Laboratorio
 import { LaboratoryDashboardPage } from "../../features/laboratories/presentation/pages/LaboratoryDashboardPage";
+
+// Pages - Insumos Médicos
+import { SupplyDashboardPage } from "../../features/supplies/presentation/pages/SupplyDashboardPage";
 
 // Pages - Insumos & Checkout & Search
 import { AmbulanceAdsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceAdsPage";
@@ -108,6 +112,18 @@ export const AppRouter = () => {
           }
         >
           <Route path="dashboard" element={<LaboratoryDashboardPage />} />
+        </Route>
+
+        {/* --- Panel de Insumos Médicos --- */}
+        <Route
+          path="/supply"
+          element={
+            <SupplyRoute>
+              <Outlet />
+            </SupplyRoute>
+          }
+        >
+          <Route path="dashboard" element={<SupplyDashboardPage />} />
         </Route>
 
         {/* --- RUTAS DE PROVEEDORES (Estructura Anidada) --- */}

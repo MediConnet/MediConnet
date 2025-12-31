@@ -4,11 +4,13 @@ import {
   CalendarToday,
   Campaign,
   Dashboard,
+  Inventory,
   LocalPharmacy,
   LocalShipping,
   MedicalServices,
   Person,
   Settings,
+  ShoppingCart,
   StarRate,
   Timeline,
 } from "@mui/icons-material";
@@ -137,6 +139,40 @@ export const LAB_MENU: MenuItem[] = [
   },
 ];
 
+// --- 6. MENÚ INSUMOS MÉDICOS ---
+export const SUPPLIES_MENU: MenuItem[] = [
+  {
+    icon: <Person />,
+    label: "Mi Perfil",
+    path: "/supply/dashboard?tab=profile",
+  },
+  {
+    icon: <Campaign />,
+    label: "Anuncios",
+    path: "/supply/dashboard?tab=ads",
+  },
+  {
+    icon: <StarRate />,
+    label: "Reseñas",
+    path: "/supply/dashboard?tab=reviews",
+  },
+  {
+    icon: <ShoppingCart />,
+    label: "Pedidos",
+    path: "/supply/dashboard?tab=orders",
+  },
+  {
+    icon: <Inventory />,
+    label: "Productos",
+    path: "/supply/dashboard?tab=products",
+  },
+  {
+    icon: <Settings />,
+    label: "Configuración",
+    path: "/supply/dashboard?tab=settings",
+  },
+];
+
 // --- FUNCIÓN HELPER ---
 export const getMenuByRole = (
   role: UserRole,
@@ -159,6 +195,8 @@ export const getMenuByRole = (
           return PHARMACY_MENU;
         case "lab":
           return LAB_MENU;
+        case "supplies":
+          return SUPPLIES_MENU;
         default:
           return [];
       }
