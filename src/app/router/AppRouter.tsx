@@ -45,7 +45,11 @@ import { PharmacyDashboardPage } from "../../features/pharmacy-panel/presentatio
 import { LaboratoryDashboardPage } from "../../features/laboratories/presentation/pages/LaboratoryDashboardPage";
 
 // Pages - Insumos & Checkout & Search
+import { AmbulanceAdsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceAdsPage";
 import { CheckoutPage } from "../../features/booking/presentation/pages/CheckoutPage";
+import { PharmacyAdsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyAdsPage";
+import { PharmacyReviewsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyReviewsPage";
+import { PharmacySettingsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacySettingsPage";
 import { SearchPage } from "../../features/search/presentation/pages/SearchPage";
 import { SpecialtiesPage } from "../../features/search/presentation/pages/SpecialtiesPage";
 import { SuppliesListPage } from "../../features/supplies/presentation/pages/SuppliesListPage";
@@ -109,6 +113,7 @@ export const AppRouter = () => {
           {/* 1. Panel Ambulancia */}
           <Route path="ambulance">
             <Route path="dashboard" element={<AmbulanceDashboardPage />} />
+            <Route path="ads" element={<AmbulanceAdsPage />} />
             <Route path="reviews" element={<AmbulanceReviewsPage />} />
             <Route path="settings" element={<AmbulanceSettingsPage />} />
           </Route>
@@ -116,6 +121,9 @@ export const AppRouter = () => {
           {/* 2. Panel Farmacia */}
           <Route path="pharmacy">
             <Route path="dashboard" element={<PharmacyDashboardPage />} />
+            <Route path="ads" element={<PharmacyAdsPage />} />
+            <Route path="reviews" element={<PharmacyReviewsPage />} />
+            <Route path="settings" element={<PharmacySettingsPage />} />
           </Route>
         </Route>
 

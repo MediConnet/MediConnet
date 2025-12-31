@@ -15,6 +15,7 @@ export interface PharmacyProfile {
   commercialName: string;
   bannerUrl: string; 
   phone: string;
+  whatsappContact: string; 
   address: string;
   hasDelivery: boolean; 
   schedule: ScheduleConfig;

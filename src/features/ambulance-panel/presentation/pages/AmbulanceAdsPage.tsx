@@ -1,13 +1,22 @@
-import { ContactPhone, Star, Visibility } from "@mui/icons-material";
-import { Box, Paper, Skeleton, Typography, useTheme } from "@mui/material";
+import { Add, ContactPhone, Star, Visibility } from "@mui/icons-material";
+import {
+  Box,
+  Button,
+  Skeleton,
+  Stack,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
-import { KPICard } from "../components/KPICard";
-import { ReviewItem } from "../components/ReviewItem";
-import { useAmbulanceProfile } from "../hooks/useAmbulanceProfile";
-import { useAmbulanceReviews } from "../hooks/useAmbulanceReviews";
 
-// Mock del usuario logueado
+// Componentes y Hooks locales
+import { AdsEmptyState } from "../components/AdsEmptyState";
+import { KPICard } from "../components/KPICard";
+import { useAmbulanceAds } from "../hooks/useAmbulanceAds";
+import { useAmbulanceProfile } from "../hooks/useAmbulanceProfile";
+
+// Mock user para el layout
 const AMBULANCE_USER = {
   name: "Ambulancias Vida",
   roleLabel: "Proveedor",
@@ -15,14 +24,15 @@ const AMBULANCE_USER = {
   isActive: true,
 };
 
-export const AmbulanceReviewsPage = () => {
+export const AmbulanceAdsPage = () => {
   const theme = useTheme();
-  // 1. Hook del perfil para los KPIs (Visitas, Rating global, etc)
-  const { profile, isLoading: isLoadingProfile } = useAmbulanceProfile();
-  // 2. Hook de reseñas para la lista
-  const { reviews, isLoading: isLoadingReviews } = useAmbulanceReviews();
 
-  const isLoading = isLoadingProfile || isLoadingReviews;
+  // 1. Obtener datos de perfil para KPIs
+  const { profile, isLoading: isLoadingProfile } = useAmbulanceProfile();
+  // 2. Obtener lista de anuncios
+  const { ads, isLoading: isLoadingAds } = useAmbulanceAds();
+
+  const isLoading = isLoadingProfile || isLoadingAds;
 
   if (isLoading || !profile) {
     return (
@@ -33,8 +43,11 @@ export const AmbulanceReviewsPage = () => {
             height={150}
             sx={{ mb: 3, borderRadius: 3 }}
           />
-          <Skeleton variant="rectangular" height={100} sx={{ mb: 2 }} />
-          <Skeleton variant="rectangular" height={100} sx={{ mb: 2 }} />
+          <Skeleton
+            variant="rectangular"
+            height={300}
+            sx={{ borderRadius: 3 }}
+          />
         </Box>
       </DashboardLayout>
     );
@@ -55,7 +68,7 @@ export const AmbulanceReviewsPage = () => {
           </Typography>
         </Box>
 
-        {/* SECTION 1: KPIS (Reutilizados para consistencia visual) */}
+        {/* KPIs (Reutilizando lógica visual de Farmacia/Dashboard) */}
         <Grid2 container spacing={3} mb={4}>
           <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
             <KPICard
@@ -91,39 +104,45 @@ export const AmbulanceReviewsPage = () => {
           </Grid2>
         </Grid2>
 
-        {/* SECTION 2: LISTA DE RESEÑAS */}
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            borderRadius: 3,
-            border: "1px solid",
-            borderColor: "grey.200",
-            bgcolor: "white",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
-          }}
-        >
-          <Box mb={3}>
-            <Typography variant="h6" fontWeight={700} gutterBottom>
-              Reseñas de Pacientes
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Valoraciones recibidas desde la aplicación móvil
-            </Typography>
-          </Box>
-
-          <Box>
-            {reviews.map((review) => (
-              <ReviewItem key={review.id} review={review} />
-            ))}
-
-            {reviews.length === 0 && (
-              <Typography color="text.secondary" align="center" py={4}>
-                Aún no tienes reseñas.
+        {/* SECCIÓN ANUNCIOS */}
+        <Box mb={3}>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            mb={3}
+          >
+            <Box>
+              <Typography variant="h6" fontWeight={700}>
+                Anuncios Promocionales
               </Typography>
-            )}
-          </Box>
-        </Paper>
+              <Typography variant="body2" color="text.secondary">
+                Gestiona los anuncios que aparecerán en la app móvil
+              </Typography>
+            </Box>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              sx={{
+                color: "white",
+                fontWeight: 700,
+                borderRadius: 2,
+                textTransform: "none",
+                boxShadow: "none",
+                px: 3,
+              }}
+              onClick={() => console.log("Crear anuncio ambulancia")}
+            >
+              Crear anuncio
+            </Button>
+          </Stack>
+
+          {ads.length === 0 ? (
+            <AdsEmptyState />
+          ) : (
+            <Typography>Listado de anuncios de ambulancia...</Typography>
+          )}
+        </Box>
       </Box>
     </DashboardLayout>
   );

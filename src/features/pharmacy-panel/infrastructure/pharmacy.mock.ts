@@ -2,10 +2,10 @@ import type { PharmacyProfile } from "../domain/pharmacy-profile.entity";
 
 export const MOCK_PHARMACY_PROFILE: PharmacyProfile = {
   id: "pharma-001",
-  // Usamos una imagen de farmacia genérica para el banner
   bannerUrl: "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?q=80&w=2069&auto=format&fit=crop",
   commercialName: "Fybeca Centro",
-  phone: "+593987660002",
+  phone: "022567890", 
+  whatsappContact: "0998765432", 
   address: "Av. Amazonas N23-50 y Wilson, Quito",
   hasDelivery: true,
   schedule: {
@@ -20,7 +20,6 @@ export const MOCK_PHARMACY_PROFILE: PharmacyProfile = {
   },
 };
 
-// Simulamos la llamada a la API
 export const getPharmacyProfileMock = (): Promise<PharmacyProfile> => {
   return Promise.resolve(MOCK_PHARMACY_PROFILE);
 };

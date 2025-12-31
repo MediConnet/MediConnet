@@ -34,7 +34,7 @@ export const EditProfileModal = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<AmbulanceProfile | null>(null);
-  const [hasNewImage, setHasNewImage] = useState(false); // Para mostrar feedback visual
+  const [hasNewImage, setHasNewImage] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -43,10 +43,31 @@ export const EditProfileModal = ({
     }
   }, [initialData, open]);
 
+  // Manejador genérico para texto
   const handleChange = (field: keyof AmbulanceProfile, value: string) => {
     if (formData) {
       setFormData({ ...formData, [field]: value });
     }
+  };
+
+  // Manejar campos de teléfono (Validación de números y longitud)
+  const handlePhoneChange = (
+    field: keyof AmbulanceProfile,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = e.target.value;
+
+    // Solo permitir números
+    if (!/^\d*$/.test(value)) {
+      return;
+    }
+
+    // Máximo 10 caracteres
+    if (value.length > 10) {
+      return;
+    }
+
+    handleChange(field, value);
   };
 
   const handleUploadClick = () => {
@@ -58,7 +79,7 @@ export const EditProfileModal = ({
     if (file && formData) {
       const objectUrl = URL.createObjectURL(file);
       setFormData({ ...formData, bannerUrl: objectUrl });
-      setHasNewImage(true); // Marcamos que se seleccionó algo nuevo
+      setHasNewImage(true);
     }
   };
 
@@ -77,7 +98,11 @@ export const EditProfileModal = ({
       onClose={onClose}
       fullWidth
       maxWidth="md"
-      PaperProps={{ sx: { borderRadius: 3 } }}
+      slotProps={{
+        paper: {
+          sx: { borderRadius: 3 },
+        },
+      }}
     >
       <Box
         display="flex"
@@ -96,7 +121,7 @@ export const EditProfileModal = ({
 
       <DialogContent dividers>
         <Stack spacing={3} sx={{ mt: 1 }}>
-          {/* --- ZONA DE CARGA DE IMAGEN (LIMPIA) --- */}
+          {/* --- ZONA DE CARGA DE IMAGEN --- */}
           <Box>
             <Typography variant="subtitle2" fontWeight={600} mb={1}>
               Imagen de Portada
@@ -110,7 +135,6 @@ export const EditProfileModal = ({
               onChange={handleFileChange}
             />
 
-            {/* Zona visual clicable SIN imagen de fondo */}
             <Box
               onClick={handleUploadClick}
               sx={{
@@ -160,7 +184,6 @@ export const EditProfileModal = ({
                 SVG, PNG, JPG (Max. 800x400px)
               </Typography>
 
-              {/* Feedback si se seleccionó una nueva imagen */}
               {hasNewImage && (
                 <Stack
                   direction="row"
@@ -188,12 +211,18 @@ export const EditProfileModal = ({
                 onChange={(e) => handleChange("commercialName", e.target.value)}
               />
             </Grid2>
+
             <Grid2 size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
                 label="Teléfono Emergencia"
                 value={formData.emergencyPhone}
-                onChange={(e) => handleChange("emergencyPhone", e.target.value)}
+                onChange={(e) => handlePhoneChange("emergencyPhone", e as any)}
+                placeholder="Ej: 0991234567"
+                helperText="Solo números (máx 10)"
+                slotProps={{
+                  input: { inputMode: "numeric" },
+                }}
               />
             </Grid2>
           </Grid2>
@@ -204,9 +233,12 @@ export const EditProfileModal = ({
                 fullWidth
                 label="WhatsApp Corporativo"
                 value={formData.whatsappContact}
-                onChange={(e) =>
-                  handleChange("whatsappContact", e.target.value)
-                }
+                onChange={(e) => handlePhoneChange("whatsappContact", e as any)}
+                placeholder="Ej: 0991234567"
+                helperText="Solo números (máx 10)"
+                slotProps={{
+                  input: { inputMode: "numeric" },
+                }}
               />
             </Grid2>
             <Grid2 size={{ xs: 12, md: 6 }}>
@@ -238,8 +270,17 @@ export const EditProfileModal = ({
         <Button
           variant="contained"
           onClick={handleSave}
-          startIcon={<Save />}
-          sx={{ borderRadius: 2, px: 3 }}
+          startIcon={<Save sx={{ color: "white" }} />}
+          sx={{
+            borderRadius: 2,
+            px: 3,
+            color: "white",
+            fontWeight: 700,
+            boxShadow: "none",
+            "&:hover": {
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+            },
+          }}
         >
           Guardar Cambios
         </Button>

@@ -75,12 +75,6 @@ export const PharmacyDashboardPage = () => {
           <Typography variant="h5" fontWeight={700} color="text.primary">
             Panel de Farmacia
           </Typography>
-          <Chip
-            label="Servicio Activo"
-            color="success"
-            size="small"
-            sx={{ fontWeight: 700 }}
-          />
         </Box>
 
         {/* SECTION 1: KPIS (Métricas clave) */}

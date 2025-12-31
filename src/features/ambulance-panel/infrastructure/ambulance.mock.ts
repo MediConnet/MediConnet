@@ -6,8 +6,8 @@ export const MOCK_AMBULANCE_PROFILE: AmbulanceProfile = {
   commercialName: "Ambulancias VidaRápida",
   shortDescription: "Servicio de ambulancia 24/7. Unidades de terapia intensiva móvil y traslados programados.",
   address: "Av. 12 de Octubre N27-30 y Orellana, Quito",
-  whatsappContact: "+593999999999",
-  emergencyPhone: "+593987690101",
+  whatsappContact: "0998765432",
+  emergencyPhone: "3245678",
   stats: {
     profileViews: 1250,
     contactClicks: 320,

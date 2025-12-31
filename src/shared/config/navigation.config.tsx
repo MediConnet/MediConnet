@@ -67,7 +67,16 @@ export const AMBULANCE_MENU: MenuItem[] = [
     label: "Mi Unidad",
     path: "/provider/ambulance/dashboard",
   },
-  { icon: <StarRate />, label: "Reseñas", path: "/provider/ambulance/reviews" },
+  {
+    icon: <Campaign />,
+    label: "Anuncios",
+    path: "/provider/ambulance/ads",
+  },
+  {
+    icon: <StarRate />,
+    label: "Reseñas",
+    path: "/provider/ambulance/reviews",
+  },
   {
     icon: <Settings />,
     label: "Configuración",
@@ -83,18 +92,23 @@ export const PHARMACY_MENU: MenuItem[] = [
     path: "/provider/pharmacy/dashboard",
   },
   {
+    icon: <Campaign />,
+    label: "Anuncios",
+    path: "/provider/pharmacy/ads",
+  },
+  {
     icon: <StarRate />,
     label: "Reseñas",
-    path: "/provider/pharmacy/dashboard",
-  }, // Temporal
+    path: "/provider/pharmacy/reviews",
+  },
   {
     icon: <Settings />,
     label: "Configuración",
-    path: "/provider/pharmacy/dashboard",
-  }, // Temporal
+    path: "/provider/pharmacy/settings",
+  },
 ];
 
-// --- 5. MENÚ LABORATORIO (Tabs - Igual que Doctor) ---
+// --- 5. MENÚ LABORATORIO ---
 export const LAB_MENU: MenuItem[] = [
   {
     icon: <Biotech />,
