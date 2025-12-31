@@ -46,6 +46,7 @@ import { LaboratoryDashboardPage } from "../../features/laboratories/presentatio
 
 // Pages - Insumos & Checkout & Search
 import { AmbulanceAdsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceAdsPage";
+import { ForgotPasswordPage } from "../../features/auth/presentation/pages/ForgotPasswordPage";
 import { CheckoutPage } from "../../features/booking/presentation/pages/CheckoutPage";
 import { PharmacyAdsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyAdsPage";
 import { PharmacyReviewsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyReviewsPage";
@@ -63,6 +64,7 @@ export const AppRouter = () => {
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         </Route>
 
         {/* --- Rutas públicas con Layout Principal --- */}

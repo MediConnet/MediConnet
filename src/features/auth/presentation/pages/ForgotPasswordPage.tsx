@@ -1,34 +1,40 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import {
+  ArrowBack,
+  CheckCircleOutline,
+  Email as EmailIcon,
+} from "@mui/icons-material";
 import {
   Box,
+  Button,
   Card,
   CardContent,
-  TextField,
-  Button,
-  Typography,
+  CircularProgress,
   InputAdornment,
   Link,
-  Alert,
-} from '@mui/material';
-import { Email as EmailIcon, ArrowBack } from '@mui/icons-material';
-import { useSendResetPassword } from '../hooks/useSendResetPassword';
-import { ROUTES } from '../../../../app/config/constants';
+  TextField,
+  Typography,
+} from "@mui/material";
+import { useState } from "react";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { ROUTES } from "../../../../app/config/constants";
+import { useSendResetPassword } from "../hooks/useSendResetPassword";
 
 export const ForgotPasswordPage = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  // Hook de Clean Architecture
   const sendResetPassword = useSendResetPassword();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setSuccess(false);
 
     if (!email) {
-      setError('Por favor ingresa tu correo electrónico');
+      setError("Por favor ingresa tu correo electrónico");
       return;
     }
 
@@ -40,148 +46,283 @@ export const ForgotPasswordPage = () => {
         setError(response.message);
       }
     } catch (err) {
-      setError('Ocurrió un error al enviar el enlace. Por favor intenta nuevamente.');
+      setError("Ocurrió un error al enviar el enlace. Intenta nuevamente.");
     }
   };
 
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        width: '100vw',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#f0f9ff',
-        position: 'relative',
-        overflow: 'hidden',
-        m: 0,
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         p: 2,
+        position: "relative",
+        overflow: "hidden",
+        backgroundColor: "#f9fafb",
       }}
     >
-      <Card
+      {/* --- EFECTOS DE FONDO (Igual que Login) --- */}
+      <Box
         sx={{
-          maxWidth: 480,
-          width: '100%',
-          borderRadius: { xs: 2, sm: 3 },
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.1)',
-          position: 'relative',
+          position: "absolute",
+          inset: 0,
+          opacity: 0.3,
+          backgroundImage: `
+            linear-gradient(rgba(6, 182, 212, 0.08) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(6, 182, 212, 0.08) 1px, transparent 1px)
+          `,
+          backgroundSize: "40px 40px",
+        }}
+      />
+      <Box
+        sx={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          width: "500px",
+          height: "500px",
+          background: "rgba(6, 182, 212, 0.05)",
+          borderRadius: "50%",
+          filter: "blur(80px)",
+        }}
+      />
+      <Box
+        sx={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          width: "400px",
+          height: "400px",
+          background: "rgba(6, 182, 212, 0.05)",
+          borderRadius: "50%",
+          filter: "blur(80px)",
+        }}
+      />
+
+      <Box
+        sx={{
+          position: "relative",
           zIndex: 1,
+          width: "100%",
+          maxWidth: "480px",
+          animation: "scaleIn 0.5s ease-out",
+          "@keyframes scaleIn": {
+            from: { opacity: 0, transform: "scale(0.95)" },
+            to: { opacity: 1, transform: "scale(1)" },
+          },
         }}
       >
-        <CardContent sx={{ p: { xs: 3, sm: 4 }, '&:last-child': { pb: { xs: 3, sm: 4 } } }}>
-          {/* Link de volver */}
-          <Link
-            component="button"
-            onClick={() => navigate(ROUTES.HOME)}
-            underline="hover"
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.5,
-              mb: 3,
-              color: '#64748b',
-              fontSize: '0.875rem',
-              textTransform: 'none',
-              cursor: 'pointer',
-              '&:hover': {
-                color: '#1e293b',
-              },
-            }}
-          >
-            <ArrowBack sx={{ fontSize: 18 }} />
-            Volver al inicio de sesión
-          </Link>
+        {/* Botón Volver (Estilo link superior) */}
+        <Button
+          component={RouterLink}
+          to={ROUTES.LOGIN}
+          startIcon={<ArrowBack />}
+          sx={{
+            mb: 3,
+            color: "#14b8a6",
+            fontWeight: 500,
+            textTransform: "none",
+            "&:hover": {
+              backgroundColor: "rgba(20, 184, 166, 0.1)",
+            },
+          }}
+        >
+          Volver al inicio de sesión
+        </Button>
 
-          {/* Título */}
-          <Typography
-            variant="h4"
-            component="h1"
-            sx={{
-              fontWeight: 700,
-              mb: 1.5,
-              color: '#1e293b',
-              fontSize: '1.75rem',
-            }}
-          >
-            Restablecer su contraseña
-          </Typography>
+        <Card
+          sx={{
+            borderRadius: 3,
+            p: 2,
+            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.1)",
+            backgroundColor: "rgba(255, 255, 255, 0.95)",
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          <CardContent sx={{ textAlign: "center", p: { xs: 3, sm: 4 } }}>
+            {/* LOGO (Igual que Login) */}
+            <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
+              <Box
+                sx={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 2,
+                  backgroundColor: "#14b8a6",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Typography
+                  sx={{ color: "white", fontWeight: 700, fontSize: "2rem" }}
+                >
+                  M
+                </Typography>
+              </Box>
+            </Box>
 
-          {/* Instrucciones */}
-          <Typography
-            variant="body1"
-            sx={{
-              color: '#64748b',
-              mb: 3,
-              fontSize: '0.9375rem',
-              lineHeight: 1.6,
-            }}
-          >
-            Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña
-          </Typography>
+            {success ? (
+              // --- VISTA DE ÉXITO ---
+              <Box sx={{ animation: "fadeIn 0.5s ease-in" }}>
+                <CheckCircleOutline
+                  sx={{ fontSize: 60, color: "#14b8a6", mb: 2 }}
+                />
+                <Typography
+                  variant="h5"
+                  fontWeight={700}
+                  color="#1f2937"
+                  gutterBottom
+                >
+                  ¡Correo enviado!
+                </Typography>
+                <Typography
+                  variant="body1"
+                  color="text.secondary"
+                  sx={{ mb: 4 }}
+                >
+                  Hemos enviado las instrucciones para restablecer tu contraseña
+                  a <strong>{email}</strong>.
+                </Typography>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  onClick={() => navigate(ROUTES.LOGIN)}
+                  sx={{
+                    py: 1.5,
+                    borderRadius: 2,
+                    borderColor: "#14b8a6",
+                    color: "#14b8a6",
+                    fontWeight: 600,
+                    textTransform: "none",
+                    "&:hover": {
+                      borderColor: "#0d9488",
+                      backgroundColor: "rgba(20, 184, 166, 0.05)",
+                    },
+                  }}
+                >
+                  Volver al Login
+                </Button>
+              </Box>
+            ) : (
+              // --- FORMULARIO DE RECUPERACIÓN ---
+              <>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontWeight: 700,
+                    mb: 1,
+                    color: "#1f2937",
+                    fontSize: "1.75rem",
+                  }}
+                >
+                  Recuperar contraseña
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: "#6b7280",
+                    mb: 4,
+                    fontSize: "0.9375rem",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Ingresa tu correo electrónico y te enviaremos un enlace para
+                  recuperar tu cuenta.
+                </Typography>
 
-          {/* Mensaje de éxito */}
-          {success && (
-            <Alert severity="success" sx={{ mb: 3 }}>
-              Se ha enviado un enlace de restablecimiento a tu correo electrónico. Por favor revisa tu bandeja de entrada.
-            </Alert>
-          )}
+                <Box component="form" onSubmit={handleSubmit}>
+                  <Box sx={{ mb: 3 }}>
+                    <TextField
+                      fullWidth
+                      label="Correo electrónico"
+                      type="email"
+                      placeholder="tu@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      disabled={sendResetPassword.isPending}
+                      error={!!error}
+                      helperText={error}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                        },
+                      }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <EmailIcon
+                              sx={{ color: "#9ca3af", fontSize: 20 }}
+                            />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Box>
 
-          {/* Formulario */}
-          <Box component="form" onSubmit={handleSubmit}>
-            <TextField
-              fullWidth
-              label="Correo electrónico"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@ejemplo.com"
-              margin="normal"
-              required
-              disabled={success || sendResetPassword.isPending}
-              error={!!error && !success}
-              helperText={error && !success ? error : ''}
-              sx={{ mb: 3 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <EmailIcon sx={{ color: '#9ca3af' }} />
-                  </InputAdornment>
-                ),
-              }}
-            />
+                  <Button
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                    disabled={sendResetPassword.isPending}
+                    sx={{
+                      py: 1.5,
+                      backgroundColor: "#14b8a6",
+                      color: "white",
+                      textTransform: "none",
+                      fontSize: "1rem",
+                      fontWeight: 600,
+                      borderRadius: 2,
+                      boxShadow: "none",
+                      "&:hover": {
+                        backgroundColor: "#0d9488",
+                        boxShadow: "0 4px 12px rgba(13, 148, 136, 0.2)",
+                      },
+                      "&:disabled": {
+                        backgroundColor: "#cbd5e1",
+                      },
+                    }}
+                  >
+                    {sendResetPassword.isPending ? (
+                      <>
+                        <CircularProgress
+                          size={20}
+                          sx={{ mr: 1, color: "white" }}
+                        />
+                        Enviando...
+                      </>
+                    ) : (
+                      "Enviar enlace"
+                    )}
+                  </Button>
+                </Box>
 
-            {/* Botón de envío */}
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              disabled={success || sendResetPassword.isPending}
-              sx={{
-                py: 1.5,
-                backgroundColor: '#1e293b',
-                color: 'white',
-                textTransform: 'none',
-                fontSize: '1rem',
-                fontWeight: 600,
-                borderRadius: 2,
-                boxShadow: '0 4px 12px rgba(30, 41, 59, 0.2)',
-                '&:hover': {
-                  backgroundColor: '#334155',
-                  boxShadow: '0 6px 16px rgba(30, 41, 59, 0.3)',
-                },
-                '&:disabled': {
-                  backgroundColor: '#cbd5e1',
-                  color: '#94a3b8',
-                },
-              }}
-            >
-              {sendResetPassword.isPending ? 'Enviando...' : 'Enviar enlace de restablecimiento'}
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
+                <Box sx={{ mt: 3, textAlign: "center" }}>
+                  <Typography variant="body2" color="text.secondary">
+                    ¿Ya tienes cuenta?{" "}
+                    <Link
+                      component={RouterLink}
+                      to={ROUTES.LOGIN}
+                      sx={{
+                        color: "#14b8a6",
+                        fontWeight: 600,
+                        textDecoration: "none",
+                        "&:hover": {
+                          textDecoration: "underline",
+                        },
+                      }}
+                    >
+                      Inicia sesión
+                    </Link>
+                  </Typography>
+                </Box>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </Box>
     </Box>
   );
 };
-
