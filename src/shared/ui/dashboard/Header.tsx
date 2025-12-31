@@ -20,15 +20,38 @@ interface HeaderProps {
     time: string;
     reason: string;
   }>;
+  orders?: Array<{
+    id: string;
+    orderNumber: string;
+    clientName: string;
+    orderDate: string;
+    status: string;
+    totalAmount?: number;
+  }>;
+  notificationType?: "appointments" | "orders";
 }
 
-export const Header = ({ user, onMenuToggle, isMenuOpen, appointments = [] }: HeaderProps) => {
+export const Header = ({
+  user,
+  onMenuToggle,
+  isMenuOpen,
+  appointments = [],
+  orders = [],
+  notificationType = "appointments",
+}: HeaderProps) => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
-  // Obtener solo las citas de hoy
+  // Obtener solo las citas o pedidos de hoy
   const today = new Date().toISOString().split("T")[0];
-  const todayAppointments = appointments.filter((apt) => apt.date === today);
-  const notificationCount = todayAppointments.length;
+  let notificationCount = 0;
+
+  if (notificationType === "orders") {
+    const todayOrders = orders.filter((order) => order.orderDate === today);
+    notificationCount = todayOrders.length;
+  } else {
+    const todayAppointments = appointments.filter((apt) => apt.date === today);
+    notificationCount = todayAppointments.length;
+  }
 
   return (
     <header
@@ -71,6 +94,8 @@ export const Header = ({ user, onMenuToggle, isMenuOpen, appointments = [] }: He
             open={notificationsOpen}
             onClose={() => setNotificationsOpen(false)}
             appointments={appointments}
+            orders={orders}
+            notificationType={notificationType}
           />
         </div>
 

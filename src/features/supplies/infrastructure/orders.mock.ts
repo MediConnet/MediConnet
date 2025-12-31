@@ -1,6 +1,12 @@
 import type { SupplyOrder } from "../domain/Order.entity";
 
 // Mock data para pedidos de insumos médicos (productos ortopédicos y de rehabilitación)
+// Función para obtener la fecha de hoy en formato YYYY-MM-DD
+const getTodayDate = () => {
+  const today = new Date();
+  return today.toISOString().split("T")[0];
+};
+
 export const mockOrders: SupplyOrder[] = [
   {
     id: "1",
@@ -33,8 +39,8 @@ export const mockOrders: SupplyOrder[] = [
       },
     ],
     totalAmount: 515.00,
-    status: "confirmed",
-    orderDate: "2024-01-20",
+    status: "pending",
+    orderDate: getTodayDate(), // Pedido de hoy
     deliveryDate: "2024-01-25",
     notes: "Cliente requiere silla de ruedas para adulto",
   },
@@ -160,8 +166,8 @@ export const mockOrders: SupplyOrder[] = [
       },
     ],
     totalAmount: 115.00,
-    status: "pending",
-    orderDate: "2024-01-22",
+    status: "confirmed",
+    orderDate: getTodayDate(), // Otro pedido de hoy
     notes: "Cliente solicita productos para recuperación post-quirúrgica",
   },
 ];

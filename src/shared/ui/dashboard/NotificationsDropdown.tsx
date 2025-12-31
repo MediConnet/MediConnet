@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { AccessTime, Person, Close, CalendarToday } from "@mui/icons-material";
+import { AccessTime, Person, Close, CalendarToday, ShoppingCart } from "@mui/icons-material";
 
 interface Appointment {
   id: string;
@@ -10,16 +10,29 @@ interface Appointment {
   reason: string;
 }
 
+interface Order {
+  id: string;
+  orderNumber: string;
+  clientName: string;
+  orderDate: string;
+  status: string;
+  totalAmount?: number;
+}
+
 interface NotificationsDropdownProps {
   open: boolean;
   onClose: () => void;
   appointments: Appointment[];
+  orders?: Order[];
+  notificationType?: "appointments" | "orders";
 }
 
 export const NotificationsDropdown = ({
   open,
   onClose,
   appointments,
+  orders = [],
+  notificationType = "appointments",
 }: NotificationsDropdownProps) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -43,11 +56,14 @@ export const NotificationsDropdown = ({
     };
   }, [open, onClose]);
 
-  // Obtener solo las citas de hoy
+  // Obtener solo las citas o pedidos de hoy
   const today = new Date().toISOString().split("T")[0];
   const todayAppointments = appointments
     .filter((apt) => apt.date === today)
     .sort((a, b) => a.time.localeCompare(b.time));
+  const todayOrders = orders
+    .filter((order) => order.orderDate === today)
+    .sort((a, b) => a.orderNumber.localeCompare(b.orderNumber));
 
   if (!open) return null;
 
@@ -60,7 +76,9 @@ export const NotificationsDropdown = ({
       <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-teal-50 to-white">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-bold text-gray-800">Citas de Hoy</h3>
+            <h3 className="text-lg font-bold text-gray-800">
+              {notificationType === "orders" ? "Pedidos de Hoy" : "Citas de Hoy"}
+            </h3>
             <p className="text-xs text-gray-500 mt-1">
               {new Date().toLocaleDateString("es-ES", {
                 weekday: "long",
@@ -78,13 +96,65 @@ export const NotificationsDropdown = ({
           </button>
         </div>
         <p className="text-sm text-gray-500 mt-2">
-          {todayAppointments.length} cita{todayAppointments.length !== 1 ? "s" : ""} programada{todayAppointments.length !== 1 ? "s" : ""} para hoy
+          {notificationType === "orders"
+            ? `${todayOrders.length} pedido${todayOrders.length !== 1 ? "s" : ""} recibido${todayOrders.length !== 1 ? "s" : ""} hoy`
+            : `${todayAppointments.length} cita${todayAppointments.length !== 1 ? "s" : ""} programada${todayAppointments.length !== 1 ? "s" : ""} para hoy`}
         </p>
       </div>
 
       {/* Content */}
       <div className="overflow-y-auto max-h-[500px]">
-        {todayAppointments.length > 0 ? (
+        {notificationType === "orders" ? (
+          todayOrders.length > 0 ? (
+            <div className="divide-y divide-gray-100">
+              {todayOrders.map((order) => (
+                <div
+                  key={order.id}
+                  className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center shrink-0">
+                      <ShoppingCart className="text-teal-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-gray-800 text-base">
+                          {order.orderNumber}
+                        </h4>
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-lg text-xs font-semibold">
+                          {order.status === "pending" ? "Pendiente" : order.status === "confirmed" ? "Confirmado" : order.status}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        Cliente: {order.clientName}
+                      </p>
+                      {order.totalAmount && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          Total: {new Intl.NumberFormat("es-EC", {
+                            style: "currency",
+                            currency: "USD",
+                          }).format(order.totalAmount)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ShoppingCart className="text-gray-400 text-3xl" />
+              </div>
+              <p className="text-gray-500 text-sm font-medium mb-1">
+                No hay pedidos recibidos hoy
+              </p>
+              <p className="text-gray-400 text-xs">
+                Los pedidos de hoy aparecerán aquí
+              </p>
+            </div>
+          )
+        ) : todayAppointments.length > 0 ? (
           <div className="divide-y divide-gray-100">
             {todayAppointments.map((apt) => (
               <div
@@ -133,11 +203,21 @@ export const NotificationsDropdown = ({
         <button
           onClick={() => {
             onClose();
-            navigate("/doctor/dashboard?tab=appointments");
+            if (notificationType === "orders") {
+              navigate("/supply/dashboard?tab=orders");
+            } else {
+              navigate("/doctor/dashboard?tab=appointments");
+            }
           }}
           className="w-full px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium text-sm"
         >
-          {todayAppointments.length > 0 ? "Ver calendario completo" : "Ver todas las citas"}
+          {notificationType === "orders"
+            ? todayOrders.length > 0
+              ? "Ver todos los pedidos"
+              : "Ver pedidos"
+            : todayAppointments.length > 0
+            ? "Ver calendario completo"
+            : "Ver todas las citas"}
         </button>
       </div>
     </div>

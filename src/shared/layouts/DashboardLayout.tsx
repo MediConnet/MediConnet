@@ -14,6 +14,15 @@ interface DashboardLayoutProps {
     time: string;
     reason: string;
   }>;
+  orders?: Array<{
+    id: string;
+    orderNumber: string;
+    clientName: string;
+    orderDate: string;
+    status: string;
+    totalAmount?: number;
+  }>;
+  notificationType?: "appointments" | "orders";
 }
 
 export const DashboardLayout = ({
@@ -21,6 +30,8 @@ export const DashboardLayout = ({
   role,
   userProfile,
   appointments = [],
+  orders = [],
+  notificationType = "appointments",
 }: DashboardLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -39,6 +50,8 @@ export const DashboardLayout = ({
           isMenuOpen={isSidebarOpen}
           onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)}
           appointments={appointments}
+          orders={orders}
+          notificationType={notificationType}
         />
 
         <main className="flex-1 p-8 mt-20">{children}</main>

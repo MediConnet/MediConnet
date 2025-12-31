@@ -1,4 +1,5 @@
 import { useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { useSupplyDashboard } from "../hooks/useSupplyDashboard";
 import { useAuthStore } from "../../../../app/store/auth.store";
@@ -9,6 +10,8 @@ import { OrdersSection } from "../components/OrdersSection";
 import { ProductsSection } from "../components/ProductsSection";
 import { SettingsSection } from "../components/SettingsSection";
 import { StatsCards } from "../components/StatsCards";
+import { getOrdersMock } from "../../infrastructure/orders.mock";
+import type { SupplyOrder } from "../domain/Order.entity";
 
 type TabType = "profile" | "ads" | "reviews" | "orders" | "products" | "settings";
 
@@ -17,8 +20,16 @@ export const SupplyDashboardPage = () => {
   const { data, loading, setData, refetch } = useSupplyDashboard();
   const authStore = useAuthStore();
   const { user } = authStore;
+  const [orders, setOrders] = useState<SupplyOrder[]>([]);
 
   const currentTab = (searchParams.get("tab") || "profile") as TabType;
+
+  // Cargar pedidos para las notificaciones
+  useEffect(() => {
+    getOrdersMock().then((ordersData) => {
+      setOrders(ordersData);
+    });
+  }, []);
 
   // Obtener iniciales del usuario
   const getInitials = (name: string) => {
@@ -57,8 +68,23 @@ export const SupplyDashboardPage = () => {
     );
   }
 
+  // Convertir pedidos al formato de notificaciones
+  const notificationOrders = orders.map((order) => ({
+    id: order.id,
+    orderNumber: order.orderNumber,
+    clientName: order.clientName,
+    orderDate: order.orderDate,
+    status: order.status,
+    totalAmount: order.totalAmount,
+  }));
+
   return (
-    <DashboardLayout role="PROVIDER" userProfile={userProfile}>
+    <DashboardLayout
+      role="PROVIDER"
+      userProfile={userProfile}
+      orders={notificationOrders}
+      notificationType="orders"
+    >
       {/* Cards de Estadísticas - No mostrar en la pestaña de pedidos */}
       {currentTab !== "orders" && currentTab !== "products" && <StatsCards data={data} />}
 
