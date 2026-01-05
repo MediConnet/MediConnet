@@ -1,6 +1,16 @@
+import {
+  AccessTime,
+  CalendarToday,
+  Close,
+  Email,
+  Person,
+  Phone,
+} from "@mui/icons-material";
 import { useState } from "react";
-import { AccessTime, Person, Close, Email, Phone, CalendarToday } from "@mui/icons-material";
-import { generateMockAppointments, type DoctorAppointment } from "../../infrastructure/appointments.mock";
+import {
+  generateMockAppointments,
+  type DoctorAppointment,
+} from "../../infrastructure/appointments.mock";
 
 type ViewType = "month" | "week" | "day" | "list";
 
@@ -10,7 +20,11 @@ interface AppointmentDetailModalProps {
   appointment: DoctorAppointment | null;
 }
 
-const AppointmentDetailModal = ({ open, onClose, appointment }: AppointmentDetailModalProps) => {
+const AppointmentDetailModal = ({
+  open,
+  onClose,
+  appointment,
+}: AppointmentDetailModalProps) => {
   if (!appointment) return null;
 
   return (
@@ -21,14 +35,18 @@ const AppointmentDetailModal = ({ open, onClose, appointment }: AppointmentDetai
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl w-full max-w-lg shadow-2xl animate-fade-in-up"
+        className="bg-white rounded-2xl w-full max-w-lg shadow-2xl animate-fade-in-up flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-200">
+        {/* Header (Fijo) */}
+        <div className="flex justify-between items-center p-6 border-b border-gray-200 shrink-0">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Detalle de la Cita</h2>
-            <p className="text-sm text-gray-500 mt-1">Información del paciente y motivo de consulta</p>
+            <h2 className="text-xl font-bold text-gray-900">
+              Detalle de la Cita
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Información del paciente y motivo de consulta
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -38,23 +56,25 @@ const AppointmentDetailModal = ({ open, onClose, appointment }: AppointmentDetai
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-6">
+        {/* Content (Scrollable) */}
+        <div className="p-6 space-y-6 overflow-y-auto">
           {/* Información del Paciente */}
           <div className="bg-teal-50 p-4 rounded-xl">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center">
+              <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center shrink-0">
                 <Person className="text-teal-600 text-2xl" />
               </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900 text-lg">{appointment.patientName}</h3>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-gray-900 text-lg truncate">
+                  {appointment.patientName}
+                </h3>
                 <div className="mt-2 space-y-1">
                   <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Email className="text-xs" />
-                    <span>{appointment.patientEmail}</span>
+                    <Email className="text-xs shrink-0" />
+                    <span className="truncate">{appointment.patientEmail}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Phone className="text-xs" />
+                    <Phone className="text-xs shrink-0" />
                     <span>{appointment.patientPhone}</span>
                   </div>
                 </div>
@@ -70,28 +90,38 @@ const AppointmentDetailModal = ({ open, onClose, appointment }: AppointmentDetai
               </div>
               <div>
                 <p className="text-sm text-gray-500">Hora agendada</p>
-                <p className="text-lg font-bold text-gray-900">{appointment.time}</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {appointment.time}
+                </p>
               </div>
             </div>
           </div>
 
           {/* Razón de la Cita */}
           <div className="border border-gray-200 rounded-xl p-4">
-            <h4 className="font-semibold text-gray-900 mb-2">Motivo de la consulta</h4>
-            <p className="text-gray-700 leading-relaxed">{appointment.reason}</p>
+            <h4 className="font-semibold text-gray-900 mb-2">
+              Motivo de la consulta
+            </h4>
+            <p className="text-gray-700 leading-relaxed">
+              {appointment.reason}
+            </p>
           </div>
 
           {/* Notas adicionales */}
           {appointment.notes && (
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-              <h4 className="font-semibold text-gray-900 mb-2">Notas adicionales</h4>
-              <p className="text-gray-600 text-sm leading-relaxed">{appointment.notes}</p>
+              <h4 className="font-semibold text-gray-900 mb-2">
+                Notas adicionales
+              </h4>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                {appointment.notes}
+              </p>
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="p-6 border-t border-gray-200 flex justify-end">
+        {/* Footer (Fijo) */}
+        <div className="p-6 border-t border-gray-200 flex justify-end shrink-0">
           <button
             onClick={onClose}
             className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium"
@@ -112,9 +142,10 @@ export const AppointmentsSection = () => {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [currentDay, setCurrentDay] = useState(new Date());
   const [view, setView] = useState<ViewType>("month");
-  const [selectedAppointment, setSelectedAppointment] = useState<DoctorAppointment | null>(null);
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<DoctorAppointment | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
+
   // Generar citas mock basadas en el mes actual
   const mockAppointments = generateMockAppointments();
 
@@ -139,7 +170,15 @@ export const AppointmentsSection = () => {
   const nextMonthBlanks = Array.from({ length: nextMonthDays }, (_, i) => i);
 
   const daysShort = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sá"];
-  const daysFull = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  const daysFull = [
+    "Domingo",
+    "Lunes",
+    "Martes",
+    "Miércoles",
+    "Jueves",
+    "Viernes",
+    "Sábado",
+  ];
   const months = [
     "Enero",
     "Febrero",
@@ -291,7 +330,10 @@ export const AppointmentsSection = () => {
         })}
 
         {days.map((d) => {
-          const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+          const dateStr = `${year}-${String(month + 1).padStart(
+            2,
+            "0"
+          )}-${String(d).padStart(2, "0")}`;
           const isSelected = selectedDate === dateStr;
           const dayAppointments = getAppointmentsForDay(dateStr);
           const today = isToday(d);
@@ -302,7 +344,9 @@ export const AppointmentsSection = () => {
               onClick={() => setSelectedDate(dateStr)}
               className={`
                 bg-white min-h-[120px] p-2 cursor-pointer transition-all border-r border-b border-gray-200 last:border-r-0 relative
-                ${isSelected ? "bg-blue-50 ring-2 ring-blue-500 ring-inset" : ""}
+                ${
+                  isSelected ? "bg-blue-50 ring-2 ring-blue-500 ring-inset" : ""
+                }
                 ${today && !isSelected ? "bg-yellow-50" : ""}
                 hover:bg-gray-50 hover:shadow-inner
               `}
@@ -311,7 +355,13 @@ export const AppointmentsSection = () => {
                 <span
                   className={`
                     text-sm font-semibold px-1.5 py-0.5 rounded
-                    ${isSelected ? "text-blue-700 bg-blue-100" : today ? "text-yellow-700 bg-yellow-100" : "text-gray-800"}
+                    ${
+                      isSelected
+                        ? "text-blue-700 bg-blue-100"
+                        : today
+                        ? "text-yellow-700 bg-yellow-100"
+                        : "text-gray-800"
+                    }
                   `}
                 >
                   {d}
@@ -363,14 +413,19 @@ export const AppointmentsSection = () => {
             const dateStr = day.toISOString().split("T")[0];
             const dayAppointments = getAppointmentsForDay(dateStr);
             const isSelected = selectedDate === dateStr;
-            const isTodayDate = dateStr === new Date().toISOString().split("T")[0];
+            const isTodayDate =
+              dateStr === new Date().toISOString().split("T")[0];
 
             return (
               <div
                 key={index}
                 className={`
                   border-r border-gray-200 last:border-r-0 min-h-[400px]
-                  ${isSelected ? "bg-blue-50 ring-2 ring-blue-500 ring-inset" : "bg-white"}
+                  ${
+                    isSelected
+                      ? "bg-blue-50 ring-2 ring-blue-500 ring-inset"
+                      : "bg-white"
+                  }
                   ${isTodayDate && !isSelected ? "bg-yellow-50" : ""}
                 `}
               >
@@ -387,7 +442,13 @@ export const AppointmentsSection = () => {
                   <div
                     className={`
                       text-lg font-bold
-                      ${isSelected ? "text-blue-700" : isTodayDate ? "text-yellow-700" : "text-gray-800"}
+                      ${
+                        isSelected
+                          ? "text-blue-700"
+                          : isTodayDate
+                          ? "text-yellow-700"
+                          : "text-gray-800"
+                      }
                     `}
                   >
                     {day.getDate()}
@@ -462,12 +523,18 @@ export const AppointmentsSection = () => {
                             onClick={() => handleAppointmentClick(apt)}
                             className="bg-blue-500 text-white p-3 rounded-lg cursor-pointer hover:bg-blue-600 transition-colors shadow-sm"
                           >
-                            <div className="font-semibold mb-1">{apt.patientName}</div>
-                            <div className="text-sm opacity-90">{apt.reason}</div>
+                            <div className="font-semibold mb-1">
+                              {apt.patientName}
+                            </div>
+                            <div className="text-sm opacity-90">
+                              {apt.reason}
+                            </div>
                           </div>
                         ))
                       ) : (
-                        <div className="text-sm text-gray-400 py-2">Sin citas</div>
+                        <div className="text-sm text-gray-400 py-2">
+                          Sin citas
+                        </div>
                       )}
                     </div>
                   </div>
@@ -490,7 +557,9 @@ export const AppointmentsSection = () => {
           <div className="bg-gray-50 p-4 border-b-2 border-gray-200">
             <h3 className="text-lg font-bold text-gray-800">Todas las Citas</h3>
             <p className="text-sm text-gray-500 mt-1">
-              {allAppointments.length} cita{allAppointments.length !== 1 ? "s" : ""} programada{allAppointments.length !== 1 ? "s" : ""}
+              {allAppointments.length} cita
+              {allAppointments.length !== 1 ? "s" : ""} programada
+              {allAppointments.length !== 1 ? "s" : ""}
             </p>
           </div>
           <div className="bg-white max-h-[600px] overflow-y-auto">
@@ -508,7 +577,9 @@ export const AppointmentsSection = () => {
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
-                          <h4 className="font-bold text-gray-800">{apt.patientName}</h4>
+                          <h4 className="font-bold text-gray-800">
+                            {apt.patientName}
+                          </h4>
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <CalendarToday className="text-xs" />
                             <span>{formatDateShort(apt.date)}</span>
@@ -518,7 +589,9 @@ export const AppointmentsSection = () => {
                         </div>
                         <p className="text-sm text-gray-600">{apt.reason}</p>
                         {apt.notes && (
-                          <p className="text-xs text-gray-500 mt-1 italic">{apt.notes}</p>
+                          <p className="text-xs text-gray-500 mt-1 italic">
+                            {apt.notes}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -530,7 +603,9 @@ export const AppointmentsSection = () => {
                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <CalendarToday className="text-gray-400 text-3xl" />
                 </div>
-                <p className="text-gray-500 text-sm font-medium">No hay citas programadas</p>
+                <p className="text-gray-500 text-sm font-medium">
+                  No hay citas programadas
+                </p>
               </div>
             )}
           </div>
@@ -545,7 +620,9 @@ export const AppointmentsSection = () => {
       return {
         prev: prevWeek,
         next: nextWeek,
-        label: `Semana del ${formatDateShort(getWeekDays()[0].toISOString().split("T")[0])} - ${formatDateShort(getWeekDays()[6].toISOString().split("T")[0])}`,
+        label: `Semana del ${formatDateShort(
+          getWeekDays()[0].toISOString().split("T")[0]
+        )} - ${formatDateShort(getWeekDays()[6].toISOString().split("T")[0])}`,
       };
     }
     if (view === "day") {
@@ -672,7 +749,9 @@ export const AppointmentsSection = () => {
                             </h4>
                             <div className="flex items-center gap-2 text-sm text-gray-600">
                               <AccessTime className="text-xs" />
-                              <span className="font-medium">{appointment.time}</span>
+                              <span className="font-medium">
+                                {appointment.time}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -684,7 +763,9 @@ export const AppointmentsSection = () => {
                   <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <AccessTime className="text-gray-400 text-3xl" />
                   </div>
-                  <p className="text-gray-500 text-sm font-medium">No hay citas programadas</p>
+                  <p className="text-gray-500 text-sm font-medium">
+                    No hay citas programadas
+                  </p>
                 </div>
               )}
             </div>
