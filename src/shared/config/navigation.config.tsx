@@ -10,7 +10,6 @@ import {
   MedicalServices,
   Person,
   Settings,
-  ShoppingCart,
   StarRate,
   Timeline,
 } from "@mui/icons-material";
@@ -66,7 +65,7 @@ export const DOCTOR_MENU: MenuItem[] = [
 export const AMBULANCE_MENU: MenuItem[] = [
   {
     icon: <LocalShipping />,
-    label: "Mi Unidad",
+    label: "Mi Perfil",
     path: "/provider/ambulance/dashboard",
   },
   {
