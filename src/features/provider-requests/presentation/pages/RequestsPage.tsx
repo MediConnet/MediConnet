@@ -24,7 +24,7 @@ import {
   type GridColDef,
   type GridRenderCellParams,
 } from "@mui/x-data-grid";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import type {
   ProviderRequest,
@@ -33,6 +33,7 @@ import type {
 import { RequestDetailModal } from "../components/RequestDetailModal";
 import { RequestStatusBadge } from "../components/RequestStatusBadge";
 import { useProviderRequests } from "../hooks/useProviderRequests";
+import { useRequestFiltering } from "../hooks/useRequestFiltering";
 
 const CURRENT_ADMIN = {
   name: "Admin General",
@@ -43,18 +44,21 @@ const CURRENT_ADMIN = {
 export const RequestsPage = () => {
   const { data: initialData, isLoading } = useProviderRequests();
 
-  const [requests, setRequests] = useState<ProviderRequest[]>([]);
+  const {
+    requests,
+    filters,
+    setSearchText,
+    setStatusFilter,
+    setDateFilter,
+    approveRequest,
+    rejectRequest,
+  } = useRequestFiltering(initialData);
 
   const [selectedRequest, setSelectedRequest] =
     useState<ProviderRequest | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    if (initialData) {
-      setRequests(initialData);
-    }
-  }, [initialData]);
-
+  // --- Handlers UI ---
   const handleViewRequest = (request: ProviderRequest) => {
     setSelectedRequest(request);
     setIsModalOpen(true);
@@ -65,25 +69,17 @@ export const RequestsPage = () => {
     setSelectedRequest(null);
   };
 
-  const handleApprove = (id: string) => {
-    setRequests((prevRequests) =>
-      prevRequests.map((req) =>
-        req.id === id ? { ...req, status: "APPROVED" } : req
-      )
-    );
-
+  const onApprove = (id: string) => {
+    approveRequest(id);
     handleCloseModal();
   };
 
-  const handleReject = (id: string) => {
-    setRequests((prevRequests) =>
-      prevRequests.map((req) =>
-        req.id === id ? { ...req, status: "REJECTED" } : req
-      )
-    );
+  const onReject = (id: string) => {
+    rejectRequest(id);
     handleCloseModal();
   };
 
+  // --- Definición de Columnas ---
   const columns: GridColDef<ProviderRequest>[] = [
     { field: "id", headerName: "ID", width: 90 },
     {
@@ -132,7 +128,6 @@ export const RequestsPage = () => {
       renderCell: (params) => {
         const type = params.value as ServiceType;
         let icon = null;
-
         if (type === "doctor")
           icon = <LocalHospital color="primary" fontSize="small" />;
         if (type === "pharmacy")
@@ -174,7 +169,7 @@ export const RequestsPage = () => {
       field: "status",
       headerName: "Estado",
       width: 150,
-      renderCell: (params: GridRenderCellParams<ProviderRequest>) => (
+      renderCell: (params) => (
         <Box sx={{ display: "flex", alignItems: "center", height: "100%" }}>
           <RequestStatusBadge status={params.row.status} />
         </Box>
@@ -185,7 +180,7 @@ export const RequestsPage = () => {
       headerName: "Acciones",
       sortable: false,
       width: 150,
-      renderCell: (params: GridRenderCellParams<ProviderRequest>) => {
+      renderCell: (params) => {
         const isPending = params.row.status === "PENDING";
         return (
           <Stack
@@ -202,14 +197,13 @@ export const RequestsPage = () => {
             >
               <Visibility fontSize="small" />
             </IconButton>
-
             {isPending && (
               <>
                 <IconButton
                   size="small"
                   title="Aprobar"
                   color="success"
-                  onClick={() => handleApprove(params.row.id)}
+                  onClick={() => onApprove(params.row.id)}
                 >
                   <Check fontSize="small" />
                 </IconButton>
@@ -217,7 +211,7 @@ export const RequestsPage = () => {
                   size="small"
                   title="Rechazar"
                   color="error"
-                  onClick={() => handleReject(params.row.id)}
+                  onClick={() => onReject(params.row.id)}
                 >
                   <Close fontSize="small" />
                 </IconButton>
@@ -252,7 +246,7 @@ export const RequestsPage = () => {
           </Button>
         </Stack>
 
-        {/* Filtros */}
+        {/* Filtros (Conectados al Hook) */}
         <Stack
           direction={{ xs: "column", md: "row" }}
           spacing={2}
@@ -268,26 +262,30 @@ export const RequestsPage = () => {
             placeholder="Buscar por nombre o email..."
             size="small"
             sx={{ flexGrow: 1 }}
+            value={filters.searchText}
+            onChange={(e) => setSearchText(e.target.value)}
           />
           <TextField
             select
             label="Estado"
             size="small"
-            defaultValue="all"
+            value={filters.statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
             sx={{ minWidth: 150 }}
           >
             <MenuItem value="all">Todos</MenuItem>
             <MenuItem value="PENDING">Pendientes</MenuItem>
             <MenuItem value="APPROVED">Aprobados</MenuItem>
+            <MenuItem value="REJECTED">Rechazados</MenuItem>
           </TextField>
           <TextField
             type="date"
             size="small"
             sx={{ minWidth: 150 }}
-            slotProps={{
-              inputLabel: { shrink: true },
-            }}
+            slotProps={{ inputLabel: { shrink: true } }}
             label="Desde fecha"
+            value={filters.dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
           />
         </Stack>
 
@@ -307,32 +305,27 @@ export const RequestsPage = () => {
             loading={isLoading}
             rowHeight={80}
             initialState={{
-              pagination: {
-                paginationModel: { page: 0, pageSize: 10 },
-              },
+              pagination: { paginationModel: { page: 0, pageSize: 10 } },
             }}
             pageSizeOptions={[5, 10, 20]}
             disableColumnResize
             disableRowSelectionOnClick
             sx={{
               border: "none",
-              "& .MuiDataGrid-cell": {
-                display: "flex",
-                alignItems: "center",
-              },
+              "& .MuiDataGrid-cell": { display: "flex", alignItems: "center" },
               "& .MuiDataGrid-cell:focus": { outline: "none" },
               "& .MuiDataGrid-columnHeader:focus": { outline: "none" },
             }}
           />
         </Box>
 
-        {/* Modal de Detalle */}
+        {/* Modal */}
         <RequestDetailModal
           open={isModalOpen}
           onClose={handleCloseModal}
           request={selectedRequest}
-          onApprove={handleApprove}
-          onReject={handleReject}
+          onApprove={onApprove}
+          onReject={onReject}
         />
       </Box>
     </DashboardLayout>
