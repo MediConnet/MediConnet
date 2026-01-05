@@ -411,11 +411,13 @@ export const HomePage = () => {
 
       {/* Service Types Section */}
       <Box
+        id="servicios"
         sx={{
           width: '100%',
           py: { xs: 8, md: 12 },
           px: { xs: 3, md: 6 },
           backgroundColor: '#ffffff',
+          scrollMarginTop: '80px',
         }}
       >
         <Box sx={{ maxWidth: '1200px', mx: 'auto', textAlign: 'center' }}>
@@ -580,11 +582,13 @@ export const HomePage = () => {
 
       {/* Features Section */}
       <Box
+        id="beneficios"
         sx={{
           width: '100%',
           py: { xs: 8, md: 12 },
           px: { xs: 3, md: 6 },
           backgroundColor: 'rgba(236, 253, 245, 0.3)',
+          scrollMarginTop: '80px',
         }}
       >
         <Box sx={{ maxWidth: '1200px', mx: 'auto', textAlign: 'center' }}>
@@ -695,12 +699,14 @@ export const HomePage = () => {
 
       {/* Footer */}
       <Box
+        id="contacto"
         sx={{
           width: '100%',
           py: { xs: 8, md: 12 },
           px: { xs: 3, md: 6 },
           backgroundColor: '#1f2937',
           color: 'white',
+          scrollMarginTop: '80px',
         }}
       >
         <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
@@ -746,7 +752,7 @@ export const HomePage = () => {
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: 'rgba(255, 255, 255, 0.7)' }}>
                   <Phone sx={{ fontSize: 20 }} />
-                  <Typography sx={{ fontSize: '0.875rem' }}>+1 234 567 890</Typography>
+                  <Typography sx={{ fontSize: '0.875rem' }}>+593 23 456 456</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: 'rgba(255, 255, 255, 0.7)' }}>
                   <LocationOn sx={{ fontSize: 20 }} />
@@ -769,7 +775,7 @@ export const HomePage = () => {
                 Plataforma
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                {['Para Médicos', 'Para Farmacias', 'Para Laboratorios', 'Para Ambulancias'].map((link) => (
+                {['Para Médicos', 'Para Farmacias', 'Para Laboratorios', 'Para Ambulancias', 'Para Insumos Médicos'].map((link) => (
                   <Link
                     key={link}
                     href="#"
