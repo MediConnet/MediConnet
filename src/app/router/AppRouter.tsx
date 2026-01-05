@@ -8,7 +8,6 @@ import {
 import { DoctorRoute } from "./DoctorRoute";
 import { LaboratoryRoute } from "./LaboratoryRoute";
 import { SupplyRoute } from "./SupplyRoute";
-import { ProtectedRoute } from "./ProtectedRoute";
 
 // Layouts
 import { AppLayout } from "../../shared/layouts/AppLayout";
@@ -19,20 +18,15 @@ import { LoginPage } from "../../features/auth/presentation/pages/LoginPage";
 import { RegisterPage } from "../../features/auth/presentation/pages/RegisterPage";
 import { HomePage } from "../../features/home/presentation/pages/HomePage";
 import { ServicesCatalogPage } from "../../features/home/presentation/pages/ServicesCatalogPage";
-import { ProfilePage } from "../../features/profile/pages/ProfilePage";
 
 // Pages - Admin
-import { ActivityPage } from "../../features/activity-history/presentation/pages/ActivityPage";
+import { ActivityPage } from "../../features/admin-dashboard/presentation/pages/ActivityPage";
 import { AdminDashboardPage } from "../../features/admin-dashboard/presentation/pages/AdminDashboardPage";
-import { RequestsPage } from "../../features/provider-requests/presentation/pages/RequestsPage";
-import { ServicesDashboardPage } from "../../features/services-dashboard/presentation/pages/ServicesDashboardPage";
-import { SettingsPage } from "../../features/settings/presentation/pages/SettingsPage";
+import { RequestsPage } from "../../features/admin-dashboard/presentation/pages/RequestsPage";
+import { ServicesDashboardPage } from "../../features/admin-dashboard/presentation/pages/ServicesDashboardPage";
 
 // Pages - Doctor
-import { AppointmentsPage } from "../../features/appointments/presentation/pages/AppointmentsPage";
-import { DoctorDashboardPage } from "../../features/doctors/presentation/pages/DoctorDashboardPage";
-import { DoctorProfilePage } from "../../features/doctors/presentation/pages/DoctorProfilePage";
-import { DoctorsListPage } from "../../features/doctors/presentation/pages/DoctorsListPage";
+import { DoctorDashboardPage } from "../../features/doctor-panel/presentation/pages/DoctorDashboardPage";
 
 // Pages - Ambulancia
 import { AmbulanceDashboardPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceDashboardPage";
@@ -43,22 +37,20 @@ import { AmbulanceSettingsPage } from "../../features/ambulance-panel/presentati
 import { PharmacyDashboardPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyDashboardPage";
 
 // Pages - Laboratorio
-import { LaboratoryDashboardPage } from "../../features/laboratories/presentation/pages/LaboratoryDashboardPage";
+import { LaboratoryDashboardPage } from "../../features/laboratory-panel/presentation/pages/LaboratoryDashboardPage";
 
 // Pages - Insumos Médicos
-import { SupplyDashboardPage } from "../../features/supplies/presentation/pages/SupplyDashboardPage";
+import { SupplyDashboardPage } from "../../features/supplies-panel/presentation/pages/SupplyDashboardPage";
 
 // Pages - Insumos & Checkout & Search
+import { SettingsPage } from "../../features/admin-dashboard/presentation/pages/SettingsPage";
 import { AmbulanceAdsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceAdsPage";
 import { ForgotPasswordPage } from "../../features/auth/presentation/pages/ForgotPasswordPage";
-import { CheckoutPage } from "../../features/booking/presentation/pages/CheckoutPage";
 import { PharmacyAdsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyAdsPage";
 import { PharmacyReviewsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyReviewsPage";
 import { PharmacySettingsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacySettingsPage";
-import { SearchPage } from "../../features/search/presentation/pages/SearchPage";
-import { SpecialtiesPage } from "../../features/search/presentation/pages/SpecialtiesPage";
-import { SuppliesListPage } from "../../features/supplies/presentation/pages/SuppliesListPage";
-import { SupplyStoreDetailPage } from "../../features/supplies/presentation/pages/SupplyStoreDetailPage";
+import { SuppliesListPage } from "../../features/supplies-panel/presentation/pages/SuppliesListPage";
+import { SupplyStoreDetailPage } from "../../features/supplies-panel/presentation/pages/SupplyStoreDetailPage";
 
 export const AppRouter = () => {
   return (
@@ -75,8 +67,6 @@ export const AppRouter = () => {
         <Route element={<AppLayout />}>
           <Route path="/home" element={<HomePage />} />
           <Route path="/services" element={<ServicesCatalogPage />} />
-          <Route path="/specialties" element={<SpecialtiesPage />} />
-          <Route path="/search" element={<SearchPage />} />
           <Route path="/supplies" element={<SuppliesListPage />} />
           <Route path="/supplies/:id" element={<SupplyStoreDetailPage />} />
         </Route>
@@ -143,24 +133,6 @@ export const AppRouter = () => {
             <Route path="reviews" element={<PharmacyReviewsPage />} />
             <Route path="settings" element={<PharmacySettingsPage />} />
           </Route>
-        </Route>
-
-        {/* --- Rutas Protegidas Generales (Pacientes) --- */}
-        <Route
-          element={
-            <ProtectedRoute>
-              <AppLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route path="/doctor/:id" element={<DoctorProfilePage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/appointments" element={<AppointmentsPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route
-            path="/specialties/:specialtyName"
-            element={<DoctorsListPage />}
-          />
         </Route>
 
         {/* --- Fallback --- */}

@@ -9,7 +9,7 @@ import { Avatar, Box, Chip, Paper, Typography } from "@mui/material";
 import type {
   ActivityHistory,
   ActivityType,
-} from "../../domain/activity-history.entity";
+} from "../../../admin-dashboard/domain/activity-history.entity";
 
 interface Props {
   history: ActivityHistory;
