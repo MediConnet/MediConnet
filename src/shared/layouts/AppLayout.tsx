@@ -1,13 +1,14 @@
 // NOTE: Layout principal de la aplicación con header y sidebar
 // TODO: Agregar navegación completa y menú de usuario
 
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Box, Button, Typography } from '@mui/material';
 import { ROUTES } from '../../app/config/constants';
 import { useAuthStore } from '../../app/store/auth.store';
 
 export const AppLayout = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const authStore = useAuthStore();
   const { user, logout } = authStore;
 
@@ -16,15 +17,71 @@ export const AppLayout = () => {
     navigate(ROUTES.HOME);
   };
 
+  const handleServiciosClick = () => {
+    if (location.pathname === ROUTES.HOME) {
+      // Si ya estamos en home, hacer scroll suave
+      const serviciosSection = document.getElementById('servicios');
+      if (serviciosSection) {
+        serviciosSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } else {
+      // Si no estamos en home, navegar y luego hacer scroll
+      navigate(ROUTES.HOME);
+      setTimeout(() => {
+        const serviciosSection = document.getElementById('servicios');
+        if (serviciosSection) {
+          serviciosSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  };
+
+  const handleBeneficiosClick = () => {
+    if (location.pathname === ROUTES.HOME) {
+      // Si ya estamos en home, hacer scroll suave
+      const beneficiosSection = document.getElementById('beneficios');
+      if (beneficiosSection) {
+        beneficiosSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } else {
+      // Si no estamos en home, navegar y luego hacer scroll
+      navigate(ROUTES.HOME);
+      setTimeout(() => {
+        const beneficiosSection = document.getElementById('beneficios');
+        if (beneficiosSection) {
+          beneficiosSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  };
+
+  const handleContactoClick = () => {
+    if (location.pathname === ROUTES.HOME) {
+      // Si ya estamos en home, hacer scroll suave
+      const contactoSection = document.getElementById('contacto');
+      if (contactoSection) {
+        contactoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } else {
+      // Si no estamos en home, navegar y luego hacer scroll
+      navigate(ROUTES.HOME);
+      setTimeout(() => {
+        const contactoSection = document.getElementById('contacto');
+        if (contactoSection) {
+          contactoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  };
+
   return (
     <Box
       sx={{
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        
         overflowX: 'hidden',
-        
+        position: 'relative',
       }}
     >
       {/* NOTE: Header/Navbar con diseño público o privado según el estado del usuario */}
@@ -32,9 +89,13 @@ export const AppLayout = () => {
         style={{ 
           position: 'sticky', 
           top: 0, 
+          left: 0,
+          right: 0,
           zIndex: 1000, 
           backgroundColor: 'white',
           borderBottom: '1px solid #e5e7eb',
+          width: '100%',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
         }}
       >
         <Box
@@ -109,7 +170,7 @@ export const AppLayout = () => {
               }}
             >
               <Button
-                onClick={() => navigate(ROUTES.HOME)}
+                onClick={handleServiciosClick}
                 sx={{
                   textTransform: 'none',
                   color: '#1f2937',
@@ -124,7 +185,7 @@ export const AppLayout = () => {
                 Servicios
               </Button>
               <Button
-                onClick={() => navigate(ROUTES.HOME)}
+                onClick={handleBeneficiosClick}
                 sx={{
                   textTransform: 'none',
                   color: '#1f2937',
@@ -139,7 +200,7 @@ export const AppLayout = () => {
                 Beneficios
               </Button>
               <Button
-                onClick={() => navigate(ROUTES.HOME)}
+                onClick={handleContactoClick}
                 sx={{
                   textTransform: 'none',
                   color: '#1f2937',
