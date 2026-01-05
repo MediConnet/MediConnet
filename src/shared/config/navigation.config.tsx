@@ -157,11 +157,6 @@ export const SUPPLIES_MENU: MenuItem[] = [
     path: "/supply/dashboard?tab=reviews",
   },
   {
-    icon: <ShoppingCart />,
-    label: "Pedidos",
-    path: "/supply/dashboard?tab=orders",
-  },
-  {
     icon: <Inventory />,
     label: "Productos",
     path: "/supply/dashboard?tab=products",
