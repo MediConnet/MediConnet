@@ -136,12 +136,12 @@ export const LoginPage = () => {
         } else if (user.role === "profesional") {
           switch (user.tipo) {
             case "doctor":
-              navigate("/doctor/dashboard");
+              navigate("/doctor/dashboard?tab=profile");
               break;
 
             // CASO LABORATORIO (Ruta raíz)
             case "lab":
-              navigate("/laboratory/dashboard");
+              navigate("/laboratory/dashboard?tab=profile");
               break;
 
             // CASO AMBULANCIA (Ruta provider)
@@ -156,7 +156,7 @@ export const LoginPage = () => {
 
             // CASO INSUMOS MÉDICOS
             case "supplies":
-              navigate("/supply/dashboard");
+              navigate("/supply/dashboard?tab=profile");
               break;
 
             default:

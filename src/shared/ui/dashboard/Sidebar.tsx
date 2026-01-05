@@ -51,20 +51,21 @@ export const Sidebar = ({ role, isOpen }: SidebarProps) => {
       {/* ... MENU ITEMS ... */}
       <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto overflow-x-hidden">
         {menuItems.map((item, index) => {
-          const pathWithoutQuery = item.path.split("?")[0];
-          const tabParam = item.path.includes("tab=")
-            ? item.path.split("tab=")[1]
-            : null;
-          const currentTab = tabParam
-            ? location.search.includes(`tab=${tabParam}`)
-            : false;
+          const [itemPath, itemQuery] = item.path.split("?");
+          const isPathMatch = location.pathname.startsWith(itemPath);
+          let isActive = false;
 
-          const isActive =
-            location.pathname.startsWith(pathWithoutQuery) &&
-            (tabParam
-              ? currentTab
-              : !location.search.includes("tab=") ||
-                location.pathname !== pathWithoutQuery);
+          if (isPathMatch) {
+            if (itemQuery) {
+              if (location.search) {
+                isActive = location.search.includes(itemQuery);
+              } else {
+                isActive = itemQuery.includes("tab=profile");
+              }
+            } else {
+              isActive = true;
+            }
+          }
 
           return (
             <Link
