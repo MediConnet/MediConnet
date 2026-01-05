@@ -1,4 +1,4 @@
-import type { ActiveService, ServiceStats } from "../domain/service-stats.entity";
+import type { ActiveService, ServiceStats } from "../../admin-dashboard/domain/service-stats.entity";
 
 export const MOCK_SERVICE_STATS: ServiceStats = {
   doctorCount: 1,

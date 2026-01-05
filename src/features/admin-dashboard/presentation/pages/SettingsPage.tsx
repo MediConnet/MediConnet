@@ -1,7 +1,7 @@
 import { Box, Divider, Paper, Skeleton, Typography } from "@mui/material";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
-import { SettingsItem } from "../components/SettingsItem";
-import { useAdminSettings } from "../hooks/useAdminSettings";
+import { SettingsItem } from "../../../admin-dashboard/presentation/components/SettingsItem";
+import { useAdminSettings } from "../../../admin-dashboard/presentation/hooks/useAdminSettings";
 
 const CURRENT_ADMIN = {
   name: "Administrador General",

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getRequestsUseCase } from "../../application/get-requests.usecase";
+import { getRequestsUseCase } from "../../../admin-dashboard/application/get-requests.usecase";
 
 export const useProviderRequests = () => {
   return useQuery({

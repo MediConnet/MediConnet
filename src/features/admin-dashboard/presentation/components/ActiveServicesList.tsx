@@ -6,7 +6,7 @@ import {
   Science,
 } from "@mui/icons-material";
 import { Avatar, Box, Chip, Paper, Stack, Typography } from "@mui/material";
-import type { ActiveService } from "../../domain/service-stats.entity";
+import type { ActiveService } from "../../../admin-dashboard/domain/service-stats.entity";
 
 interface Props {
   services: ActiveService[];

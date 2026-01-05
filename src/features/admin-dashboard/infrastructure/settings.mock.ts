@@ -1,4 +1,4 @@
-import type { AdminSettings } from "../domain/admin-settings.entity";
+import type { AdminSettings } from "../../admin-dashboard/domain/admin-settings.entity";
 
 export const MOCK_ADMIN_SETTINGS: AdminSettings = {
   notifyNewRequests: true,
