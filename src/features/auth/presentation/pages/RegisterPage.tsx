@@ -7,7 +7,7 @@ import {
   CardContent,
   CircularProgress,
 } from "@mui/material";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -21,6 +21,8 @@ import {
   ArrowForward,
   CheckCircle,
   CloudUpload,
+  Close,
+  Description,
 } from "@mui/icons-material";
 import { ROUTES } from "../../../../app/config/constants";
 import { useRegisterProfessional } from "../hooks/useRegisterProfessional";
@@ -62,6 +64,12 @@ export const RegisterPage = () => {
   const [step, setStep] = useState(initialType ? 1 : 0);
   const [selectedType, setSelectedType] = useState<ServiceType | null>(initialType);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [licenses, setLicenses] = useState<File[]>([]);
+  const [certificates, setCertificates] = useState<File[]>([]);
+  const [professionalTitles, setProfessionalTitles] = useState<File[]>([]);
+  const licenseInputRef = useRef<HTMLInputElement>(null);
+  const certificateInputRef = useRef<HTMLInputElement>(null);
+  const professionalTitleInputRef = useRef<HTMLInputElement>(null);
 
   // Esquema de validación para paso 1 (Información personal)
   const personalInfoSchema = Yup.object({
@@ -640,31 +648,287 @@ export const RegisterPage = () => {
 
               {/* Documents Upload */}
               <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 3 }}>
                   Documentos de respaldo
                 </Typography>
-                <Box
-                  sx={{
-                    border: "2px dashed #d1fae5",
-                    borderRadius: 3,
-                    p: 4,
-                    textAlign: "center",
-                    backgroundColor: "#f8fffd",
-                    cursor: "pointer",
-                    transition: "all 0.3s ease",
-                    "&:hover": {
-                      borderColor: "#14b8a6",
-                      backgroundColor: "#f0fdfa",
-                    },
-                  }}
-                >
-                  <CloudUpload sx={{ fontSize: 40, color: "#94a3b8", mb: 2 }} />
-                  <Typography sx={{ mb: 1 }}>
-                    Arrastra archivos aquí o haz clic para subir
+
+                {/* Licencias */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1.5, color: "text.secondary" }}>
+                    Licencias
                   </Typography>
-                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                    Licencias, certificados, títulos profesionales
+                  <input
+                    type="file"
+                    ref={licenseInputRef}
+                    multiple
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      setLicenses((prev) => [...prev, ...files]);
+                    }}
+                  />
+                  <Box
+                    onClick={() => licenseInputRef.current?.click()}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const files = Array.from(e.dataTransfer.files);
+                      setLicenses((prev) => [...prev, ...files]);
+                    }}
+                    sx={{
+                      border: "2px dashed #d1fae5",
+                      borderRadius: 3,
+                      p: 3,
+                      textAlign: "center",
+                      backgroundColor: "#f8fffd",
+                      cursor: "pointer",
+                      transition: "all 0.3s ease",
+                      "&:hover": {
+                        borderColor: "#14b8a6",
+                        backgroundColor: "#f0fdfa",
+                      },
+                    }}
+                  >
+                    <CloudUpload sx={{ fontSize: 32, color: "#94a3b8", mb: 1 }} />
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                      Arrastra archivos aquí o haz clic para subir
+                    </Typography>
+                  </Box>
+                  {licenses.length > 0 && (
+                    <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 1 }}>
+                      {licenses.map((file, index) => (
+                        <Box
+                          key={index}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            p: 1.5,
+                            backgroundColor: "#f0fdfa",
+                            borderRadius: 2,
+                            border: "1px solid #d1fae5",
+                          }}
+                        >
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1 }}>
+                            <Description sx={{ color: "#14b8a6", fontSize: 20 }} />
+                            <Typography variant="body2" sx={{ flex: 1, textAlign: "left" }}>
+                              {file.name}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                              {(file.size / 1024).toFixed(2)} KB
+                            </Typography>
+                          </Box>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLicenses((prev) => prev.filter((_, i) => i !== index));
+                            }}
+                            sx={{
+                              minWidth: "auto",
+                              p: 0.5,
+                              color: "#ef4444",
+                              "&:hover": {
+                                backgroundColor: "#fee2e2",
+                              },
+                            }}
+                          >
+                            <Close />
+                          </Button>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Certificados */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1.5, color: "text.secondary" }}>
+                    Certificados
                   </Typography>
+                  <input
+                    type="file"
+                    ref={certificateInputRef}
+                    multiple
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      setCertificates((prev) => [...prev, ...files]);
+                    }}
+                  />
+                  <Box
+                    onClick={() => certificateInputRef.current?.click()}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const files = Array.from(e.dataTransfer.files);
+                      setCertificates((prev) => [...prev, ...files]);
+                    }}
+                    sx={{
+                      border: "2px dashed #d1fae5",
+                      borderRadius: 3,
+                      p: 3,
+                      textAlign: "center",
+                      backgroundColor: "#f8fffd",
+                      cursor: "pointer",
+                      transition: "all 0.3s ease",
+                      "&:hover": {
+                        borderColor: "#14b8a6",
+                        backgroundColor: "#f0fdfa",
+                      },
+                    }}
+                  >
+                    <CloudUpload sx={{ fontSize: 32, color: "#94a3b8", mb: 1 }} />
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                      Arrastra archivos aquí o haz clic para subir
+                    </Typography>
+                  </Box>
+                  {certificates.length > 0 && (
+                    <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 1 }}>
+                      {certificates.map((file, index) => (
+                        <Box
+                          key={index}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            p: 1.5,
+                            backgroundColor: "#f0fdfa",
+                            borderRadius: 2,
+                            border: "1px solid #d1fae5",
+                          }}
+                        >
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1 }}>
+                            <Description sx={{ color: "#14b8a6", fontSize: 20 }} />
+                            <Typography variant="body2" sx={{ flex: 1, textAlign: "left" }}>
+                              {file.name}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                              {(file.size / 1024).toFixed(2)} KB
+                            </Typography>
+                          </Box>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCertificates((prev) => prev.filter((_, i) => i !== index));
+                            }}
+                            sx={{
+                              minWidth: "auto",
+                              p: 0.5,
+                              color: "#ef4444",
+                              "&:hover": {
+                                backgroundColor: "#fee2e2",
+                              },
+                            }}
+                          >
+                            <Close />
+                          </Button>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Títulos Profesionales */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1.5, color: "text.secondary" }}>
+                    Títulos Profesionales
+                  </Typography>
+                  <input
+                    type="file"
+                    ref={professionalTitleInputRef}
+                    multiple
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      setProfessionalTitles((prev) => [...prev, ...files]);
+                    }}
+                  />
+                  <Box
+                    onClick={() => professionalTitleInputRef.current?.click()}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const files = Array.from(e.dataTransfer.files);
+                      setProfessionalTitles((prev) => [...prev, ...files]);
+                    }}
+                    sx={{
+                      border: "2px dashed #d1fae5",
+                      borderRadius: 3,
+                      p: 3,
+                      textAlign: "center",
+                      backgroundColor: "#f8fffd",
+                      cursor: "pointer",
+                      transition: "all 0.3s ease",
+                      "&:hover": {
+                        borderColor: "#14b8a6",
+                        backgroundColor: "#f0fdfa",
+                      },
+                    }}
+                  >
+                    <CloudUpload sx={{ fontSize: 32, color: "#94a3b8", mb: 1 }} />
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                      Arrastra archivos aquí o haz clic para subir
+                    </Typography>
+                  </Box>
+                  {professionalTitles.length > 0 && (
+                    <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 1 }}>
+                      {professionalTitles.map((file, index) => (
+                        <Box
+                          key={index}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            p: 1.5,
+                            backgroundColor: "#f0fdfa",
+                            borderRadius: 2,
+                            border: "1px solid #d1fae5",
+                          }}
+                        >
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1 }}>
+                            <Description sx={{ color: "#14b8a6", fontSize: 20 }} />
+                            <Typography variant="body2" sx={{ flex: 1, textAlign: "left" }}>
+                              {file.name}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                              {(file.size / 1024).toFixed(2)} KB
+                            </Typography>
+                          </Box>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setProfessionalTitles((prev) => prev.filter((_, i) => i !== index));
+                            }}
+                            sx={{
+                              minWidth: "auto",
+                              p: 0.5,
+                              color: "#ef4444",
+                              "&:hover": {
+                                backgroundColor: "#fee2e2",
+                              },
+                            }}
+                          >
+                            <Close />
+                          </Button>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
                 </Box>
               </Box>
 

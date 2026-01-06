@@ -1,5 +1,5 @@
 import { Visibility, Group, Star, TrendingUp } from "@mui/icons-material";
-import type { DoctorDashboard } from "../../../domain/DoctorDashboard.entity";
+import type { DoctorDashboard } from "../../domain/DoctorDashboard.entity";
 
 interface StatsCardsProps {
   data: DoctorDashboard;

@@ -1,5 +1,5 @@
 import { Visibility, Group, Star, TrendingUp } from "@mui/icons-material";
-import type { SupplyDashboard } from "../../../domain/SupplyDashboard.entity";
+import type { SupplyDashboard } from "../../domain/SupplyDashboard.entity";
 
 interface StatsCardsProps {
   data: SupplyDashboard;

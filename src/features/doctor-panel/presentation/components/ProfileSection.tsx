@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Edit, LocationOn, Phone, Star } from "@mui/icons-material";
-import type { DoctorDashboard, WorkSchedule } from "../../../domain/DoctorDashboard.entity";
+import type { DoctorDashboard, WorkSchedule } from "../../domain/DoctorDashboard.entity";
 import { useUpdateDoctorProfile } from "../hooks/useUpdateDoctorProfile";
 import { useAuthStore } from "../../../../app/store/auth.store";
 
@@ -113,7 +113,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const handleScheduleChange = (day: string, field: 'enabled' | 'startTime' | 'endTime', value: boolean | string) => {
     setFormData((prev) => ({
       ...prev,
-      workSchedule: prev.workSchedule.map((schedule) =>
+      workSchedule: prev.workSchedule.map((schedule: WorkSchedule) =>
         schedule.day === day ? { ...schedule, [field]: value } : schedule
       ),
     }));
@@ -244,7 +244,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
               <div className="mt-6">
                 <label className="text-sm text-gray-600 mb-3 block font-semibold">Horario Laboral</label>
                 <div className="space-y-2">
-                  {doctor.workSchedule.map((schedule) => (
+                  {doctor.workSchedule.map((schedule: WorkSchedule) => (
                     <div key={schedule.day} className="flex items-center justify-between py-2 border-b border-gray-100">
                       <span className="text-sm font-medium text-gray-700 w-24">
                         {dayLabels[schedule.day] || schedule.day}
@@ -346,7 +346,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
             <div className="mt-6">
               <label className="text-sm text-gray-600 mb-3 block font-semibold">Horario Laboral</label>
               <div className="space-y-3">
-                {formData.workSchedule.map((schedule) => (
+                {formData.workSchedule.map((schedule: WorkSchedule) => (
                   <div key={schedule.day} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-2 w-24">
                       <input

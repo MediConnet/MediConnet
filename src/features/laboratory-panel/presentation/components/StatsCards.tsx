@@ -1,5 +1,5 @@
 import { Visibility, Group, Star, TrendingUp } from "@mui/icons-material";
-import type { LaboratoryDashboard } from "../../../domain/LaboratoryDashboard.entity";
+import type { LaboratoryDashboard } from "../../domain/LaboratoryDashboard.entity";
 
 interface StatsCardsProps {
   data: LaboratoryDashboard;
