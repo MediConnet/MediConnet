@@ -9,6 +9,8 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 import {
   LocalHospital,
   Medication,
@@ -61,60 +63,113 @@ export const RegisterPage = () => {
   const [selectedType, setSelectedType] = useState<ServiceType | null>(initialType);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [formData, setFormData] = useState({
-    // Personal Info
-    nombreCompleto: "",
-    email: "",
-    telefono: "",
-    whatsapp: "",
-    password: "",
-    confirmPassword: "",
-    // Service Info
-    nombreServicio: "",
-    especialidad: "",
-    descripcion: "",
-    direccion: "",
-    ciudad: "",
-    tarifaConsulta: "",
-    // Social
-    facebook: "",
-    instagram: "",
+  // Esquema de validación para paso 1 (Información personal)
+  const personalInfoSchema = Yup.object({
+    nombreCompleto: Yup.string()
+      .min(3, "El nombre debe tener al menos 3 caracteres")
+      .required("El nombre completo es requerido"),
+    email: Yup.string()
+      .email("Correo electrónico inválido")
+      .required("El correo electrónico es requerido"),
+    telefono: Yup.string()
+      .min(10, "El teléfono debe tener al menos 10 dígitos")
+      .required("El teléfono es requerido"),
+    whatsapp: Yup.string()
+      .min(10, "El WhatsApp debe tener al menos 10 dígitos")
+      .required("El WhatsApp es requerido"),
+    password: Yup.string()
+      .min(6, "La contraseña debe tener al menos 6 caracteres")
+      .required("La contraseña es requerida"),
+    confirmPassword: Yup.string()
+      .oneOf([Yup.ref("password")], "Las contraseñas no coinciden")
+      .required("Debes confirmar tu contraseña"),
+  });
+
+  // Esquema de validación para paso 2 (Información del servicio)
+  const getServiceInfoSchema = () => {
+    const baseSchema = {
+      nombreServicio: Yup.string()
+        .min(3, "El nombre del servicio debe tener al menos 3 caracteres")
+        .required("El nombre del servicio es requerido"),
+      descripcion: Yup.string()
+        .min(10, "La descripción debe tener al menos 10 caracteres")
+        .required("La descripción es requerida"),
+      direccion: Yup.string()
+        .min(5, "La dirección debe tener al menos 5 caracteres")
+        .required("La dirección es requerida"),
+      ciudad: Yup.string()
+        .min(2, "La ciudad debe tener al menos 2 caracteres")
+        .required("La ciudad es requerida"),
+      tarifaConsulta: Yup.string(),
+      facebook: Yup.string(),
+      instagram: Yup.string(),
+    };
+
+    if (selectedType === "doctor") {
+      return Yup.object({
+        ...baseSchema,
+        especialidad: Yup.string().required("La especialidad es requerida"),
+      });
+    }
+
+    return Yup.object(baseSchema);
+  };
+
+  const formik = useFormik({
+    initialValues: {
+      // Personal Info
+      nombreCompleto: "",
+      email: "",
+      telefono: "",
+      whatsapp: "",
+      password: "",
+      confirmPassword: "",
+      // Service Info
+      nombreServicio: "",
+      especialidad: "",
+      descripcion: "",
+      direccion: "",
+      ciudad: "",
+      tarifaConsulta: "",
+      // Social
+      facebook: "",
+      instagram: "",
+    },
+    validationSchema: step === 1 ? personalInfoSchema : step === 2 ? getServiceInfoSchema() : undefined,
+    enableReinitialize: true,
+    onSubmit: async (values) => {
+      if (step === 1) {
+        setStep(2);
+      } else if (step === 2) {
+        setIsSubmitting(true);
+        try {
+          const professionalData = {
+            type: selectedType!,
+            name: values.nombreCompleto,
+            email: values.email,
+            phone: values.telefono,
+            whatsapp: values.whatsapp,
+            serviceName: values.nombreServicio,
+            address: values.direccion,
+            city: values.ciudad,
+            price: values.tarifaConsulta,
+            description: values.descripcion,
+          };
+
+          await submit(professionalData);
+          setStep(3); // Step 3 - Success
+        } catch (error) {
+          console.error("Error al enviar solicitud:", error);
+        } finally {
+          setIsSubmitting(false);
+        }
+      }
+    },
   });
 
   const handleTypeSelect = (type: ServiceType) => {
     setSelectedType(type);
     setStep(1);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      const professionalData = {
-        type: selectedType!,
-        name: formData.nombreCompleto,
-        email: formData.email,
-        phone: formData.telefono,
-        whatsapp: formData.whatsapp,
-        serviceName: formData.nombreServicio,
-        address: formData.direccion,
-        city: formData.ciudad,
-        price: formData.tarifaConsulta,
-        description: formData.descripcion,
-      };
-
-      await submit(professionalData);
-      setStep(3); // Step 4 (índice 3) - Success
-    } catch (error) {
-      console.error("Error al enviar solicitud:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   return (
@@ -356,7 +411,7 @@ export const RegisterPage = () => {
               </Box>
             </Box>
 
-            <Box component="form" onSubmit={(e) => { e.preventDefault(); setStep(2); }}>
+            <Box component="form" onSubmit={formik.handleSubmit}>
               <Box
                 sx={{
                   display: "grid",
@@ -368,8 +423,11 @@ export const RegisterPage = () => {
                 <TextField
                   label="Nombre completo *"
                   name="nombreCompleto"
-                  value={formData.nombreCompleto}
-                  onChange={handleChange}
+                  value={formik.values.nombreCompleto}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={formik.touched.nombreCompleto && Boolean(formik.errors.nombreCompleto)}
+                  helperText={formik.touched.nombreCompleto && formik.errors.nombreCompleto}
                   required
                   fullWidth
                 />
@@ -377,24 +435,33 @@ export const RegisterPage = () => {
                   label="Correo electrónico *"
                   name="email"
                   type="email"
-                  value={formData.email}
-                  onChange={handleChange}
+                  value={formik.values.email}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={formik.touched.email && Boolean(formik.errors.email)}
+                  helperText={formik.touched.email && formik.errors.email}
                   required
                   fullWidth
                 />
                 <TextField
                   label="Teléfono *"
                   name="telefono"
-                  value={formData.telefono}
-                  onChange={handleChange}
+                  value={formik.values.telefono}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={formik.touched.telefono && Boolean(formik.errors.telefono)}
+                  helperText={formik.touched.telefono && formik.errors.telefono}
                   required
                   fullWidth
                 />
                 <TextField
                   label="WhatsApp *"
                   name="whatsapp"
-                  value={formData.whatsapp}
-                  onChange={handleChange}
+                  value={formik.values.whatsapp}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={formik.touched.whatsapp && Boolean(formik.errors.whatsapp)}
+                  helperText={formik.touched.whatsapp && formik.errors.whatsapp}
                   required
                   fullWidth
                 />
@@ -415,8 +482,11 @@ export const RegisterPage = () => {
                   label="Contraseña *"
                   name="password"
                   type="password"
-                  value={formData.password}
-                  onChange={handleChange}
+                  value={formik.values.password}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={formik.touched.password && Boolean(formik.errors.password)}
+                  helperText={formik.touched.password && formik.errors.password}
                   required
                   fullWidth
                 />
@@ -424,8 +494,11 @@ export const RegisterPage = () => {
                   label="Confirmar contraseña *"
                   name="confirmPassword"
                   type="password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
+                  value={formik.values.confirmPassword}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={formik.touched.confirmPassword && Boolean(formik.errors.confirmPassword)}
+                  helperText={formik.touched.confirmPassword && formik.errors.confirmPassword}
                   required
                   fullWidth
                 />
@@ -475,7 +548,7 @@ export const RegisterPage = () => {
               </Typography>
             </Box>
 
-            <Box component="form" onSubmit={handleSubmit}>
+            <Box component="form" onSubmit={formik.handleSubmit}>
               <Box
                 sx={{
                   display: "grid",
@@ -492,8 +565,11 @@ export const RegisterPage = () => {
                       ? "Consultorio Dr. Pérez"
                       : "Nombre del establecimiento"
                   }
-                  value={formData.nombreServicio}
-                  onChange={handleChange}
+                  value={formik.values.nombreServicio}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={formik.touched.nombreServicio && Boolean(formik.errors.nombreServicio)}
+                  helperText={formik.touched.nombreServicio && formik.errors.nombreServicio}
                   required
                   fullWidth
                 />
@@ -502,8 +578,11 @@ export const RegisterPage = () => {
                     label="Especialidad *"
                     name="especialidad"
                     placeholder="Cardiología, Pediatría, etc."
-                    value={formData.especialidad}
-                    onChange={handleChange}
+                    value={formik.values.especialidad}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={formik.touched.especialidad && Boolean(formik.errors.especialidad)}
+                    helperText={formik.touched.especialidad && formik.errors.especialidad}
                     required
                     fullWidth
                   />
@@ -512,8 +591,11 @@ export const RegisterPage = () => {
                   label="Dirección *"
                   name="direccion"
                   placeholder="Calle Principal #123"
-                  value={formData.direccion}
-                  onChange={handleChange}
+                  value={formik.values.direccion}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={formik.touched.direccion && Boolean(formik.errors.direccion)}
+                  helperText={formik.touched.direccion && formik.errors.direccion}
                   required
                   fullWidth
                 />
@@ -521,8 +603,11 @@ export const RegisterPage = () => {
                   label="Ciudad *"
                   name="ciudad"
                   placeholder="Tu ciudad"
-                  value={formData.ciudad}
-                  onChange={handleChange}
+                  value={formik.values.ciudad}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={formik.touched.ciudad && Boolean(formik.errors.ciudad)}
+                  helperText={formik.touched.ciudad && formik.errors.ciudad}
                   required
                   fullWidth
                 />
@@ -530,8 +615,9 @@ export const RegisterPage = () => {
                   label="Tarifa de consulta"
                   name="tarifaConsulta"
                   placeholder="$50.00"
-                  value={formData.tarifaConsulta}
-                  onChange={handleChange}
+                  value={formik.values.tarifaConsulta}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   fullWidth
                 />
               </Box>
@@ -540,8 +626,11 @@ export const RegisterPage = () => {
                 label="Descripción del servicio *"
                 name="descripcion"
                 placeholder="Describe brevemente los servicios que ofreces..."
-                value={formData.descripcion}
-                onChange={handleChange}
+                value={formik.values.descripcion}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.descripcion && Boolean(formik.errors.descripcion)}
+                helperText={formik.touched.descripcion && formik.errors.descripcion}
                 required
                 multiline
                 rows={4}
@@ -595,16 +684,18 @@ export const RegisterPage = () => {
                     label="Facebook"
                     name="facebook"
                     placeholder="facebook.com/tupagina"
-                    value={formData.facebook}
-                    onChange={handleChange}
+                    value={formik.values.facebook}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
                     fullWidth
                   />
                   <TextField
                     label="Instagram"
                     name="instagram"
                     placeholder="@tucuenta"
-                    value={formData.instagram}
-                    onChange={handleChange}
+                    value={formik.values.instagram}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
                     fullWidth
                   />
                 </Box>

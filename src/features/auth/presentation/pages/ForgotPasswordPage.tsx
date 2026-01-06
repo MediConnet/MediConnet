@@ -16,39 +16,43 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 import { ROUTES } from "../../../../app/config/constants";
 import { useSendResetPassword } from "../hooks/useSendResetPassword";
 
+// Esquema de validación
+const forgotPasswordValidationSchema = Yup.object({
+  email: Yup.string()
+    .email("Correo electrónico inválido")
+    .required("El correo electrónico es requerido"),
+});
+
 export const ForgotPasswordPage = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
   // Hook de Clean Architecture
   const sendResetPassword = useSendResetPassword();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess(false);
-
-    if (!email) {
-      setError("Por favor ingresa tu correo electrónico");
-      return;
-    }
-
-    try {
-      const response = await sendResetPassword.mutateAsync({ email });
-      if (response.success) {
-        setSuccess(true);
-      } else {
-        setError(response.message);
+  const formik = useFormik({
+    initialValues: {
+      email: "",
+    },
+    validationSchema: forgotPasswordValidationSchema,
+    onSubmit: async (values) => {
+      try {
+        const response = await sendResetPassword.mutateAsync({ email: values.email });
+        if (response.success) {
+          setSuccess(true);
+        } else {
+          formik.setFieldError("email", response.message || "Error al enviar el enlace");
+        }
+      } catch (err) {
+        formik.setFieldError("email", "Ocurrió un error al enviar el enlace. Intenta nuevamente.");
       }
-    } catch (err) {
-      setError("Ocurrió un error al enviar el enlace. Intenta nuevamente.");
-    }
-  };
+    },
+  });
 
   return (
     <Box
@@ -183,7 +187,7 @@ export const ForgotPasswordPage = () => {
                   sx={{ mb: 4 }}
                 >
                   Hemos enviado las instrucciones para restablecer tu contraseña
-                  a <strong>{email}</strong>.
+                  a <strong>{formik.values.email}</strong>.
                 </Typography>
                 <Button
                   fullWidth
@@ -232,19 +236,21 @@ export const ForgotPasswordPage = () => {
                   recuperar tu cuenta.
                 </Typography>
 
-                <Box component="form" onSubmit={handleSubmit}>
+                <Box component="form" onSubmit={formik.handleSubmit}>
                   <Box sx={{ mb: 3 }}>
                     <TextField
                       fullWidth
                       label="Correo electrónico"
                       type="email"
                       placeholder="tu@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      name="email"
+                      value={formik.values.email}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
                       required
                       disabled={sendResetPassword.isPending}
-                      error={!!error}
-                      helperText={error}
+                      error={formik.touched.email && Boolean(formik.errors.email)}
+                      helperText={formik.touched.email && formik.errors.email}
                       sx={{
                         "& .MuiOutlinedInput-root": {
                           borderRadius: 2,

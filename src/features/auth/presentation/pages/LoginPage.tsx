@@ -19,6 +19,8 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 import { ROUTES } from "../../../../app/config/constants";
 import { useAuthStore } from "../../../../app/store/auth.store";
 
@@ -91,24 +93,34 @@ const authenticateUser = (email: string, password: string) => {
   );
 };
 
+// Esquema de validación
+const loginValidationSchema = Yup.object({
+  email: Yup.string()
+    .email("Correo electrónico inválido")
+    .required("El correo electrónico es requerido"),
+  password: Yup.string()
+    .min(6, "La contraseña debe tener al menos 6 caracteres")
+    .required("La contraseña es requerida"),
+});
+
 export const LoginPage = () => {
   const navigate = useNavigate();
   const authStore = useAuthStore();
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      const user = authenticateUser(formData.email, formData.password);
+  const formik = useFormik({
+    initialValues: {
+      email: "",
+      password: "",
+    },
+    validationSchema: loginValidationSchema,
+    onSubmit: async (values) => {
+      setIsLoading(true);
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        const user = authenticateUser(values.email, values.password);
 
       if (user) {
         // 1. Determinar el role para el store
@@ -166,17 +178,19 @@ export const LoginPage = () => {
           navigate(ROUTES.HOME);
         }
       } else {
-        console.error("Credenciales incorrectas");
+        formik.setFieldError("password", "Credenciales incorrectas");
       }
     } catch (error) {
       console.error("Error al iniciar sesión:", error);
+      formik.setFieldError("password", "Error al iniciar sesión");
     } finally {
       setIsLoading(false);
     }
-  };
+    },
+  });
 
   const handleQuickLogin = (email: string, password: string) => {
-    setFormData({ email, password });
+    formik.setValues({ email, password });
   };
 
   return (
@@ -326,17 +340,19 @@ export const LoginPage = () => {
             </Typography>
 
             {/* Form */}
-            <Box component="form" onSubmit={handleSubmit} sx={{ mb: 3 }}>
+            <Box component="form" onSubmit={formik.handleSubmit} sx={{ mb: 3 }}>
               <Box sx={{ mb: 2 }}>
                 <TextField
                   fullWidth
                   label="Correo electrónico"
                   type="email"
                   placeholder="tu@email.com"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
+                  name="email"
+                  value={formik.values.email}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={formik.touched.email && Boolean(formik.errors.email)}
+                  helperText={formik.touched.email && formik.errors.email}
                   required
                   sx={{
                     "& .MuiOutlinedInput-root": {
@@ -359,10 +375,12 @@ export const LoginPage = () => {
                   label="Contraseña"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
+                  name="password"
+                  value={formik.values.password}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={formik.touched.password && Boolean(formik.errors.password)}
+                  helperText={formik.touched.password && formik.errors.password}
                   required
                   sx={{
                     "& .MuiOutlinedInput-root": {
