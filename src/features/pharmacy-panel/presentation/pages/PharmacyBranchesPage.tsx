@@ -1,10 +1,12 @@
 import { Add, Store } from "@mui/icons-material";
 import { Box, Button, Stack, Typography } from "@mui/material";
+import { useState } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
+import type { PharmacyBranch } from "../../domain/pharmacy-branch.entity";
+import { PharmacyBranchModal } from "../components/PharmacyBranchModal";
 import { PharmacyBranchesTable } from "../components/PharmacyBranchesTable";
 import { usePharmacyBranches } from "../hooks/usePharmacyBranches";
 
-// Mock user
 const PHARMACY_USER = {
   name: "Fybeca Admin",
   roleLabel: "Farmacia",
@@ -13,12 +15,50 @@ const PHARMACY_USER = {
 };
 
 export const PharmacyBranchesPage = () => {
-  const { branches, isLoading } = usePharmacyBranches();
+  // 1. Hook con lógica de negocio (CRUD local)
+  const { branches, isLoading, addBranch, updateBranch, deleteBranch } =
+    usePharmacyBranches();
+
+  // 2. Estado local para el Modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedBranch, setSelectedBranch] = useState<PharmacyBranch | null>(
+    null
+  );
+
+  // --- Handlers ---
+
+  const handleCreate = () => {
+    setSelectedBranch(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (branch: PharmacyBranch) => {
+    setSelectedBranch(branch);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm("¿Estás seguro de eliminar esta sucursal?")) {
+      deleteBranch(id);
+    }
+  };
+
+  const handleSave = (
+    branchData: PharmacyBranch | Omit<PharmacyBranch, "id">
+  ) => {
+    if ("id" in branchData) {
+      // Tiene ID -> Es Edición
+      updateBranch(branchData as PharmacyBranch);
+    } else {
+      // No tiene ID -> Es Creación
+      addBranch(branchData);
+    }
+  };
 
   return (
     <DashboardLayout role="PROVIDER" userProfile={PHARMACY_USER}>
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
-        {/* HEADER DE SECCIÓN + BOTÓN CREAR */}
+        {/* HEADER */}
         <Stack
           direction={{ xs: "column", sm: "row" }}
           justifyContent="space-between"
@@ -51,14 +91,27 @@ export const PharmacyBranchesPage = () => {
               px: 3,
               py: 1,
             }}
-            onClick={() => console.log("Abrir modal crear sucursal")}
+            onClick={handleCreate}
           >
             Nueva Sucursal
           </Button>
         </Stack>
 
-        {/* TABLA DE SUCURSALES */}
-        <PharmacyBranchesTable branches={branches} isLoading={isLoading} />
+        {/* TABLA */}
+        <PharmacyBranchesTable
+          branches={branches}
+          isLoading={isLoading}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+
+        {/* MODAL (CREAR / EDITAR) */}
+        <PharmacyBranchModal
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          branchToEdit={selectedBranch}
+          onSave={handleSave}
+        />
       </Box>
     </DashboardLayout>
   );

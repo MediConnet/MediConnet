@@ -6,9 +6,16 @@ import type { PharmacyBranch } from "../../domain/pharmacy-branch.entity";
 interface Props {
   branches: PharmacyBranch[];
   isLoading: boolean;
+  onEdit: (branch: PharmacyBranch) => void;
+  onDelete: (id: string) => void;
 }
 
-export const PharmacyBranchesTable = ({ branches, isLoading }: Props) => {
+export const PharmacyBranchesTable = ({
+  branches,
+  isLoading,
+  onEdit,
+  onDelete,
+}: Props) => {
   const columns: GridColDef<PharmacyBranch>[] = [
     {
       field: "name",
@@ -182,7 +189,7 @@ export const PharmacyBranchesTable = ({ branches, isLoading }: Props) => {
       align: "center",
       headerAlign: "center",
       sortable: false,
-      renderCell: () => (
+      renderCell: (params) => (
         <Stack
           direction="row"
           spacing={0.5}
@@ -194,6 +201,7 @@ export const PharmacyBranchesTable = ({ branches, isLoading }: Props) => {
             size="small"
             title="Editar"
             sx={{ color: "primary.main" }}
+            onClick={() => onEdit(params.row)}
           >
             <Edit fontSize="small" />
           </IconButton>
@@ -201,6 +209,7 @@ export const PharmacyBranchesTable = ({ branches, isLoading }: Props) => {
             size="small"
             title="Eliminar"
             sx={{ color: "error.main" }}
+            onClick={() => onDelete(params.row.id)}
           >
             <Delete fontSize="small" />
           </IconButton>

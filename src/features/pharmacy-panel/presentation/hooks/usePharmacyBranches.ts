@@ -6,6 +6,7 @@ export const usePharmacyBranches = () => {
   const [branches, setBranches] = useState<PharmacyBranch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Carga inicial
   useEffect(() => {
     const fetchBranches = async () => {
       try {
@@ -22,5 +23,31 @@ export const usePharmacyBranches = () => {
     fetchBranches();
   }, []);
 
-  return { branches, isLoading };
+  // --- ACCIONES (Simulación Local) ---
+
+  const addBranch = (branch: Omit<PharmacyBranch, "id">) => {
+    const newBranch: PharmacyBranch = {
+      ...branch,
+      id: `BR-${Math.floor(Math.random() * 1000)}`, 
+    };
+    setBranches((prev) => [...prev, newBranch]);
+  };
+
+  const updateBranch = (updatedBranch: PharmacyBranch) => {
+    setBranches((prev) =>
+      prev.map((b) => (b.id === updatedBranch.id ? updatedBranch : b))
+    );
+  };
+
+  const deleteBranch = (id: string) => {
+    setBranches((prev) => prev.filter((b) => b.id !== id));
+  };
+
+  return { 
+    branches, 
+    isLoading, 
+    addBranch, 
+    updateBranch, 
+    deleteBranch 
+  };
 };
