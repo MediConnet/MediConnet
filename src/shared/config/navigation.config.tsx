@@ -11,6 +11,7 @@ import {
   Person,
   Settings,
   StarRate,
+  Store,
   Timeline,
 } from "@mui/icons-material";
 
@@ -91,6 +92,11 @@ export const PHARMACY_MENU: MenuItem[] = [
     icon: <LocalPharmacy />,
     label: "Mi Farmacia",
     path: "/provider/pharmacy/dashboard",
+  },
+  {
+    icon: <Store />,
+    label: "Sucursales",
+    path: "/provider/pharmacy/branches",
   },
   {
     icon: <Campaign />,

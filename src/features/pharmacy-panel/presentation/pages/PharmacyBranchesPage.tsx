@@ -1,0 +1,118 @@
+import { Add, Store } from "@mui/icons-material";
+import { Box, Button, Stack, Typography } from "@mui/material";
+import { useState } from "react";
+import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
+import type { PharmacyBranch } from "../../domain/pharmacy-branch.entity";
+import { PharmacyBranchModal } from "../components/PharmacyBranchModal";
+import { PharmacyBranchesTable } from "../components/PharmacyBranchesTable";
+import { usePharmacyBranches } from "../hooks/usePharmacyBranches";
+
+const PHARMACY_USER = {
+  name: "Fybeca Admin",
+  roleLabel: "Farmacia",
+  initials: "FA",
+  isActive: true,
+};
+
+export const PharmacyBranchesPage = () => {
+  // 1. Hook con lógica de negocio (CRUD local)
+  const { branches, isLoading, addBranch, updateBranch, deleteBranch } =
+    usePharmacyBranches();
+
+  // 2. Estado local para el Modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedBranch, setSelectedBranch] = useState<PharmacyBranch | null>(
+    null
+  );
+
+  // --- Handlers ---
+
+  const handleCreate = () => {
+    setSelectedBranch(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (branch: PharmacyBranch) => {
+    setSelectedBranch(branch);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm("¿Estás seguro de eliminar esta sucursal?")) {
+      deleteBranch(id);
+    }
+  };
+
+  const handleSave = (
+    branchData: PharmacyBranch | Omit<PharmacyBranch, "id">
+  ) => {
+    if ("id" in branchData) {
+      // Tiene ID -> Es Edición
+      updateBranch(branchData as PharmacyBranch);
+    } else {
+      // No tiene ID -> Es Creación
+      addBranch(branchData);
+    }
+  };
+
+  return (
+    <DashboardLayout role="PROVIDER" userProfile={PHARMACY_USER}>
+      <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
+        {/* HEADER */}
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          justifyContent="space-between"
+          alignItems={{ xs: "flex-start", sm: "center" }}
+          spacing={2}
+          mb={3}
+        >
+          <Box>
+            <Stack direction="row" alignItems="center" spacing={1.5} mb={0.5}>
+              <Store color="primary" sx={{ fontSize: 32 }} />
+              <Typography variant="h5" fontWeight={700} color="text.primary">
+                Gestión de Sucursales
+              </Typography>
+            </Stack>
+            <Typography variant="body1" color="text.secondary">
+              Administra los puntos de atención, horarios y servicios de tu
+              farmacia.
+            </Typography>
+          </Box>
+
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            sx={{
+              color: "white",
+              fontWeight: 700,
+              borderRadius: 2,
+              textTransform: "none",
+              boxShadow: "0 4px 12px rgba(20, 184, 166, 0.2)",
+              px: 3,
+              py: 1,
+            }}
+            onClick={handleCreate}
+          >
+            Nueva Sucursal
+          </Button>
+        </Stack>
+
+        {/* TABLA */}
+        <PharmacyBranchesTable
+          branches={branches}
+          isLoading={isLoading}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+
+        {/* MODAL (CREAR / EDITAR) */}
+        <PharmacyBranchModal
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          branchToEdit={selectedBranch}
+          onSave={handleSave}
+        />
+      </Box>
+    </DashboardLayout>
+  );
+};
