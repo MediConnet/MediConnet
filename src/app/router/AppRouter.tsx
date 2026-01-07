@@ -47,6 +47,7 @@ import { SettingsPage } from "../../features/admin-dashboard/presentation/pages/
 import { AmbulanceAdsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceAdsPage";
 import { ForgotPasswordPage } from "../../features/auth/presentation/pages/ForgotPasswordPage";
 import { PharmacyAdsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyAdsPage";
+import { PharmacyBranchesPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyBranchesPage";
 import { PharmacyReviewsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyReviewsPage";
 import { PharmacySettingsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacySettingsPage";
 import { SuppliesListPage } from "../../features/supplies-panel/presentation/pages/SuppliesListPage";
@@ -129,6 +130,7 @@ export const AppRouter = () => {
           {/* 2. Panel Farmacia */}
           <Route path="pharmacy">
             <Route path="dashboard" element={<PharmacyDashboardPage />} />
+            <Route path="branches" element={<PharmacyBranchesPage />} />
             <Route path="ads" element={<PharmacyAdsPage />} />
             <Route path="reviews" element={<PharmacyReviewsPage />} />
             <Route path="settings" element={<PharmacySettingsPage />} />
