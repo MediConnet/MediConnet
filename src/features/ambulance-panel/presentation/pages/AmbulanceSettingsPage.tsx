@@ -15,7 +15,6 @@ import { KPICard } from "../components/KPICard";
 import { useAmbulanceProfile } from "../hooks/useAmbulanceProfile";
 import { useAmbulanceSettings } from "../hooks/useAmbulanceSettings";
 
-// Mock del usuario logueado
 const AMBULANCE_USER = {
   name: "Ambulancias Vida",
   roleLabel: "Proveedor",
@@ -25,10 +24,7 @@ const AMBULANCE_USER = {
 
 export const AmbulanceSettingsPage = () => {
   const theme = useTheme();
-
-  // 1. Hook de perfil para los KPIs superiores
   const { profile, isLoading: isLoadingProfile } = useAmbulanceProfile();
-  // 2. Hook de configuración para los switches
   const {
     settings,
     isLoading: isLoadingSettings,
@@ -59,19 +55,7 @@ export const AmbulanceSettingsPage = () => {
   return (
     <DashboardLayout role="PROVIDER" userProfile={AMBULANCE_USER}>
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
-        {/* HEADER */}
-        <Box
-          mb={4}
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-        >
-          <Typography variant="h5" fontWeight={700} color="text.primary">
-            Panel Profesional
-          </Typography>
-        </Box>
-
-        {/* SECTION 1: KPIS */}
+        {/* SECTION 1: KPIS (Subidos) */}
         <Grid2 container spacing={3} mb={4}>
           <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
             <KPICard
@@ -134,7 +118,6 @@ export const AmbulanceSettingsPage = () => {
             </Typography>
 
             <Stack spacing={0} divider={<Divider sx={{ my: 2 }} />}>
-              {/* Opción 1: Nuevas Reseñas */}
               <Box
                 display="flex"
                 justifyContent="space-between"
@@ -156,7 +139,6 @@ export const AmbulanceSettingsPage = () => {
                 />
               </Box>
 
-              {/* Opción 2: Contactos */}
               <Box
                 display="flex"
                 justifyContent="space-between"

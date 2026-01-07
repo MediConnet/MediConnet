@@ -2,12 +2,11 @@ import { ContactPhone, Star, Visibility } from "@mui/icons-material";
 import { Box, Paper, Skeleton, Typography, useTheme } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
-import { KPICard } from "../components/KPICard"; // Usamos el KPI Card de Farmacia
+import { KPICard } from "../components/KPICard";
 import { PharmacyReviewItem } from "../components/PharmacyReviewItem";
 import { usePharmacyProfile } from "../hooks/usePharmacyProfile";
 import { usePharmacyReviews } from "../hooks/usePharmacyReviews";
 
-// Mock de usuario para el layout
 const PHARMACY_USER = {
   name: "Fybeca Admin",
   roleLabel: "Farmacia",
@@ -15,16 +14,9 @@ const PHARMACY_USER = {
   isActive: true,
 };
 
-export const PharmacyDashboardPage = () => {
-  return null;
-};
-
 export const PharmacyReviewsPage = () => {
   const theme = useTheme();
-
-  // 1. Datos del perfil para los KPIs de arriba
   const { profile, isLoading: isLoadingProfile } = usePharmacyProfile();
-  // 2. Datos de las reseñas para la lista
   const { reviews, isLoading: isLoadingReviews } = usePharmacyReviews();
 
   const isLoading = isLoadingProfile || isLoadingReviews;
@@ -48,24 +40,12 @@ export const PharmacyReviewsPage = () => {
   return (
     <DashboardLayout role="PROVIDER" userProfile={PHARMACY_USER}>
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
-        {/* HEADER */}
-        <Box
-          mb={4}
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-        >
-          <Typography variant="h5" fontWeight={700} color="text.primary">
-            Panel de Farmacia
-          </Typography>
-        </Box>
-
         {/* SECTION 1: KPIS (Resumen) */}
         <Grid2 container spacing={3} mb={4}>
           <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
             <KPICard
               title="Visitas al perfil"
-              value={profile.stats.profileViews}
+              value={profile?.stats?.profileViews || 0}
               icon={<Visibility sx={{ color: theme.palette.primary.main }} />}
               iconColor={theme.palette.primary.light + "20"}
             />
@@ -73,7 +53,7 @@ export const PharmacyReviewsPage = () => {
           <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
             <KPICard
               title="Clics en contacto"
-              value={profile.stats.contactClicks}
+              value={profile?.stats?.contactClicks || 0}
               icon={<ContactPhone sx={{ color: theme.palette.info.main }} />}
               iconColor={theme.palette.info.light + "20"}
             />
@@ -81,7 +61,7 @@ export const PharmacyReviewsPage = () => {
           <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
             <KPICard
               title="Reseñas"
-              value={profile.stats.totalReviews}
+              value={profile?.stats?.totalReviews || 0}
               icon={<Star sx={{ color: theme.palette.warning.main }} />}
               iconColor={theme.palette.warning.light + "20"}
             />
@@ -89,7 +69,7 @@ export const PharmacyReviewsPage = () => {
           <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
             <KPICard
               title="Rating Promedio"
-              value={profile.stats.averageRating}
+              value={profile?.stats?.averageRating || 0}
               icon={<Star sx={{ color: "#FFC107" }} />}
               iconColor="#FFF8E1"
             />
