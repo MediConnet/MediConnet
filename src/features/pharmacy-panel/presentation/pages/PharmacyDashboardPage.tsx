@@ -1,17 +1,17 @@
 import {
-  AccessTime,
-  ContactPhone,
+  Business,
+  Description as DescriptionIcon,
   Edit,
-  LocalShipping,
-  LocationOn,
+  Language,
   Star,
+  TouchApp,
   Visibility,
-  WhatsApp,
 } from "@mui/icons-material";
 import {
   Box,
   Button,
-  Chip,
+  Divider,
+  Link,
   Paper,
   Skeleton,
   Stack,
@@ -25,24 +25,18 @@ import { EditPharmacyModal } from "../components/EditPharmacyModal";
 import { KPICard } from "../components/KPICard";
 import { usePharmacyProfile } from "../hooks/usePharmacyProfile";
 
-// Mock del usuario farmacia para el header
 const PHARMACY_USER = {
   name: "Fybeca Admin",
-  roleLabel: "Farmacia",
+  roleLabel: "Administrador de Marca",
   initials: "FA",
   isActive: true,
 };
 
 export const PharmacyDashboardPage = () => {
   const theme = useTheme();
-
-  // Hook para gestionar la data del perfil
   const { profile, isLoading, setProfile } = usePharmacyProfile();
-
-  // Estado para el modal de edición
   const [isEditOpen, setIsEditOpen] = useState(false);
 
-  // Estado de carga
   if (isLoading || !profile) {
     return (
       <DashboardLayout role="PROVIDER" userProfile={PHARMACY_USER}>
@@ -72,41 +66,46 @@ export const PharmacyDashboardPage = () => {
           justifyContent="space-between"
           alignItems="center"
         >
-          <Typography variant="h5" fontWeight={700} color="text.primary">
-            Panel de Farmacia
-          </Typography>
+          <Box>
+            <Typography variant="h5" fontWeight={700} color="text.primary">
+              Panel Corporativo
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Gestiona la identidad de tu marca para todas las sucursales
+            </Typography>
+          </Box>
         </Box>
 
-        {/* SECTION 1: KPIS (Métricas clave) */}
+        {/* SECTION 1: KPIS (Métricas Globales de Marca) */}
         <Grid2 container spacing={3} mb={4}>
           <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
             <KPICard
-              title="Visitas al perfil"
-              value={profile.stats.profileViews}
+              title="Visitas al Perfil"
+              value={profile.stats?.profileViews || 0}
               icon={<Visibility sx={{ color: theme.palette.primary.main }} />}
               iconColor={theme.palette.primary.light + "20"}
             />
           </Grid2>
           <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
             <KPICard
-              title="Clics en contacto"
-              value={profile.stats.contactClicks}
-              icon={<ContactPhone sx={{ color: theme.palette.info.main }} />}
+              title="Interacciones Totales"
+              value={profile.stats?.contactClicks || 0}
+              icon={<TouchApp sx={{ color: theme.palette.info.main }} />}
               iconColor={theme.palette.info.light + "20"}
             />
           </Grid2>
           <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
             <KPICard
-              title="Reseñas"
-              value={profile.stats.totalReviews}
+              title="Total Reseñas"
+              value={profile.stats?.totalReviews || 0}
               icon={<Star sx={{ color: theme.palette.warning.main }} />}
               iconColor={theme.palette.warning.light + "20"}
             />
           </Grid2>
           <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
             <KPICard
-              title="Rating Promedio"
-              value={profile.stats.averageRating}
+              title="Calificación Global"
+              value={profile.stats?.averageRating || 0}
               icon={<Star sx={{ color: "#FFC107" }} />}
               iconColor="#FFF8E1"
             />
@@ -115,7 +114,7 @@ export const PharmacyDashboardPage = () => {
 
         {/* SECTION 2: CONTENIDO PRINCIPAL */}
         <Grid2 container spacing={4}>
-          {/* COLUMNA IZQUIERDA: Información del Perfil (Datos de Farmacia) */}
+          {/* COLUMNA IZQUIERDA: Identidad Corporativa */}
           <Grid2 size={{ xs: 12, lg: 7 }}>
             <Paper
               elevation={0}
@@ -125,6 +124,7 @@ export const PharmacyDashboardPage = () => {
                 border: "1px solid",
                 borderColor: "grey.200",
                 boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+                height: "100%",
               }}
             >
               <Box
@@ -135,10 +135,10 @@ export const PharmacyDashboardPage = () => {
               >
                 <Box>
                   <Typography variant="h6" fontWeight={700}>
-                    Información de la Farmacia
+                    Identidad de Marca
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Datos visibles para los usuarios
+                    Información visible en el listado principal
                   </Typography>
                 </Box>
                 <Button
@@ -155,104 +155,118 @@ export const PharmacyDashboardPage = () => {
                 </Button>
               </Box>
 
-              <Stack spacing={3}>
-                <Box>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    fontWeight={600}
-                  >
-                    Nombre Comercial
-                  </Typography>
-                  <Typography variant="body1" fontWeight={500} mt={0.5}>
-                    {profile.commercialName}
-                  </Typography>
-                </Box>
-
+              <Stack spacing={4}>
+                {/* Nombre y RUC */}
                 <Grid2 container spacing={3}>
                   <Grid2 size={{ xs: 12, md: 6 }}>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      fontWeight={600}
-                    >
-                      Teléfono
-                    </Typography>
-                    <Typography variant="body1" fontWeight={500} mt={0.5}>
-                      {profile.phone}
-                    </Typography>
+                    <Box>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        fontWeight={600}
+                      >
+                        Nombre Comercial
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        fontWeight={600}
+                        mt={0.5}
+                        color="primary.main"
+                      >
+                        {profile.commercialName}
+                      </Typography>
+                    </Box>
                   </Grid2>
                   <Grid2 size={{ xs: 12, md: 6 }}>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      fontWeight={600}
-                    >
-                      Servicio a Domicilio
-                    </Typography>
-                    <Box mt={0.5}>
-                      {profile.hasDelivery ? (
-                        <Chip
-                          icon={<LocalShipping sx={{ fontSize: 16 }} />}
-                          label="Disponible"
-                          color="success"
-                          size="small"
-                          variant="outlined"
-                          sx={{ fontWeight: 600 }}
-                        />
-                      ) : (
-                        <Chip
-                          label="No disponible"
-                          color="default"
-                          size="small"
-                          variant="outlined"
-                        />
-                      )}
+                    <Box display="flex" alignItems="flex-start" gap={1}>
+                      <Business
+                        sx={{ color: "text.secondary", fontSize: 20, mt: 0.5 }}
+                      />
+                      <Box>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          fontWeight={600}
+                        >
+                          RUC / Razón Social
+                        </Typography>
+                        <Typography variant="body1" fontWeight={500} mt={0.5}>
+                          {profile.ruc || "No registrado"}
+                        </Typography>
+                      </Box>
                     </Box>
                   </Grid2>
                 </Grid2>
 
-                <Box>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    fontWeight={600}
-                  >
-                    Dirección
-                  </Typography>
-                  <Typography variant="body1" fontWeight={500} mt={0.5}>
-                    {profile.address}
-                  </Typography>
+                <Divider />
+
+                {/* Slogan */}
+                <Box display="flex" gap={2}>
+                  <DescriptionIcon sx={{ color: "text.secondary", mt: 0.5 }} />
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                    >
+                      Slogan / Descripción
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      color="text.primary"
+                      mt={0.5}
+                      sx={{
+                        fontStyle: profile.description ? "normal" : "italic",
+                      }}
+                    >
+                      {profile.description || "Sin descripción definida."}
+                    </Typography>
+                  </Box>
                 </Box>
 
-                <Box>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    fontWeight={600}
-                  >
-                    Horario de Atención
-                  </Typography>
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={1}
-                    mt={0.5}
-                  >
-                    <AccessTime
-                      sx={{ color: "text.secondary", fontSize: 20 }}
-                    />
-                    <Typography variant="body1" fontWeight={500}>
-                      {profile.schedule.daysSummary}:{" "}
-                      {profile.schedule.hoursSummary}
+                {/* Website */}
+                <Box display="flex" gap={2}>
+                  <Language sx={{ color: "text.secondary", mt: 0.5 }} />
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                    >
+                      Sitio Web Oficial
                     </Typography>
-                  </Stack>
+                    <Box mt={0.5}>
+                      {profile.websiteUrl ? (
+                        <Link
+                          href={
+                            profile.websiteUrl.startsWith("http")
+                              ? profile.websiteUrl
+                              : `https://${profile.websiteUrl}`
+                          }
+                          target="_blank"
+                          rel="noopener"
+                          underline="hover"
+                          fontWeight={500}
+                        >
+                          {profile.websiteUrl}
+                        </Link>
+                      ) : (
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          fontStyle="italic"
+                        >
+                          No configurado
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
                 </Box>
               </Stack>
             </Paper>
           </Grid2>
 
-          {/* COLUMNA DERECHA: Vista Previa (Diseño de Tarjeta App) */}
+          {/* COLUMNA DERECHA: Vista Previa (Brand Card) */}
           <Grid2 size={{ xs: 12, lg: 5 }}>
             <Paper
               elevation={0}
@@ -261,8 +275,12 @@ export const PharmacyDashboardPage = () => {
                 borderRadius: 3,
                 border: "1px solid",
                 borderColor: "grey.200",
-                height: "100%",
                 bgcolor: "grey.50",
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
               <Typography
@@ -271,138 +289,79 @@ export const PharmacyDashboardPage = () => {
                 mb={3}
                 textAlign="center"
               >
-                Vista previa en App
+                Vista Previa en App
               </Typography>
 
-              {/* Simulador de Tarjeta */}
+              {/* CARD ESTILO APP */}
               <Paper
-                elevation={3}
+                elevation={2}
                 sx={{
+                  width: "100%",
+                  maxWidth: 320,
                   borderRadius: 3,
-                  overflow: "hidden",
-                  maxWidth: 380,
-                  mx: "auto",
                   bgcolor: "white",
+                  p: 3,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  cursor: "default",
+                  border: "1px solid",
+                  borderColor: "grey.100",
+                  transition: "transform 0.2s",
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: "0 12px 24px rgba(0,0,0,0.1)",
+                  },
                 }}
               >
-                {/* Banner */}
+                {/* LOGO */}
                 <Box
+                  component="img"
+                  src={profile.logoUrl}
+                  alt={profile.commercialName}
                   sx={{
-                    height: 160,
-                    width: "100%",
-                    bgcolor: "grey.200",
-                    backgroundImage: `url(${profile.bannerUrl})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
+                    width: "auto",
+                    height: 60,
+                    maxWidth: 180,
+                    objectFit: "contain",
+                    mb: 3,
                   }}
                 />
 
-                <Box p={2.5}>
+                {/* Fallback si no hay logo */}
+                {!profile.logoUrl && (
                   <Typography
-                    variant="h6"
+                    variant="h5"
                     fontWeight={800}
-                    fontSize="1.1rem"
-                    mb={1}
+                    color="primary.main"
+                    mb={3}
                   >
-                    {profile.commercialName}
+                    {profile.commercialName || "TU MARCA"}
                   </Typography>
+                )}
 
-                  {/* Horario */}
-                  <Stack direction="row" spacing={1} mb={1} alignItems="center">
-                    <AccessTime sx={{ fontSize: 18, color: "success.main" }} />
-                    <Typography
-                      variant="body2"
-                      fontWeight={500}
-                      color="text.primary"
-                    >
-                      <span style={{ fontWeight: 600 }}>Horario:</span>{" "}
-                      {profile.schedule.daysSummary}{" "}
-                      {profile.schedule.hoursSummary}
-                    </Typography>
-                  </Stack>
-
-                  {/* Dirección */}
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    mb={2}
-                    alignItems="flex-start"
-                  >
-                    <LocationOn
-                      sx={{ fontSize: 18, color: "success.main", mt: 0.2 }}
-                    />
-                    <Typography variant="body2" color="text.secondary">
-                      {profile.address}
-                    </Typography>
-                  </Stack>
-
-                  {/* Banner de Envío a Domicilio */}
-                  {profile.hasDelivery && (
-                    <Box
-                      sx={{
-                        py: 1,
-                        px: 1.5,
-                        bgcolor: "#E8F5E9",
-                        borderRadius: 1.5,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 2,
-                      }}
-                    >
-                      <LocalShipping
-                        sx={{ color: "success.main", fontSize: 20 }}
-                      />
-                      <Typography
-                        variant="body2"
-                        fontWeight={600}
-                        color="success.main"
-                      >
-                        Envío a domicilio disponible
-                      </Typography>
-                    </Box>
-                  )}
-
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    color="success"
-                    startIcon={<WhatsApp />}
-                    size="large"
-                    sx={{
-                      borderRadius: 2,
-                      textTransform: "none",
-                      boxShadow: "none",
-                      fontWeight: 700,
-                    }}
-                  >
-                    Contactar por WhatsApp
-                  </Button>
-                </Box>
-
-                {/* Footer Tarjeta: Rating */}
                 <Box
-                  p={2}
-                  borderTop="1px solid"
-                  borderColor="grey.100"
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
-                >
-                  <Typography variant="body2" fontWeight={600}>
-                    Reseñas y Valoraciones
-                  </Typography>
-                  <Stack direction="row" alignItems="center" spacing={0.5}>
-                    <Star sx={{ fontSize: 20, color: "#FFC107" }} />
-                    <Typography variant="body1" fontWeight={700}>
-                      {profile.stats.averageRating.toFixed(1)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      ({profile.stats.totalReviews})
-                    </Typography>
-                  </Stack>
-                </Box>
+                  sx={{
+                    width: "100%",
+                    height: 4,
+                    bgcolor: theme.palette.primary.main,
+                    borderRadius: 2,
+                    mt: "auto",
+                    opacity: 0.8,
+                  }}
+                />
               </Paper>
+
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                mt={3}
+                textAlign="center"
+                maxWidth={300}
+              >
+                * Así aparecerá tu marca en el directorio principal de farmacias
+                de la aplicación móvil.
+              </Typography>
             </Paper>
           </Grid2>
         </Grid2>
@@ -412,9 +371,10 @@ export const PharmacyDashboardPage = () => {
           open={isEditOpen}
           onClose={() => setIsEditOpen(false)}
           initialData={profile}
-          onSave={(newData) => {
-            setProfile(newData);
-            // Aquí iría la llamada a la API para guardar los cambios
+          onSave={(updatedFields) => {
+            const mergedProfile = { ...profile, ...updatedFields };
+            setProfile(mergedProfile);
+            // Aquí iría la llamada al backend pasando updatedFields o mergedProfile
           }}
         />
       </Box>

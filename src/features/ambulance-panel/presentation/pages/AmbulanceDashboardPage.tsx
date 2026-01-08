@@ -18,11 +18,10 @@ import Grid2 from "@mui/material/Grid2";
 import { useEffect, useState } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import type { AmbulanceProfile } from "../../domain/ambulance-profile.entity";
-import { EditProfileModal } from "../components/EditProfileModal"; // ✅ Importamos el modal separado
+import { EditProfileModal } from "../components/EditProfileModal";
 import { KPICard } from "../components/KPICard";
 import { useAmbulanceProfile } from "../hooks/useAmbulanceProfile";
 
-// Mock del usuario logueado
 const AMBULANCE_USER = {
   name: "Ambulancias Vida",
   roleLabel: "Proveedor",
@@ -33,22 +32,17 @@ const AMBULANCE_USER = {
 export const AmbulanceDashboardPage = () => {
   const theme = useTheme();
   const { profile: fetchedProfile, isLoading } = useAmbulanceProfile();
-
-  // Estado local para los datos mostrados
   const [profile, setProfile] = useState<AmbulanceProfile | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
-  // Sincronizar cuando llega la data del hook
   useEffect(() => {
     if (fetchedProfile) {
       setProfile(fetchedProfile);
     }
   }, [fetchedProfile]);
 
-  // Función para guardar cambios (callback del modal)
   const handleSaveChanges = (updatedProfile: AmbulanceProfile) => {
     setProfile(updatedProfile);
-    // TODO: Aquí iría la llamada al caso de uso para persistir los cambios
   };
 
   if (isLoading || !profile) {
@@ -73,19 +67,7 @@ export const AmbulanceDashboardPage = () => {
   return (
     <DashboardLayout role="PROVIDER" userProfile={AMBULANCE_USER}>
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
-        {/* HEADER */}
-        <Box
-          mb={4}
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-        >
-          <Typography variant="h5" fontWeight={700} color="text.primary">
-            Panel Profesional
-          </Typography>
-        </Box>
-
-        {/* SECTION 1: KPIS */}
+        {/* SECTION 1: KPIS (Subidos) */}
         <Grid2 container spacing={3} mb={4}>
           <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
             <KPICard
@@ -123,7 +105,7 @@ export const AmbulanceDashboardPage = () => {
 
         {/* SECTION 2: MAIN CONTENT */}
         <Grid2 container spacing={4}>
-          {/* LEFT COLUMN: Profile Info (Read Only) */}
+          {/* LEFT COLUMN: Profile Info */}
           <Grid2 size={{ xs: 12, lg: 8 }}>
             <Paper
               elevation={0}
@@ -361,7 +343,7 @@ export const AmbulanceDashboardPage = () => {
           </Grid2>
         </Grid2>
 
-        {/* COMPONENTE DE MODAL */}
+        {/* MODAL */}
         <EditProfileModal
           open={isEditOpen}
           onClose={() => setIsEditOpen(false)}

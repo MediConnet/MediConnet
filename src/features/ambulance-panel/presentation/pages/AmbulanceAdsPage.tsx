@@ -16,7 +16,6 @@ import { KPICard } from "../components/KPICard";
 import { useAmbulanceAds } from "../hooks/useAmbulanceAds";
 import { useAmbulanceProfile } from "../hooks/useAmbulanceProfile";
 
-// Mock user para el layout
 const AMBULANCE_USER = {
   name: "Ambulancias Vida",
   roleLabel: "Proveedor",
@@ -26,10 +25,7 @@ const AMBULANCE_USER = {
 
 export const AmbulanceAdsPage = () => {
   const theme = useTheme();
-
-  // 1. Obtener datos de perfil para KPIs
   const { profile, isLoading: isLoadingProfile } = useAmbulanceProfile();
-  // 2. Obtener lista de anuncios
   const { ads, isLoading: isLoadingAds } = useAmbulanceAds();
 
   const isLoading = isLoadingProfile || isLoadingAds;
@@ -56,19 +52,7 @@ export const AmbulanceAdsPage = () => {
   return (
     <DashboardLayout role="PROVIDER" userProfile={AMBULANCE_USER}>
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
-        {/* HEADER */}
-        <Box
-          mb={4}
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-        >
-          <Typography variant="h5" fontWeight={700} color="text.primary">
-            Panel Profesional
-          </Typography>
-        </Box>
-
-        {/* KPIs (Reutilizando lógica visual de Farmacia/Dashboard) */}
+        {/* KPIs (Contenido principal subido) */}
         <Grid2 container spacing={3} mb={4}>
           <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
             <KPICard

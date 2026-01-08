@@ -4,20 +4,12 @@ export interface PharmacyStats {
   totalReviews: number;
   averageRating: number;
 }
-
-export interface ScheduleConfig {
-  daysSummary: string; 
-  hoursSummary: string; 
-}
-
 export interface PharmacyProfile {
   id: string;
   commercialName: string;
-  bannerUrl: string; 
-  phone: string;
-  whatsappContact: string; 
-  address: string;
-  hasDelivery: boolean; 
-  schedule: ScheduleConfig;
-  stats: PharmacyStats;
+  logoUrl: string;      
+  ruc: string;          
+  description: string;  
+  websiteUrl: string;   
+  stats: PharmacyStats; 
 }
