@@ -1,9 +1,9 @@
 import {
+  AccessTime,
   ContactPhone,
   Edit,
   Star,
   Visibility,
-  WhatsApp,
 } from "@mui/icons-material";
 import {
   Box,
@@ -34,6 +34,8 @@ export const AmbulanceDashboardPage = () => {
   const { profile: fetchedProfile, isLoading } = useAmbulanceProfile();
   const [profile, setProfile] = useState<AmbulanceProfile | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
+
+  const ambulanceCardColor = "#06b6d4";
 
   useEffect(() => {
     if (fetchedProfile) {
@@ -67,7 +69,7 @@ export const AmbulanceDashboardPage = () => {
   return (
     <DashboardLayout role="PROVIDER" userProfile={AMBULANCE_USER}>
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
-        {/* SECTION 1: KPIS (Subidos) */}
+        {/* SECTION 1: KPIS */}
         <Grid2 container spacing={3} mb={4}>
           <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
             <KPICard
@@ -200,18 +202,33 @@ export const AmbulanceDashboardPage = () => {
                   </Grid2>
                 </Grid2>
 
-                <Box>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    fontWeight={600}
-                  >
-                    Dirección Base
-                  </Typography>
-                  <Typography variant="body1" fontWeight={500} mt={0.5}>
-                    {profile.address}
-                  </Typography>
-                </Box>
+                {/* Tiempo de llegada + Dirección */}
+                <Grid2 container spacing={3}>
+                  <Grid2 size={{ xs: 12, md: 6 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                    >
+                      Tiempo medio de llegada
+                    </Typography>
+                    <Typography variant="body1" fontWeight={500} mt={0.5}>
+                      {profile.arrivalField || 0} min
+                    </Typography>
+                  </Grid2>
+                  <Grid2 size={{ xs: 12, md: 6 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                    >
+                      Dirección Base
+                    </Typography>
+                    <Typography variant="body1" fontWeight={500} mt={0.5}>
+                      {profile.address}
+                    </Typography>
+                  </Grid2>
+                </Grid2>
 
                 <Box>
                   <Typography
@@ -234,7 +251,7 @@ export const AmbulanceDashboardPage = () => {
             </Paper>
           </Grid2>
 
-          {/* RIGHT COLUMN: Preview */}
+          {/* RIGHT COLUMN: Preview Card */}
           <Grid2 size={{ xs: 12, lg: 4 }}>
             <Paper
               elevation={0}
@@ -250,100 +267,78 @@ export const AmbulanceDashboardPage = () => {
                 Vista previa en App
               </Typography>
 
-              {/* Phone Card Simulator */}
-              <Box
-                sx={{
-                  border: "1px dashed",
-                  borderColor: "grey.300",
-                  borderRadius: 4,
-                  p: 2,
-                  bgcolor: "grey.50",
-                }}
-              >
-                <Paper
-                  elevation={3}
-                  sx={{
-                    borderRadius: 3,
-                    overflow: "hidden",
-                    maxWidth: 320,
-                    mx: "auto",
-                    bgcolor: "white",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      height: 140,
-                      width: "100%",
-                      bgcolor: "grey.200",
-                      backgroundImage: `url(${profile.bannerUrl})`,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                    }}
-                  />
-
-                  <Box p={2}>
-                    <Typography variant="h6" fontWeight={700} fontSize="1rem">
-                      {profile.commercialName}
-                    </Typography>
-
-                    <Stack
-                      direction="row"
-                      alignItems="center"
-                      spacing={0.5}
-                      mt={0.5}
-                    >
-                      <Star sx={{ fontSize: 16, color: "#FFC107" }} />
-                      <Typography variant="caption" fontWeight={600}>
-                        {profile.stats.averageRating}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        ({profile.stats.totalReviews})
-                      </Typography>
-                    </Stack>
-
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      display="block"
-                      mt={1}
-                      sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-                    >
-                      📍 {profile.address}
-                    </Typography>
-
-                    <Typography
-                      variant="caption"
-                      color="primary.main"
-                      fontWeight={600}
-                      display="block"
-                      mt={1}
-                    >
-                      📞 {profile.emergencyPhone}
-                    </Typography>
-
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      color="success"
-                      startIcon={<WhatsApp />}
-                      size="small"
-                      sx={{
-                        mt: 2,
-                        borderRadius: 2,
-                        textTransform: "none",
-                        boxShadow: "none",
+              {/* Contenedor del Card */}
+              <Box display="flex" justifyContent="center">
+                {/* --- CARD AMBULANCIA --- */}
+                <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] overflow-hidden w-full max-w-[320px] flex flex-col border border-gray-100 pb-4">
+                  {/* Imagen + Badge */}
+                  <div className="h-44 w-full bg-gray-200 relative">
+                    <div className="absolute top-3 right-3 bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-md z-10">
+                      Disponible
+                    </div>
+                    <div
+                      style={{
+                        height: "100%",
+                        width: "100%",
+                        backgroundColor: "#e5e7eb",
+                        backgroundImage: `url(${profile.bannerUrl})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
                       }}
-                    >
-                      Contactar
-                    </Button>
-                  </Box>
-                </Paper>
+                    />
+                  </div>
+
+                  {/* Contenido */}
+                  <div className="p-4 flex flex-col">
+                    <h4 className="font-bold text-gray-900 text-lg leading-tight mb-2">
+                      {profile.commercialName}
+                    </h4>
+
+                    {/* Fila Info: Tiempo | Rating */}
+                    <div className="flex items-center gap-3 text-gray-500 mb-4">
+                      <div className="flex items-center gap-1">
+                        <AccessTime sx={{ fontSize: 16 }} />
+                        <span className="text-xs">
+                          ~{profile.arrivalField || 0} min de llegada
+                        </span>
+                      </div>
+                      <span className="text-xs">•</span>
+                      <div className="flex items-center gap-1">
+                        <Star sx={{ fontSize: 16, color: "#FFC107" }} />
+                        <span className="text-xs font-medium text-gray-600">
+                          {profile.stats.averageRating} (
+                          {profile.stats.totalReviews})
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Botón Ver Ambulancia */}
+                    <div className="w-full">
+                      <div
+                        className="text-white text-sm font-bold px-4 py-3 rounded-xl shadow-sm cursor-default flex items-center justify-center gap-2 w-full transition-transform hover:scale-[1.02]"
+                        style={{ backgroundColor: ambulanceCardColor }}
+                      >
+                        <Visibility sx={{ fontSize: 20 }} />
+                        <span>Ver Ambulancia</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </Box>
+
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                align="center"
+                display="block"
+                mt={3}
+              >
+                Así verán tu perfil los pacientes en la app
+              </Typography>
             </Paper>
           </Grid2>
         </Grid2>
 
-        {/* MODAL */}
         <EditProfileModal
           open={isEditOpen}
           onClose={() => setIsEditOpen(false)}

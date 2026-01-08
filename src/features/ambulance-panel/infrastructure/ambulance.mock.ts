@@ -8,6 +8,7 @@ export const MOCK_AMBULANCE_PROFILE: AmbulanceProfile = {
   address: "Av. 12 de Octubre N27-30 y Orellana, Quito",
   whatsappContact: "0998765432",
   emergencyPhone: "3245678",
+  arrivalField: 15,
   stats: {
     profileViews: 1250,
     contactClicks: 320,

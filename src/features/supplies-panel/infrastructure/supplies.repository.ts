@@ -12,7 +12,7 @@ const mockSupplyDashboard: SupplyDashboard = {
     whatsapp: "+52 442 111 2222",
     address: "Parque Industrial Benito Juárez, Nave 5",
     description: "Distribuidora de insumos y equipo médico. Vendemos al mayoreo y menudeo. Guantes, jeringas, material de curación, equipo de diagnóstico y más.",
-    schedule: "Lun-Vie 8:00-18:00, Sáb 9:00-14:00",
+    schedule: "Lun-Vie 8:00-18:00",
     workSchedule: [
       { day: 'monday', enabled: true, startTime: '08:00', endTime: '18:00' },
       { day: 'tuesday', enabled: true, startTime: '08:00', endTime: '18:00' },
