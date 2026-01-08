@@ -44,7 +44,10 @@ export const EditProfileModal = ({
   }, [initialData, open]);
 
   // Manejador genérico para texto
-  const handleChange = (field: keyof AmbulanceProfile, value: string) => {
+  const handleChange = (
+    field: keyof AmbulanceProfile,
+    value: string | number
+  ) => {
     if (formData) {
       setFormData({ ...formData, [field]: value });
     }
@@ -68,6 +71,18 @@ export const EditProfileModal = ({
     }
 
     handleChange(field, value);
+  };
+
+  // Manejar campo numérico de tiempo de llegada
+  const handleNumberChange = (
+    field: keyof AmbulanceProfile,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const value = e.target.value;
+    // Permitir solo números positivos
+    if (!/^\d*$/.test(value)) return;
+
+    handleChange(field, Number(value));
   };
 
   const handleUploadClick = () => {
@@ -228,20 +243,35 @@ export const EditProfileModal = ({
           </Grid2>
 
           <Grid2 container spacing={2}>
-            <Grid2 size={{ xs: 12, md: 6 }}>
+            <Grid2 size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
                 label="WhatsApp Corporativo"
                 value={formData.whatsappContact}
                 onChange={(e) => handlePhoneChange("whatsappContact", e as any)}
                 placeholder="Ej: 0991234567"
-                helperText="Solo números (máx 10)"
+                helperText="Solo números"
                 slotProps={{
                   input: { inputMode: "numeric" },
                 }}
               />
             </Grid2>
-            <Grid2 size={{ xs: 12, md: 6 }}>
+
+            <Grid2 size={{ xs: 12, md: 4 }}>
+              <TextField
+                fullWidth
+                label="Tiempo llegada (min)"
+                value={formData.arrivalField || ""}
+                onChange={(e) => handleNumberChange("arrivalField", e as any)}
+                placeholder="Ej: 15"
+                helperText="Tiempo estimado en minutos"
+                slotProps={{
+                  input: { inputMode: "numeric" },
+                }}
+              />
+            </Grid2>
+
+            <Grid2 size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
                 label="Dirección Base"

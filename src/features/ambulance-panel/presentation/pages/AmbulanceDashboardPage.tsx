@@ -1,5 +1,5 @@
 import {
-  AccessTime, // Icono para tiempo de llegada
+  AccessTime,
   ContactPhone,
   Edit,
   Star,
@@ -35,7 +35,6 @@ export const AmbulanceDashboardPage = () => {
   const [profile, setProfile] = useState<AmbulanceProfile | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
-  // Color principal de la tarjeta de ambulancia (Cyan/Azul de la imagen)
   const ambulanceCardColor = "#06b6d4";
 
   useEffect(() => {
@@ -108,7 +107,7 @@ export const AmbulanceDashboardPage = () => {
 
         {/* SECTION 2: MAIN CONTENT */}
         <Grid2 container spacing={4}>
-          {/* LEFT COLUMN: Profile Info (Read Only for now) */}
+          {/* LEFT COLUMN: Profile Info */}
           <Grid2 size={{ xs: 12, lg: 8 }}>
             <Paper
               elevation={0}
@@ -203,18 +202,33 @@ export const AmbulanceDashboardPage = () => {
                   </Grid2>
                 </Grid2>
 
-                <Box>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    fontWeight={600}
-                  >
-                    Dirección Base
-                  </Typography>
-                  <Typography variant="body1" fontWeight={500} mt={0.5}>
-                    {profile.address}
-                  </Typography>
-                </Box>
+                {/* Tiempo de llegada + Dirección */}
+                <Grid2 container spacing={3}>
+                  <Grid2 size={{ xs: 12, md: 6 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                    >
+                      Tiempo medio de llegada
+                    </Typography>
+                    <Typography variant="body1" fontWeight={500} mt={0.5}>
+                      {profile.arrivalField || 0} min
+                    </Typography>
+                  </Grid2>
+                  <Grid2 size={{ xs: 12, md: 6 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                    >
+                      Dirección Base
+                    </Typography>
+                    <Typography variant="body1" fontWeight={500} mt={0.5}>
+                      {profile.address}
+                    </Typography>
+                  </Grid2>
+                </Grid2>
 
                 <Box>
                   <Typography
@@ -259,11 +273,9 @@ export const AmbulanceDashboardPage = () => {
                 <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] overflow-hidden w-full max-w-[320px] flex flex-col border border-gray-100 pb-4">
                   {/* Imagen + Badge */}
                   <div className="h-44 w-full bg-gray-200 relative">
-                    {/* Badge Disponible */}
                     <div className="absolute top-3 right-3 bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-md z-10">
                       Disponible
                     </div>
-
                     <div
                       style={{
                         height: "100%",
@@ -278,23 +290,19 @@ export const AmbulanceDashboardPage = () => {
 
                   {/* Contenido */}
                   <div className="p-4 flex flex-col">
-                    {/* Título */}
                     <h4 className="font-bold text-gray-900 text-lg leading-tight mb-2">
                       {profile.commercialName}
                     </h4>
 
                     {/* Fila Info: Tiempo | Rating */}
                     <div className="flex items-center gap-3 text-gray-500 mb-4">
-                      {/* Tiempo de llegada */}
                       <div className="flex items-center gap-1">
                         <AccessTime sx={{ fontSize: 16 }} />
-                        <span className="text-xs">~15 min llegada</span>
+                        <span className="text-xs">
+                          ~{profile.arrivalField || 0} min de llegada
+                        </span>
                       </div>
-
-                      {/* Separador punto */}
                       <span className="text-xs">•</span>
-
-                      {/* Rating */}
                       <div className="flex items-center gap-1">
                         <Star sx={{ fontSize: 16, color: "#FFC107" }} />
                         <span className="text-xs font-medium text-gray-600">
@@ -316,7 +324,6 @@ export const AmbulanceDashboardPage = () => {
                     </div>
                   </div>
                 </div>
-                {/* --- FIN CARD --- */}
               </Box>
 
               <Typography
@@ -332,7 +339,6 @@ export const AmbulanceDashboardPage = () => {
           </Grid2>
         </Grid2>
 
-        {/* MODAL EDITAR (Funcionalidad pendiente de revisión) */}
         <EditProfileModal
           open={isEditOpen}
           onClose={() => setIsEditOpen(false)}
