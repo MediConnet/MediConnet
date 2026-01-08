@@ -12,7 +12,7 @@ const mockLaboratoryDashboard: LaboratoryDashboard = {
     whatsapp: "+593 99 123 4567",
     address: "Av. Principal 456, Quito",
     description: "Laboratorio clínico profesional con más de 15 años de experiencia",
-    schedule: "7:00am - 7:00pm",
+    schedule: "Lun-Vie 07:00-19:00", 
     workSchedule: [
       { day: 'monday', enabled: true, startTime: '07:00', endTime: '19:00' },
       { day: 'tuesday', enabled: true, startTime: '07:00', endTime: '19:00' },
@@ -25,8 +25,6 @@ const mockLaboratoryDashboard: LaboratoryDashboard = {
 
 export const getLaboratoryDashboardAPI = async (_userId: string): Promise<LaboratoryDashboard> => {
   // TODO: Reemplazar con llamada real a la API cuando esté disponible
-  // const response = await httpClient.get<LaboratoryDashboard>(`/laboratories/${userId}/dashboard`);
-  // return response.data;
   
   // Por ahora retornamos datos mock o desde localStorage si existe
   return new Promise((resolve, reject) => {

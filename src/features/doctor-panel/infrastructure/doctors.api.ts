@@ -9,6 +9,7 @@ export interface UpdateDoctorProfileParams {
   address: string;
   price: number;
   description: string;
+  experience?: number; 
   workSchedule?: WorkSchedule[];
 }
 
@@ -26,6 +27,7 @@ const mockDoctorDashboard: DoctorDashboard = {
     address: 'Av. Principal 123, Quito',
     price: 50,
     description: 'Especialista en cardiología con más de 10 años de experiencia.',
+    experience: 10, 
     workSchedule: [
       { day: 'monday', enabled: true, startTime: '09:00', endTime: '17:00' },
       { day: 'tuesday', enabled: true, startTime: '09:00', endTime: '17:00' },
@@ -38,8 +40,6 @@ const mockDoctorDashboard: DoctorDashboard = {
 
 export const getDoctorDashboardAPI = async (_userId: string): Promise<DoctorDashboard> => {
   // TODO: Reemplazar con llamada real a la API cuando esté disponible
-  // const response = await httpClient.get<DoctorDashboard>(`/doctors/${userId}/dashboard`);
-  // return response.data;
   
   // Por ahora retornamos datos mock o desde localStorage si existe
   return new Promise((resolve, reject) => {
@@ -70,8 +70,6 @@ export const updateDoctorProfileAPI = async (
   params: UpdateDoctorProfileParams
 ): Promise<DoctorDashboard> => {
   // TODO: Reemplazar con llamada real a la API cuando esté disponible
-  // const response = await httpClient.put<DoctorDashboard>(`/doctors/${userId}/profile`, params);
-  // return response.data;
   
   // Por ahora simulamos la actualización
   return new Promise((resolve) => {
