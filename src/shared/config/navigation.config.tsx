@@ -32,6 +32,7 @@ export interface MenuItem {
 export const ADMIN_MENU: MenuItem[] = [
   { icon: <Dashboard />, label: "Dashboard", path: "/admin/dashboard" },
   { icon: <Assignment />, label: "Solicitudes", path: "/admin/requests" },
+  { icon: <Campaign />, label: "Solicitudes de Anuncios", path: "/admin/ad-requests" },
   { icon: <MedicalServices />, label: "Servicios", path: "/admin/services" },
   { icon: <Timeline />, label: "Actividad", path: "/admin/activity" },
   { icon: <Settings />, label: "Configuración", path: "/admin/settings" },

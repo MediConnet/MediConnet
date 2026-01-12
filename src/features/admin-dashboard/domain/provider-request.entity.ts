@@ -19,6 +19,7 @@ export interface ProviderRequest {
   submissionDate: string;
   documentsCount: number;
   status: RequestStatusType;
+  rejectionReason?: string; // Motivo de rechazo si fue rechazado
   
   phone: string;
   whatsapp: string;

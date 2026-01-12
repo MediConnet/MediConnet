@@ -31,6 +31,7 @@ import type {
   ServiceType,
 } from "../../domain/provider-request.entity";
 import { RequestDetailModal } from "../components/RequestDetailModal";
+import { RejectProviderRequestModal } from "../components/RejectProviderRequestModal";
 import { RequestStatusBadge } from "../components/RequestStatusBadge";
 import { useProviderRequests } from "../hooks/useProviderRequests";
 import { useRequestFiltering } from "../hooks/useRequestFiltering";
@@ -57,6 +58,8 @@ export const RequestsPage = () => {
   const [selectedRequest, setSelectedRequest] =
     useState<ProviderRequest | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [requestToReject, setRequestToReject] = useState<ProviderRequest | null>(null);
 
   // --- Handlers UI ---
   const handleViewRequest = (request: ProviderRequest) => {
@@ -74,9 +77,27 @@ export const RequestsPage = () => {
     handleCloseModal();
   };
 
-  const onReject = (id: string) => {
-    rejectRequest(id);
-    handleCloseModal();
+  const handleOpenRejectModal = (request: ProviderRequest) => {
+    setRequestToReject(request);
+    setIsRejectModalOpen(true);
+    // Si el modal de detalles está abierto, cerrarlo
+    if (isModalOpen) {
+      handleCloseModal();
+    }
+  };
+
+  const handleReject = (id: string, reason: string) => {
+    rejectRequest(id, reason);
+    setIsRejectModalOpen(false);
+    setRequestToReject(null);
+    // Si el modal de detalles está abierto, cerrarlo
+    if (isModalOpen) {
+      handleCloseModal();
+    }
+  };
+
+  const onReject = (request: ProviderRequest) => {
+    handleOpenRejectModal(request);
   };
 
   // --- Definición de Columnas ---
@@ -85,15 +106,23 @@ export const RequestsPage = () => {
     {
       field: "providerName",
       headerName: "Proveedor",
-      width: 300,
+      width: 320,
       renderCell: (params: GridRenderCellParams<ProviderRequest>) => (
         <Stack
           direction="row"
           spacing={2}
           alignItems="center"
-          sx={{ height: "100%" }}
+          sx={{ height: "100%", width: "100%", py: 1 }}
         >
-          <Avatar src={params.row.avatarUrl} alt={params.row.providerName}>
+          <Avatar 
+            src={params.row.avatarUrl} 
+            alt={params.row.providerName}
+            sx={{ 
+              width: 48, 
+              height: 48,
+              flexShrink: 0
+            }}
+          >
             {params.row.providerName.charAt(0)}
           </Avatar>
           <Box
@@ -101,19 +130,33 @@ export const RequestsPage = () => {
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
+              flex: 1,
+              minWidth: 0,
+              overflow: "hidden",
             }}
           >
             <Typography
               variant="subtitle2"
               fontWeight={600}
-              sx={{ lineHeight: 1.2 }}
+              sx={{ 
+                lineHeight: 1.2,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
+              }}
             >
               {params.row.providerName}
             </Typography>
             <Typography
               variant="caption"
               color="text.secondary"
-              sx={{ lineHeight: 1.2 }}
+              sx={{ 
+                lineHeight: 1.2,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                mt: 0.5
+              }}
             >
               {params.row.email}
             </Typography>
@@ -211,7 +254,7 @@ export const RequestsPage = () => {
                   size="small"
                   title="Rechazar"
                   color="error"
-                  onClick={() => onReject(params.row.id)}
+                  onClick={() => handleOpenRejectModal(params.row)}
                 >
                   <Close fontSize="small" />
                 </IconButton>
@@ -319,13 +362,24 @@ export const RequestsPage = () => {
           />
         </Box>
 
-        {/* Modal */}
+        {/* Modal de Detalles */}
         <RequestDetailModal
           open={isModalOpen}
           onClose={handleCloseModal}
           request={selectedRequest}
           onApprove={onApprove}
           onReject={onReject}
+        />
+
+        {/* Modal de Rechazo */}
+        <RejectProviderRequestModal
+          open={isRejectModalOpen}
+          onClose={() => {
+            setIsRejectModalOpen(false);
+            setRequestToReject(null);
+          }}
+          request={requestToReject}
+          onConfirm={handleReject}
         />
       </Box>
     </DashboardLayout>

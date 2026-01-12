@@ -41,6 +41,14 @@ export const Header = ({
 }: HeaderProps) => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
+  // Validar que user existe, si no, usar valores por defecto
+  const safeUser = user || {
+    name: "Usuario",
+    roleLabel: "Usuario",
+    initials: "U",
+    isActive: false,
+  };
+
   // Obtener solo las citas o pedidos de hoy
   const today = new Date().toISOString().split("T")[0];
   let notificationCount = 0;
@@ -67,12 +75,12 @@ export const Header = ({
           <MenuIcon />
         </button>
         <h2 className="text-2xl font-bold text-gray-800">
-          {user.roleLabel === "Super Admin" ? "Panel de Administración" : "Panel Profesional"}
+          {safeUser.roleLabel === "Super Admin" ? "Panel de Administración" : "Panel Profesional"}
         </h2>
       </div>
 
       <div className="flex items-center gap-6">
-        {user.isActive && (
+        {safeUser.isActive && (
           <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold border border-green-200">
             Servicio Activo
           </span>
@@ -101,11 +109,11 @@ export const Header = ({
 
         <div className="flex items-center gap-3 border-l border-gray-200 pl-6">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-medium text-gray-900">{user.name}</p>
-            <p className="text-xs text-gray-500">{user.roleLabel}</p>
+            <p className="text-sm font-medium text-gray-900">{safeUser.name}</p>
+            <p className="text-xs text-gray-500">{safeUser.roleLabel}</p>
           </div>
           <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center text-teal-600 font-bold cursor-pointer">
-            {user.initials}
+            {safeUser.initials}
           </div>
         </div>
       </div>

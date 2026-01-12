@@ -23,6 +23,7 @@ import { ServicesCatalogPage } from "../../features/home/presentation/pages/Serv
 import { ActivityPage } from "../../features/admin-dashboard/presentation/pages/ActivityPage";
 import { AdminDashboardPage } from "../../features/admin-dashboard/presentation/pages/AdminDashboardPage";
 import { RequestsPage } from "../../features/admin-dashboard/presentation/pages/RequestsPage";
+import { AdRequestsPage } from "../../features/admin-dashboard/presentation/pages/AdRequestsPage";
 import { ServicesDashboardPage } from "../../features/admin-dashboard/presentation/pages/ServicesDashboardPage";
 
 // Pages - Doctor
@@ -76,6 +77,7 @@ export const AppRouter = () => {
         <Route path="/admin" element={<Outlet />}>
           <Route path="dashboard" element={<AdminDashboardPage />} />
           <Route path="requests" element={<RequestsPage />} />
+          <Route path="ad-requests" element={<AdRequestsPage />} />
           <Route path="services" element={<ServicesDashboardPage />} />
           <Route path="activity" element={<ActivityPage />} />
           <Route path="settings" element={<SettingsPage />} />

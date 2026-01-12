@@ -28,7 +28,7 @@ interface Props {
   onClose: () => void;
   request: ProviderRequest | null;
   onApprove: (id: string) => void;
-  onReject: (id: string) => void;
+  onReject: (request: ProviderRequest) => void;
 }
 
 export const RequestDetailModal = ({
@@ -259,7 +259,10 @@ export const RequestDetailModal = ({
           color="error"
           size="large"
           startIcon={<Block />}
-          onClick={() => onReject(request.id)}
+          onClick={() => {
+            onReject(request);
+            onClose();
+          }}
           sx={{
             px: 3,
             borderRadius: 2,

@@ -1,4 +1,4 @@
-import { Add, ContactPhone, Star, Visibility } from "@mui/icons-material";
+import { Add, ContactPhone, Star, Visibility, CheckCircle, HourglassEmpty, Send, Campaign } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -6,13 +6,18 @@ import {
   Stack,
   Typography,
   useTheme,
+  Chip,
+  Alert,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
+import { useState } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { AdsEmptyState } from "../components/AdsEmptyState";
 import { KPICard } from "../components/KPICard";
 import { usePharmacyAds } from "../hooks/usePharmacyAds";
 import { usePharmacyProfile } from "../hooks/usePharmacyProfile";
+import { useAdRequest } from "../hooks/useAdRequest";
+import { CreateAdModal } from "../components/CreateAdModal";
 
 // Mock user
 const PHARMACY_USER = {
@@ -24,13 +29,52 @@ const PHARMACY_USER = {
 
 export const PharmacyAdsPage = () => {
   const theme = useTheme();
+  const { pendingRequest, hasActiveAd, hasApprovedRequest, isLoading: isLoadingAdRequest, createRequest, createAd, refetch } = useAdRequest();
+  const [isCreating, setIsCreating] = useState(false);
+  const [isCreateAdModalOpen, setIsCreateAdModalOpen] = useState(false);
 
   // 1. Obtener datos de perfil para KPIs
   const { profile, isLoading: isLoadingProfile } = usePharmacyProfile();
   // 2. Obtener lista de anuncios
   const { ads, isLoading: isLoadingAds } = usePharmacyAds();
 
-  const isLoading = isLoadingProfile || isLoadingAds;
+  const isLoading = isLoadingProfile || isLoadingAds || isLoadingAdRequest;
+
+  const handleRequestPermission = async () => {
+    setIsCreating(true);
+    try {
+      await createRequest();
+    } catch (error) {
+      console.error("Error creating request:", error);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleCreateAd = async (adData: {
+    title: string;
+    description: string;
+    imageUrl?: string;
+    startDate: string;
+    endDate?: string;
+  }) => {
+    try {
+      await createAd(adData);
+      await refetch();
+    } catch (error: any) {
+      throw error;
+    }
+  };
+
+  const handleCreateAdClick = () => {
+    if (!hasApprovedRequest && !hasActiveAd) {
+      handleRequestPermission();
+      return;
+    }
+    if (hasApprovedRequest) {
+      setIsCreateAdModalOpen(true);
+    }
+  };
 
   if (isLoading || !profile) {
     return (
@@ -110,7 +154,16 @@ export const PharmacyAdsPage = () => {
             </Box>
             <Button
               variant="contained"
-              startIcon={<Add />}
+              startIcon={
+                hasActiveAd || pendingRequest ? (
+                  <Campaign />
+                ) : hasApprovedRequest ? (
+                  <Add />
+                ) : (
+                  <Send />
+                )
+              }
+              disabled={hasActiveAd || pendingRequest || isCreating}
               sx={{
                 color: "white",
                 fontWeight: 700,
@@ -118,20 +171,75 @@ export const PharmacyAdsPage = () => {
                 textTransform: "none",
                 boxShadow: "none",
                 px: 3,
+                opacity: hasActiveAd || pendingRequest ? 0.6 : 1,
               }}
-              onClick={() => console.log("Abrir modal de crear anuncio")}
+              onClick={handleCreateAdClick}
             >
-              Crear anuncio
+              {hasActiveAd
+                ? "Anuncio Activo"
+                : pendingRequest
+                ? "Solicitud Pendiente"
+                : isCreating
+                ? "Enviando..."
+                : "Crear y solicitar permiso"}
             </Button>
           </Stack>
 
+          {/* Mensajes de estado */}
+          {pendingRequest && (
+            <Alert severity="warning" sx={{ mb: 3 }}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <HourglassEmpty />
+                <Box>
+                  <Typography variant="body2" fontWeight={600}>
+                    Solicitud pendiente de aprobación
+                  </Typography>
+                  <Typography variant="caption">
+                    Tu solicitud para crear un anuncio está siendo revisada por el administrador. Te notificaremos cuando sea aprobada.
+                  </Typography>
+                </Box>
+              </Stack>
+            </Alert>
+          )}
+
+          {hasActiveAd && (
+            <Alert severity="success" sx={{ mb: 3 }}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <CheckCircle />
+                <Box>
+                  <Typography variant="body2" fontWeight={600}>
+                    Tienes un anuncio activo
+                  </Typography>
+                  <Typography variant="caption">
+                    Ya tienes un anuncio publicado. Si deseas crear otro, debes solicitar permiso nuevamente al administrador.
+                  </Typography>
+                </Box>
+              </Stack>
+            </Alert>
+          )}
+
+
           {/* CONTENIDO PRINCIPAL */}
-          {ads.length === 0 ? (
+          {ads.length === 0 && !hasActiveAd ? (
             <AdsEmptyState />
+          ) : hasActiveAd ? (
+            <Box sx={{ bgcolor: "grey.50", p: 3, borderRadius: 2, border: "1px solid", borderColor: "grey.200" }}>
+              <Typography variant="body2" color="text.secondary">
+                Tu anuncio activo se mostrará aquí
+              </Typography>
+            </Box>
           ) : (
             <Typography>Listado de anuncios...</Typography>
           )}
         </Box>
+
+        {/* Modal para crear anuncio */}
+        <CreateAdModal
+          open={isCreateAdModalOpen}
+          onClose={() => setIsCreateAdModalOpen(false)}
+          onCreateAd={handleRequestPermission}
+          submitButtonText="Enviar solicitud"
+        />
       </Box>
     </DashboardLayout>
   );

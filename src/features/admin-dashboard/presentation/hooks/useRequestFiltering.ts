@@ -39,9 +39,13 @@ export const useRequestFiltering = (initialData: ProviderRequest[] | undefined) 
     );
   };
 
-  const rejectRequest = (id: string) => {
+  const rejectRequest = (id: string, reason?: string) => {
     setRequests((prev) =>
-      prev.map((req) => (req.id === id ? { ...req, status: "REJECTED" } : req))
+      prev.map((req) => 
+        req.id === id 
+          ? { ...req, status: "REJECTED" as const, rejectionReason: reason || "" } 
+          : req
+      )
     );
   };
 

@@ -1,4 +1,4 @@
-import { Add, ContactPhone, Star, Visibility } from "@mui/icons-material";
+import { Add, ContactPhone, Star, Visibility, CheckCircle, HourglassEmpty, Send, Campaign } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -6,8 +6,10 @@ import {
   Stack,
   Typography,
   useTheme,
+  Alert,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
+import { useState } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 
 // Componentes y Hooks locales
@@ -15,6 +17,8 @@ import { AdsEmptyState } from "../components/AdsEmptyState";
 import { KPICard } from "../components/KPICard";
 import { useAmbulanceAds } from "../hooks/useAmbulanceAds";
 import { useAmbulanceProfile } from "../hooks/useAmbulanceProfile";
+import { useAdRequest } from "../hooks/useAdRequest";
+import { CreateAdModal } from "../components/CreateAdModal";
 
 const AMBULANCE_USER = {
   name: "Ambulancias Vida",
@@ -25,10 +29,41 @@ const AMBULANCE_USER = {
 
 export const AmbulanceAdsPage = () => {
   const theme = useTheme();
+  const { pendingRequest, hasActiveAd, hasApprovedRequest, isLoading: isLoadingAdRequest, createRequest, refetch } = useAdRequest();
+  const [isCreating, setIsCreating] = useState(false);
+  const [isCreateAdModalOpen, setIsCreateAdModalOpen] = useState(false);
   const { profile, isLoading: isLoadingProfile } = useAmbulanceProfile();
   const { ads, isLoading: isLoadingAds } = useAmbulanceAds();
 
-  const isLoading = isLoadingProfile || isLoadingAds;
+  const isLoading = isLoadingProfile || isLoadingAds || isLoadingAdRequest;
+
+  const [isCreateAdModalOpen, setIsCreateAdModalOpen] = useState(false);
+
+  const handleRequestPermission = async (adData: {
+    title: string;
+    description: string;
+    imageUrl?: string;
+    startDate: string;
+    endDate?: string;
+  }) => {
+    setIsCreating(true);
+    try {
+      await createRequest(adData);
+      await refetch();
+    } catch (error) {
+      console.error("Error creating request:", error);
+      throw error;
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleCreateAdClick = () => {
+    if (hasActiveAd || pendingRequest) {
+      return; // Ya tiene anuncio o solicitud pendiente
+    }
+    setIsCreateAdModalOpen(true);
+  };
 
   if (isLoading || !profile) {
     return (
@@ -106,7 +141,16 @@ export const AmbulanceAdsPage = () => {
             </Box>
             <Button
               variant="contained"
-              startIcon={<Add />}
+              startIcon={
+                hasActiveAd || pendingRequest ? (
+                  <Campaign />
+                ) : hasApprovedRequest ? (
+                  <Add />
+                ) : (
+                  <Send />
+                )
+              }
+              disabled={hasActiveAd || pendingRequest || isCreating}
               sx={{
                 color: "white",
                 fontWeight: 700,
@@ -114,19 +158,74 @@ export const AmbulanceAdsPage = () => {
                 textTransform: "none",
                 boxShadow: "none",
                 px: 3,
+                opacity: hasActiveAd || pendingRequest ? 0.6 : 1,
               }}
-              onClick={() => console.log("Crear anuncio ambulancia")}
+              onClick={handleCreateAdClick}
             >
-              Crear anuncio
+              {hasActiveAd
+                ? "Anuncio Activo"
+                : pendingRequest
+                ? "Solicitud Pendiente"
+                : isCreating
+                ? "Enviando..."
+                : "Crear y solicitar permiso"}
             </Button>
           </Stack>
 
-          {ads.length === 0 ? (
+          {/* Mensajes de estado */}
+          {pendingRequest && (
+            <Alert severity="warning" sx={{ mb: 3 }}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <HourglassEmpty />
+                <Box>
+                  <Typography variant="body2" fontWeight={600}>
+                    Solicitud pendiente de aprobación
+                  </Typography>
+                  <Typography variant="caption">
+                    Tu solicitud para crear un anuncio está siendo revisada por el administrador. Te notificaremos cuando sea aprobada.
+                  </Typography>
+                </Box>
+              </Stack>
+            </Alert>
+          )}
+
+          {hasActiveAd && (
+            <Alert severity="success" sx={{ mb: 3 }}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <CheckCircle />
+                <Box>
+                  <Typography variant="body2" fontWeight={600}>
+                    Tienes un anuncio activo
+                  </Typography>
+                  <Typography variant="caption">
+                    Ya tienes un anuncio publicado. Si deseas crear otro, debes solicitar permiso nuevamente al administrador.
+                  </Typography>
+                </Box>
+              </Stack>
+            </Alert>
+          )}
+
+
+          {ads.length === 0 && !hasActiveAd ? (
             <AdsEmptyState />
+          ) : hasActiveAd ? (
+            <Box sx={{ bgcolor: "grey.50", p: 3, borderRadius: 2, border: "1px solid", borderColor: "grey.200" }}>
+              <Typography variant="body2" color="text.secondary">
+                Tu anuncio activo se mostrará aquí
+              </Typography>
+            </Box>
           ) : (
             <Typography>Listado de anuncios de ambulancia...</Typography>
           )}
         </Box>
+
+        {/* Modal para crear anuncio */}
+        <CreateAdModal
+          open={isCreateAdModalOpen}
+          onClose={() => setIsCreateAdModalOpen(false)}
+          onCreateAd={handleRequestPermission}
+          submitButtonText="Enviar solicitud"
+        />
       </Box>
     </DashboardLayout>
   );
