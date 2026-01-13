@@ -5,8 +5,11 @@ import {
   Email,
   Person,
   Phone,
+  CheckCircle,
+  Payment,
+  Schedule,
 } from "@mui/icons-material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   generateMockAppointments,
   type DoctorAppointment,
@@ -18,14 +21,49 @@ interface AppointmentDetailModalProps {
   open: boolean;
   onClose: () => void;
   appointment: DoctorAppointment | null;
+  onStatusChange?: (appointmentId: string, newStatus: string) => void;
 }
 
 const AppointmentDetailModal = ({
   open,
   onClose,
   appointment,
+  onStatusChange,
 }: AppointmentDetailModalProps) => {
+  const [currentStatus, setCurrentStatus] = useState<string>("pending");
+
+  useEffect(() => {
+    if (appointment) {
+      // Mapear estados: pending -> Programada, paid -> Pagada, completed -> Atendida
+      setCurrentStatus(appointment.status || "pending");
+    }
+  }, [appointment]);
+
   if (!appointment) return null;
+
+  const handleStatusChange = (newStatus: string) => {
+    setCurrentStatus(newStatus);
+    if (onStatusChange) {
+      onStatusChange(appointment.id, newStatus);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "bg-blue-100 text-blue-700 border-blue-300";
+      case "paid":
+        return "bg-green-100 text-green-700 border-green-300";
+      case "completed":
+        return "bg-teal-100 text-teal-700 border-teal-300";
+      case "finalizada":
+        return "bg-purple-100 text-purple-700 border-purple-300";
+      case "cancelled":
+        return "bg-red-100 text-red-700 border-red-300";
+      default:
+        return "bg-gray-100 text-gray-700 border-gray-300";
+    }
+  };
 
   return (
     <div
@@ -35,7 +73,7 @@ const AppointmentDetailModal = ({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl w-full max-w-lg shadow-2xl animate-fade-in-up flex flex-col max-h-[90vh]"
+        className="bg-white rounded-2xl w-full max-w-md shadow-2xl animate-fade-in-up flex flex-col max-h-[85vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header (Fijo) */}
@@ -118,6 +156,114 @@ const AppointmentDetailModal = ({
               </p>
             </div>
           )}
+
+          {/* Estado de la cita */}
+          <div className="border border-gray-200 rounded-xl p-4">
+            <h4 className="font-semibold text-gray-900 mb-3">
+              Estado de la cita
+            </h4>
+            <div className="space-y-2">
+              <div
+                className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                  currentStatus === "pending"
+                    ? getStatusColor("pending")
+                    : "bg-white border-gray-200 hover:bg-gray-50"
+                }`}
+                onClick={() => handleStatusChange("pending")}
+              >
+                <Schedule
+                  className={`${
+                    currentStatus === "pending" ? "text-blue-600" : "text-gray-400"
+                  }`}
+                />
+                <span
+                  className={`font-medium ${
+                    currentStatus === "pending" ? "text-blue-700" : "text-gray-600"
+                  }`}
+                >
+                  Programada
+                </span>
+                {currentStatus === "pending" && (
+                  <CheckCircle className="text-blue-600 ml-auto" />
+                )}
+              </div>
+
+              <div
+                className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                  currentStatus === "paid"
+                    ? getStatusColor("paid")
+                    : "bg-white border-gray-200 hover:bg-gray-50"
+                }`}
+                onClick={() => handleStatusChange("paid")}
+              >
+                <Payment
+                  className={`${
+                    currentStatus === "paid" ? "text-green-600" : "text-gray-400"
+                  }`}
+                />
+                <span
+                  className={`font-medium ${
+                    currentStatus === "paid" ? "text-green-700" : "text-gray-600"
+                  }`}
+                >
+                  Pagada
+                </span>
+                {currentStatus === "paid" && (
+                  <CheckCircle className="text-green-600 ml-auto" />
+                )}
+              </div>
+
+              <div
+                className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                  currentStatus === "completed"
+                    ? getStatusColor("completed")
+                    : "bg-white border-gray-200 hover:bg-gray-50"
+                }`}
+                onClick={() => handleStatusChange("completed")}
+              >
+                <CheckCircle
+                  className={`${
+                    currentStatus === "completed" ? "text-teal-600" : "text-gray-400"
+                  }`}
+                />
+                <span
+                  className={`font-medium ${
+                    currentStatus === "completed" ? "text-teal-700" : "text-gray-600"
+                  }`}
+                >
+                  Atendida
+                </span>
+                {currentStatus === "completed" && (
+                  <CheckCircle className="text-teal-600 ml-auto" />
+                )}
+              </div>
+
+              <div
+                className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                  currentStatus === "finalizada"
+                    ? "bg-purple-100 text-purple-700 border-purple-300"
+                    : "bg-white border-gray-200 hover:bg-gray-50"
+                }`}
+                onClick={() => handleStatusChange("finalizada")}
+              >
+                <CheckCircle
+                  className={`${
+                    currentStatus === "finalizada" ? "text-purple-600" : "text-gray-400"
+                  }`}
+                />
+                <span
+                  className={`font-medium ${
+                    currentStatus === "finalizada" ? "text-purple-700" : "text-gray-600"
+                  }`}
+                >
+                  Consulta Finalizada
+                </span>
+                {currentStatus === "finalizada" && (
+                  <CheckCircle className="text-purple-600 ml-auto" />
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Footer (Fijo) */}
@@ -145,12 +291,30 @@ export const AppointmentsSection = () => {
   const [selectedAppointment, setSelectedAppointment] =
     useState<DoctorAppointment | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [appointments, setAppointments] = useState<DoctorAppointment[]>([]);
+
+  // Cargar citas desde localStorage o generar mock
+  useEffect(() => {
+    const savedAppointments = localStorage.getItem("doctor_appointments");
+    if (savedAppointments) {
+      setAppointments(JSON.parse(savedAppointments));
+    } else {
+      const mockAppointments = generateMockAppointments();
+      setAppointments(mockAppointments);
+      localStorage.setItem("doctor_appointments", JSON.stringify(mockAppointments));
+    }
+  }, []);
 
   // Generar citas mock basadas en el mes actual
-  const mockAppointments = generateMockAppointments();
+  const mockAppointments = appointments.length > 0 ? appointments : generateMockAppointments();
 
-  // Obtener citas del día seleccionado
-  const appointmentsForDate = mockAppointments.filter(
+  // Filtrar citas finalizadas del calendario (no se muestran)
+  const activeAppointments = mockAppointments.filter(
+    (apt) => apt.status !== "finalizada"
+  );
+
+  // Obtener citas del día seleccionado (solo activas, sin finalizadas)
+  const appointmentsForDate = activeAppointments.filter(
     (apt) => apt.date === selectedDate
   );
 
@@ -284,9 +448,9 @@ export const AppointmentsSection = () => {
     return days;
   };
 
-  // Obtener todas las citas ordenadas por fecha y hora
+  // Obtener todas las citas ordenadas por fecha y hora (solo activas, sin finalizadas)
   const getAllAppointmentsSorted = () => {
-    return [...mockAppointments].sort((a, b) => {
+    return [...activeAppointments].sort((a, b) => {
       const dateA = new Date(`${a.date}T${a.time}`);
       const dateB = new Date(`${b.date}T${b.time}`);
       return dateA.getTime() - dateB.getTime();
@@ -301,6 +465,28 @@ export const AppointmentsSection = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedAppointment(null);
+  };
+
+  const handleStatusChange = (appointmentId: string, newStatus: string) => {
+    const updatedAppointments = appointments.map((apt) =>
+      apt.id === appointmentId ? { ...apt, status: newStatus as any } : apt
+    );
+    setAppointments(updatedAppointments);
+    localStorage.setItem("doctor_appointments", JSON.stringify(updatedAppointments));
+    
+    // Disparar evento personalizado para notificar cambios
+    window.dispatchEvent(new Event("appointments-updated"));
+    
+    // Si se marca como finalizada, cerrar el modal
+    if (newStatus === "finalizada") {
+      setIsModalOpen(false);
+      setSelectedAppointment(null);
+    } else {
+      // Actualizar el appointment seleccionado si es el mismo
+      if (selectedAppointment && selectedAppointment.id === appointmentId) {
+        setSelectedAppointment({ ...selectedAppointment, status: newStatus as any });
+      }
+    }
   };
 
   // Renderizar vista de Mes
@@ -778,6 +964,7 @@ export const AppointmentsSection = () => {
         open={isModalOpen}
         onClose={handleCloseModal}
         appointment={selectedAppointment}
+        onStatusChange={handleStatusChange}
       />
     </>
   );

@@ -1,11 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ProviderRequest } from "../../domain/provider-request.entity";
+import { approveRequestUseCase } from "../../application/approve-request.usecase";
+import { rejectRequestUseCase } from "../../application/reject-request.usecase";
 
-export const useRequestFiltering = (initialData: ProviderRequest[] | undefined) => {
+export const useRequestFiltering = (
+  initialData: ProviderRequest[] | undefined,
+  defaultStatusFilter: string = "all"
+) => {
   const [requests, setRequests] = useState<ProviderRequest[]>([]);
 
   const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState(defaultStatusFilter);
   const [dateFilter, setDateFilter] = useState("");
 
   useEffect(() => {
@@ -33,13 +38,17 @@ export const useRequestFiltering = (initialData: ProviderRequest[] | undefined) 
     });
   }, [requests, searchText, statusFilter, dateFilter]);
 
-  const approveRequest = (id: string) => {
+  const approveRequest = async (id: string) => {
+    await approveRequestUseCase(id);
+    // Actualizar el estado local
     setRequests((prev) =>
       prev.map((req) => (req.id === id ? { ...req, status: "APPROVED" } : req))
     );
   };
 
-  const rejectRequest = (id: string, reason?: string) => {
+  const rejectRequest = async (id: string, reason?: string) => {
+    await rejectRequestUseCase(id, reason || "");
+    // Actualizar el estado local - la solicitud se eliminará de la lista porque el filtro es "PENDING"
     setRequests((prev) =>
       prev.map((req) => 
         req.id === id 

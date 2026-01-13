@@ -1,10 +1,10 @@
-import { Campaign, CheckCircle, HourglassEmpty, Block, Send, Add } from "@mui/icons-material";
+import { Campaign, CheckCircle, HourglassEmpty, Send, Add } from "@mui/icons-material";
 import { useState } from "react";
 import { useAdRequest } from "../hooks/useAdRequest";
 import { CreateAdModal } from "./CreateAdModal";
 
 export const AdsSection = () => {
-  const { pendingRequest, hasActiveAd, hasApprovedRequest, isLoading, createRequest, refetch } = useAdRequest();
+  const { pendingRequest, hasActiveAd, hasApprovedRequest, isLoading, createRequest, createAd, refetch } = useAdRequest();
   const [isCreating, setIsCreating] = useState(false);
   const [isCreateAdModalOpen, setIsCreateAdModalOpen] = useState(false);
 
@@ -173,7 +173,7 @@ export const AdsSection = () => {
           </p>
         </div>
         <button
-          onClick={handleRequestPermission}
+          onClick={() => setIsCreateAdModalOpen(true)}
           disabled={isCreating}
           className="bg-teal-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -196,6 +196,12 @@ export const AdsSection = () => {
           Una vez aprobado, podrás crear un anuncio.
         </p>
       </div>
+
+      <CreateAdModal
+        open={isCreateAdModalOpen}
+        onClose={() => setIsCreateAdModalOpen(false)}
+        onCreateAd={handleRequestPermission}
+      />
     </div>
   );
 };

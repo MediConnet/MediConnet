@@ -1,15 +1,20 @@
 import { useSearchParams } from "react-router-dom";
+import { Box, Typography } from "@mui/material";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { useSupplyDashboard } from "../hooks/useSupplyDashboard";
 import { useAuthStore } from "../../../../app/store/auth.store";
 import { ProfileSection } from "../components/ProfileSection";
+import { SuppliesScheduleSection } from "../components/SuppliesScheduleSection";
+import { SuppliesContactLocationSection } from "../components/SuppliesContactLocationSection";
 import { AdsSection } from "../components/AdsSection";
 import { ReviewsSection } from "../components/ReviewsSection";
 import { ProductsSection } from "../components/ProductsSection";
 import { SettingsSection } from "../components/SettingsSection";
 import { StatsCards } from "../components/StatsCards";
+import { DashboardContent } from "../components/DashboardContent";
+import { Stack } from "@mui/material";
 
-type TabType = "profile" | "ads" | "reviews" | "products" | "settings";
+type TabType = "dashboard" | "profile" | "ads" | "reviews" | "products" | "settings";
 
 export const SupplyDashboardPage = () => {
   const [searchParams] = useSearchParams();
@@ -17,7 +22,7 @@ export const SupplyDashboardPage = () => {
   const authStore = useAuthStore();
   const { user } = authStore;
 
-  const currentTab = (searchParams.get("tab") || "profile") as TabType;
+  const currentTab = (searchParams.get("tab") || "dashboard") as TabType;
 
   // Obtener iniciales del usuario
   const getInitials = (name: string) => {
@@ -58,24 +63,62 @@ export const SupplyDashboardPage = () => {
 
   return (
     <DashboardLayout role="PROVIDER" userProfile={userProfile}>
-      {/* Cards de Estadísticas - No mostrar en la pestaña de productos */}
-      {currentTab !== "products" && <StatsCards data={data} />}
+      {/* Cards de Estadísticas - Solo mostrar en la pestaña de dashboard */}
+      {currentTab === "dashboard" && <StatsCards data={data} />}
 
       {/* Contenido según la pestaña activa */}
-      <div className={currentTab === "products" ? "" : "mt-6"}>
+      <div className={currentTab === "dashboard" || currentTab === "products" ? "" : "mt-6"}>
+        {currentTab === "dashboard" && (
+          <Box>
+            <Box mb={3}>
+              <Typography variant="h4" fontWeight={700} mb={1}>
+                Dashboard
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Resumen de tus estadísticas y métricas principales
+              </Typography>
+            </Box>
+            <DashboardContent
+              visits={data.visits}
+              contacts={data.contacts}
+              reviews={data.reviews}
+              rating={data.rating}
+            />
+          </Box>
+        )}
         {currentTab === "profile" && (
-          <ProfileSection
-            data={data}
-            onUpdate={(updatedData) => {
-              // Actualizar los datos directamente sin recargar
-              if (setData) {
-                setData(updatedData);
-              } else {
-                // Fallback: recargar si setData no está disponible
-                refetch();
-              }
-            }}
-          />
+          <Stack spacing={4}>
+            <ProfileSection
+              data={data}
+              onUpdate={(updatedData) => {
+                if (setData) {
+                  setData(updatedData);
+                } else {
+                  refetch();
+                }
+              }}
+            />
+            <SuppliesScheduleSection
+              data={data}
+              onUpdate={(updatedData) => {
+                if (setData) {
+                  setData(updatedData);
+                } else {
+                  refetch();
+                }
+              }}
+            />
+            <SuppliesContactLocationSection
+              data={data}
+              onUpdate={(updatedData) => {
+                if (setData) {
+                  setData(updatedData);
+                } else {
+                  refetch();
+                }
+              }}
+            />
+          </Stack>
         )}
         {currentTab === "ads" && <AdsSection />}
         {currentTab === "reviews" && <ReviewsSection />}

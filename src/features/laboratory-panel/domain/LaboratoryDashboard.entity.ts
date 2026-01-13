@@ -1,8 +1,14 @@
 export interface WorkSchedule {
   day: string; // 'monday', 'tuesday', etc.
-  enabled: boolean;
+  isOpen: boolean;
   startTime: string; // 'HH:mm'
   endTime: string; // 'HH:mm'
+}
+
+export interface LaboratoryStudy {
+  id: string;
+  name: string; // Tipo de examen
+  preparation: string; // Preparación básica
 }
 
 export interface LaboratoryDashboard {
@@ -11,13 +17,22 @@ export interface LaboratoryDashboard {
   reviews: number;
   rating: number;
   laboratory: {
+    id: string;
     name: string;
+    logoUrl?: string; // Logo del laboratorio
     email: string;
     whatsapp: string;
     address: string;
     description: string;
     schedule: string;
-    workSchedule?: WorkSchedule[]; // Horario laboral de lunes a viernes
+    workSchedule?: WorkSchedule[]; // Horario laboral
+    studies?: LaboratoryStudy[]; // Tipos de exámenes
+    location?: {
+      latitude: number;
+      longitude: number;
+      address: string;
+    }; // Ubicación (coordenadas)
+    isActive?: boolean; // Estado del servicio: Activo / Inactivo
   };
 }
 

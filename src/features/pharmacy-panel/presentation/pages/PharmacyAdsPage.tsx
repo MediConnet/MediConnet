@@ -6,7 +6,6 @@ import {
   Stack,
   Typography,
   useTheme,
-  Chip,
   Alert,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
@@ -40,12 +39,20 @@ export const PharmacyAdsPage = () => {
 
   const isLoading = isLoadingProfile || isLoadingAds || isLoadingAdRequest;
 
-  const handleRequestPermission = async () => {
+  const handleRequestPermission = async (adData: {
+    title: string;
+    description: string;
+    imageUrl?: string;
+    startDate: string;
+    endDate?: string;
+  }) => {
     setIsCreating(true);
     try {
-      await createRequest();
+      await createRequest(adData);
+      setIsCreateAdModalOpen(false);
     } catch (error) {
       console.error("Error creating request:", error);
+      throw error;
     } finally {
       setIsCreating(false);
     }
@@ -61,19 +68,17 @@ export const PharmacyAdsPage = () => {
     try {
       await createAd(adData);
       await refetch();
+      setIsCreateAdModalOpen(false);
     } catch (error: any) {
       throw error;
     }
   };
 
   const handleCreateAdClick = () => {
-    if (!hasApprovedRequest && !hasActiveAd) {
-      handleRequestPermission();
-      return;
+    if (hasActiveAd || pendingRequest) {
+      return; // Ya tiene anuncio o solicitud pendiente
     }
-    if (hasApprovedRequest) {
-      setIsCreateAdModalOpen(true);
-    }
+    setIsCreateAdModalOpen(true);
   };
 
   if (isLoading || !profile) {
@@ -163,7 +168,7 @@ export const PharmacyAdsPage = () => {
                   <Send />
                 )
               }
-              disabled={hasActiveAd || pendingRequest || isCreating}
+              disabled={!!hasActiveAd || !!pendingRequest || isCreating}
               sx={{
                 color: "white",
                 fontWeight: 700,
@@ -237,8 +242,8 @@ export const PharmacyAdsPage = () => {
         <CreateAdModal
           open={isCreateAdModalOpen}
           onClose={() => setIsCreateAdModalOpen(false)}
-          onCreateAd={handleRequestPermission}
-          submitButtonText="Enviar solicitud"
+          onCreateAd={hasApprovedRequest ? handleCreateAd : handleRequestPermission}
+          submitButtonText={hasApprovedRequest ? "Publicar Anuncio" : "Enviar solicitud"}
         />
       </Box>
     </DashboardLayout>

@@ -4,6 +4,14 @@ export interface PharmacyStats {
   totalReviews: number;
   averageRating: number;
 }
+
+export interface WorkSchedule {
+  day: string; // "monday", "tuesday", etc.
+  isOpen: boolean;
+  startTime: string; // "09:00"
+  endTime: string; // "18:00"
+}
+
 export interface PharmacyProfile {
   id: string;
   commercialName: string;
@@ -11,5 +19,15 @@ export interface PharmacyProfile {
   ruc: string;          
   description: string;  
   websiteUrl: string;   
-  stats: PharmacyStats; 
+  address: string; // Dirección principal
+  status: "draft" | "published" | "suspended"; // Estado del perfil
+  whatsapp: string; // Número de WhatsApp
+  location?: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  }; // Ubicación (coordenadas)
+  schedule: WorkSchedule[]; // Horarios de atención
+  stats: PharmacyStats;
+  isActive?: boolean; // Estado del servicio: Activo / Inactivo
 }

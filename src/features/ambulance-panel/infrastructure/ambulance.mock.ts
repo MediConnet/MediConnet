@@ -9,6 +9,15 @@ export const MOCK_AMBULANCE_PROFILE: AmbulanceProfile = {
   whatsappContact: "0998765432",
   emergencyPhone: "3245678",
   arrivalField: 15,
+  ambulanceType: "advanced",
+  coverageZone: "Quito, Valle de los Chillos y alrededores",
+  availability: "24/7",
+  operatingHours: {
+    startTime: "00:00",
+    endTime: "23:59",
+  },
+  interprovincialTransfers: true,
+  isActive: true, // Estado del servicio: Activo
   stats: {
     profileViews: 1250,
     contactClicks: 320,

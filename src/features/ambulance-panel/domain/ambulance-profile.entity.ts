@@ -6,7 +6,16 @@ export interface AmbulanceProfile {
   address: string;
   whatsappContact: string;
   emergencyPhone: string;
-  arrivalField?: number; 
+  arrivalField?: number;
+  ambulanceType?: "basic" | "advanced" | "mobile-icu"; // Tipo de ambulancia
+  coverageZone?: string; // Zona de cobertura (ej: "Quito y alrededores")
+  availability?: "24/7" | "scheduled"; // Disponibilidad 24/7 o por horario
+  operatingHours?: {
+    startTime: string; // HH:mm
+    endTime: string; // HH:mm
+  };
+  interprovincialTransfers?: boolean; // Traslados interprovinciales
+  isActive?: boolean; // Estado del servicio: Activo / Inactivo
 
   // Métricas para el dashboard (KPIs)
   stats: {

@@ -6,8 +6,14 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
+  FormControlLabel,
   IconButton,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
+  Switch,
   TextField,
   Typography,
   alpha,
@@ -290,6 +296,165 @@ export const EditProfileModal = ({
             onChange={(e) => handleChange("shortDescription", e.target.value)}
             helperText="Máximo 150 caracteres para la vista previa"
           />
+
+          {/* Nuevos campos: Tipo de ambulancia, zona de cobertura, disponibilidad */}
+          <Grid2 container spacing={2}>
+            <Grid2 size={{ xs: 12, md: 6 }}>
+              <FormControl fullWidth>
+                <InputLabel>Tipo de Ambulancia</InputLabel>
+                <Select
+                  value={formData.ambulanceType || "basic"}
+                  label="Tipo de Ambulancia"
+                  onChange={(e) => handleChange("ambulanceType", e.target.value)}
+                >
+                  <MenuItem value="basic">Básica</MenuItem>
+                  <MenuItem value="advanced">Avanzada</MenuItem>
+                  <MenuItem value="mobile-icu">UCI Móvil</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid2>
+
+            <Grid2 size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                label="Zona de Cobertura"
+                value={formData.coverageZone || ""}
+                onChange={(e) => handleChange("coverageZone", e.target.value)}
+                placeholder="Ej: Quito y alrededores"
+                helperText="Describe las zonas donde prestas servicio"
+              />
+            </Grid2>
+          </Grid2>
+
+          <Grid2 container spacing={2}>
+            <Grid2 size={{ xs: 12, md: 6 }}>
+              <FormControl fullWidth>
+                <InputLabel>Disponibilidad</InputLabel>
+                <Select
+                  value={formData.availability || "24/7"}
+                  label="Disponibilidad"
+                  onChange={(e) => {
+                    const availability = e.target.value as "24/7" | "scheduled";
+                    if (formData) {
+                      setFormData({
+                        ...formData,
+                        availability,
+                        operatingHours: availability === "scheduled"
+                          ? { startTime: "08:00", endTime: "18:00" }
+                          : { startTime: "00:00", endTime: "23:59" },
+                      });
+                    }
+                  }}
+                >
+                  <MenuItem value="24/7">24/7 (Todo el día)</MenuItem>
+                  <MenuItem value="scheduled">Por Horario</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid2>
+
+            {formData.availability === "scheduled" && (
+              <>
+                <Grid2 size={{ xs: 12, md: 3 }}>
+                  <TextField
+                    fullWidth
+                    type="time"
+                    label="Hora de Inicio"
+                    value={formData.operatingHours?.startTime || "08:00"}
+                    onChange={(e) => {
+                      if (formData) {
+                        setFormData({
+                          ...formData,
+                          operatingHours: {
+                            ...formData.operatingHours!,
+                            startTime: e.target.value,
+                          },
+                        });
+                      }
+                    }}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid2>
+                <Grid2 size={{ xs: 12, md: 3 }}>
+                  <TextField
+                    fullWidth
+                    type="time"
+                    label="Hora de Fin"
+                    value={formData.operatingHours?.endTime || "18:00"}
+                    onChange={(e) => {
+                      if (formData) {
+                        setFormData({
+                          ...formData,
+                          operatingHours: {
+                            ...formData.operatingHours!,
+                            endTime: e.target.value,
+                          },
+                        });
+                      }
+                    }}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid2>
+              </>
+            )}
+          </Grid2>
+
+          <FormControlLabel
+            control={
+              <Switch
+                checked={formData.interprovincialTransfers || false}
+                onChange={(e) => {
+                  if (formData) {
+                    setFormData({
+                      ...formData,
+                      interprovincialTransfers: e.target.checked,
+                    });
+                  }
+                }}
+              />
+            }
+            label="Ofrecer traslados interprovinciales"
+          />
+
+          {/* Estado del Servicio */}
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              border: "1px solid",
+              borderColor: "grey.200",
+              bgcolor: "grey.50",
+            }}
+          >
+            <Typography variant="subtitle2" fontWeight={600} mb={1}>
+              Estado del Servicio
+            </Typography>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.isActive !== false}
+                  onChange={(e) => {
+                    if (formData) {
+                      setFormData({
+                        ...formData,
+                        isActive: e.target.checked,
+                      });
+                    }
+                  }}
+                  color="primary"
+                />
+              }
+              label={
+                formData.isActive !== false
+                  ? "Servicio Activo (visible en la app)"
+                  : "Servicio Inactivo (oculto en la app)"
+              }
+            />
+            <Typography variant="caption" color="text.secondary" mt={1} display="block">
+              {formData.isActive !== false
+                ? "Tu servicio está visible y disponible para los usuarios"
+                : "Tu servicio está oculto y no aparecerá en la búsqueda"}
+            </Typography>
+          </Box>
         </Stack>
       </DialogContent>
 

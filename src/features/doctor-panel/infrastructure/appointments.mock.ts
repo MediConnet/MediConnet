@@ -26,6 +26,9 @@ export interface DoctorAppointment {
   time: string; // HH:mm
   reason: string; // Razón de la cita
   notes?: string;
+  status?: "pending" | "paid" | "completed" | "finalizada" | "cancelled" | "no-show";
+  paymentMethod?: "card" | "cash";
+  price?: number;
 }
 
 // Mock data para citas - distribuidas en diferentes fechas del mes actual
@@ -41,6 +44,9 @@ export const generateMockAppointments = (): DoctorAppointment[] => {
       time: "10:00",
       reason: "Consulta de seguimiento post-operatorio",
       notes: "Paciente requiere revisión de herida quirúrgica",
+      status: "completed",
+      paymentMethod: "card",
+      price: 50,
     },
     {
       id: "2",
@@ -51,6 +57,9 @@ export const generateMockAppointments = (): DoctorAppointment[] => {
       time: "14:30",
       reason: "Primera consulta médica general",
       notes: "Nuevo paciente, requiere evaluación inicial",
+      status: "completed",
+      paymentMethod: "cash",
+      price: 45,
     },
     {
       id: "3",
@@ -60,6 +69,9 @@ export const generateMockAppointments = (): DoctorAppointment[] => {
       date: dates.day2,
       time: "09:00",
       reason: "Control de presión arterial",
+      status: "completed",
+      paymentMethod: "card",
+      price: 40,
     },
     {
       id: "4",
@@ -70,6 +82,9 @@ export const generateMockAppointments = (): DoctorAppointment[] => {
       time: "11:00",
       reason: "Revisión de resultados de laboratorio",
       notes: "Paciente traerá exámenes de sangre y orina",
+      status: "completed",
+      paymentMethod: "card",
+      price: 55,
     },
     {
       id: "5",
@@ -79,6 +94,9 @@ export const generateMockAppointments = (): DoctorAppointment[] => {
       date: dates.day4,
       time: "15:00",
       reason: "Consulta por dolor de cabeza recurrente",
+      status: "pending",
+      paymentMethod: "cash",
+      price: 50,
     },
     {
       id: "6",
@@ -88,6 +106,9 @@ export const generateMockAppointments = (): DoctorAppointment[] => {
       date: dates.day5,
       time: "16:00",
       reason: "Seguimiento de tratamiento para diabetes",
+      status: "completed",
+      paymentMethod: "card",
+      price: 60,
     },
     {
       id: "7",
@@ -97,6 +118,9 @@ export const generateMockAppointments = (): DoctorAppointment[] => {
       date: dates.day6,
       time: "10:30",
       reason: "Consulta de rutina y chequeo general",
+      status: "cancelled",
+      paymentMethod: "cash",
+      price: 45,
     },
   ];
 };

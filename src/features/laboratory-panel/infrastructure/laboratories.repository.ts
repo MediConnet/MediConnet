@@ -7,19 +7,50 @@ const mockLaboratoryDashboard: LaboratoryDashboard = {
   reviews: 45,
   rating: 4.7,
   laboratory: {
+    id: "lab-001",
     name: "Laboratorio Central",
+    logoUrl: undefined,
     email: "lab@medicones.com",
     whatsapp: "+593 99 123 4567",
-    address: "Av. Principal 456, Quito",
+    address: "Av. Principal 456, Quito, Ecuador",
     description: "Laboratorio clínico profesional con más de 15 años de experiencia",
     schedule: "Lun-Vie 07:00-19:00", 
     workSchedule: [
-      { day: 'monday', enabled: true, startTime: '07:00', endTime: '19:00' },
-      { day: 'tuesday', enabled: true, startTime: '07:00', endTime: '19:00' },
-      { day: 'wednesday', enabled: true, startTime: '07:00', endTime: '19:00' },
-      { day: 'thursday', enabled: true, startTime: '07:00', endTime: '19:00' },
-      { day: 'friday', enabled: true, startTime: '07:00', endTime: '19:00' },
+      { day: 'monday', isOpen: true, startTime: '07:00', endTime: '19:00' },
+      { day: 'tuesday', isOpen: true, startTime: '07:00', endTime: '19:00' },
+      { day: 'wednesday', isOpen: true, startTime: '07:00', endTime: '19:00' },
+      { day: 'thursday', isOpen: true, startTime: '07:00', endTime: '19:00' },
+      { day: 'friday', isOpen: true, startTime: '07:00', endTime: '19:00' },
+      { day: 'saturday', isOpen: false, startTime: '09:00', endTime: '13:00' },
+      { day: 'sunday', isOpen: false, startTime: '09:00', endTime: '13:00' },
     ],
+    studies: [
+      {
+        id: "study-1",
+        name: "Hemograma completo",
+        preparation: "Ayuno de 8 horas requerido",
+      },
+      {
+        id: "study-2",
+        name: "Perfil lipídico",
+        preparation: "Ayuno de 12 horas",
+      },
+      {
+        id: "study-3",
+        name: "Examen de orina completo",
+        preparation: "Muestra de primera orina de la mañana",
+      },
+      {
+        id: "study-4",
+        name: "Glicemia en ayunas",
+        preparation: "Ayuno de 8 horas",
+      },
+    ],
+    location: {
+      latitude: -0.1807,
+      longitude: -78.4678,
+      address: "Av. Principal 456, Quito, Ecuador",
+    },
   },
 };
 

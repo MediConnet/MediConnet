@@ -31,11 +31,11 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const bgCardColor = "#f3e8ff"; // Fondo lila suave
 
   const defaultSchedule: WorkSchedule[] = [
-    { day: "monday", enabled: true, startTime: "07:00", endTime: "19:00" },
-    { day: "tuesday", enabled: true, startTime: "07:00", endTime: "19:00" },
-    { day: "wednesday", enabled: true, startTime: "07:00", endTime: "19:00" },
-    { day: "thursday", enabled: true, startTime: "07:00", endTime: "19:00" },
-    { day: "friday", enabled: true, startTime: "07:00", endTime: "19:00" },
+    { day: "monday", isOpen: true, startTime: "07:00", endTime: "19:00" },
+    { day: "tuesday", isOpen: true, startTime: "07:00", endTime: "19:00" },
+    { day: "wednesday", isOpen: true, startTime: "07:00", endTime: "19:00" },
+    { day: "thursday", isOpen: true, startTime: "07:00", endTime: "19:00" },
+    { day: "friday", isOpen: true, startTime: "07:00", endTime: "19:00" },
   ];
 
   const [formData, setFormData] = useState({
@@ -50,7 +50,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
   // Función para generar el texto del horario (Ej: Lun-Vie 07:00-19:00)
   const getDynamicScheduleText = (schedule: WorkSchedule[]) => {
-    const activeDays = schedule.filter((s) => s.enabled);
+    const activeDays = schedule.filter((s) => s.isOpen);
 
     if (activeDays.length === 0) return "Cerrado temporalmente";
 
@@ -153,7 +153,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
   const handleScheduleChange = (
     day: string,
-    field: "enabled" | "startTime" | "endTime",
+                    field: "isOpen" | "startTime" | "endTime",
     value: boolean | string
   ) => {
     setFormData((prev) => ({
@@ -290,7 +290,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                       <span className="text-sm font-medium text-gray-700 w-24">
                         {dayLabels[schedule.day] || schedule.day}
                       </span>
-                      {schedule.enabled ? (
+                      {schedule.isOpen ? (
                         <span className="text-sm text-gray-800">
                           {schedule.startTime} - {schedule.endTime}
                         </span>
@@ -389,11 +389,11 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                     <div className="flex items-center gap-2 w-24">
                       <input
                         type="checkbox"
-                        checked={schedule.enabled}
+                        checked={schedule.isOpen}
                         onChange={(e) =>
                           handleScheduleChange(
                             schedule.day,
-                            "enabled",
+                            "isOpen",
                             e.target.checked
                           )
                         }
@@ -403,7 +403,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                         {dayLabels[schedule.day] || schedule.day}
                       </span>
                     </div>
-                    {schedule.enabled && (
+                    {schedule.isOpen && (
                       <div className="flex items-center gap-2 flex-1">
                         <input
                           type="time"
@@ -432,7 +432,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                         />
                       </div>
                     )}
-                    {!schedule.enabled && (
+                    {!schedule.isOpen && (
                       <span className="text-sm text-gray-400">Cerrado</span>
                     )}
                   </div>

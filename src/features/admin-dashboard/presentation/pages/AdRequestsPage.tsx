@@ -7,10 +7,12 @@ import {
   Science,
   AirportShuttle,
   Inventory,
+  Visibility,
 } from "@mui/icons-material";
 import {
   Avatar,
   Box,
+  Button,
   IconButton,
   MenuItem,
   Stack,
@@ -27,6 +29,7 @@ import { useState, useMemo } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import type { AdRequest } from "../../domain/ad-request.entity";
 import { RejectAdRequestModal } from "../components/RejectAdRequestModal";
+import { AdDetailModal } from "../components/AdDetailModal";
 import { RequestStatusBadge } from "../components/RequestStatusBadge";
 import { useAdRequests } from "../hooks/useAdRequests";
 import { approveAdRequestUseCase } from "../../application/approve-ad-request.usecase";
@@ -50,9 +53,10 @@ export const AdRequestsPage = () => {
   const { data: initialData, isLoading, refetch } = useAdRequests();
 
   const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("PENDING"); // Filtrar solo PENDING por defecto
   const [selectedRequest, setSelectedRequest] = useState<AdRequest | null>(null);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const filteredRequests = useMemo(() => {
     if (!initialData) return [];
@@ -73,6 +77,7 @@ export const AdRequestsPage = () => {
   const handleApprove = async (id: string) => {
     try {
       await approveAdRequestUseCase(id);
+      // Refrescar los datos - la solicitud se eliminará de la lista porque el filtro es "PENDING"
       await refetch();
     } catch (error) {
       console.error("Error approving ad request:", error);
@@ -82,9 +87,13 @@ export const AdRequestsPage = () => {
   const handleReject = async (id: string, reason: string) => {
     try {
       await rejectAdRequestUseCase(id, reason);
+      // Refrescar los datos - la solicitud se eliminará automáticamente de la lista porque el filtro es "PENDING"
+      // y se moverá al historial
       await refetch();
       setIsRejectModalOpen(false);
       setSelectedRequest(null);
+      // Opcional: Redirigir al historial después de rechazar
+      // window.location.href = '/admin/history?tab=ads';
     } catch (error) {
       console.error("Error rejecting ad request:", error);
     }
@@ -93,6 +102,11 @@ export const AdRequestsPage = () => {
   const openRejectModal = (request: AdRequest) => {
     setSelectedRequest(request);
     setIsRejectModalOpen(true);
+  };
+
+  const openDetailModal = (request: AdRequest) => {
+    setSelectedRequest(request);
+    setIsDetailModalOpen(true);
   };
 
   const columns: GridColDef<AdRequest>[] = [
@@ -220,11 +234,9 @@ export const AdRequestsPage = () => {
     {
       field: "actions",
       headerName: "Acciones",
-      width: 120,
+      width: 200,
       sortable: false,
       renderCell: (params: GridRenderCellParams<AdRequest>) => {
-        if (params.row.status !== "PENDING") return null;
-
         return (
           <Stack
             direction="row"
@@ -232,22 +244,38 @@ export const AdRequestsPage = () => {
             alignItems="center"
             sx={{ height: "100%" }}
           >
-            <IconButton
+            <Button
+              variant="outlined"
               size="small"
-              title="Aprobar"
-              color="success"
-              onClick={() => handleApprove(params.row.id)}
+              startIcon={<Visibility />}
+              onClick={() => openDetailModal(params.row)}
+              sx={{
+                textTransform: "none",
+                fontSize: "0.75rem",
+              }}
             >
-              <Check fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              title="Rechazar"
-              color="error"
-              onClick={() => openRejectModal(params.row)}
-            >
-              <Close fontSize="small" />
-            </IconButton>
+              Ver Detalle
+            </Button>
+            {params.row.status === "PENDING" && (
+              <>
+                <IconButton
+                  size="small"
+                  title="Aprobar"
+                  color="success"
+                  onClick={() => handleApprove(params.row.id)}
+                >
+                  <Check fontSize="small" />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  title="Rechazar"
+                  color="error"
+                  onClick={() => openRejectModal(params.row)}
+                >
+                  <Close fontSize="small" />
+                </IconButton>
+              </>
+            )}
           </Stack>
         );
       },
@@ -333,6 +361,16 @@ export const AdRequestsPage = () => {
             }}
           />
         </Box>
+
+        {/* Modal de Detalle del Anuncio */}
+        <AdDetailModal
+          open={isDetailModalOpen}
+          onClose={() => {
+            setIsDetailModalOpen(false);
+            setSelectedRequest(null);
+          }}
+          request={selectedRequest}
+        />
 
         {/* Modal de Rechazo */}
         <RejectAdRequestModal

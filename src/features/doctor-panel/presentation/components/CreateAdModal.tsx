@@ -10,7 +10,7 @@ import {
   IconButton,
   Alert,
 } from "@mui/material";
-import { Close, CloudUpload, Image as ImageIcon } from "@mui/icons-material";
+import { Close, CloudUpload } from "@mui/icons-material";
 import { useState, useRef } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";

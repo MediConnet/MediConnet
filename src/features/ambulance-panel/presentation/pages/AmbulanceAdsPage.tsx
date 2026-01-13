@@ -29,15 +29,13 @@ const AMBULANCE_USER = {
 
 export const AmbulanceAdsPage = () => {
   const theme = useTheme();
-  const { pendingRequest, hasActiveAd, hasApprovedRequest, isLoading: isLoadingAdRequest, createRequest, refetch } = useAdRequest();
+  const { pendingRequest, hasActiveAd, hasApprovedRequest, isLoading: isLoadingAdRequest, createRequest } = useAdRequest();
   const [isCreating, setIsCreating] = useState(false);
   const [isCreateAdModalOpen, setIsCreateAdModalOpen] = useState(false);
   const { profile, isLoading: isLoadingProfile } = useAmbulanceProfile();
   const { ads, isLoading: isLoadingAds } = useAmbulanceAds();
 
   const isLoading = isLoadingProfile || isLoadingAds || isLoadingAdRequest;
-
-  const [isCreateAdModalOpen, setIsCreateAdModalOpen] = useState(false);
 
   const handleRequestPermission = async (adData: {
     title: string;
@@ -49,7 +47,7 @@ export const AmbulanceAdsPage = () => {
     setIsCreating(true);
     try {
       await createRequest(adData);
-      await refetch();
+      setIsCreateAdModalOpen(false);
     } catch (error) {
       console.error("Error creating request:", error);
       throw error;
@@ -150,7 +148,7 @@ export const AmbulanceAdsPage = () => {
                   <Send />
                 )
               }
-              disabled={hasActiveAd || pendingRequest || isCreating}
+              disabled={!!hasActiveAd || !!pendingRequest || isCreating}
               sx={{
                 color: "white",
                 fontWeight: 700,

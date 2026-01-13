@@ -1,9 +1,11 @@
 import {
   Assignment,
+  AttachMoney,
   Biotech,
   CalendarToday,
   Campaign,
   Dashboard,
+  Group,
   Inventory,
   LocalPharmacy,
   LocalShipping,
@@ -13,6 +15,8 @@ import {
   StarRate,
   Store,
   Timeline,
+  History,
+  Percent,
 } from "@mui/icons-material";
 
 export type UserRole =
@@ -33,13 +37,22 @@ export const ADMIN_MENU: MenuItem[] = [
   { icon: <Dashboard />, label: "Dashboard", path: "/admin/dashboard" },
   { icon: <Assignment />, label: "Solicitudes", path: "/admin/requests" },
   { icon: <Campaign />, label: "Solicitudes de Anuncios", path: "/admin/ad-requests" },
-  { icon: <MedicalServices />, label: "Servicios", path: "/admin/services" },
+  { icon: <MedicalServices />, label: "Servicios Aprobados", path: "/admin/services" },
+  { icon: <History />, label: "Historial", path: "/admin/history" },
+  { icon: <AttachMoney />, label: "Pagos", path: "/admin/payments" },
+  { icon: <Percent />, label: "Comisiones", path: "/admin/commissions" },
+  { icon: <Group />, label: "Usuarios", path: "/admin/users" },
   { icon: <Timeline />, label: "Actividad", path: "/admin/activity" },
   { icon: <Settings />, label: "Configuración", path: "/admin/settings" },
 ];
 
 // --- 2. MENÚ DOCTOR (Tabs) ---
 export const DOCTOR_MENU: MenuItem[] = [
+  {
+    icon: <Dashboard />,
+    label: "Dashboard",
+    path: "/doctor/dashboard?tab=dashboard",
+  },
   {
     icon: <Person />,
     label: "Mi Perfil",
@@ -57,18 +70,38 @@ export const DOCTOR_MENU: MenuItem[] = [
     path: "/doctor/dashboard?tab=appointments",
   },
   {
+    icon: <Group />,
+    label: "Pacientes",
+    path: "/doctor/dashboard?tab=patients",
+  },
+  {
+    icon: <AttachMoney />,
+    label: "Pagos e Ingresos",
+    path: "/doctor/dashboard?tab=payments",
+  },
+  {
+    icon: <Timeline />,
+    label: "Reportes",
+    path: "/doctor/dashboard?tab=reports",
+  },
+  {
     icon: <Settings />,
     label: "Configuración",
     path: "/doctor/dashboard?tab=settings",
   },
 ];
 
-// --- 3. MENÚ AMBULANCIA (Sub-rutas) ---
+// --- 3. MENÚ AMBULANCIA (Tabs) ---
 export const AMBULANCE_MENU: MenuItem[] = [
+  {
+    icon: <Dashboard />,
+    label: "Dashboard",
+    path: "/provider/ambulance/dashboard?tab=dashboard",
+  },
   {
     icon: <LocalShipping />,
     label: "Mi Perfil",
-    path: "/provider/ambulance/dashboard",
+    path: "/provider/ambulance/dashboard?tab=profile",
   },
   {
     icon: <Campaign />,
@@ -87,12 +120,17 @@ export const AMBULANCE_MENU: MenuItem[] = [
   },
 ];
 
-// --- 4. MENÚ FARMACIA (Sub-rutas) ---
+// --- 4. MENÚ FARMACIA (Tabs) ---
 export const PHARMACY_MENU: MenuItem[] = [
+  {
+    icon: <Dashboard />,
+    label: "Dashboard",
+    path: "/provider/pharmacy/dashboard?tab=dashboard",
+  },
   {
     icon: <LocalPharmacy />,
     label: "Mi Farmacia",
-    path: "/provider/pharmacy/dashboard",
+    path: "/provider/pharmacy/dashboard?tab=profile",
   },
   {
     icon: <Store />,
@@ -119,6 +157,11 @@ export const PHARMACY_MENU: MenuItem[] = [
 // --- 5. MENÚ LABORATORIO ---
 export const LAB_MENU: MenuItem[] = [
   {
+    icon: <Dashboard />,
+    label: "Dashboard",
+    path: "/laboratory/dashboard?tab=dashboard",
+  },
+  {
     icon: <Biotech />,
     label: "Mi Laboratorio",
     path: "/laboratory/dashboard?tab=profile",
@@ -134,11 +177,6 @@ export const LAB_MENU: MenuItem[] = [
     path: "/laboratory/dashboard?tab=reviews",
   },
   {
-    icon: <CalendarToday />,
-    label: "Citas",
-    path: "/laboratory/dashboard?tab=appointments",
-  },
-  {
     icon: <Settings />,
     label: "Configuración",
     path: "/laboratory/dashboard?tab=settings",
@@ -147,6 +185,11 @@ export const LAB_MENU: MenuItem[] = [
 
 // --- 6. MENÚ INSUMOS MÉDICOS ---
 export const SUPPLIES_MENU: MenuItem[] = [
+  {
+    icon: <Dashboard />,
+    label: "Dashboard",
+    path: "/supply/dashboard?tab=dashboard",
+  },
   {
     icon: <Person />,
     label: "Mi Perfil",

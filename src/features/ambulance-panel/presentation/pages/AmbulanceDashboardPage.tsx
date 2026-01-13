@@ -1,13 +1,18 @@
+import { useSearchParams } from "react-router-dom";
 import {
   AccessTime,
   ContactPhone,
   Edit,
   Star,
   Visibility,
+  Phone,
+  WhatsApp,
 } from "@mui/icons-material";
 import {
   Box,
   Button,
+  Chip,
+  Divider,
   Paper,
   Skeleton,
   Stack,
@@ -21,6 +26,7 @@ import type { AmbulanceProfile } from "../../domain/ambulance-profile.entity";
 import { EditProfileModal } from "../components/EditProfileModal";
 import { KPICard } from "../components/KPICard";
 import { useAmbulanceProfile } from "../hooks/useAmbulanceProfile";
+import { DashboardContent } from "../components/DashboardContent";
 
 const AMBULANCE_USER = {
   name: "Ambulancias Vida",
@@ -29,12 +35,16 @@ const AMBULANCE_USER = {
   isActive: true,
 };
 
+type TabType = "dashboard" | "profile";
+
 export const AmbulanceDashboardPage = () => {
+  const [searchParams] = useSearchParams();
   const theme = useTheme();
   const { profile: fetchedProfile, isLoading } = useAmbulanceProfile();
   const [profile, setProfile] = useState<AmbulanceProfile | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
+  const currentTab = (searchParams.get("tab") || "dashboard") as TabType;
   const ambulanceCardColor = "#06b6d4";
 
   useEffect(() => {
@@ -69,43 +79,70 @@ export const AmbulanceDashboardPage = () => {
   return (
     <DashboardLayout role="PROVIDER" userProfile={AMBULANCE_USER}>
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
-        {/* SECTION 1: KPIS */}
-        <Grid2 container spacing={3} mb={4}>
-          <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
-            <KPICard
-              title="Visitas al perfil"
-              value={profile.stats.profileViews}
-              icon={<Visibility sx={{ color: theme.palette.primary.main }} />}
-              iconColor={theme.palette.primary.light + "20"}
-            />
+        {/* Cards de Estadísticas - Solo mostrar en la pestaña de dashboard */}
+        {currentTab === "dashboard" && (
+          <Grid2 container spacing={3} mb={4}>
+            <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+              <KPICard
+                title="Visitas al perfil"
+                value={profile.stats.profileViews}
+                icon={<Visibility sx={{ color: theme.palette.primary.main }} />}
+                iconColor={theme.palette.primary.light + "20"}
+              />
+            </Grid2>
+            <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+              <KPICard
+                title="Contactos"
+                value={profile.stats.contactClicks}
+                icon={<ContactPhone sx={{ color: theme.palette.info.main }} />}
+                iconColor={theme.palette.info.light + "20"}
+              />
+            </Grid2>
+            <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+              <KPICard
+                title="Reseñas"
+                value={profile.stats.totalReviews}
+                icon={<Star sx={{ color: theme.palette.warning.main }} />}
+                iconColor={theme.palette.warning.light + "20"}
+              />
+            </Grid2>
+            <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+              <KPICard
+                title="Rating"
+                value={profile.stats.averageRating}
+                icon={<Star sx={{ color: "#FFC107" }} />}
+                iconColor="#FFF8E1"
+              />
+            </Grid2>
           </Grid2>
-          <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
-            <KPICard
-              title="Contactos"
-              value={profile.stats.contactClicks}
-              icon={<ContactPhone sx={{ color: theme.palette.info.main }} />}
-              iconColor={theme.palette.info.light + "20"}
-            />
-          </Grid2>
-          <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
-            <KPICard
-              title="Reseñas"
-              value={profile.stats.totalReviews}
-              icon={<Star sx={{ color: theme.palette.warning.main }} />}
-              iconColor={theme.palette.warning.light + "20"}
-            />
-          </Grid2>
-          <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
-            <KPICard
-              title="Rating"
-              value={profile.stats.averageRating}
-              icon={<Star sx={{ color: "#FFC107" }} />}
-              iconColor="#FFF8E1"
-            />
-          </Grid2>
-        </Grid2>
+        )}
 
-        {/* SECTION 2: MAIN CONTENT */}
+        {/* Contenido según la pestaña activa */}
+        <div className={currentTab === "dashboard" ? "" : "mt-6"}>
+          {currentTab === "dashboard" && (
+            <Box>
+              <Box mb={3}>
+                <Typography variant="h4" fontWeight={700} mb={1}>
+                  Dashboard
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Resumen de tus estadísticas y métricas principales
+                </Typography>
+              </Box>
+              <DashboardContent profile={profile} />
+            </Box>
+          )}
+          {currentTab === "profile" && (
+            <Box>
+              <Box mb={3}>
+                <Typography variant="h4" fontWeight={700} mb={1}>
+                  Mi Perfil
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Gestiona la información del servicio de ambulancia
+                </Typography>
+              </Box>
+              {/* SECTION 2: MAIN CONTENT */}
         <Grid2 container spacing={4}>
           {/* LEFT COLUMN: Profile Info */}
           <Grid2 size={{ xs: 12, lg: 8 }}>
@@ -196,11 +233,57 @@ export const AmbulanceDashboardPage = () => {
                     >
                       WhatsApp
                     </Typography>
-                    <Typography variant="body1" fontWeight={500} mt={0.5}>
-                      {profile.whatsappContact}
-                    </Typography>
+                    <Box display="flex" alignItems="center" gap={1} mt={0.5}>
+                      <WhatsApp sx={{ fontSize: 18, color: "success.main" }} />
+                      <Typography variant="body1" fontWeight={500}>
+                        {profile.whatsappContact}
+                      </Typography>
+                    </Box>
                   </Grid2>
                 </Grid2>
+
+                {/* Contacto Directo */}
+                <Divider sx={{ my: 2 }} />
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    fontWeight={600}
+                    mb={2}
+                    display="block"
+                  >
+                    Contacto Directo
+                  </Typography>
+                  <Stack direction="row" spacing={2} flexWrap="wrap">
+                    <Button
+                      variant="outlined"
+                      startIcon={<Phone />}
+                      href={`tel:${profile.emergencyPhone}`}
+                      sx={{
+                        borderRadius: 2,
+                        textTransform: "none",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Llamar: {profile.emergencyPhone}
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      startIcon={<WhatsApp />}
+                      href={`https://wa.me/${profile.whatsappContact.replace(/[^0-9]/g, "")}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      color="success"
+                      sx={{
+                        borderRadius: 2,
+                        textTransform: "none",
+                        fontWeight: 600,
+                      }}
+                    >
+                      WhatsApp: {profile.whatsappContact}
+                    </Button>
+                  </Stack>
+                </Box>
 
                 {/* Tiempo de llegada + Dirección */}
                 <Grid2 container spacing={3}>
@@ -246,6 +329,91 @@ export const AmbulanceDashboardPage = () => {
                   >
                     {profile.shortDescription}
                   </Typography>
+                </Box>
+
+                {/* Nuevos campos: Tipo, Zona de cobertura, Disponibilidad */}
+                <Divider sx={{ my: 2 }} />
+                
+                <Grid2 container spacing={3}>
+                  <Grid2 size={{ xs: 12, md: 6 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                    >
+                      Tipo de Ambulancia
+                    </Typography>
+                    <Typography variant="body1" fontWeight={500} mt={0.5}>
+                      {profile.ambulanceType === "basic"
+                        ? "Básica"
+                        : profile.ambulanceType === "advanced"
+                        ? "Avanzada"
+                        : profile.ambulanceType === "mobile-icu"
+                        ? "UCI Móvil"
+                        : "No especificado"}
+                    </Typography>
+                  </Grid2>
+                  <Grid2 size={{ xs: 12, md: 6 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                    >
+                      Disponibilidad
+                    </Typography>
+                    <Typography variant="body1" fontWeight={500} mt={0.5}>
+                      {profile.availability === "24/7"
+                        ? "24/7 (Todo el día)"
+                        : profile.availability === "scheduled" && profile.operatingHours
+                        ? `${profile.operatingHours.startTime} - ${profile.operatingHours.endTime}`
+                        : "No especificado"}
+                    </Typography>
+                  </Grid2>
+                </Grid2>
+
+                {profile.coverageZone && (
+                  <Box mt={2}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      fontWeight={600}
+                    >
+                      Zona de Cobertura
+                    </Typography>
+                    <Typography variant="body1" fontWeight={500} mt={0.5}>
+                      {profile.coverageZone}
+                    </Typography>
+                  </Box>
+                )}
+
+                {profile.interprovincialTransfers && (
+                  <Box mt={2}>
+                    <Chip
+                      label="Traslados Interprovinciales Disponibles"
+                      color="success"
+                      size="small"
+                    />
+                  </Box>
+                )}
+
+                {/* Estado del Servicio */}
+                <Divider sx={{ my: 2 }} />
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    fontWeight={600}
+                  >
+                    Estado del Servicio
+                  </Typography>
+                  <Box mt={1}>
+                    <Chip
+                      label={profile.isActive !== false ? "Activo" : "Inactivo"}
+                      color={profile.isActive !== false ? "success" : "error"}
+                      size="medium"
+                      sx={{ fontWeight: 600 }}
+                    />
+                  </Box>
                 </Box>
               </Stack>
             </Paper>
@@ -338,6 +506,10 @@ export const AmbulanceDashboardPage = () => {
             </Paper>
           </Grid2>
         </Grid2>
+
+            </Box>
+          )}
+        </div>
 
         <EditProfileModal
           open={isEditOpen}

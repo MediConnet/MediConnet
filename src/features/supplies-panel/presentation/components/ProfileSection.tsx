@@ -1,17 +1,24 @@
 import {
-  AccessTime, // Icono para horario
-  CloudUpload,
   Edit,
-  LocationOn,
   PhotoCamera,
+  Description,
+  Visibility,
+  VisibilityOff,
 } from "@mui/icons-material";
-import { Button } from "@mui/material";
+import {
+  Box,
+  Button,
+  Chip,
+  Divider,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import Grid2 from "@mui/material/Grid2";
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../../../../app/store/auth.store";
-import type {
-  SupplyDashboard,
-  WorkSchedule,
-} from "../../domain/SupplyDashboard.entity";
+import type { SupplyDashboard } from "../../domain/SupplyDashboard.entity";
 
 interface ProfileSectionProps {
   data: SupplyDashboard;
@@ -26,66 +33,18 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const authStore = useAuthStore();
   const { user } = authStore;
 
-  // Colores del tema Suministros (Naranja)
-  const themeColor = "#f97316"; // Naranja vibrante
-  const bgCardColor = "#fff7ed"; // Fondo naranja muy suave
-
-  const defaultSchedule: WorkSchedule[] = [
-    { day: "monday", enabled: true, startTime: "08:00", endTime: "18:00" },
-    { day: "tuesday", enabled: true, startTime: "08:00", endTime: "18:00" },
-    { day: "wednesday", enabled: true, startTime: "08:00", endTime: "18:00" },
-    { day: "thursday", enabled: true, startTime: "08:00", endTime: "18:00" },
-    { day: "friday", enabled: true, startTime: "08:00", endTime: "18:00" },
-  ];
-
   const [formData, setFormData] = useState({
     name: data?.supply?.name || "",
-    email: data?.supply?.email || "",
-    whatsapp: data?.supply?.whatsapp || "",
-    address: data?.supply?.address || "",
     description: data?.supply?.description || "",
-    // Eliminamos 'schedule' manual, lo calcularemos dinámicamente
-    workSchedule: data?.supply?.workSchedule || defaultSchedule,
+    isActive: data?.supply?.isActive !== false,
   });
-
-  // Función para generar el texto del horario (Ej: Lun-Vie 08:00-18:00)
-  const getDynamicScheduleText = (schedule: WorkSchedule[]) => {
-    const activeDays = schedule.filter((s) => s.enabled);
-
-    if (activeDays.length === 0) return "Cerrado temporalmente";
-
-    const dayMap: Record<string, string> = {
-      monday: "Lun",
-      tuesday: "Mar",
-      wednesday: "Mié",
-      thursday: "Jue",
-      friday: "Vie",
-      saturday: "Sáb",
-      sunday: "Dom",
-    };
-
-    // Ordenar días si fuera necesario (asumiendo que vienen en orden)
-    const startDay = dayMap[activeDays[0].day];
-    const endDay = dayMap[activeDays[activeDays.length - 1].day];
-    const startTime = activeDays[0].startTime;
-    const endTime = activeDays[0].endTime;
-
-    if (activeDays.length === 1) {
-      return `${startDay} ${startTime}-${endTime}`;
-    }
-
-    return `${startDay}-${endDay} ${startTime}-${endTime}`;
-  };
 
   useEffect(() => {
     if (data?.supply) {
       setFormData({
         name: data.supply.name,
-        email: data.supply.email,
-        whatsapp: data.supply.whatsapp,
-        address: data.supply.address,
         description: data.supply.description,
-        workSchedule: data.supply.workSchedule || defaultSchedule,
+        isActive: data.supply.isActive !== false,
       });
     }
   }, [data]);
@@ -110,11 +69,8 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     if (data?.supply) {
       setFormData({
         name: data.supply.name,
-        email: data.supply.email,
-        whatsapp: data.supply.whatsapp,
-        address: data.supply.address,
         description: data.supply.description,
-        workSchedule: data.supply.workSchedule || defaultSchedule,
+        isActive: data.supply.isActive !== false,
       });
     }
   };
@@ -122,15 +78,13 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const handleSave = async () => {
     if (!user?.id) return;
 
-    // Generamos el string del horario para guardarlo también
-    const scheduleString = getDynamicScheduleText(formData.workSchedule);
-
     const updatedData: SupplyDashboard = {
       ...data,
       supply: {
         ...data.supply,
-        ...formData,
-        schedule: scheduleString,
+        name: formData.name,
+        description: formData.description,
+        isActive: formData.isActive,
       },
     };
 
@@ -147,27 +101,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleScheduleChange = (
-    day: string,
-    field: "enabled" | "startTime" | "endTime",
-    value: boolean | string
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      workSchedule: prev.workSchedule.map((schedule: WorkSchedule) =>
-        schedule.day === day ? { ...schedule, [field]: value } : schedule
-      ),
-    }));
-  };
-
-  const dayLabels: Record<string, string> = {
-    monday: "Lunes",
-    tuesday: "Martes",
-    wednesday: "Miércoles",
-    thursday: "Jueves",
-    friday: "Viernes",
   };
 
   const handleImageClick = () => {
@@ -199,388 +132,294 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
   if (!data || !data.supply) {
     return (
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <p className="text-gray-500">Cargando información del perfil...</p>
-      </div>
+      <Box>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            borderRadius: 3,
+            border: "1px solid",
+            borderColor: "grey.200",
+          }}
+        >
+          <Typography color="text.secondary">
+            Cargando información del perfil...
+          </Typography>
+        </Paper>
+      </Box>
     );
   }
 
   const supply = data.supply;
-  // Calculamos el horario para mostrar
-  const displaySchedule = isEditing
-    ? getDynamicScheduleText(formData.workSchedule)
-    : supply.schedule ||
-      getDynamicScheduleText(supply.workSchedule || defaultSchedule);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* --- COLUMNA IZQUIERDA: Formulario --- */}
-      <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-xl font-bold text-gray-800">
-              Información del Perfil
-            </h3>
-            <p className="text-sm text-gray-500 mt-1">
-              Gestiona los datos de tu servicio
-            </p>
-          </div>
-
-          {/* BOTÓN EDITAR: Color Verde (Teal) */}
-          {!isEditing ? (
-            <button
-              onClick={handleEdit}
-              className="bg-teal-50 text-teal-600 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-teal-100 transition-colors"
-            >
-              <Edit className="text-sm" />
-              <span className="text-sm font-medium">Editar</span>
-            </button>
-          ) : (
-            <button
-              onClick={handleSave}
-              className="bg-teal-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-teal-700 transition-colors"
-            >
-              <span className="text-sm font-medium">Guardar cambios</span>
-            </button>
-          )}
-        </div>
-
-        {!isEditing ? (
-          // VISTA: Solo Lectura
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              {[
-                { label: "Nombre del negocio", val: supply.name },
-                { label: "Email", val: supply.email },
-                { label: "WhatsApp", val: supply.whatsapp },
-                { label: "Dirección", val: supply.address },
-                { label: "Horario", val: displaySchedule },
-              ].map((item, idx) => (
-                <div key={idx}>
-                  <label className="text-sm text-gray-600">{item.label}</label>
-                  <p className="text-gray-800 font-medium mt-1">{item.val}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-6">
-              <label className="text-sm text-gray-600">Descripción</label>
-              <p className="text-gray-800 mt-2 leading-relaxed">
-                {supply.description}
-              </p>
-            </div>
-
-            {supply.workSchedule && supply.workSchedule.length > 0 && (
-              <div className="mt-6">
-                <label className="text-sm text-gray-600 mb-3 block font-semibold">
-                  Horario Laboral
-                </label>
-                <div className="space-y-2">
-                  {supply.workSchedule.map((schedule: WorkSchedule) => (
-                    <div
-                      key={schedule.day}
-                      className="flex items-center justify-between py-2 border-b border-gray-100"
-                    >
-                      <span className="text-sm font-medium text-gray-700 w-24">
-                        {dayLabels[schedule.day] || schedule.day}
-                      </span>
-                      {schedule.enabled ? (
-                        <span className="text-sm text-gray-800">
-                          {schedule.startTime} - {schedule.endTime}
-                        </span>
-                      ) : (
-                        <span className="text-sm text-gray-400">Cerrado</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        ) : (
-          // VISTA: Edición (Formulario)
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSave();
+    <Box>
+      <Paper
+        elevation={0}
+        sx={{
+          p: 4,
+          borderRadius: 3,
+          border: "1px solid",
+          borderColor: "grey.200",
+        }}
+      >
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={4}
+        >
+          <Box>
+            <Typography variant="h5" fontWeight={700}>
+              Mi Perfil Comercial
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Información visible en el perfil de tu negocio
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<Edit />}
+            onClick={handleEdit}
+            sx={{
+              borderRadius: 2,
+              textTransform: "none",
+              fontWeight: 600,
             }}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              <div>
-                <label className="text-sm text-gray-600 mb-1 block">
-                  Nombre del negocio
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => handleChange("name", e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 mb-1 block">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 mb-1 block">
-                  WhatsApp
-                </label>
-                <input
-                  type="text"
-                  value={formData.whatsapp}
-                  onChange={(e) => handleChange("whatsapp", e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 mb-1 block">
-                  Dirección
-                </label>
-                <input
-                  type="text"
-                  value={formData.address}
-                  onChange={(e) => handleChange("address", e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  required
-                />
-              </div>
-              {/* Horario manual eliminado, se usa el dinámico */}
-            </div>
+            Editar Perfil
+          </Button>
+        </Box>
 
-            <div className="mt-6">
-              <label className="text-sm text-gray-600 mb-1 block">
-                Descripción
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => handleChange("description", e.target.value)}
-                rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
-                required
-              />
-            </div>
-
-            <div className="mt-6">
-              <label className="text-sm text-gray-600 mb-3 block font-semibold">
-                Horario Laboral
-              </label>
-              <div className="space-y-3">
-                {formData.workSchedule.map((schedule: WorkSchedule) => (
-                  <div
-                    key={schedule.day}
-                    className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg"
-                  >
-                    <div className="flex items-center gap-2 w-24">
-                      <input
-                        type="checkbox"
-                        checked={schedule.enabled}
-                        onChange={(e) =>
-                          handleScheduleChange(
-                            schedule.day,
-                            "enabled",
-                            e.target.checked
-                          )
-                        }
-                        className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
-                      />
-                      <span className="text-sm font-medium text-gray-700">
-                        {dayLabels[schedule.day] || schedule.day}
-                      </span>
-                    </div>
-                    {schedule.enabled && (
-                      <div className="flex items-center gap-2 flex-1">
-                        <input
-                          type="time"
-                          value={schedule.startTime}
-                          onChange={(e) =>
-                            handleScheduleChange(
-                              schedule.day,
-                              "startTime",
-                              e.target.value
-                            )
-                          }
-                          className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
-                        />
-                        <span className="text-gray-500">-</span>
-                        <input
-                          type="time"
-                          value={schedule.endTime}
-                          onChange={(e) =>
-                            handleScheduleChange(
-                              schedule.day,
-                              "endTime",
-                              e.target.value
-                            )
-                          }
-                          className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
-                        />
-                      </div>
-                    )}
-                    {!schedule.enabled && (
-                      <span className="text-sm text-gray-400">Cerrado</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-4 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        <Stack spacing={3}>
+          {/* Logo y Nombre */}
+          <Grid2 container spacing={4} alignItems="center">
+            <Grid2 size={{ xs: 12, md: 4 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  position: "relative",
+                }}
               >
-                Cancelar
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
-
-      {/* --- COLUMNA DERECHA: Vista Previa y Carga de Imagen --- */}
-      <div className="lg:col-span-1 space-y-6">
-        {/* SECCIÓN DE CARGA DE IMAGEN */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">
-            Imagen de Perfil
-          </h3>
-
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleImageChange}
-            accept="image/*"
-            className="hidden"
-          />
-
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-200">
-              {profileImage ? (
-                <img
-                  src={profileImage}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  style={{ display: "none" }}
+                  onChange={handleImageChange}
                 />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                  <PhotoCamera />
-                </div>
-              )}
-            </div>
-
-            <Button
-              variant="outlined"
-              startIcon={<CloudUpload />}
-              onClick={handleImageClick}
-              sx={{
-                textTransform: "none",
-                borderRadius: 2,
-                fontWeight: 600,
-                color: "text.primary",
-                borderColor: "grey.300",
-                "&:hover": {
-                  borderColor: themeColor,
-                  backgroundColor: "rgba(249, 115, 22, 0.04)",
-                },
-              }}
-            >
-              {profileImage ? "Cambiar foto" : "Subir foto"}
-            </Button>
-          </div>
-          <p className="text-xs text-gray-500 mt-3">
-            Se recomienda una imagen rectangular para el banner.
-          </p>
-        </div>
-
-        {/* --- CARD DE VISTA PREVIA (Estilo Suministros - Naranja) --- */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">
-            Vista previa en App
-          </h3>
-
-          <div className="flex justify-center">
-            {/* Contenedor del Card */}
-            <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] overflow-hidden w-full max-w-[300px] flex flex-col border border-gray-100">
-              {/* Imagen Superior */}
-              <div className="h-44 w-full bg-gray-200 relative">
                 {profileImage ? (
-                  <img
+                  <Box
+                    component="img"
                     src={profileImage}
-                    alt="Supply"
-                    className="w-full h-full object-cover"
+                    alt={supply.name}
+                    onClick={handleImageClick}
+                    sx={{
+                      maxWidth: "100%",
+                      maxHeight: 150,
+                      width: "auto",
+                      height: "auto",
+                      objectFit: "contain",
+                      cursor: "pointer",
+                      borderRadius: 2,
+                      border: "1px solid",
+                      borderColor: "grey.200",
+                      p: 1,
+                      bgcolor: "white",
+                      transition: "all 0.2s",
+                      "&:hover": {
+                        borderColor: "#f97316",
+                        boxShadow: "0 2px 8px rgba(249, 115, 22, 0.2)",
+                      },
+                    }}
                   />
                 ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 text-gray-400">
-                    <PhotoCamera style={{ fontSize: 40, opacity: 0.5 }} />
-                  </div>
-                )}
-              </div>
-
-              {/* Contenido (Fondo Naranja Suave) */}
-              <div
-                className="p-5 flex flex-col gap-3"
-                style={{ backgroundColor: bgCardColor }}
-              >
-                {/* Nombre */}
-                <h4 className="font-extrabold text-gray-900 text-lg leading-tight">
-                  {isEditing
-                    ? formData.name || "Nombre del Negocio"
-                    : supply.name}
-                </h4>
-
-                {/* Info: Dirección */}
-                <div className="flex items-start gap-2 text-gray-600">
-                  <LocationOn
-                    style={{ fontSize: 18 }}
-                    className="flex-shrink-0 mt-0.5"
-                  />
-                  <span className="text-xs leading-snug">
-                    {isEditing
-                      ? formData.address || "Dirección"
-                      : supply.address}
-                  </span>
-                </div>
-
-                {/* Info: Horario (DINÁMICO) */}
-                <div className="flex items-start gap-2 text-gray-600">
-                  <AccessTime
-                    style={{ fontSize: 18 }}
-                    className="flex-shrink-0 mt-0.5"
-                  />
-                  <span className="text-xs leading-snug">
-                    {/* Llamada a la función dinámica */}
-                    {displaySchedule}
-                  </span>
-                </div>
-
-                {/* Botón Ver Productos */}
-                <div className="mt-2 w-full">
-                  <div
-                    className="text-white text-sm font-bold px-4 py-2.5 rounded-lg shadow-sm cursor-default flex items-center justify-center w-full transition-transform hover:scale-[1.02]"
-                    style={{ backgroundColor: themeColor }}
+                  <Box
+                    onClick={handleImageClick}
+                    sx={{
+                      width: 150,
+                      height: 150,
+                      bgcolor: "grey.100",
+                      borderRadius: 2,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: "2px dashed",
+                      borderColor: "grey.300",
+                      transition: "all 0.2s",
+                      "&:hover": {
+                        borderColor: "#f97316",
+                        bgcolor: "grey.50",
+                      },
+                    }}
                   >
-                    <span>Ver productos</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* --- FIN DEL CARD --- */}
-          </div>
-          <p className="text-xs text-center text-gray-400 mt-4">
-            Así verán tu perfil los pacientes en la app
-          </p>
-        </div>
-      </div>
-    </div>
+                    <PhotoCamera sx={{ fontSize: 60, color: "grey.400" }} />
+                  </Box>
+                )}
+              </Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                textAlign="center"
+                display="block"
+                mt={1}
+                sx={{ cursor: "pointer" }}
+                onClick={handleImageClick}
+              >
+                Click para cambiar logo
+              </Typography>
+            </Grid2>
+            <Grid2 size={{ xs: 12, md: 8 }}>
+              <Stack spacing={1}>
+                <Typography variant="h4" fontWeight={700} color="#f97316">
+                  {isEditing ? formData.name : supply.name}
+                </Typography>
+                <Chip
+                  label={supply.isActive !== false ? "Publicado" : "No publicado"}
+                  color={supply.isActive !== false ? "success" : "error"}
+                  size="small"
+                  icon={
+                    supply.isActive !== false ? (
+                      <Visibility fontSize="small" />
+                    ) : (
+                      <VisibilityOff fontSize="small" />
+                    )
+                  }
+                  sx={{ width: "fit-content" }}
+                />
+              </Stack>
+            </Grid2>
+          </Grid2>
+
+          <Divider />
+
+          {/* Descripción */}
+          <Box display="flex" gap={2}>
+            <Description sx={{ color: "text.secondary", mt: 0.5 }} />
+            <Box flex={1}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                fontWeight={600}
+              >
+                Descripción
+              </Typography>
+              <Typography variant="body1" color="text.primary" mt={0.5}>
+                {isEditing
+                  ? formData.description
+                  : supply.description || "Sin descripción definida."}
+              </Typography>
+            </Box>
+          </Box>
+
+          <Divider />
+
+          {/* Estado del Perfil */}
+          <Box>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              fontWeight={600}
+              mb={1}
+              display="block"
+            >
+              Estado del Perfil
+            </Typography>
+            <Chip
+              label={supply.isActive !== false ? "Publicado" : "No publicado"}
+              color={supply.isActive !== false ? "success" : "error"}
+              size="medium"
+              sx={{ fontWeight: 600 }}
+            />
+          </Box>
+        </Stack>
+
+        {/* Modal de Edición */}
+        {isEditing && (
+          <Box
+            sx={{
+              mt: 4,
+              p: 3,
+              borderRadius: 2,
+              border: "1px solid",
+              borderColor: "grey.200",
+              bgcolor: "grey.50",
+            }}
+          >
+            <Typography variant="h6" fontWeight={600} mb={2}>
+              Editar Perfil Comercial
+            </Typography>
+            <Stack spacing={3}>
+              <TextField
+                fullWidth
+                label="Nombre del Negocio"
+                value={formData.name}
+                onChange={(e) => handleChange("name", e.target.value)}
+                required
+              />
+              <TextField
+                fullWidth
+                label="Descripción"
+                value={formData.description}
+                onChange={(e) => handleChange("description", e.target.value)}
+                multiline
+                rows={4}
+                required
+              />
+              <Box
+                sx={{
+                  p: 2,
+                  borderRadius: 2,
+                  border: "1px solid",
+                  borderColor: "grey.200",
+                  bgcolor: "white",
+                }}
+              >
+                <Typography variant="subtitle2" fontWeight={600} mb={1}>
+                  Estado del Perfil
+                </Typography>
+                <Box display="flex" alignItems="center" gap={2}>
+                  <input
+                    type="checkbox"
+                    checked={formData.isActive}
+                    onChange={(e) =>
+                      setFormData({ ...formData, isActive: e.target.checked })
+                    }
+                    className="w-5 h-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                  />
+                  <Typography variant="body2">
+                    {formData.isActive
+                      ? "Publicado (visible en la app)"
+                      : "No publicado (oculto en la app)"}
+                  </Typography>
+                </Box>
+              </Box>
+              <Box display="flex" gap={2} justifyContent="flex-end">
+                <Button onClick={handleCancel} sx={{ color: "text.secondary" }}>
+                  Cancelar
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={handleSave}
+                  sx={{
+                    bgcolor: "#f97316",
+                    color: "white",
+                    fontWeight: 600,
+                    "&:hover": {
+                      bgcolor: "#ea580c",
+                    },
+                  }}
+                >
+                  Guardar Cambios
+                </Button>
+              </Box>
+            </Stack>
+          </Box>
+        )}
+      </Paper>
+    </Box>
   );
 };

@@ -5,7 +5,7 @@ import {
   Visibility,
   WorkOutline,
 } from "@mui/icons-material";
-import { Button } from "@mui/material";
+import { Button, Chip } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../../../../app/store/auth.store";
 import type {
@@ -46,6 +46,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     experience: (data?.doctor?.experience || 0).toString(),
     description: data?.doctor?.description || "",
     workSchedule: data?.doctor?.workSchedule || defaultSchedule,
+    isActive: data?.doctor?.isActive !== false,
   });
 
   useEffect(() => {
@@ -60,6 +61,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
         experience: (data.doctor.experience || 0).toString(),
         description: data.doctor.description,
         workSchedule: data.doctor.workSchedule || defaultSchedule,
+        isActive: data.doctor.isActive !== false,
       });
     }
   }, [data]);
@@ -92,6 +94,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
         experience: (data.doctor.experience || 0).toString(),
         description: data.doctor.description,
         workSchedule: data.doctor.workSchedule || defaultSchedule,
+        isActive: data.doctor.isActive !== false,
       });
     }
   };
@@ -250,6 +253,19 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
               <p className="text-gray-800 mt-2 leading-relaxed">
                 {doctor.description}
               </p>
+            </div>
+
+            {/* Estado del Servicio */}
+            <div className="mt-6">
+              <label className="text-sm text-gray-600">Estado del Servicio</label>
+              <div className="mt-2">
+                <Chip
+                  label={doctor.isActive !== false ? "Activo" : "Inactivo"}
+                  color={doctor.isActive !== false ? "success" : "error"}
+                  size="medium"
+                  sx={{ fontWeight: 600 }}
+                />
+              </div>
             </div>
 
             {doctor.workSchedule && doctor.workSchedule.length > 0 && (
