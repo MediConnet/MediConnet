@@ -14,6 +14,28 @@ export const MOCK_PHARMACY_PROFILE: PharmacyProfile = {
   
   websiteUrl: "www.fybeca.com",
   
+  address: "Av. Amazonas N25 y Colón, Quito, Ecuador",
+  
+  status: "published",
+  
+  whatsapp: "+593 99 123 4567",
+  
+  location: {
+    latitude: -0.1807,
+    longitude: -78.4678,
+    address: "Av. Amazonas N25 y Colón, Quito, Ecuador",
+  },
+  
+  schedule: [
+    { day: "monday", isOpen: true, startTime: "08:00", endTime: "22:00" },
+    { day: "tuesday", isOpen: true, startTime: "08:00", endTime: "22:00" },
+    { day: "wednesday", isOpen: true, startTime: "08:00", endTime: "22:00" },
+    { day: "thursday", isOpen: true, startTime: "08:00", endTime: "22:00" },
+    { day: "friday", isOpen: true, startTime: "08:00", endTime: "22:00" },
+    { day: "saturday", isOpen: true, startTime: "09:00", endTime: "21:00" },
+    { day: "sunday", isOpen: true, startTime: "10:00", endTime: "20:00" },
+  ],
+  
   stats: {
     profileViews: 1240,
     contactClicks: 350,

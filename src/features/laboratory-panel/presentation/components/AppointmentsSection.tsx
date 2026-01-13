@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { AccessTime, Person, Close, Email, Phone, CalendarToday } from "@mui/icons-material";
+import { useState, useEffect } from "react";
+import { AccessTime, Person, Close, Email, Phone, CalendarToday, CheckCircle } from "@mui/icons-material";
 import { generateMockAppointments, type LaboratoryAppointment } from "../../infrastructure/appointments.mock";
 
 type ViewType = "month" | "week" | "day" | "list";
@@ -8,10 +8,41 @@ interface AppointmentDetailModalProps {
   open: boolean;
   onClose: () => void;
   appointment: LaboratoryAppointment | null;
+  onStatusChange?: (appointmentId: string, newStatus: string) => void;
 }
 
-const AppointmentDetailModal = ({ open, onClose, appointment }: AppointmentDetailModalProps) => {
+const AppointmentDetailModal = ({ open, onClose, appointment, onStatusChange }: AppointmentDetailModalProps) => {
+  const [currentStatus, setCurrentStatus] = useState<string>("pending");
+
+  useEffect(() => {
+    if (appointment) {
+      setCurrentStatus(appointment.status || "pending");
+    }
+  }, [appointment]);
+
   if (!appointment) return null;
+
+  const handleStatusChange = (newStatus: string) => {
+    setCurrentStatus(newStatus);
+    if (onStatusChange) {
+      onStatusChange(appointment.id, newStatus);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "bg-blue-100 text-blue-700 border-blue-300";
+      case "completed":
+        return "bg-teal-100 text-teal-700 border-teal-300";
+      case "finalizada":
+        return "bg-purple-100 text-purple-700 border-purple-300";
+      case "cancelled":
+        return "bg-red-100 text-red-700 border-red-300";
+      default:
+        return "bg-gray-100 text-gray-700 border-gray-300";
+    }
+  };
 
   return (
     <div
@@ -21,11 +52,11 @@ const AppointmentDetailModal = ({ open, onClose, appointment }: AppointmentDetai
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl w-full max-w-lg shadow-2xl animate-fade-in-up"
+        className="bg-white rounded-2xl w-full max-w-md shadow-2xl animate-fade-in-up flex flex-col max-h-[85vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-200">
+        {/* Header (Fijo) */}
+        <div className="flex justify-between items-center p-6 border-b border-gray-200 shrink-0">
           <div>
             <h2 className="text-xl font-bold text-gray-900">Detalle de la Cita</h2>
             <p className="text-sm text-gray-500 mt-1">Información del paciente y tipo de examen</p>
@@ -38,8 +69,8 @@ const AppointmentDetailModal = ({ open, onClose, appointment }: AppointmentDetai
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-6">
+        {/* Content (Scrollable) */}
+        <div className="p-6 space-y-6 overflow-y-auto flex-1 min-h-0">
           {/* Información del Paciente */}
           <div className="bg-teal-50 p-4 rounded-xl">
             <div className="flex items-center gap-4">
@@ -88,10 +119,93 @@ const AppointmentDetailModal = ({ open, onClose, appointment }: AppointmentDetai
               <p className="text-gray-600 text-sm leading-relaxed">{appointment.notes}</p>
             </div>
           )}
+
+          {/* Estado de la cita */}
+          <div className="border border-gray-200 rounded-xl p-4">
+            <h4 className="font-semibold text-gray-900 mb-3">
+              Estado de la cita
+            </h4>
+            <div className="space-y-2">
+              <div
+                className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                  currentStatus === "pending"
+                    ? getStatusColor("pending")
+                    : "bg-white border-gray-200 hover:bg-gray-50"
+                }`}
+                onClick={() => handleStatusChange("pending")}
+              >
+                <CalendarToday
+                  className={`${
+                    currentStatus === "pending" ? "text-blue-600" : "text-gray-400"
+                  }`}
+                />
+                <span
+                  className={`font-medium ${
+                    currentStatus === "pending" ? "text-blue-700" : "text-gray-600"
+                  }`}
+                >
+                  Programada
+                </span>
+                {currentStatus === "pending" && (
+                  <CheckCircle className="text-blue-600 ml-auto" />
+                )}
+              </div>
+
+              <div
+                className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                  currentStatus === "completed"
+                    ? getStatusColor("completed")
+                    : "bg-white border-gray-200 hover:bg-gray-50"
+                }`}
+                onClick={() => handleStatusChange("completed")}
+              >
+                <CheckCircle
+                  className={`${
+                    currentStatus === "completed" ? "text-teal-600" : "text-gray-400"
+                  }`}
+                />
+                <span
+                  className={`font-medium ${
+                    currentStatus === "completed" ? "text-teal-700" : "text-gray-600"
+                  }`}
+                >
+                  Completada
+                </span>
+                {currentStatus === "completed" && (
+                  <CheckCircle className="text-teal-600 ml-auto" />
+                )}
+              </div>
+
+              <div
+                className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                  currentStatus === "finalizada"
+                    ? getStatusColor("finalizada")
+                    : "bg-white border-gray-200 hover:bg-gray-50"
+                }`}
+                onClick={() => handleStatusChange("finalizada")}
+              >
+                <CheckCircle
+                  className={`${
+                    currentStatus === "finalizada" ? "text-purple-600" : "text-gray-400"
+                  }`}
+                />
+                <span
+                  className={`font-medium ${
+                    currentStatus === "finalizada" ? "text-purple-700" : "text-gray-600"
+                  }`}
+                >
+                  Consulta Finalizada
+                </span>
+                {currentStatus === "finalizada" && (
+                  <CheckCircle className="text-purple-600 ml-auto" />
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Footer */}
-        <div className="p-6 border-t border-gray-200 flex justify-end">
+        {/* Footer (Fijo) */}
+        <div className="p-6 border-t border-gray-200 flex justify-end shrink-0">
           <button
             onClick={onClose}
             className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium"
@@ -114,12 +228,30 @@ export const AppointmentsSection = () => {
   const [view, setView] = useState<ViewType>("month");
   const [selectedAppointment, setSelectedAppointment] = useState<LaboratoryAppointment | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  // Generar citas mock basadas en el mes actual
-  const mockAppointments = generateMockAppointments();
+  const [appointments, setAppointments] = useState<LaboratoryAppointment[]>([]);
 
-  // Obtener citas del día seleccionado
-  const appointmentsForDate = mockAppointments.filter(
+  // Cargar citas desde localStorage o generar mock
+  useEffect(() => {
+    const savedAppointments = localStorage.getItem("laboratory_appointments");
+    if (savedAppointments) {
+      setAppointments(JSON.parse(savedAppointments));
+    } else {
+      const mockAppointments = generateMockAppointments();
+      setAppointments(mockAppointments);
+      localStorage.setItem("laboratory_appointments", JSON.stringify(mockAppointments));
+    }
+  }, []);
+
+  // Generar citas mock basadas en el mes actual
+  const mockAppointments = appointments.length > 0 ? appointments : generateMockAppointments();
+
+  // Filtrar citas finalizadas del calendario (no se muestran)
+  const activeAppointments = mockAppointments.filter(
+    (apt) => apt.status !== "finalizada"
+  );
+
+  // Obtener citas del día seleccionado (solo activas, sin finalizadas)
+  const appointmentsForDate = activeAppointments.filter(
     (apt) => apt.date === selectedDate
   );
 
@@ -197,9 +329,9 @@ export const AppointmentsSection = () => {
     setSelectedDate(today.toISOString().split("T")[0]);
   };
 
-  // Obtener citas de un día específico
+  // Obtener citas de un día específico (solo activas, sin finalizadas)
   const getAppointmentsForDay = (dateStr: string) => {
-    return mockAppointments.filter((apt) => apt.date === dateStr);
+    return activeAppointments.filter((apt) => apt.date === dateStr);
   };
 
   // Verificar si un día es hoy
@@ -246,9 +378,9 @@ export const AppointmentsSection = () => {
     return days;
   };
 
-  // Obtener todas las citas ordenadas por fecha y hora
+  // Obtener todas las citas ordenadas por fecha y hora (solo activas, sin finalizadas)
   const getAllAppointmentsSorted = () => {
-    return [...mockAppointments].sort((a, b) => {
+    return [...activeAppointments].sort((a, b) => {
       const dateA = new Date(`${a.date}T${a.time}`);
       const dateB = new Date(`${b.date}T${b.time}`);
       return dateA.getTime() - dateB.getTime();
@@ -263,6 +395,28 @@ export const AppointmentsSection = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedAppointment(null);
+  };
+
+  const handleStatusChange = (appointmentId: string, newStatus: string) => {
+    const updatedAppointments = appointments.map((apt) =>
+      apt.id === appointmentId ? { ...apt, status: newStatus as any } : apt
+    );
+    setAppointments(updatedAppointments);
+    localStorage.setItem("laboratory_appointments", JSON.stringify(updatedAppointments));
+    
+    // Disparar evento personalizado para notificar cambios
+    window.dispatchEvent(new Event("appointments-updated"));
+    
+    // Si se marca como finalizada, cerrar el modal
+    if (newStatus === "finalizada") {
+      setIsModalOpen(false);
+      setSelectedAppointment(null);
+    } else {
+      // Actualizar el appointment seleccionado si es el mismo
+      if (selectedAppointment && selectedAppointment.id === appointmentId) {
+        setSelectedAppointment({ ...selectedAppointment, status: newStatus as any });
+      }
+    }
   };
 
   // Renderizar vista de Mes
@@ -699,6 +853,7 @@ export const AppointmentsSection = () => {
         open={isModalOpen}
         onClose={handleCloseModal}
         appointment={selectedAppointment}
+        onStatusChange={handleStatusChange}
       />
     </>
   );

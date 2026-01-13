@@ -1,4 +1,5 @@
 import { useSearchParams } from "react-router-dom";
+import { Box, Typography } from "@mui/material";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { useDoctorDashboard } from "../hooks/useDoctorDashboard";
 import { useAuthStore } from "../../../../app/store/auth.store";
@@ -7,10 +8,14 @@ import { AdsSection } from "../components/AdsSection";
 import { ReviewsSection } from "../components/ReviewsSection";
 import { SettingsSection } from "../components/SettingsSection";
 import { AppointmentsSection } from "../components/AppointmentsSection";
+import { PatientsSection } from "../components/PatientsSection";
+import { PaymentsSection } from "../components/PaymentsSection";
+import { ReportsSection } from "../components/ReportsSection";
 import { StatsCards } from "../components/StatsCards";
+import { DashboardContent } from "../components/DashboardContent";
 import { generateMockAppointments } from "../../infrastructure/appointments.mock";
 
-type TabType = "profile" | "ads" | "reviews" | "appointments" | "settings";
+type TabType = "dashboard" | "profile" | "ads" | "reviews" | "appointments" | "patients" | "payments" | "reports" | "settings";
 
 export const DoctorDashboardPage = () => {
   const [searchParams] = useSearchParams();
@@ -18,7 +23,7 @@ export const DoctorDashboardPage = () => {
   const authStore = useAuthStore();
   const { user } = authStore;
 
-  const currentTab = (searchParams.get("tab") || "profile") as TabType;
+  const currentTab = (searchParams.get("tab") || "dashboard") as TabType;
 
   // Obtener iniciales del usuario
   const getInitials = (name: string) => {
@@ -68,11 +73,29 @@ export const DoctorDashboardPage = () => {
 
   return (
     <DashboardLayout role="PROVIDER" userProfile={userProfile} appointments={appointments}>
-      {/* Cards de Estadísticas - No mostrar en la pestaña de citas */}
-      {currentTab !== "appointments" && <StatsCards data={data} />}
+      {/* Cards de Estadísticas - Solo mostrar en la pestaña de dashboard */}
+      {currentTab === "dashboard" && <StatsCards data={data} />}
 
       {/* Contenido según la pestaña activa */}
-      <div className={currentTab === "appointments" ? "" : "mt-6"}>
+      <div className={currentTab === "dashboard" || currentTab === "appointments" ? "" : "mt-6"}>
+        {currentTab === "dashboard" && (
+          <Box>
+            <Box mb={3}>
+              <Typography variant="h4" fontWeight={700} mb={1}>
+                Dashboard
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Resumen de tus estadísticas y métricas principales
+              </Typography>
+            </Box>
+            <DashboardContent
+              visits={data.visits}
+              contacts={data.contacts}
+              reviews={data.reviews}
+              rating={data.rating}
+            />
+          </Box>
+        )}
         {currentTab === "profile" && (
           <ProfileSection
             data={data}
@@ -90,6 +113,9 @@ export const DoctorDashboardPage = () => {
         {currentTab === "ads" && <AdsSection />}
         {currentTab === "reviews" && <ReviewsSection />}
         {currentTab === "appointments" && <AppointmentsSection />}
+        {currentTab === "patients" && <PatientsSection />}
+        {currentTab === "payments" && <PaymentsSection />}
+        {currentTab === "reports" && <ReportsSection />}
         {currentTab === "settings" && <SettingsSection />}
       </div>
     </DashboardLayout>

@@ -26,6 +26,7 @@ export interface LaboratoryAppointment {
   time: string; // HH:mm
   reason: string; // Tipo de examen
   notes?: string;
+  status?: "pending" | "completed" | "finalizada" | "cancelled";
 }
 
 // Mock data para citas - distribuidas en diferentes fechas del mes actual
@@ -51,6 +52,7 @@ export const generateMockAppointments = (): LaboratoryAppointment[] => {
       time: "10:30",
       reason: "Perfil lipídico",
       notes: "Ayuno de 12 horas",
+      status: "completed",
     },
     {
       id: "3",
@@ -60,6 +62,7 @@ export const generateMockAppointments = (): LaboratoryAppointment[] => {
       date: dates.day2,
       time: "09:00",
       reason: "Examen de orina completo",
+      status: "pending",
     },
     {
       id: "4",
@@ -70,6 +73,7 @@ export const generateMockAppointments = (): LaboratoryAppointment[] => {
       time: "11:00",
       reason: "Glicemia en ayunas",
       notes: "Ayuno de 8 horas",
+      status: "pending",
     },
     {
       id: "5",
@@ -79,6 +83,7 @@ export const generateMockAppointments = (): LaboratoryAppointment[] => {
       date: dates.day4,
       time: "14:00",
       reason: "Perfil tiroideo",
+      status: "completed",
     },
     {
       id: "6",
@@ -88,6 +93,7 @@ export const generateMockAppointments = (): LaboratoryAppointment[] => {
       date: dates.day5,
       time: "15:30",
       reason: "Hemograma y química sanguínea",
+      status: "cancelled",
     },
     {
       id: "7",
@@ -97,6 +103,7 @@ export const generateMockAppointments = (): LaboratoryAppointment[] => {
       date: dates.day6,
       time: "08:30",
       reason: "Examen general de rutina",
+      status: "pending",
     },
   ];
 };

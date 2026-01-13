@@ -19,6 +19,7 @@ export interface DoctorDashboard {
     price: number;
     description: string;
     experience?: number; 
-    workSchedule?: WorkSchedule[]; 
+    workSchedule?: WorkSchedule[];
+    isActive?: boolean; // Estado del servicio: Activo / Inactivo
   };
 }

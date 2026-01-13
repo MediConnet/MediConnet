@@ -35,6 +35,7 @@ import { RejectProviderRequestModal } from "../components/RejectProviderRequestM
 import { RequestStatusBadge } from "../components/RequestStatusBadge";
 import { useProviderRequests } from "../hooks/useProviderRequests";
 import { useRequestFiltering } from "../hooks/useRequestFiltering";
+import { useQueryClient } from "@tanstack/react-query";
 
 const CURRENT_ADMIN = {
   name: "Admin General",
@@ -44,6 +45,7 @@ const CURRENT_ADMIN = {
 
 export const RequestsPage = () => {
   const { data: initialData, isLoading } = useProviderRequests();
+  const queryClient = useQueryClient();
 
   const {
     requests,
@@ -53,7 +55,7 @@ export const RequestsPage = () => {
     setDateFilter,
     approveRequest,
     rejectRequest,
-  } = useRequestFiltering(initialData);
+  } = useRequestFiltering(initialData, "PENDING"); // Filtrar solo PENDING por defecto
 
   const [selectedRequest, setSelectedRequest] =
     useState<ProviderRequest | null>(null);
@@ -72,8 +74,10 @@ export const RequestsPage = () => {
     setSelectedRequest(null);
   };
 
-  const onApprove = (id: string) => {
-    approveRequest(id);
+  const onApprove = async (id: string) => {
+    await approveRequest(id);
+    // Invalidar la query para refrescar los datos
+    queryClient.invalidateQueries({ queryKey: ['provider-requests-list'] });
     handleCloseModal();
   };
 
@@ -86,8 +90,10 @@ export const RequestsPage = () => {
     }
   };
 
-  const handleReject = (id: string, reason: string) => {
-    rejectRequest(id, reason);
+  const handleReject = async (id: string, reason: string) => {
+    await rejectRequest(id, reason);
+    // Invalidar la query para refrescar los datos
+    queryClient.invalidateQueries({ queryKey: ['provider-requests-list'] });
     setIsRejectModalOpen(false);
     setRequestToReject(null);
     // Si el modal de detalles está abierto, cerrarlo

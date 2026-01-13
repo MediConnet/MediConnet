@@ -10,6 +10,13 @@ export const MOCK_AD_REQUESTS: AdRequest[] = [
     submissionDate: "2024-01-15",
     status: "PENDING",
     hasActiveAd: false,
+    adContent: {
+      title: "Consulta Médica Especializada - Descuento del 20%",
+      description: "Aprovecha nuestro descuento especial del 20% en consultas médicas durante todo el mes. Atención de calidad con especialistas certificados. Agenda tu cita ahora.",
+      imageUrl: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=800&auto=format&fit=crop",
+      startDate: "2024-01-20",
+      endDate: "2024-02-20",
+    },
   },
   {
     id: "ad-2",
@@ -21,6 +28,13 @@ export const MOCK_AD_REQUESTS: AdRequest[] = [
     status: "APPROVED",
     approvedAt: "2024-01-17",
     hasActiveAd: true,
+    adContent: {
+      title: "Exámenes de Laboratorio con Resultados Rápidos",
+      description: "Realiza tus exámenes de laboratorio con nosotros. Resultados en 24 horas. Equipos de última generación y personal altamente calificado.",
+      imageUrl: "https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=800&auto=format&fit=crop",
+      startDate: "2024-01-18",
+      endDate: "2024-03-18",
+    },
   },
   {
     id: "ad-3",
@@ -33,6 +47,30 @@ export const MOCK_AD_REQUESTS: AdRequest[] = [
     rejectedAt: "2024-01-15",
     rejectionReason: "El anuncio no cumple con las políticas de contenido.",
     hasActiveAd: false,
+    adContent: {
+      title: "Promoción Especial en Medicamentos",
+      description: "Descuentos especiales en medicamentos de marca y genéricos. Atención 24 horas.",
+      imageUrl: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=800&auto=format&fit=crop",
+      startDate: "2024-01-15",
+      endDate: "2024-02-15",
+    },
+  },
+  {
+    id: "ad-4",
+    providerId: "amb-1",
+    providerName: "Ambulancias Rápidas",
+    providerEmail: "ambulancias@example.com",
+    serviceType: "ambulance",
+    submissionDate: new Date().toISOString().split("T")[0],
+    status: "PENDING",
+    hasActiveAd: false,
+    adContent: {
+      title: "Servicio de Ambulancia 24/7 - Respuesta Inmediata",
+      description: "Servicio de ambulancia disponible las 24 horas del día. Unidades equipadas con tecnología de última generación. Llegamos en menos de 15 minutos.",
+      imageUrl: "https://images.unsplash.com/photo-1584555613497-9ecf9dd06f68?w=800&auto=format&fit=crop",
+      startDate: new Date().toISOString().split("T")[0],
+      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    },
   },
 ];
 

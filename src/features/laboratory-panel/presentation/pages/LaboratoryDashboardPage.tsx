@@ -1,16 +1,19 @@
 import { useSearchParams } from "react-router-dom";
+import { Box, Stack, Typography } from "@mui/material";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { useLaboratoryDashboard } from "../hooks/useLaboratoryDashboard";
 import { useAuthStore } from "../../../../app/store/auth.store";
-import { ProfileSection } from "../components/ProfileSection";
+import { LaboratoryProfileSection } from "../components/LaboratoryProfileSection";
+import { ServicesSection } from "../components/ServicesSection";
+import { LaboratoryScheduleSection } from "../components/LaboratoryScheduleSection";
+import { LaboratoryContactLocationSection } from "../components/LaboratoryContactLocationSection";
 import { AdsSection } from "../components/AdsSection";
 import { ReviewsSection } from "../components/ReviewsSection";
 import { SettingsSection } from "../components/SettingsSection";
-import { AppointmentsSection } from "../components/AppointmentsSection";
 import { StatsCards } from "../components/StatsCards";
-import { generateMockAppointments } from "../../infrastructure/appointments.mock";
+import { DashboardContent } from "../components/DashboardContent";
 
-type TabType = "profile" | "ads" | "reviews" | "appointments" | "settings";
+type TabType = "dashboard" | "profile" | "ads" | "reviews" | "settings";
 
 export const LaboratoryDashboardPage = () => {
   const [searchParams] = useSearchParams();
@@ -18,7 +21,7 @@ export const LaboratoryDashboardPage = () => {
   const authStore = useAuthStore();
   const { user } = authStore;
 
-  const currentTab = (searchParams.get("tab") || "profile") as TabType;
+  const currentTab = (searchParams.get("tab") || "dashboard") as TabType;
 
   // Obtener iniciales del usuario
   const getInitials = (name: string) => {
@@ -37,18 +40,9 @@ export const LaboratoryDashboardPage = () => {
     isActive: true,
   };
 
-  // Obtener citas para las notificaciones
-  const appointments = generateMockAppointments().map((apt) => ({
-    id: apt.id,
-    patientName: apt.patientName,
-    date: apt.date,
-    time: apt.time,
-    reason: apt.reason,
-  }));
-
   if (loading) {
     return (
-      <DashboardLayout role="PROVIDER" userProfile={userProfile} appointments={appointments}>
+      <DashboardLayout role="PROVIDER" userProfile={userProfile}>
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-gray-500">Cargando...</div>
         </div>
@@ -58,7 +52,7 @@ export const LaboratoryDashboardPage = () => {
 
   if (!data) {
     return (
-      <DashboardLayout role="PROVIDER" userProfile={userProfile} appointments={appointments}>
+      <DashboardLayout role="PROVIDER" userProfile={userProfile}>
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-red-500">Error al cargar los datos del dashboard</div>
         </div>
@@ -67,29 +61,86 @@ export const LaboratoryDashboardPage = () => {
   }
 
   return (
-    <DashboardLayout role="PROVIDER" userProfile={userProfile} appointments={appointments}>
-      {/* Cards de Estadísticas - No mostrar en la pestaña de citas */}
-      {currentTab !== "appointments" && <StatsCards data={data} />}
+    <DashboardLayout role="PROVIDER" userProfile={userProfile}>
+      {/* Cards de Estadísticas - Solo mostrar en la pestaña de dashboard */}
+      {currentTab === "dashboard" && <StatsCards data={data} />}
 
       {/* Contenido según la pestaña activa */}
-      <div className={currentTab === "appointments" ? "" : "mt-6"}>
+      <div className={currentTab === "dashboard" ? "" : "mt-6"}>
+        {currentTab === "dashboard" && (
+          <Box>
+            <Box mb={3}>
+              <Typography variant="h4" fontWeight={700} mb={1}>
+                Dashboard
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Resumen de tus estadísticas y métricas principales
+              </Typography>
+            </Box>
+            <DashboardContent
+              visits={data.visits}
+              contacts={data.contacts}
+              reviews={data.reviews}
+              rating={data.rating}
+            />
+          </Box>
+        )}
         {currentTab === "profile" && (
-          <ProfileSection
-            data={data}
-            onUpdate={(updatedData) => {
-              // Actualizar los datos directamente sin recargar
-              if (setData) {
-                setData(updatedData);
-              } else {
-                // Fallback: recargar si setData no está disponible
-                refetch();
-              }
-            }}
-          />
+          <Box>
+            <Box mb={3}>
+              <Typography variant="h4" fontWeight={700} mb={1}>
+                Mi Laboratorio
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Gestiona el perfil, servicios, horarios y contacto de tu laboratorio
+              </Typography>
+            </Box>
+            <Stack spacing={4}>
+              <LaboratoryProfileSection
+                data={data}
+                onUpdate={(updatedData) => {
+                  if (setData) {
+                    setData(updatedData);
+                  } else {
+                    refetch();
+                  }
+                }}
+              />
+              <ServicesSection
+                data={data}
+                onUpdate={(updatedData) => {
+                  if (setData) {
+                    setData(updatedData);
+                  } else {
+                    refetch();
+                  }
+                }}
+              />
+              <LaboratoryScheduleSection
+                data={data}
+                onUpdate={(updatedData) => {
+                  if (setData) {
+                    setData(updatedData);
+                  } else {
+                    refetch();
+                  }
+                }}
+              />
+              <LaboratoryContactLocationSection
+                data={data}
+                onUpdate={(updatedData) => {
+                  if (setData) {
+                    setData(updatedData);
+                  } else {
+                    refetch();
+                  }
+                }}
+              />
+            </Stack>
+          </Box>
         )}
         {currentTab === "ads" && <AdsSection />}
         {currentTab === "reviews" && <ReviewsSection />}
-        {currentTab === "appointments" && <AppointmentsSection />}
         {currentTab === "settings" && <SettingsSection />}
       </div>
     </DashboardLayout>

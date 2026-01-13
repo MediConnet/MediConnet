@@ -5,7 +5,10 @@ import {
   CloudUpload,
   Description,
   Language,
+  LocationOn,
   Save,
+  Visibility,
+  VisibilityOff,
 } from "@mui/icons-material";
 import {
   Box,
@@ -14,9 +17,15 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
+  FormControlLabel,
   IconButton,
   InputAdornment,
+  InputLabel,
+  MenuItem,
+  Select,
   Stack,
+  Switch,
   TextField,
   Typography,
   alpha,
@@ -42,13 +51,16 @@ export const EditPharmacyModal = ({
   const theme = useTheme();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Estado simplificado: Solo identidad de marca
+  // Estado: Identidad de marca + dirección + estado
   const [formData, setFormData] = useState<Partial<PharmacyProfile>>({
     commercialName: "",
     ruc: "",
     description: "",
     websiteUrl: "",
     logoUrl: "",
+    address: "",
+    status: "draft",
+    isActive: true,
   });
 
   const [hasNewImage, setHasNewImage] = useState(false);
@@ -61,6 +73,9 @@ export const EditPharmacyModal = ({
         description: initialData.description || "",
         websiteUrl: initialData.websiteUrl || "",
         logoUrl: initialData.logoUrl || "",
+        address: initialData.address || "",
+        status: initialData.status || "draft",
+        isActive: initialData.isActive !== false,
       });
       setHasNewImage(false);
     }
@@ -266,7 +281,86 @@ export const EditPharmacyModal = ({
                 }}
               />
             </Grid2>
+
+            <Grid2 size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                label="Dirección"
+                placeholder="Av. Amazonas N25 y Colón, Quito, Ecuador"
+                value={formData.address}
+                onChange={(e) => handleChange("address", e.target.value)}
+                multiline
+                rows={2}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start" sx={{ mt: 1.5 }}>
+                      <LocationOn color="action" fontSize="small" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid2>
+
+            <Grid2 size={{ xs: 12 }}>
+              <FormControl fullWidth>
+                <InputLabel>Estado del Perfil</InputLabel>
+                <Select
+                  value={formData.status || "draft"}
+                  label="Estado del Perfil"
+                  onChange={(e) => handleChange("status", e.target.value)}
+                  startAdornment={
+                    <InputAdornment position="start">
+                      {formData.status === "published" ? (
+                        <Visibility color="action" fontSize="small" />
+                      ) : (
+                        <VisibilityOff color="action" fontSize="small" />
+                      )}
+                    </InputAdornment>
+                  }
+                >
+                  <MenuItem value="draft">Borrador</MenuItem>
+                  <MenuItem value="published">Publicado</MenuItem>
+                  <MenuItem value="suspended">Suspendido</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid2>
           </Grid2>
+
+          {/* Estado del Servicio */}
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              border: "1px solid",
+              borderColor: "grey.200",
+              bgcolor: "grey.50",
+            }}
+          >
+            <Typography variant="subtitle2" fontWeight={600} mb={1}>
+              Estado del Servicio
+            </Typography>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.isActive !== false}
+                  onChange={(e) => {
+                    setFormData((prev) => ({ ...prev, isActive: e.target.checked }));
+                  }}
+                  color="primary"
+                />
+              }
+              label={
+                formData.isActive !== false
+                  ? "Servicio Activo (visible en la app)"
+                  : "Servicio Inactivo (oculto en la app)"
+              }
+            />
+            <Typography variant="caption" color="text.secondary" mt={1} display="block">
+              {formData.isActive !== false
+                ? "Tu servicio está visible y disponible para los usuarios"
+                : "Tu servicio está oculto y no aparecerá en la búsqueda"}
+            </Typography>
+          </Box>
         </Stack>
       </DialogContent>
 

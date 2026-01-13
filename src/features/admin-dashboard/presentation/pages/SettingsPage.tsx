@@ -88,6 +88,69 @@ export const SettingsPage = () => {
               onChange={() => toggleSetting("maintenanceMode")}
             />
           </Box>
+
+          {/* SECCIÓN 3: Anuncios */}
+          <Box mt={4}>
+            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
+              Gestión de Anuncios
+            </Typography>
+
+            <SettingsItem
+              title="Solo admin puede publicar anuncios"
+              description="Solo el administrador puede subir y publicar anuncios en la app y web. Los servicios deben solicitar y enviar el material del anuncio para que el admin lo publique."
+              checked={settings.onlyAdminCanPublishAds}
+              onChange={() => toggleSetting("onlyAdminCanPublishAds")}
+            />
+            <Divider sx={{ my: 1, opacity: 0.5 }} />
+            <SettingsItem
+              title="Requerir aprobación de anuncios"
+              description="Todos los anuncios deben ser aprobados por el administrador antes de ser publicados"
+              checked={settings.requireAdApproval}
+              onChange={() => toggleSetting("requireAdApproval")}
+            />
+            <Divider sx={{ my: 1, opacity: 0.5 }} />
+            <SettingsItem
+              title="Permitir auto-publicación de anuncios"
+              description="Permitir que los servicios publiquen sus anuncios directamente (desactivar si solo el admin puede publicar)"
+              checked={settings.allowAdSelfPublishing}
+              onChange={() => toggleSetting("allowAdSelfPublishing")}
+            />
+          </Box>
+
+          {/* SECCIÓN 4: Reglas Globales */}
+          <Box mt={4}>
+            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
+              Reglas Globales
+            </Typography>
+
+            <SettingsItem
+              title="Aprobación requerida para servicios"
+              description="Todos los servicios nuevos deben ser aprobados manualmente por el administrador"
+              checked={settings.serviceApprovalRequired}
+              onChange={() => toggleSetting("serviceApprovalRequired")}
+            />
+            <Divider sx={{ my: 1, opacity: 0.5 }} />
+            <SettingsItem
+              title="Aprobación requerida para anuncios"
+              description="Todos los anuncios deben ser aprobados antes de ser publicados"
+              checked={settings.adApprovalRequired}
+              onChange={() => toggleSetting("adApprovalRequired")}
+            />
+          </Box>
+
+          {/* SECCIÓN 5: Estados */}
+          <Box mt={4}>
+            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
+              Estados del Sistema
+            </Typography>
+
+            <SettingsItem
+              title="Permitir auto-activación de servicios"
+              description="Los servicios pueden activarse automáticamente después de ser aprobados"
+              checked={settings.allowServiceSelfActivation}
+              onChange={() => toggleSetting("allowServiceSelfActivation")}
+            />
+          </Box>
         </Paper>
       </Box>
     </DashboardLayout>

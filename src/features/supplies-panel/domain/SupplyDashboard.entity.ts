@@ -18,6 +18,7 @@ export interface SupplyDashboard {
     description: string;
     schedule: string;
     workSchedule?: WorkSchedule[]; // Horario laboral de lunes a viernes
+    isActive?: boolean; // Estado del servicio: Activo / Inactivo
   };
 }
 

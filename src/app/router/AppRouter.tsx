@@ -25,6 +25,10 @@ import { AdminDashboardPage } from "../../features/admin-dashboard/presentation/
 import { RequestsPage } from "../../features/admin-dashboard/presentation/pages/RequestsPage";
 import { AdRequestsPage } from "../../features/admin-dashboard/presentation/pages/AdRequestsPage";
 import { ServicesDashboardPage } from "../../features/admin-dashboard/presentation/pages/ServicesDashboardPage";
+import { PaymentsPage } from "../../features/admin-dashboard/presentation/pages/PaymentsPage";
+import { CommissionsPage } from "../../features/admin-dashboard/presentation/pages/CommissionsPage";
+import { UsersPage } from "../../features/admin-dashboard/presentation/pages/UsersPage";
+import { HistoryPage } from "../../features/admin-dashboard/presentation/pages/RejectedServicesPage";
 
 // Pages - Doctor
 import { DoctorDashboardPage } from "../../features/doctor-panel/presentation/pages/DoctorDashboardPage";
@@ -78,6 +82,10 @@ export const AppRouter = () => {
           <Route path="dashboard" element={<AdminDashboardPage />} />
           <Route path="requests" element={<RequestsPage />} />
           <Route path="ad-requests" element={<AdRequestsPage />} />
+          <Route path="history" element={<HistoryPage />} />
+          <Route path="payments" element={<PaymentsPage />} />
+          <Route path="commissions" element={<CommissionsPage />} />
+          <Route path="users" element={<UsersPage />} />
           <Route path="services" element={<ServicesDashboardPage />} />
           <Route path="activity" element={<ActivityPage />} />
           <Route path="settings" element={<SettingsPage />} />

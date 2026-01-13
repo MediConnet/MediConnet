@@ -10,7 +10,7 @@ import {
   IconButton,
   Alert,
 } from "@mui/material";
-import { Close, CloudUpload, Image as ImageIcon } from "@mui/icons-material";
+import { Close, CloudUpload } from "@mui/icons-material";
 import { useState, useRef } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -25,6 +25,7 @@ interface Props {
     startDate: string;
     endDate?: string;
   }) => Promise<void>;
+  submitButtonText?: string;
 }
 
 const validationSchema = Yup.object({
@@ -46,7 +47,7 @@ const validationSchema = Yup.object({
   ),
 });
 
-export const CreateAdModal = ({ open, onClose, onCreateAd }: Props) => {
+export const CreateAdModal = ({ open, onClose, onCreateAd, submitButtonText = "Publicar Anuncio" }: Props) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -333,7 +334,7 @@ export const CreateAdModal = ({ open, onClose, onCreateAd }: Props) => {
               },
             }}
           >
-            {isSubmitting ? "Publicando..." : "Publicar Anuncio"}
+            {isSubmitting ? "Enviando..." : submitButtonText}
           </Button>
         </DialogActions>
       </form>
