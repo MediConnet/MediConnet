@@ -6,410 +6,370 @@ import {
   Science, 
   LocalShipping, 
   Inventory,
-  ArrowForward,
-  People,
-  Bolt,
+  Download,
+  PersonAdd,
+  Search,
+  CalendarToday,
+  CheckCircle,
+  LocationOn,
+  AccessTime,
+  Star,
   Phone,
   Email,
-  LocationOn,
-  BarChart,
-  Message,
-  Campaign,
-  Star,
+  Facebook,
+  Twitter,
+  Instagram,
+  LinkedIn,
+  Favorite,
+  VerifiedUser,
+  Lock,
+  Description,
   Shield,
-  Smartphone,
 } from '@mui/icons-material';
 import { ROUTES } from '../../../../app/config/constants';
-
-type ServiceType = 'doctor' | 'pharmacy' | 'lab' | 'ambulance' | 'supplies';
-
-const serviceTypes: ServiceType[] = ['doctor', 'pharmacy', 'lab', 'ambulance', 'supplies'];
-
-const serviceLabels: Record<ServiceType, string> = {
-  doctor: 'Médico',
-  pharmacy: 'Farmacia',
-  lab: 'Laboratorio',
-  ambulance: 'Ambulancia',
-  supplies: 'Insumos Médicos',
-};
-
-const serviceDescriptions: Record<ServiceType, string> = {
-  doctor: 'Consultas médicas, especialistas y atención personalizada',
-  pharmacy: 'Venta de medicamentos y productos de salud',
-  lab: 'Análisis clínicos y estudios de laboratorio',
-  ambulance: 'Servicios de emergencia y traslados médicos',
-  supplies: 'Equipos médicos, suministros y material sanitario',
-};
-
-const serviceIcons: Record<ServiceType, React.ReactNode> = {
-  doctor: <LocalHospital sx={{ fontSize: 32 }} />,
-  pharmacy: <LocalPharmacy sx={{ fontSize: 32 }} />,
-  lab: <Science sx={{ fontSize: 32 }} />,
-  ambulance: <LocalShipping sx={{ fontSize: 32 }} />,
-  supplies: <Inventory sx={{ fontSize: 32 }} />,
-};
-
-const features = [
-  {
-    icon: <Smartphone sx={{ fontSize: 28 }} />,
-    title: 'Visibilidad en la App',
-    description: 'Tu servicio aparecerá en la aplicación móvil donde miles de usuarios buscan atención médica.',
-  },
-  {
-    icon: <BarChart sx={{ fontSize: 28 }} />,
-    title: 'Panel de Control',
-    description: 'Gestiona tu perfil, servicios, tarifas y disponibilidad desde un dashboard intuitivo.',
-  },
-  {
-    icon: <Message sx={{ fontSize: 28 }} />,
-    title: 'Contacto Directo',
-    description: 'Los pacientes pueden contactarte directamente por WhatsApp para agendar citas.',
-  },
-  {
-    icon: <Campaign sx={{ fontSize: 28 }} />,
-    title: 'Promociones',
-    description: 'Crea anuncios y ofertas especiales que aparecerán destacados en la app.',
-  },
-  {
-    icon: <LocationOn sx={{ fontSize: 28 }} />,
-    title: 'Geolocalización',
-    description: 'Los usuarios cercanos a tu ubicación te encontrarán fácilmente en el mapa.',
-  },
-  {
-    icon: <Star sx={{ fontSize: 28 }} />,
-    title: 'Reseñas',
-    description: 'Recibe valoraciones de tus pacientes y construye tu reputación profesional.',
-  },
-];
 
 export const HomePage = () => {
   const navigate = useNavigate();
 
-  const handleServiceTypeClick = (type: ServiceType) => {
-    navigate(`${ROUTES.REGISTER}?tipo=${type}`);
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   return (
-    <Box sx={{ width: '100%', minHeight: '100vh', backgroundColor: '#ffffff', position: 'relative', overflow: 'hidden' }}>
+    <Box sx={{ width: '100%', minHeight: '100vh', backgroundColor: '#ffffff' }}>
       {/* Hero Section */}
       <Box
         sx={{
           position: 'relative',
-          minHeight: { xs: '80vh', md: '100vh' },
+          minHeight: { xs: 'auto', md: '90vh' },
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-          py: { xs: 8, md: 12 },
+          py: { xs: 6, md: 12 },
           px: { xs: 3, md: 6 },
+          overflow: 'hidden',
         }}
       >
-        {/* Background Effects */}
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            width: { xs: '300px', md: '600px' },
-            height: { xs: '300px', md: '600px' },
-            background: 'rgba(6, 182, 212, 0.05)',
-            borderRadius: '50%',
-            filter: 'blur(80px)',
-            transform: 'translate(33%, -50%)',
-            zIndex: 0,
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            width: { xs: '250px', md: '400px' },
-            height: { xs: '250px', md: '400px' },
-            background: 'rgba(6, 182, 212, 0.05)',
-            borderRadius: '50%',
-            filter: 'blur(80px)',
-            transform: 'translate(-33%, 50%)',
-            zIndex: 0,
-          }}
-        />
-
-        {/* Floating Elements */}
-        <Box
-          sx={{
-            position: 'absolute',
-            top: { xs: '20%', md: '25%' },
-            left: { xs: '10%', md: '20%' },
-            width: { xs: 60, md: 80 },
-            height: { xs: 60, md: 80 },
-            background: 'rgba(6, 182, 212, 0.1)',
-            borderRadius: 2,
-            transform: 'rotate(12deg)',
-            display: { xs: 'none', lg: 'block' },
-            zIndex: 1,
-            animation: 'float 6s ease-in-out infinite',
-            '@keyframes float': {
-              '0%, 100%': { transform: 'translateY(0) rotate(12deg)' },
-              '50%': { transform: 'translateY(-20px) rotate(12deg)' },
-            },
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: { xs: '30%', md: '40%' },
-            right: { xs: '15%', md: '32%' },
-            width: { xs: 50, md: 64 },
-            height: { xs: 50, md: 64 },
-            background: 'rgba(6, 182, 212, 0.1)',
-            borderRadius: '50%',
-            display: { xs: 'none', lg: 'block' },
-            zIndex: 1,
-            animation: 'float 8s ease-in-out infinite',
-            animationDelay: '2s',
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            right: { xs: '10%', md: '20%' },
-            width: { xs: 40, md: 48 },
-            height: { xs: 40, md: 48 },
-            background: 'rgba(34, 197, 94, 0.1)',
-            borderRadius: 1.5,
-            transform: 'rotate(-12deg)',
-            display: { xs: 'none', lg: 'block' },
-            zIndex: 1,
-            animation: 'float 7s ease-in-out infinite',
-            animationDelay: '3s',
-          }}
-        />
-
         <Box
           sx={{
             maxWidth: '1200px',
             mx: 'auto',
-            textAlign: 'center',
-            position: 'relative',
-            zIndex: 2,
+            width: '100%',
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            alignItems: 'center',
+            gap: 4,
           }}
         >
-          {/* Badge */}
-          <Chip
-            icon={<Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#22c55e', animation: 'pulse 2s infinite' }} />}
-            label="Plataforma de servicios médicos profesionales"
-            sx={{
-              mb: 4,
-              backgroundColor: 'rgba(236, 253, 245, 0.8)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(6, 182, 212, 0.2)',
-              color: '#065f46',
-              fontWeight: 500,
-              fontSize: '0.875rem',
-              height: '36px',
-              px: 2,
-              animation: 'fadeIn 0.8s ease-in',
-              '@keyframes fadeIn': {
-                from: { opacity: 0, transform: 'translateY(-10px)' },
-                to: { opacity: 1, transform: 'translateY(0)' },
-              },
-            }}
-          />
+          {/* Left Side - Text Content */}
+          <Box sx={{ flex: 1, zIndex: 2 }}>
+            <Typography
+              variant="h1"
+              sx={{
+                fontSize: { xs: '2rem', sm: '2.5rem', md: '3.5rem', lg: '4rem' },
+                fontWeight: 700,
+                mb: 3,
+                color: '#1f2937',
+                lineHeight: 1.2,
+              }}
+            >
+              Una app que conecta personas con servicios de salud de forma{' '}
+              <Box component="span" sx={{ color: '#06b6d4' }}>
+                rápida, segura y sencilla
+              </Box>
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{
+                fontSize: { xs: '1rem', md: '1.125rem' },
+                color: '#6b7280',
+                mb: 4,
+                lineHeight: 1.6,
+              }}
+            >
+              Encuentra médicos independientes y servicios de salud cercanos, agenda citas o contacta directamente desde tu celular.
+            </Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: 2,
+                mb: 4,
+              }}
+            >
+              <Button
+                variant="contained"
+                startIcon={<Download />}
+                onClick={() => navigate(ROUTES.HOME)}
+                sx={{
+                  backgroundColor: '#06b6d4',
+                  color: 'white',
+                  px: 4,
+                  py: 1.5,
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  borderRadius: 2,
+                  '&:hover': {
+                    backgroundColor: '#0891b2',
+                  },
+                }}
+              >
+                Descargar la App
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<PersonAdd />}
+                onClick={() => navigate(ROUTES.REGISTER)}
+                sx={{
+                  borderColor: '#06b6d4',
+                  color: '#06b6d4',
+                  px: 4,
+                  py: 1.5,
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  borderRadius: 2,
+                  '&:hover': {
+                    borderColor: '#0891b2',
+                    backgroundColor: 'rgba(6, 182, 212, 0.04)',
+                  },
+                }}
+              >
+                Publicar mi servicio
+              </Button>
+            </Box>
+          </Box>
 
-          {/* Main Heading */}
-          <Typography
-            variant="h1"
+          {/* Right Side - Image */}
+          <Box
             sx={{
-              fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4.5rem', lg: '5.5rem' },
-              fontWeight: 700,
-              mb: 3,
-              color: '#1f2937',
-              lineHeight: 1.2,
-              animation: 'slideUp 0.8s ease-out',
-              '@keyframes slideUp': {
-                from: { opacity: 0, transform: 'translateY(30px)' },
-                to: { opacity: 1, transform: 'translateY(0)' },
-              },
+              flex: 1,
+              position: 'relative',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
             }}
           >
-            ¿Eres{' '}
             <Box
-              component="span"
+              component="img"
+              src="https://images.unsplash.com/photo-1666886573681-a8fbe983a3fd?w=1080&q=80"
+              alt="Healthcare professional"
               sx={{
-                background: 'linear-gradient(135deg, #06b6d4 0%, #10b981 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
+                width: '100%',
+                maxWidth: '500px',
+                height: 'auto',
+                borderRadius: 3,
+                objectFit: 'cover',
+              }}
+            />
+            {/* Overlay Card */}
+            <Card
+              sx={{
+                position: 'absolute',
+                top: { xs: 16, md: 24 },
+                right: { xs: 16, md: 24 },
+                backgroundColor: 'white',
+                borderRadius: 2,
+                p: 2,
+                boxShadow: 3,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
               }}
             >
-              médico, farmacia, laboratorio
-            </Box>
-            {' '}o{' '}
-            <Box
-              component="span"
-              sx={{
-                background: 'linear-gradient(135deg, #06b6d4 0%, #10b981 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              ambulancia
-            </Box>
-            ?
-          </Typography>
+              <CheckCircle sx={{ color: '#22c55e', fontSize: 20 }} />
+              <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#1f2937' }}>
+                Profesionales verificados
+              </Typography>
+            </Card>
+          </Box>
+        </Box>
+      </Box>
 
-          {/* Description */}
+      {/* How It Works Section */}
+      <Box
+        id="como-funciona"
+        sx={{
+          width: '100%',
+          py: { xs: 8, md: 12 },
+          px: { xs: 3, md: 6 },
+          backgroundColor: '#f9fafb',
+          scrollMarginTop: '80px',
+        }}
+      >
+        <Box sx={{ maxWidth: '1200px', mx: 'auto', textAlign: 'center' }}>
+          <Typography
+            variant="h2"
+            sx={{
+              fontSize: { xs: '2rem', md: '3rem' },
+              fontWeight: 700,
+              mb: 2,
+              color: '#1f2937',
+            }}
+          >
+            ¿Cómo funciona?
+          </Typography>
           <Typography
             variant="body1"
             sx={{
-              fontSize: { xs: '1.125rem', md: '1.5rem' },
+              fontSize: { xs: '1rem', md: '1.125rem' },
               color: '#6b7280',
               mb: 6,
-              maxWidth: '800px',
+              maxWidth: '700px',
               mx: 'auto',
-              lineHeight: 1.6,
-              animation: 'slideUp 0.8s ease-out 0.2s both',
             }}
           >
-            Publica tu servicio en <strong style={{ color: '#1f2937' }}>MEDICONES</strong> y conecta con miles de pacientes que necesitan atención médica
+            Conectamos personas con servicios de salud de manera simple y efectiva
           </Typography>
 
-          {/* CTA Buttons */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              gap: 2,
-              justifyContent: 'center',
-              mb: 8,
-              animation: 'slideUp 0.8s ease-out 0.4s both',
-            }}
-          >
-            <Button
-              variant="contained"
-              endIcon={<ArrowForward sx={{ transition: 'transform 0.3s', '&:hover': { transform: 'translateX(4px)' } }} />}
-              onClick={() => navigate(ROUTES.REGISTER)}
-              sx={{
-                backgroundColor: '#06b6d4',
-                color: 'white',
-                px: 5,
-                py: 1.5,
-                fontSize: '1rem',
-                fontWeight: 600,
-                textTransform: 'none',
-                borderRadius: 2,
-                '&:hover': {
-                  backgroundColor: '#0891b2',
-                  '& .MuiSvgIcon-root': {
-                    transform: 'translateX(4px)',
-                  },
-                },
-              }}
-            >
-              Solicitar registro de servicio
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => navigate(ROUTES.LOGIN)}
-              sx={{
-                borderColor: '#06b6d4',
-                color: '#06b6d4',
-                px: 5,
-                py: 1.5,
-                fontSize: '1rem',
-                fontWeight: 600,
-                textTransform: 'none',
-                borderRadius: 2,
-                '&:hover': {
-                  borderColor: '#0891b2',
-                  backgroundColor: 'rgba(6, 182, 212, 0.04)',
-                },
-              }}
-            >
-              Ya tengo cuenta
-            </Button>
-          </Box>
-
-          {/* Trust Indicators */}
-          <Grid
-            container
-            spacing={3}
-            sx={{
-              maxWidth: '900px',
-              mx: 'auto',
-              animation: 'fadeIn 0.8s ease-out 0.6s both',
-            }}
-          >
-            {[
-              {
-                icon: <Shield sx={{ fontSize: 24, color: '#06b6d4' }} />,
-                title: 'Verificación',
-                description: 'Servicios validados',
-                bgColor: 'rgba(6, 182, 212, 0.1)',
-              },
-              {
-                icon: <People sx={{ fontSize: 24, color: '#22c55e' }} />,
-                title: '+10,000',
-                description: 'Usuarios activos',
-                bgColor: 'rgba(34, 197, 94, 0.1)',
-              },
-              {
-                icon: <Bolt sx={{ fontSize: 24, color: '#f97316' }} />,
-                title: 'Rápido',
-                description: 'Registro en minutos',
-                bgColor: 'rgba(249, 115, 22, 0.1)',
-              },
-            ].map((benefit, index) => (
-              <Grid item xs={12} sm={4} key={index}>
-                <Card
+          <Grid container spacing={4}>
+            {/* Left Column - For Users */}
+            <Grid item xs={12} md={6}>
+              <Card
+                sx={{
+                  p: 4,
+                  height: '100%',
+                  backgroundColor: '#e0f2fe',
+                  borderRadius: 3,
+                  border: '2px solid #06b6d4',
+                }}
+              >
+                <Typography
+                  variant="h3"
                   sx={{
-                    p: 3,
-                    borderRadius: 3,
-                    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(0, 0, 0, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: 4,
-                    },
+                    fontSize: '1.5rem',
+                    fontWeight: 700,
+                    mb: 4,
+                    color: '#1f2937',
+                    textAlign: 'center',
                   }}
                 >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: 48,
-                      height: 48,
-                      borderRadius: 2,
-                      backgroundColor: benefit.bgColor,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {benefit.icon}
-                  </Box>
-                  <Box>
-                    <Typography sx={{ fontWeight: 600, color: '#1f2937', mb: 0.5 }}>
-                      {benefit.title}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#6b7280', fontSize: '0.875rem' }}>
-                      {benefit.description}
-                    </Typography>
-                  </Box>
-                </Card>
-              </Grid>
-            ))}
+                  Para usuarios
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  {[
+                    {
+                      icon: <Download sx={{ fontSize: 32, color: '#06b6d4' }} />,
+                      title: 'Descarga la app',
+                      description: 'Disponible en Google Play y App Store',
+                    },
+                    {
+                      icon: <Search sx={{ fontSize: 32, color: '#06b6d4' }} />,
+                      title: 'Busca un médico o servicio',
+                      description: 'Encuentra profesionales cerca de ti',
+                    },
+                    {
+                      icon: <CalendarToday sx={{ fontSize: 32, color: '#06b6d4' }} />,
+                      title: 'Agenda o contacta',
+                      description: 'Reserva citas médicas o contacta directamente',
+                    },
+                  ].map((step, index) => (
+                    <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                      <Box
+                        sx={{
+                          width: 56,
+                          height: 56,
+                          borderRadius: '50%',
+                          backgroundColor: 'white',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {step.icon}
+                      </Box>
+                      <Box>
+                        <Typography sx={{ fontWeight: 600, mb: 0.5, color: '#1f2937' }}>
+                          {step.title}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: '#6b7280' }}>
+                          {step.description}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              </Card>
+            </Grid>
+
+            {/* Right Column - For Professionals */}
+            <Grid item xs={12} md={6}>
+              <Card
+                sx={{
+                  p: 4,
+                  height: '100%',
+                  backgroundColor: '#dcfce7',
+                  borderRadius: 3,
+                  border: '2px solid #22c55e',
+                }}
+              >
+                <Typography
+                  variant="h3"
+                  sx={{
+                    fontSize: '1.5rem',
+                    fontWeight: 700,
+                    mb: 4,
+                    color: '#1f2937',
+                    textAlign: 'center',
+                  }}
+                >
+                  Para profesionales y servicios
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  {[
+                    {
+                      icon: <PersonAdd sx={{ fontSize: 32, color: '#22c55e' }} />,
+                      title: 'Regístrate en la web',
+                      description: 'Completa tu perfil profesional',
+                    },
+                    {
+                      icon: <Description sx={{ fontSize: 32, color: '#22c55e' }} />,
+                      title: 'Publica tu perfil',
+                      description: 'Configura horarios y servicios',
+                    },
+                    {
+                      icon: <CheckCircle sx={{ fontSize: 32, color: '#22c55e' }} />,
+                      title: 'Conecta con usuarios',
+                      description: 'Recibe solicitudes desde la app',
+                    },
+                  ].map((step, index) => (
+                    <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                      <Box
+                        sx={{
+                          width: 56,
+                          height: 56,
+                          borderRadius: '50%',
+                          backgroundColor: 'white',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {step.icon}
+                      </Box>
+                      <Box>
+                        <Typography sx={{ fontWeight: 600, mb: 0.5, color: '#1f2937' }}>
+                          {step.title}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: '#6b7280' }}>
+                          {step.description}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              </Card>
+            </Grid>
           </Grid>
         </Box>
       </Box>
 
-      {/* Service Types Section */}
+      {/* Services Section */}
       <Box
         id="servicios"
         sx={{
@@ -430,18 +390,7 @@ export const HomePage = () => {
               color: '#1f2937',
             }}
           >
-            Servicios que puedes{' '}
-            <Box
-              component="span"
-              sx={{
-                background: 'linear-gradient(135deg, #06b6d4 0%, #10b981 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              registrar
-            </Box>
+            Servicios disponibles
           </Typography>
           <Typography
             variant="body1"
@@ -453,145 +402,153 @@ export const HomePage = () => {
               mx: 'auto',
             }}
           >
-            Selecciona el tipo de servicio que ofreces y comienza a recibir pacientes
+            Explora las categorías de servicios de salud que conectamos
           </Typography>
 
-          <Grid
-            container
-            spacing={3}
-            sx={{
-              mb: 6,
-              '& > .MuiGrid-item': {
-                animation: 'slideUp 0.6s ease-out',
-                '@keyframes slideUp': {
-                  from: { opacity: 0, transform: 'translateY(30px)' },
-                  to: { opacity: 1, transform: 'translateY(0)' },
-                },
+          <Grid container spacing={3}>
+            {[
+              {
+                icon: <LocalHospital sx={{ fontSize: 40 }} />,
+                title: 'Médicos independientes',
+                description: 'Agenda citas y pagos desde la app',
+                color: '#06b6d4',
+                borderColor: '#06b6d4',
               },
-            }}
-          >
-            {serviceTypes.map((type, index) => (
-              <Grid
-                item
-                xs={12}
-                sm={6}
-                md={4}
-                lg={2.4}
-                key={type}
-                sx={{
-                  animationDelay: `${index * 0.1}s`,
-                }}
-              >
+              {
+                icon: <LocalPharmacy sx={{ fontSize: 40 }} />,
+                title: 'Farmacias',
+                description: 'Directorio informativo con contacto y ubicación',
+                color: '#22c55e',
+                borderColor: '#22c55e',
+              },
+              {
+                icon: <Science sx={{ fontSize: 40 }} />,
+                title: 'Laboratorios',
+                description: 'Servicios de exámenes y contacto directo',
+                color: '#a855f7',
+                borderColor: '#a855f7',
+              },
+              {
+                icon: <LocalShipping sx={{ fontSize: 40 }} />,
+                title: 'Ambulancias',
+                description: 'Servicios de emergencia y cobertura',
+                color: '#ef4444',
+                borderColor: '#ef4444',
+              },
+              {
+                icon: <Inventory sx={{ fontSize: 40 }} />,
+                title: 'Insumos médicos y tiendas',
+                description: 'Productos y servicios informativos',
+                color: '#f97316',
+                borderColor: '#f97316',
+              },
+            ].map((service, index) => (
+              <Grid item xs={12} sm={6} md={4} key={index}>
                 <Card
-                  onClick={() => handleServiceTypeClick(type)}
                   sx={{
                     p: 4,
                     textAlign: 'center',
                     borderRadius: 3,
                     height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    cursor: 'pointer',
-                    background: '#f8fffd',
-                    border: '2px solid transparent',
+                    border: `2px solid ${service.borderColor}`,
+                    backgroundColor: 'white',
                     transition: 'all 0.3s ease',
                     '&:hover': {
-                      transform: 'translateY(-8px) scale(1.02)',
+                      transform: 'translateY(-8px)',
                       boxShadow: 6,
-                      borderColor: '#06b6d4',
-                      '& .service-icon': {
-                        backgroundColor: '#06b6d4',
-                        color: 'white',
-                        transform: 'scale(1.1)',
-                      },
-                },
+                    },
                   }}
                 >
-                  <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <Box
-                      className="service-icon"
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 64,
-                        height: 64,
-                        borderRadius: 2,
-                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
-                        mx: 'auto',
-                        mb: 3,
-                        color: '#06b6d4',
-                        transition: 'all 0.3s ease',
-                      }}
-                    >
-                      {serviceIcons[type]}
-                    </Box>
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontWeight: 600,
-                        mb: 1,
-                        color: '#1f2937',
-                        fontSize: '1.125rem',
-                      }}
-                    >
-                      {serviceLabels[type]}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: '#6b7280',
-                        fontSize: '0.875rem',
-                        flex: 1,
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {serviceDescriptions[type]}
-                    </Typography>
-                  </CardContent>
+                  <Box
+                    sx={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: '50%',
+                      backgroundColor: `${service.color}15`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mx: 'auto',
+                      mb: 3,
+                      color: service.color,
+                    }}
+                  >
+                    {service.icon}
+                  </Box>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 600,
+                      mb: 1,
+                      color: '#1f2937',
+                      fontSize: '1.125rem',
+                    }}
+                  >
+                    {service.title}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                    {service.description}
+                  </Typography>
                 </Card>
               </Grid>
             ))}
           </Grid>
 
-          <Button
-            variant="contained"
-            endIcon={<ArrowForward sx={{ transition: 'transform 0.3s' }} />}
-            onClick={() => navigate(ROUTES.REGISTER)}
+          <Box
             sx={{
-              backgroundColor: '#06b6d4',
-              color: 'white',
-              px: 6,
-              py: 1.5,
-              fontSize: '1.125rem',
-              fontWeight: 600,
-              textTransform: 'none',
+              mt: 6,
+              p: 3,
+              backgroundColor: '#e0f2fe',
               borderRadius: 2,
-              '&:hover': {
-                backgroundColor: '#0891b2',
-                '& .MuiSvgIcon-root': {
-                  transform: 'translateX(4px)',
-                },
-              },
+              maxWidth: '800px',
+              mx: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
             }}
           >
-            Comenzar registro
-          </Button>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                backgroundColor: '#fbbf24',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <Typography sx={{ fontSize: '1.5rem' }}>💡</Typography>
+            </Box>
+            <Typography sx={{ color: '#1f2937', fontSize: '0.9375rem' }}>
+              Nota: Algunos servicios permiten agendar citas médicas desde la app
+            </Typography>
+          </Box>
         </Box>
       </Box>
 
-      {/* Features Section */}
+      {/* Featured Services Section */}
       <Box
-        id="beneficios"
+        id="destacados"
         sx={{
           width: '100%',
           py: { xs: 8, md: 12 },
           px: { xs: 3, md: 6 },
-          backgroundColor: 'rgba(236, 253, 245, 0.3)',
+          backgroundColor: '#f9fafb',
           scrollMarginTop: '80px',
         }}
       >
-        <Box sx={{ maxWidth: '1200px', mx: 'auto', textAlign: 'center' }}>
+        <Box sx={{ maxWidth: '1200px', mx: 'auto' }}>
+          <Chip
+            label="Destacados"
+            sx={{
+              backgroundColor: '#fbbf24',
+              color: 'white',
+              fontWeight: 600,
+              mb: 2,
+            }}
+          />
           <Typography
             variant="h2"
             sx={{
@@ -601,18 +558,322 @@ export const HomePage = () => {
               color: '#1f2937',
             }}
           >
-            Todo lo que necesitas para{' '}
-            <Box
-              component="span"
+            Servicios destacados de la semana
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{
+              fontSize: { xs: '1rem', md: '1.125rem' },
+              color: '#6b7280',
+              mb: 6,
+            }}
+          >
+            Servicios de salud verificados y recomendados
+          </Typography>
+
+          <Grid container spacing={3}>
+            {[
+            {
+              image: 'https://images.unsplash.com/photo-1767449441925-737379bc2c4d?w=1080&q=80',
+              title: 'Centro Médico Integral',
+              category: 'Clínica General',
+              location: 'Ciudad Central',
+              hours: '24/7',
+              rating: 4.8,
+            },
+            {
+              image: 'https://images.unsplash.com/photo-1765031092161-a9ebe556117e?w=1080&q=80',
+              title: 'Farmacia Salud Plus',
+              category: 'Farmacia',
+              location: 'Zona Norte',
+              hours: 'L-S: 8am-10pm',
+              rating: 4.9,
+            },
+            {
+              image: 'https://images.unsplash.com/photo-1614308456595-a59d48697ea8?w=1080&q=80',
+              title: 'Laboratorio Clínico Moderna',
+              category: 'Laboratorio',
+              location: 'Zona Este',
+              hours: 'L-V: 7am-5pm',
+              rating: 4.7,
+            },
+            ].map((service, index) => (
+              <Grid item xs={12} md={4} key={index}>
+                <Card
+                  sx={{
+                    borderRadius: 3,
+                    overflow: 'hidden',
+                    position: 'relative',
+                    height: '100%',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-8px)',
+                      boxShadow: 6,
+                    },
+                  }}
+                >
+                  <Chip
+                    label="Destacado"
+                    sx={{
+                      position: 'absolute',
+                      top: 16,
+                      right: 16,
+                      zIndex: 2,
+                      backgroundColor: '#fbbf24',
+                      color: 'white',
+                      fontWeight: 600,
+                    }}
+                  />
+                  <Box
+                    component="img"
+                    src={service.image}
+                    alt={service.title}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x250?text=Imagen+no+disponible';
+                    }}
+                    sx={{
+                      width: '100%',
+                      height: { xs: 200, md: 250 },
+                      objectFit: 'cover',
+                    }}
+                  />
+                  <CardContent sx={{ p: 3 }}>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 600,
+                        mb: 1,
+                        color: '#1f2937',
+                        fontSize: '1.125rem',
+                      }}
+                    >
+                      {service.title}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: '#06b6d4',
+                        mb: 2,
+                        fontSize: '0.875rem',
+                        fontWeight: 500,
+                      }}
+                    >
+                      {service.category}
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <LocationOn sx={{ fontSize: 18, color: '#6b7280' }} />
+                        <Typography variant="body2" sx={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                          {service.location}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <AccessTime sx={{ fontSize: 18, color: '#6b7280' }} />
+                        <Typography variant="body2" sx={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                          {service.hours}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Star sx={{ fontSize: 18, color: '#fbbf24' }} />
+                        <Typography variant="body2" sx={{ color: '#1f2937', fontSize: '0.875rem', fontWeight: 500 }}>
+                          {service.rating}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+
+          <Typography
+            variant="body2"
+            sx={{
+              mt: 4,
+              textAlign: 'center',
+              color: '#6b7280',
+              fontSize: '0.875rem',
+              fontStyle: 'italic',
+            }}
+          >
+            * Los servicios destacados aparecen de forma rotativa y están sujetos a disponibilidad
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* App Download Section */}
+      <Box
+        sx={{
+          width: '100%',
+          py: { xs: 8, md: 12 },
+          px: { xs: 3, md: 6 },
+          backgroundColor: '#1e3a8a',
+          color: 'white',
+        }}
+      >
+        <Box
+          sx={{
+            maxWidth: '1200px',
+            mx: 'auto',
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <Box sx={{ flex: 1 }}>
+            <Typography
+              variant="h2"
               sx={{
-                background: 'linear-gradient(135deg, #06b6d4 0%, #10b981 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
+                fontSize: { xs: '2rem', md: '3rem' },
+                fontWeight: 700,
+                mb: 2,
+                color: 'white',
               }}
             >
-              crecer
+              Toda la experiencia completa está en nuestra app móvil
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{
+                fontSize: { xs: '1rem', md: '1.125rem' },
+                color: 'rgba(255, 255, 255, 0.9)',
+                mb: 4,
+                lineHeight: 1.6,
+              }}
+            >
+              Descarga la app y accede a todos los servicios de salud en la palma de tu mano
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 4 }}>
+              {[
+                { icon: <CalendarToday />, title: 'Agenda citas médicas', subtitle: 'Reserva en tiempo real' },
+                { icon: <CheckCircle />, title: 'Elige forma de pago', subtitle: 'Online o presencial' },
+                { icon: <LocationOn />, title: 'Encuentra servicios cercanos', subtitle: 'Ubicación en tiempo real' },
+                { icon: <AccessTime />, title: 'Horarios actualizados', subtitle: 'Disponibilidad inmediata' },
+              ].map((feature, index) => (
+                <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                  <Box sx={{ color: '#06b6d4', mt: 0.5 }}>{feature.icon}</Box>
+                  <Box>
+                    <Typography sx={{ fontWeight: 600, mb: 0.5, color: 'white' }}>
+                      {feature.title}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                      {feature.subtitle}
+                    </Typography>
+                  </Box>
+                </Box>
+              ))}
             </Box>
+            <Box>
+              <Typography sx={{ mb: 2, color: 'white', fontWeight: 500 }}>
+                Descarga ahora:
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+                <Button
+                  variant="contained"
+                  sx={{
+                    backgroundColor: 'black',
+                    color: 'white',
+                    px: 3,
+                    py: 1.5,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    '&:hover': { backgroundColor: '#1f2937' },
+                  }}
+                >
+                  App Store
+                </Button>
+                <Button
+                  variant="contained"
+                  sx={{
+                    backgroundColor: 'white',
+                    color: 'black',
+                    px: 3,
+                    py: 1.5,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    '&:hover': { backgroundColor: '#f3f4f6' },
+                  }}
+                >
+                  Google Play
+                </Button>
+              </Box>
+            </Box>
+          </Box>
+          <Box
+            sx={{
+              flex: 1,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              position: 'relative',
+            }}
+          >
+            <Box
+              sx={{
+                width: { xs: '200px', md: '300px' },
+                height: { xs: '400px', md: '600px' },
+                border: '2px solid #06b6d4',
+                borderRadius: 4,
+                backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative',
+              }}
+            >
+              <Typography sx={{ color: '#06b6d4', fontSize: '3rem' }}>📱</Typography>
+              <Chip
+                label="Gratis"
+                sx={{
+                  position: 'absolute',
+                  top: 16,
+                  right: 16,
+                  backgroundColor: 'white',
+                  color: '#1e3a8a',
+                  fontWeight: 600,
+                }}
+              />
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Trust and Security Section */}
+      <Box
+        sx={{
+          width: '100%',
+          py: { xs: 8, md: 12 },
+          px: { xs: 3, md: 6 },
+          backgroundColor: '#ffffff',
+        }}
+      >
+        <Box sx={{ maxWidth: '1200px', mx: 'auto', textAlign: 'center' }}>
+          <Box
+            sx={{
+              width: 80,
+              height: 80,
+              borderRadius: '50%',
+              backgroundColor: '#dcfce7',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mx: 'auto',
+              mb: 3,
+            }}
+          >
+            <Shield sx={{ fontSize: 40, color: '#22c55e' }} />
+          </Box>
+          <Typography
+            variant="h2"
+            sx={{
+              fontSize: { xs: '2rem', md: '3rem' },
+              fontWeight: 700,
+              mb: 2,
+              color: '#1f2937',
+            }}
+          >
+            Confianza y seguridad
           </Typography>
           <Typography
             variant="body1"
@@ -624,72 +885,77 @@ export const HomePage = () => {
               mx: 'auto',
             }}
           >
-            MEDICONES te ofrece las herramientas para gestionar y promocionar tus servicios médicos de forma profesional
+            Todos los perfiles pasan por un proceso de revisión y aprobación para garantizar información real y confiable
           </Typography>
 
           <Grid container spacing={4}>
-            {features.map((feature, index) => (
-              <Grid item xs={12} sm={6} md={4} key={feature.title}>
+            {[
+              {
+                icon: <Shield sx={{ fontSize: 32, color: '#22c55e' }} />,
+                title: 'Verificación rigurosa',
+                description: 'Todos los perfiles son revisados antes de publicarse',
+              },
+              {
+                icon: <VerifiedUser sx={{ fontSize: 32, color: '#22c55e' }} />,
+                title: 'Información verificada',
+                description: 'Garantizamos datos reales y actualizados',
+              },
+              {
+                icon: <Lock sx={{ fontSize: 32, color: '#22c55e' }} />,
+                title: 'Seguridad',
+                description: 'Tus datos están protegidos y encriptados',
+              },
+              {
+                icon: <Description sx={{ fontSize: 32, color: '#22c55e' }} />,
+                title: 'Proceso de aprobación',
+                description: 'Cada solicitud es evaluada por nuestro equipo',
+              },
+            ].map((item, index) => (
+              <Grid item xs={12} sm={6} md={3} key={index}>
                 <Card
                   sx={{
-                    p: 4,
+                    p: 3,
                     textAlign: 'center',
                     borderRadius: 3,
                     height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(0, 0, 0, 0.05)',
+                    border: '1px solid #e5e7eb',
+                    backgroundColor: 'white',
                     transition: 'all 0.3s ease',
-                    animation: 'slideUp 0.6s ease-out',
-                    animationDelay: `${index * 0.1}s`,
                     '&:hover': {
                       transform: 'translateY(-8px)',
-                      boxShadow: 8,
+                      boxShadow: 4,
                     },
                   }}
                 >
-                  <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: 56,
-                        height: 56,
-                        borderRadius: 2,
-                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
-                        mx: 'auto',
-                        mb: 3,
-                        color: '#06b6d4',
-                      }}
-                    >
-                      {feature.icon}
-                    </Box>
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontWeight: 600,
-                        mb: 2,
-                        color: '#1f2937',
-                        fontSize: '1.125rem',
-                      }}
-                    >
-                      {feature.title}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: '#6b7280',
-                        fontSize: '0.9375rem',
-                        lineHeight: 1.6,
-                        flex: 1,
-                      }}
-                    >
-                      {feature.description}
-                    </Typography>
-                  </CardContent>
+                  <Box
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: '50%',
+                      backgroundColor: '#dcfce7',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mx: 'auto',
+                      mb: 2,
+                    }}
+                  >
+                    {item.icon}
+                  </Box>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 600,
+                      mb: 1,
+                      color: '#1f2937',
+                      fontSize: '1rem',
+                    }}
+                  >
+                    {item.title}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                    {item.description}
+                  </Typography>
                 </Card>
               </Grid>
             ))}
@@ -702,9 +968,9 @@ export const HomePage = () => {
         id="contacto"
         sx={{
           width: '100%',
-          py: { xs: 8, md: 12 },
+          py: { xs: 6, md: 8 },
           px: { xs: 3, md: 6 },
-          backgroundColor: '#1f2937',
+          backgroundColor: '#1e3a8a',
           color: 'white',
           scrollMarginTop: '80px',
         }}
@@ -725,60 +991,51 @@ export const HomePage = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <Typography sx={{ color: 'white', fontWeight: 700, fontSize: '1.25rem' }}>
-                    M
-                  </Typography>
+                  <Favorite sx={{ fontSize: 24, color: 'white' }} />
                 </Box>
                 <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'white' }}>
-                  MEDICONES
+                  MediConnect
                 </Typography>
               </Box>
               <Typography
                 variant="body2"
                 sx={{
-                  color: 'rgba(255, 255, 255, 0.7)',
+                  color: 'rgba(255, 255, 255, 0.8)',
                   mb: 3,
                   maxWidth: '400px',
                   lineHeight: 1.6,
                   fontSize: '0.9375rem',
                 }}
               >
-                La plataforma que conecta profesionales de la salud con pacientes que necesitan atención médica de calidad.
+                Un puente inteligente entre personas y servicios de salud
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: 'rgba(255, 255, 255, 0.7)' }}>
-                  <Email sx={{ fontSize: 20 }} />
-                  <Typography sx={{ fontSize: '0.875rem' }}>contacto@medicones.com</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: 'rgba(255, 255, 255, 0.7)' }}>
-                  <Phone sx={{ fontSize: 20 }} />
-                  <Typography sx={{ fontSize: '0.875rem' }}>+593 23 456 456</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: 'rgba(255, 255, 255, 0.7)' }}>
-                  <LocationOn sx={{ fontSize: 20 }} />
-                  <Typography sx={{ fontSize: '0.875rem' }}>Ciudad, País</Typography>
-                </Box>
-              </Box>
             </Grid>
 
-            {/* Platform Links */}
-            <Grid item xs={12} sm={6} md={3}>
+            {/* Quick Links */}
+            <Grid item xs={12} sm={6} md={2}>
               <Typography
                 variant="h6"
                 sx={{
                   fontWeight: 600,
                   mb: 2,
                   color: 'white',
-                  fontSize: '1.125rem',
+                  fontSize: '1rem',
                 }}
               >
-                Plataforma
+                Enlaces rápidos
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                {['Para Médicos', 'Para Farmacias', 'Para Laboratorios', 'Para Ambulancias', 'Para Insumos Médicos'].map((link) => (
+                {['Inicio', 'Cómo funciona', 'Servicios', 'Para profesionales'].map((link) => (
                   <Link
                     key={link}
                     href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (link === 'Inicio') navigate(ROUTES.HOME);
+                      else if (link === 'Cómo funciona') scrollToSection('como-funciona');
+                      else if (link === 'Servicios') scrollToSection('servicios');
+                      else if (link === 'Para profesionales') navigate(ROUTES.REGISTER);
+                    }}
                     sx={{
                       color: 'rgba(255, 255, 255, 0.7)',
                       fontSize: '0.875rem',
@@ -795,21 +1052,21 @@ export const HomePage = () => {
               </Box>
             </Grid>
 
-            {/* Legal Links */}
-            <Grid item xs={12} sm={6} md={3}>
+            {/* Legal */}
+            <Grid item xs={12} sm={6} md={2}>
               <Typography
                 variant="h6"
                 sx={{
                   fontWeight: 600,
                   mb: 2,
                   color: 'white',
-                  fontSize: '1.125rem',
+                  fontSize: '1rem',
                 }}
               >
                 Legal
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                {['Términos de Servicio', 'Política de Privacidad', 'Aviso Legal'].map((link) => (
+                {['Términos y condiciones', 'Política de privacidad', 'Política de cookies', 'Aviso legal'].map((link) => (
                   <Link
                     key={link}
                     href="#"
@@ -826,6 +1083,55 @@ export const HomePage = () => {
                     {link}
                   </Link>
                 ))}
+              </Box>
+            </Grid>
+
+            {/* Contact */}
+            <Grid item xs={12} sm={6} md={2}>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 600,
+                  mb: 2,
+                  color: 'white',
+                  fontSize: '1rem',
+                }}
+              >
+                Contacto
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'rgba(255, 255, 255, 0.7)' }}>
+                  <Email sx={{ fontSize: 18 }} />
+                  <Link
+                    href="mailto:contacto@saludconnect.com"
+                    sx={{
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      fontSize: '0.875rem',
+                      textDecoration: 'none',
+                      '&:hover': { color: 'white' },
+                    }}
+                  >
+                    contacto@saludconnect.com
+                  </Link>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'rgba(255, 255, 255, 0.7)' }}>
+                  <Phone sx={{ fontSize: 18 }} />
+                  <Link
+                    href="tel:+15551234567"
+                    sx={{
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      fontSize: '0.875rem',
+                      textDecoration: 'none',
+                      '&:hover': { color: 'white' },
+                    }}
+                  >
+                    +1 (555) 123-4567
+                  </Link>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'rgba(255, 255, 255, 0.7)' }}>
+                  <LocationOn sx={{ fontSize: 18 }} />
+                  <Typography sx={{ fontSize: '0.875rem' }}>Ciudad, País</Typography>
+                </Box>
               </Box>
             </Grid>
           </Grid>
@@ -835,12 +1141,30 @@ export const HomePage = () => {
               mt: 6,
               pt: 4,
               borderTop: '1px solid rgba(255, 255, 255, 0.2)',
-              textAlign: 'center',
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: 2,
             }}
           >
-            <Typography sx={{ color: 'rgba(255, 255, 255, 0.5)', fontSize: '0.875rem' }}>
-              © {new Date().getFullYear()} MEDICONES. Todos los derechos reservados.
+            <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>
+              © 2026 MediConnect. Todos los derechos reservados.
             </Typography>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Link href="#" sx={{ color: 'rgba(255, 255, 255, 0.7)', '&:hover': { color: 'white' } }}>
+                <Facebook />
+              </Link>
+              <Link href="#" sx={{ color: 'rgba(255, 255, 255, 0.7)', '&:hover': { color: 'white' } }}>
+                <Twitter />
+              </Link>
+              <Link href="#" sx={{ color: 'rgba(255, 255, 255, 0.7)', '&:hover': { color: 'white' } }}>
+                <Instagram />
+              </Link>
+              <Link href="#" sx={{ color: 'rgba(255, 255, 255, 0.7)', '&:hover': { color: 'white' } }}>
+                <LinkedIn />
+              </Link>
+            </Box>
           </Box>
         </Box>
       </Box>

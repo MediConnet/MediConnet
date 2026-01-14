@@ -3,6 +3,7 @@
 
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Box, Button, Typography } from '@mui/material';
+import { ArrowForward, Download, Favorite } from '@mui/icons-material';
 import { ROUTES } from '../../app/config/constants';
 import { useAuthStore } from '../../app/store/auth.store';
 
@@ -17,58 +18,18 @@ export const AppLayout = () => {
     navigate(ROUTES.HOME);
   };
 
-  const handleServiciosClick = () => {
+  const scrollToSection = (id: string) => {
     if (location.pathname === ROUTES.HOME) {
-      // Si ya estamos en home, hacer scroll suave
-      const serviciosSection = document.getElementById('servicios');
-      if (serviciosSection) {
-        serviciosSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const section = document.getElementById(id);
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     } else {
-      // Si no estamos en home, navegar y luego hacer scroll
       navigate(ROUTES.HOME);
       setTimeout(() => {
-        const serviciosSection = document.getElementById('servicios');
-        if (serviciosSection) {
-          serviciosSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 100);
-    }
-  };
-
-  const handleBeneficiosClick = () => {
-    if (location.pathname === ROUTES.HOME) {
-      // Si ya estamos en home, hacer scroll suave
-      const beneficiosSection = document.getElementById('beneficios');
-      if (beneficiosSection) {
-        beneficiosSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    } else {
-      // Si no estamos en home, navegar y luego hacer scroll
-      navigate(ROUTES.HOME);
-      setTimeout(() => {
-        const beneficiosSection = document.getElementById('beneficios');
-        if (beneficiosSection) {
-          beneficiosSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 100);
-    }
-  };
-
-  const handleContactoClick = () => {
-    if (location.pathname === ROUTES.HOME) {
-      // Si ya estamos en home, hacer scroll suave
-      const contactoSection = document.getElementById('contacto');
-      if (contactoSection) {
-        contactoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    } else {
-      // Si no estamos en home, navegar y luego hacer scroll
-      navigate(ROUTES.HOME);
-      setTimeout(() => {
-        const contactoSection = document.getElementById('contacto');
-        if (contactoSection) {
-          contactoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const section = document.getElementById(id);
+        if (section) {
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }, 100);
     }
@@ -114,7 +75,7 @@ export const AppLayout = () => {
               gap: 2,
             }}
           >
-            {/* NOTE: Logo MEDICONES a la izquierda */}
+            {/* NOTE: Logo MediConnect a la izquierda */}
             <Box
               onClick={() => navigate(ROUTES.HOME)}
               sx={{
@@ -129,22 +90,14 @@ export const AppLayout = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  borderRadius: 1,
+                  borderRadius: 1.5,
                   backgroundColor: '#06b6d4',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Typography
-                  sx={{
-                    color: 'white',
-                    fontWeight: 700,
-                    fontSize: '1.25rem',
-                  }}
-                >
-                  M
-                </Typography>
+                <Favorite sx={{ fontSize: 24, color: 'white' }} />
               </Box>
               <Typography
                 sx={{
@@ -154,23 +107,53 @@ export const AppLayout = () => {
                   display: { xs: 'none', sm: 'block' },
                 }}
               >
-                MEDICONES
+                MediConnect
               </Typography>
             </Box>
 
-            {/* NOTE: Navegación centrada (Servicios, Beneficios, Contacto) - siempre visible */}
+            {/* NOTE: Navegación centrada - siempre visible */}
             <Box
               sx={{
                 display: { xs: 'none', md: 'flex' },
                 alignItems: 'center',
-                gap: 4,
+                gap: 3,
                 position: 'absolute',
                 left: '50%',
                 transform: 'translateX(-50%)',
               }}
             >
               <Button
-                onClick={handleServiciosClick}
+                onClick={() => navigate(ROUTES.HOME)}
+                sx={{
+                  textTransform: 'none',
+                  color: location.pathname === ROUTES.HOME ? '#06b6d4' : '#1f2937',
+                  fontSize: '0.9375rem',
+                  fontWeight: location.pathname === ROUTES.HOME ? 600 : 400,
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                    color: '#06b6d4',
+                  },
+                }}
+              >
+                Inicio
+              </Button>
+              <Button
+                onClick={() => scrollToSection('como-funciona')}
+                sx={{
+                  textTransform: 'none',
+                  color: '#1f2937',
+                  fontSize: '0.9375rem',
+                  fontWeight: 400,
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                    color: '#06b6d4',
+                  },
+                }}
+              >
+                Cómo funciona
+              </Button>
+              <Button
+                onClick={() => scrollToSection('servicios')}
                 sx={{
                   textTransform: 'none',
                   color: '#1f2937',
@@ -185,7 +168,7 @@ export const AppLayout = () => {
                 Servicios
               </Button>
               <Button
-                onClick={handleBeneficiosClick}
+                onClick={() => navigate(ROUTES.REGISTER)}
                 sx={{
                   textTransform: 'none',
                   color: '#1f2937',
@@ -197,10 +180,10 @@ export const AppLayout = () => {
                   },
                 }}
               >
-                Beneficios
+                Para profesionales
               </Button>
               <Button
-                onClick={handleContactoClick}
+                onClick={() => scrollToSection('destacados')}
                 sx={{
                   textTransform: 'none',
                   color: '#1f2937',
@@ -212,7 +195,7 @@ export const AppLayout = () => {
                   },
                 }}
               >
-                Contacto
+                Destacados
               </Button>
             </Box>
 
@@ -226,10 +209,11 @@ export const AppLayout = () => {
               }}
             >
               {!user ? (
-                // Header público: Iniciar sesión y Registrarse
+                // Header público: Iniciar Sesión y Descargar App
                 <>
                   <Button
                     onClick={() => navigate(ROUTES.LOGIN)}
+                    endIcon={<ArrowForward sx={{ fontSize: 18 }} />}
                     sx={{
                       textTransform: 'none',
                       color: '#1f2937',
@@ -237,16 +221,20 @@ export const AppLayout = () => {
                       fontWeight: 500,
                       px: 2,
                       py: 0.75,
+                      border: '1px solid #06b6d4',
+                      borderRadius: 1,
                       '&:hover': {
-                        backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                        backgroundColor: 'rgba(6, 182, 212, 0.04)',
+                        borderColor: '#0891b2',
                       },
                     }}
                   >
-                    Iniciar sesión
+                    Iniciar Sesión
                   </Button>
                   <Button
                     variant="contained"
-                    onClick={() => navigate(ROUTES.REGISTER)}
+                    startIcon={<Download sx={{ fontSize: 18 }} />}
+                    onClick={() => navigate(ROUTES.HOME)}
                     sx={{
                       textTransform: 'none',
                       backgroundColor: '#06b6d4',
@@ -261,7 +249,7 @@ export const AppLayout = () => {
                       },
                     }}
                   >
-                    Registrarse
+                    Descargar App
                   </Button>
                 </>
               ) : (
