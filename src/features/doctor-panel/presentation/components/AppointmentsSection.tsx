@@ -8,12 +8,16 @@ import {
   CheckCircle,
   Payment,
   Schedule,
+  Assignment,
 } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import {
   generateMockAppointments,
   type DoctorAppointment,
 } from "../../infrastructure/appointments.mock";
+import { CreateDiagnosisModal } from "./CreateDiagnosisModal";
+import { useAuthStore } from "../../../../app/store/auth.store";
+import { getDiagnosesByAppointmentMock } from "../../infrastructure/diagnoses.mock";
 
 type ViewType = "month" | "week" | "day" | "list";
 
@@ -22,6 +26,9 @@ interface AppointmentDetailModalProps {
   onClose: () => void;
   appointment: DoctorAppointment | null;
   onStatusChange?: (appointmentId: string, newStatus: string) => void;
+  doctorId: string;
+  doctorName: string;
+  onOpenDiagnosisModal?: () => void;
 }
 
 const AppointmentDetailModal = ({
@@ -29,13 +36,20 @@ const AppointmentDetailModal = ({
   onClose,
   appointment,
   onStatusChange,
+  doctorId,
+  doctorName,
+  onOpenDiagnosisModal,
 }: AppointmentDetailModalProps) => {
   const [currentStatus, setCurrentStatus] = useState<string>("pending");
+  const [hasDiagnosis, setHasDiagnosis] = useState(false);
 
   useEffect(() => {
     if (appointment) {
       // Mapear estados: pending -> Programada, paid -> Pagada, completed -> Atendida
       setCurrentStatus(appointment.status || "pending");
+      // Verificar si ya tiene diagnóstico
+      const diagnosis = getDiagnosesByAppointmentMock(appointment.id);
+      setHasDiagnosis(!!diagnosis);
     }
   }, [appointment]);
 
@@ -70,6 +84,7 @@ const AppointmentDetailModal = ({
       className={`fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity ${
         open ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}
+      style={{ zIndex: 9999 }}
       onClick={onClose}
     >
       <div
@@ -267,7 +282,26 @@ const AppointmentDetailModal = ({
         </div>
 
         {/* Footer (Fijo) */}
-        <div className="p-6 border-t border-gray-200 flex justify-end shrink-0">
+        <div className="p-6 border-t border-gray-200 flex justify-between items-center shrink-0">
+          <div>
+            {(currentStatus === "completed" || currentStatus === "finalizada") && (
+              <button
+                onClick={() => {
+                  if (onOpenDiagnosisModal) {
+                    onOpenDiagnosisModal();
+                  }
+                }}
+                className={`px-6 py-2 rounded-lg transition-colors font-medium flex items-center gap-2 ${
+                  hasDiagnosis
+                    ? "bg-green-600 text-white hover:bg-green-700"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                }`}
+              >
+                <Assignment />
+                {hasDiagnosis ? "Ver/Editar Diagnóstico" : "Crear Diagnóstico"}
+              </button>
+            )}
+          </div>
           <button
             onClick={onClose}
             className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium"
@@ -291,7 +325,10 @@ export const AppointmentsSection = () => {
   const [selectedAppointment, setSelectedAppointment] =
     useState<DoctorAppointment | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDiagnosisModalOpen, setIsDiagnosisModalOpen] = useState(false);
   const [appointments, setAppointments] = useState<DoctorAppointment[]>([]);
+  const authStore = useAuthStore();
+  const { user } = authStore;
 
   // Cargar citas desde localStorage o generar mock
   useEffect(() => {
@@ -305,10 +342,10 @@ export const AppointmentsSection = () => {
     }
   }, []);
 
-  // Generar citas mock basadas en el mes actual
+  // Usar las citas del estado (que se actualizan cuando cambia el estado)
   const mockAppointments = appointments.length > 0 ? appointments : generateMockAppointments();
 
-  // Filtrar citas finalizadas del calendario (no se muestran)
+  // Filtrar citas finalizadas del calendario (no se muestran) - se actualiza automáticamente cuando cambia appointments
   const activeAppointments = mockAppointments.filter(
     (apt) => apt.status !== "finalizada"
   );
@@ -400,9 +437,9 @@ export const AppointmentsSection = () => {
     setSelectedDate(today.toISOString().split("T")[0]);
   };
 
-  // Obtener citas de un día específico
+  // Obtener citas de un día específico (solo activas, sin finalizadas)
   const getAppointmentsForDay = (dateStr: string) => {
-    return mockAppointments.filter((apt) => apt.date === dateStr);
+    return activeAppointments.filter((apt) => apt.date === dateStr);
   };
 
   // Verificar si un día es hoy
@@ -471,16 +508,20 @@ export const AppointmentsSection = () => {
     const updatedAppointments = appointments.map((apt) =>
       apt.id === appointmentId ? { ...apt, status: newStatus as any } : apt
     );
+    
+    // Actualizar el estado inmediatamente
     setAppointments(updatedAppointments);
     localStorage.setItem("doctor_appointments", JSON.stringify(updatedAppointments));
     
     // Disparar evento personalizado para notificar cambios
     window.dispatchEvent(new Event("appointments-updated"));
     
-    // Si se marca como finalizada, cerrar el modal
+    // Si se marca como finalizada, cerrar el modal y limpiar la selección
     if (newStatus === "finalizada") {
       setIsModalOpen(false);
       setSelectedAppointment(null);
+      // Forzar actualización del calendario removiendo la cita de la vista inmediatamente
+      // El filtro activeAppointments ya la excluirá automáticamente
     } else {
       // Actualizar el appointment seleccionado si es el mismo
       if (selectedAppointment && selectedAppointment.id === appointmentId) {
@@ -965,7 +1006,32 @@ export const AppointmentsSection = () => {
         onClose={handleCloseModal}
         appointment={selectedAppointment}
         onStatusChange={handleStatusChange}
+        doctorId={user?.id || "doc-1"}
+        doctorName={user?.name || "Dr. Usuario"}
+        onOpenDiagnosisModal={() => setIsDiagnosisModalOpen(true)}
       />
+      
+      {/* Modal de Crear Diagnóstico - Renderizado fuera del modal de cita para que tenga z-index correcto */}
+      {selectedAppointment && (
+        <CreateDiagnosisModal
+          open={isDiagnosisModalOpen}
+          onClose={() => {
+            setIsDiagnosisModalOpen(false);
+          }}
+          appointment={selectedAppointment}
+          doctorId={user?.id || "doc-1"}
+          doctorName={user?.name || "Dr. Usuario"}
+          onSuccess={() => {
+            setIsDiagnosisModalOpen(false);
+            // Refrescar el modal de cita para actualizar el estado del botón
+            if (selectedAppointment) {
+              const updated = { ...selectedAppointment };
+              setSelectedAppointment(null);
+              setTimeout(() => setSelectedAppointment(updated), 100);
+            }
+          }}
+        />
+      )}
     </>
   );
 };
