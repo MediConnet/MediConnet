@@ -9,8 +9,8 @@ const mockSupplyDashboard: SupplyDashboard = {
   supply: {
     name: "Insumos Médicos Plus",
     email: "insumos@medicones.com",
-    whatsapp: "+52 442 111 2222",
-    address: "Parque Industrial Benito Juárez, Nave 5",
+    whatsapp: "+593 99 111 2222",
+    address: "Av. 6 de Diciembre N24-120, Quito, Ecuador",
     description: "Distribuidora de insumos y equipo médico. Vendemos al mayoreo y menudeo. Guantes, jeringas, material de curación, equipo de diagnóstico y más.",
     schedule: "Lun-Vie 8:00-18:00",
     workSchedule: [

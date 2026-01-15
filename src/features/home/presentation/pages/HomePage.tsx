@@ -1137,7 +1137,7 @@ export const HomePage = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'rgba(255, 255, 255, 0.7)' }}>
                   <Phone sx={{ fontSize: 18 }} />
                   <Link
-                    href="tel:+15551234567"
+                    href="tel:+593991234567"
                     sx={{
                       color: 'rgba(255, 255, 255, 0.7)',
                       fontSize: '0.875rem',
@@ -1145,12 +1145,12 @@ export const HomePage = () => {
                       '&:hover': { color: 'white' },
                     }}
                   >
-                    +1 (555) 123-4567
+                    +593 99 123 4567
                   </Link>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'rgba(255, 255, 255, 0.7)' }}>
                   <LocationOn sx={{ fontSize: 18 }} />
-                  <Typography sx={{ fontSize: '0.875rem' }}>Ciudad, País</Typography>
+                  <Typography sx={{ fontSize: '0.875rem' }}>Quito, Ecuador</Typography>
                 </Box>
               </Box>
             </Grid>

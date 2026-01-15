@@ -1,4 +1,4 @@
-import { AttachMoney, CreditCard, CheckCircle, HourglassEmpty } from "@mui/icons-material";
+import { AttachMoney, CreditCard, CheckCircle, HourglassEmpty, AccountBalance, Edit } from "@mui/icons-material";
 import {
   Box,
   Card,
@@ -13,16 +13,78 @@ import {
   TableRow,
   Typography,
   Paper,
+  Button,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { getPaymentsMock } from "../../infrastructure/payments.mock";
 import type { Payment } from "../../domain/Payment.entity";
 import { formatMoney } from "../../../../shared/lib/formatMoney";
+import { useDoctorDashboard } from "../hooks/useDoctorDashboard";
+import { useUpdateDoctorProfile } from "../hooks/useUpdateDoctorProfile";
+import { useAuthStore } from "../../../../app/store/auth.store";
+import { handleLetterInput, handleNumberInput, handleBothInput } from "../../../../shared/lib/inputValidation";
+
+// Lista de bancos de Ecuador
+const ECUADOR_BANKS = [
+  "Banco Pichincha",
+  "Banco de Guayaquil",
+  "Banco del Pacífico",
+  "Banco Internacional",
+  "Banco Produbanco",
+  "Banco Bolivariano",
+  "Banco General Rumiñahui",
+  "Banco de Loja",
+  "Banco Solidario",
+  "Banco del Austro",
+  "Banco Comercial de Manabí",
+  "Banco D-Miro",
+  "Banco Finca",
+  "Banco ProCredit",
+  "Banco Coopnacional",
+  "Banco Amazonas",
+  "Banco Capital",
+  "Banco Litoral",
+  "Banco Machala",
+  "Banco Unión",
+];
 
 export const PaymentsSection = () => {
   const [payments] = useState<Payment[]>(getPaymentsMock());
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid">("all");
+  const [bankDialogOpen, setBankDialogOpen] = useState(false);
+  const { data, refetch } = useDoctorDashboard();
+  const { updateProfile, loading: savingBank } = useUpdateDoctorProfile();
+  const { user } = useAuthStore();
+
+  const [bankData, setBankData] = useState({
+    bankName: "",
+    accountNumber: "",
+    accountType: "checking",
+    accountHolder: "",
+  });
+
+  useEffect(() => {
+    if (data?.doctor?.bankAccount) {
+      setBankData(data.doctor.bankAccount);
+    }
+  }, [data]);
+
+  const handleSaveBankData = async () => {
+    if (!user?.id) return;
+    await updateProfile(user.id, { bankAccount: bankData });
+    setBankDialogOpen(false);
+    refetch();
+  };
 
   const filteredPayments = useMemo(() => {
     if (statusFilter === "all") return payments;
@@ -126,6 +188,74 @@ export const PaymentsSection = () => {
         </Grid2>
       </Grid2>
 
+      {/* Datos Bancarios */}
+      <Card elevation={0} sx={{ border: "1px solid #e5e7eb", mb: 4 }}>
+        <CardContent>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <AccountBalance sx={{ color: "#06b6d4", fontSize: 28 }} />
+              <div>
+                <Typography variant="h6" fontWeight={600}>
+                  Datos Bancarios
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Información para recibir pagos
+                </Typography>
+              </div>
+            </div>
+            <Button
+              variant="outlined"
+              startIcon={<Edit />}
+              onClick={() => setBankDialogOpen(true)}
+              sx={{ textTransform: "none" }}
+            >
+              {data?.doctor?.bankAccount ? "Editar" : "Agregar"}
+            </Button>
+          </div>
+
+          {data?.doctor?.bankAccount ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Typography variant="caption" color="text.secondary">
+                  Banco
+                </Typography>
+                <Typography variant="body1" fontWeight={600}>
+                  {data.doctor.bankAccount.bankName}
+                </Typography>
+              </div>
+              <div>
+                <Typography variant="caption" color="text.secondary">
+                  Número de Cuenta
+                </Typography>
+                <Typography variant="body1" fontWeight={600}>
+                  {data.doctor.bankAccount.accountNumber}
+                </Typography>
+              </div>
+              <div>
+                <Typography variant="caption" color="text.secondary">
+                  Tipo de Cuenta
+                </Typography>
+                <Typography variant="body1" fontWeight={600}>
+                  {data.doctor.bankAccount.accountType === "checking" ? "Corriente" : "Ahorros"}
+                </Typography>
+              </div>
+              <div>
+                <Typography variant="caption" color="text.secondary">
+                  Titular
+                </Typography>
+                <Typography variant="body1" fontWeight={600}>
+                  {data.doctor.bankAccount.accountHolder}
+                </Typography>
+              </div>
+            </div>
+          ) : (
+            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
+              No hay datos bancarios registrados. Agrega tu información para recibir pagos.
+            </Typography>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Tabla de pagos */}
       <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #e5e7eb" }}>
         <Table>
@@ -192,6 +322,69 @@ export const PaymentsSection = () => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Dialog para editar datos bancarios */}
+      <Dialog open={bankDialogOpen} onClose={() => setBankDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Datos Bancarios</DialogTitle>
+        <DialogContent>
+          <Stack spacing={3} sx={{ mt: 2 }}>
+            <FormControl fullWidth required>
+              <InputLabel>Banco</InputLabel>
+              <Select
+                value={bankData.bankName}
+                onChange={(e) => setBankData({ ...bankData, bankName: e.target.value })}
+                label="Banco"
+              >
+                {ECUADOR_BANKS.map((bank) => (
+                  <MenuItem key={bank} value={bank}>
+                    {bank}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              label="Número de Cuenta"
+              value={bankData.accountNumber}
+              onChange={(e) => handleNumberInput(e, (value) => setBankData({ ...bankData, accountNumber: value }))}
+              fullWidth
+              required
+              helperText="Solo números"
+            />
+            <FormControl fullWidth>
+              <InputLabel>Tipo de Cuenta</InputLabel>
+              <Select
+                value={bankData.accountType}
+                onChange={(e) => setBankData({ ...bankData, accountType: e.target.value })}
+                label="Tipo de Cuenta"
+              >
+                <MenuItem value="checking">Corriente</MenuItem>
+                <MenuItem value="savings">Ahorros</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              label="Titular de la Cuenta"
+              value={bankData.accountHolder}
+              onChange={(e) => handleLetterInput(e, (value) => setBankData({ ...bankData, accountHolder: value }))}
+              fullWidth
+              required
+              helperText="Solo letras y espacios"
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setBankDialogOpen(false)} sx={{ textTransform: "none" }}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleSaveBankData}
+            variant="contained"
+            disabled={savingBank || !bankData.bankName || !bankData.accountNumber || !bankData.accountHolder}
+            sx={{ textTransform: "none", backgroundColor: "#06b6d4", "&:hover": { backgroundColor: "#0891b2" } }}
+          >
+            {savingBank ? "Guardando..." : "Guardar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

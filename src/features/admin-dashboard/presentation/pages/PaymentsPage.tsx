@@ -1,4 +1,4 @@
-import { AttachMoney, CreditCard, Visibility } from "@mui/icons-material";
+import { AttachMoney, CreditCard, Visibility, CheckCircle, Payment } from "@mui/icons-material";
 import {
   Avatar,
   Box,
@@ -9,6 +9,7 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  DialogActions,
   FormControl,
   IconButton,
   InputLabel,
@@ -23,9 +24,10 @@ import {
   TableRow,
   Typography,
   Paper,
+  Alert,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { getPaymentsMock } from "../../../doctor-panel/infrastructure/payments.mock";
 import type { Payment } from "../../../doctor-panel/domain/Payment.entity";
@@ -39,16 +41,39 @@ const CURRENT_ADMIN = {
 };
 
 export const PaymentsPage = () => {
-  const [payments] = useState<Payment[]>(getPaymentsMock());
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid">("all");
   const [doctorFilter, setDoctorFilter] = useState<string>("all");
   const [selectedDoctor, setSelectedDoctor] = useState<string | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isPaymentConfirmDialogOpen, setIsPaymentConfirmDialogOpen] = useState(false);
+  const [doctorToPay, setDoctorToPay] = useState<string | null>(null);
+
+  // Cargar pagos desde localStorage o generar mock
+  useEffect(() => {
+    const savedPayments = localStorage.getItem("admin_payments");
+    if (savedPayments) {
+      try {
+        setPayments(JSON.parse(savedPayments));
+      } catch (error) {
+        console.error("Error loading payments from localStorage:", error);
+        setPayments(getPaymentsMock());
+      }
+    } else {
+      setPayments(getPaymentsMock());
+    }
+  }, []);
 
   // Obtener lista única de doctores con pagos con tarjeta
+  // Solo mostrar doctores que tienen pagos pendientes
   const doctors = useMemo(() => {
     const uniqueDoctors = new Set(payments.map((p) => p.patientName));
-    return Array.from(uniqueDoctors);
+    // Filtrar doctores que ya tienen todos sus pagos como "paid"
+    return Array.from(uniqueDoctors).filter((doctorName) => {
+      const doctorPayments = payments.filter((p) => p.patientName === doctorName);
+      // Si todos los pagos están como "paid", no mostrar al doctor
+      return doctorPayments.some((p) => p.status === "pending");
+    });
   }, [payments]);
 
   // Agrupar pagos por médico
@@ -64,22 +89,59 @@ export const PaymentsPage = () => {
     return grouped;
   }, [payments]);
 
-  // Calcular totales por médico
+  // Calcular totales por médico (solo pendientes)
   const doctorTotals = useMemo(() => {
-    const totals = new Map<string, { totalAmount: number; totalCommission: number; totalNet: number; count: number }>();
+    const totals = new Map<string, { totalAmount: number; totalCommission: number; totalNet: number; count: number; pendingCount: number }>();
     payments.forEach((payment) => {
       const doctorName = payment.patientName;
       if (!totals.has(doctorName)) {
-        totals.set(doctorName, { totalAmount: 0, totalCommission: 0, totalNet: 0, count: 0 });
+        totals.set(doctorName, { totalAmount: 0, totalCommission: 0, totalNet: 0, count: 0, pendingCount: 0 });
       }
       const doctorTotal = totals.get(doctorName)!;
       doctorTotal.totalAmount += payment.amount;
       doctorTotal.totalCommission += payment.commission;
       doctorTotal.totalNet += payment.netAmount;
       doctorTotal.count += 1;
+      if (payment.status === "pending") {
+        doctorTotal.pendingCount += 1;
+      }
     });
     return totals;
   }, [payments]);
+
+  // Función para marcar todos los pagos de un doctor como pagados
+  const handleMarkAsPaid = (doctorName: string) => {
+    setDoctorToPay(doctorName);
+    setIsPaymentConfirmDialogOpen(true);
+  };
+
+  const confirmPayment = () => {
+    if (!doctorToPay) return;
+
+    setPayments((prevPayments) => {
+      const updated = prevPayments.map((payment) => {
+        if (payment.patientName === doctorToPay && payment.status === "pending") {
+          return { ...payment, status: "paid" as const };
+        }
+        return payment;
+      });
+      
+      // Guardar en localStorage para persistencia
+      localStorage.setItem("admin_payments", JSON.stringify(updated));
+      return updated;
+    });
+
+    setIsPaymentConfirmDialogOpen(false);
+    setDoctorToPay(null);
+  };
+
+  // Calcular total neto pendiente por doctor
+  const getDoctorPendingTotal = (doctorName: string) => {
+    const doctorPayments = payments.filter(
+      (p) => p.patientName === doctorName && p.status === "pending"
+    );
+    return doctorPayments.reduce((sum, p) => sum + p.netAmount, 0);
+  };
 
   // Obtener pagos del médico seleccionado
   const selectedDoctorPayments = useMemo(() => {
@@ -267,22 +329,42 @@ export const PaymentsPage = () => {
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
-                        <Typography fontWeight={600} color="#10b981">
-                          {formatMoney(doctorTotal.totalNet)}
-                        </Typography>
+                        <Box>
+                          <Typography fontWeight={600} color="#10b981">
+                            {formatMoney(doctorTotal.totalNet)}
+                          </Typography>
+                          {doctorTotal.pendingCount > 0 && (
+                            <Typography variant="caption" color="warning.main" fontWeight={600}>
+                              {formatMoney(getDoctorPendingTotal(doctorName))} pendiente
+                            </Typography>
+                          )}
+                        </Box>
                       </TableCell>
                       <TableCell align="center">
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<Visibility />}
-                          onClick={() => {
-                            setSelectedDoctor(doctorName);
-                            setIsDetailModalOpen(true);
-                          }}
-                        >
-                          Ver Detalle
-                        </Button>
+                        <Stack direction="row" spacing={1} justifyContent="center">
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            startIcon={<Visibility />}
+                            onClick={() => {
+                              setSelectedDoctor(doctorName);
+                              setIsDetailModalOpen(true);
+                            }}
+                          >
+                            Ver Detalle
+                          </Button>
+                          {doctorTotal.pendingCount > 0 && (
+                            <Button
+                              variant="contained"
+                              size="small"
+                              color="success"
+                              startIcon={<Payment />}
+                              onClick={() => handleMarkAsPaid(doctorName)}
+                            >
+                              Marcar como Pagado
+                            </Button>
+                          )}
+                        </Stack>
                       </TableCell>
                     </TableRow>
                   );
@@ -494,6 +576,88 @@ export const PaymentsPage = () => {
               </Box>
             )}
           </DialogContent>
+        </Dialog>
+
+        {/* Dialog de Confirmación de Pago */}
+        <Dialog
+          open={isPaymentConfirmDialogOpen}
+          onClose={() => {
+            setIsPaymentConfirmDialogOpen(false);
+            setDoctorToPay(null);
+          }}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Typography variant="h6" fontWeight={700}>
+                Confirmar Pago al Médico
+              </Typography>
+              <IconButton
+                onClick={() => {
+                  setIsPaymentConfirmDialogOpen(false);
+                  setDoctorToPay(null);
+                }}
+              >
+                <Close />
+              </IconButton>
+            </Stack>
+          </DialogTitle>
+          <DialogContent>
+            {doctorToPay && (
+              <Stack spacing={3}>
+                <Alert severity="info">
+                  ¿Estás seguro de que deseas marcar todos los pagos pendientes de <strong>{doctorToPay}</strong> como pagados?
+                </Alert>
+                
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    Resumen del pago:
+                  </Typography>
+                  <Paper elevation={0} sx={{ p: 2, bgcolor: "#f9fafb", border: "1px solid #e5e7eb" }}>
+                    <Stack spacing={1}>
+                      <Stack direction="row" justifyContent="space-between">
+                        <Typography variant="body2">Total a pagar:</Typography>
+                        <Typography variant="body2" fontWeight={700} color="#10b981">
+                          {formatMoney(getDoctorPendingTotal(doctorToPay))}
+                        </Typography>
+                      </Stack>
+                      <Stack direction="row" justifyContent="space-between">
+                        <Typography variant="body2">Pagos pendientes:</Typography>
+                        <Typography variant="body2" fontWeight={600}>
+                          {doctorTotals.get(doctorToPay)?.pendingCount || 0} citas
+                        </Typography>
+                      </Stack>
+                    </Stack>
+                  </Paper>
+                </Box>
+
+                <Alert severity="warning">
+                  Esta acción marcará todos los pagos pendientes como "Pagado". Asegúrate de haber realizado el pago externo (transferencia bancaria, etc.) antes de confirmar.
+                </Alert>
+              </Stack>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => {
+                setIsPaymentConfirmDialogOpen(false);
+                setDoctorToPay(null);
+              }}
+              sx={{ textTransform: "none" }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={confirmPayment}
+              variant="contained"
+              color="success"
+              startIcon={<CheckCircle />}
+              sx={{ textTransform: "none" }}
+            >
+              Confirmar Pago Realizado
+            </Button>
+          </DialogActions>
         </Dialog>
       </Box>
     </DashboardLayout>

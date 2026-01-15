@@ -12,19 +12,19 @@ export const MOCK_ACTIVE_SERVICES: ActiveService[] = [
   {
     id: "1",
     name: "Ambulancias Rápidas",
-    location: "Puebla",
+    location: "Guayaquil",
     type: "ambulance",
   },
   {
     id: "2",
     name: "Dr. Roberto Sánchez",
-    location: "Ciudad de México",
+    location: "Quito",
     type: "doctor",
   },
   {
     id: "3",
     name: "Farmacia Salud Total",
-    location: "Estado de México",
+    location: "Cuenca",
     type: "pharmacy",
   },
 ];

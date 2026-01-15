@@ -18,6 +18,7 @@ import {
 import { CreateDiagnosisModal } from "./CreateDiagnosisModal";
 import { useAuthStore } from "../../../../app/store/auth.store";
 import { getDiagnosesByAppointmentMock } from "../../infrastructure/diagnoses.mock";
+import { useDoctorDashboard } from "../hooks/useDoctorDashboard";
 
 type ViewType = "month" | "week" | "day" | "list";
 
@@ -329,26 +330,135 @@ export const AppointmentsSection = () => {
   const [appointments, setAppointments] = useState<DoctorAppointment[]>([]);
   const authStore = useAuthStore();
   const { user } = authStore;
+  const { data } = useDoctorDashboard();
 
   // Cargar citas desde localStorage o generar mock
   useEffect(() => {
     const savedAppointments = localStorage.getItem("doctor_appointments");
     if (savedAppointments) {
-      setAppointments(JSON.parse(savedAppointments));
+      try {
+        const parsed = JSON.parse(savedAppointments);
+        // Verificar si hay citas válidas (futuras)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const hasValidAppointments = parsed.some((apt: DoctorAppointment) => {
+          const [year, month, day] = apt.date.split("-").map(Number);
+          const appointmentDate = new Date(year, month - 1, day);
+          appointmentDate.setHours(0, 0, 0, 0);
+          return appointmentDate >= today && apt.status !== "finalizada";
+        });
+        
+        if (hasValidAppointments && parsed.length > 0) {
+          setAppointments(parsed);
+        } else {
+          // Si no hay citas válidas, regenerar mocks
+          const mockAppointments = generateMockAppointments();
+          setAppointments(mockAppointments);
+          localStorage.setItem("doctor_appointments", JSON.stringify(mockAppointments));
+        }
+      } catch (error) {
+        // Si hay error al parsear, generar mocks nuevos
+        const mockAppointments = generateMockAppointments();
+        setAppointments(mockAppointments);
+        localStorage.setItem("doctor_appointments", JSON.stringify(mockAppointments));
+      }
     } else {
+      // No hay citas guardadas, generar mocks
       const mockAppointments = generateMockAppointments();
       setAppointments(mockAppointments);
       localStorage.setItem("doctor_appointments", JSON.stringify(mockAppointments));
     }
   }, []);
 
+  // Marcar citas como atendidas automáticamente cuando termina la hora
+  useEffect(() => {
+    const checkAndMarkCompleted = () => {
+      setAppointments((currentAppointments) => {
+        const now = new Date();
+        const updated = currentAppointments.map((apt) => {
+          // Solo procesar citas que no estén ya completadas o finalizadas
+          if (apt.status === "completed" || apt.status === "finalizada") {
+            return apt;
+          }
+
+          // Parsear fecha y hora de la cita
+          const [year, month, day] = apt.date.split("-").map(Number);
+          const [hours, minutes] = apt.time.split(":").map(Number);
+          const appointmentDateTime = new Date(year, month - 1, day, hours, minutes);
+          
+          // Obtener duración de consulta (por defecto 30 minutos)
+          const consultationDuration = data?.doctor?.consultationDuration || 30;
+          const appointmentEndTime = new Date(appointmentDateTime.getTime() + consultationDuration * 60000);
+
+          // Si la hora de la cita ya pasó (incluyendo la duración), marcarla como atendida
+          if (now >= appointmentEndTime && apt.status === "paid") {
+            return { ...apt, status: "completed" as any };
+          }
+
+          return apt;
+        });
+
+        // Solo actualizar si hubo cambios
+        const hasChanges = updated.some((apt, index) => apt.status !== currentAppointments[index].status);
+        if (hasChanges) {
+          localStorage.setItem("doctor_appointments", JSON.stringify(updated));
+          window.dispatchEvent(new Event("appointments-updated"));
+          return updated;
+        }
+
+        return currentAppointments;
+      });
+    };
+
+    // Verificar cada minuto
+    const interval = setInterval(checkAndMarkCompleted, 60000);
+    
+    // Verificar inmediatamente al cargar
+    checkAndMarkCompleted();
+
+    return () => clearInterval(interval);
+  }, [data?.doctor?.consultationDuration]);
+
   // Usar las citas del estado (que se actualizan cuando cambia el estado)
   const mockAppointments = appointments.length > 0 ? appointments : generateMockAppointments();
 
-  // Filtrar citas finalizadas del calendario (no se muestran) - se actualiza automáticamente cuando cambia appointments
-  const activeAppointments = mockAppointments.filter(
-    (apt) => apt.status !== "finalizada"
-  );
+  // Debug: mostrar cuántas citas hay
+  useEffect(() => {
+    console.log("Total citas cargadas:", mockAppointments.length);
+    console.log("Citas:", mockAppointments);
+  }, [mockAppointments.length]);
+
+  // Filtrar citas: solo mostrar las del día de hoy en adelante (fecha y hora)
+  const activeAppointments = mockAppointments.filter((apt) => {
+    // Excluir citas finalizadas
+    if (apt.status === "finalizada") return false;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Inicio del día de hoy
+    
+    // Parsear fecha de la cita
+    const [year, month, day] = apt.date.split("-").map(Number);
+    const appointmentDate = new Date(year, month - 1, day);
+    appointmentDate.setHours(0, 0, 0, 0);
+
+    // Si la fecha es anterior a hoy, excluirla
+    if (appointmentDate < today) return false;
+
+    // Si la fecha es hoy, verificar la hora
+    if (appointmentDate.getTime() === today.getTime()) {
+      const now = new Date();
+      const [hours, minutes] = apt.time.split(":").map(Number);
+      const appointmentDateTime = new Date(year, month - 1, day, hours, minutes);
+      
+      // Si la hora ya pasó y la cita está completada o finalizada, excluirla
+      // Pero si está pendiente o pagada, mostrarla aunque la hora haya pasado (puede estar en curso)
+      if (appointmentDateTime < now && (apt.status === "completed" || apt.status === "finalizada")) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 
   // Obtener citas del día seleccionado (solo activas, sin finalizadas)
   const appointmentsForDate = activeAppointments.filter(
@@ -370,7 +480,8 @@ export const AppointmentsSection = () => {
   const nextMonthDays = 42 - (blanks.length + days.length);
   const nextMonthBlanks = Array.from({ length: nextMonthDays }, (_, i) => i);
 
-  const daysShort = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sá"];
+  const daysShort = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+  const daysShortWeek = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]; // Para vista semanal que empieza en lunes
   const daysFull = [
     "Domingo",
     "Lunes",
@@ -472,10 +583,13 @@ export const AppointmentsSection = () => {
     });
   };
 
-  // Obtener días de la semana
+  // Obtener días de la semana (empezando en lunes)
   const getWeekDays = () => {
     const weekStart = new Date(currentWeek);
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    // Ajustar para que la semana empiece en lunes (getDay() devuelve 0 para domingo)
+    const dayOfWeek = weekStart.getDay();
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Si es domingo, retroceder 6 días; si no, ajustar a lunes
+    weekStart.setDate(weekStart.getDate() + diff);
     const days = [];
     for (let i = 0; i < 7; i++) {
       const day = new Date(weekStart);
@@ -629,75 +743,303 @@ export const AppointmentsSection = () => {
     </div>
   );
 
-  // Renderizar vista de Semana
-  const renderWeekView = () => {
-    const weekDays = getWeekDays();
+  // Generar horas del día (07:00 - 18:00)
+  const generateTimeSlots = () => {
+    const hours = [];
+    for (let i = 7; i <= 18; i++) {
+      hours.push(i);
+    }
+    return hours;
+  };
+
+  // Obtener posición de una cita en el calendario
+  const getAppointmentPosition = (appointment: DoctorAppointment) => {
+    const [hours, minutes] = appointment.time.split(":").map(Number);
+    const startMinutes = hours * 60 + minutes;
+    const duration = data?.doctor?.consultationDuration || 30;
+    const endMinutes = startMinutes + duration;
+    
+    // Convertir a porcentaje relativo al día (7:00 - 18:00 = 11 horas = 660 minutos)
+    const dayStartMinutes = 7 * 60; // 7:00 AM
+    const dayTotalMinutes = 11 * 60; // 11 horas
+    
+    const topPercent = ((startMinutes - dayStartMinutes) / dayTotalMinutes) * 100;
+    const heightPercent = (duration / dayTotalMinutes) * 100;
+    
+    return { top: topPercent, height: heightPercent };
+  };
+
+  // Verificar si es la hora actual
+  const isCurrentTime = (hour: number) => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    return currentHour === hour && currentMinute < 30;
+  };
+
+  // Obtener posición de la línea de tiempo actual
+  const getCurrentTimePosition = () => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentMinutes = currentHour * 60 + currentMinute;
+    
+    const dayStartMinutes = 7 * 60;
+    const dayTotalMinutes = 11 * 60;
+    
+    if (currentHour < 7 || currentHour > 18) return null;
+    
+    const topPercent = ((currentMinutes - dayStartMinutes) / dayTotalMinutes) * 100;
+    return topPercent;
+  };
+
+  // Renderizar mini calendario
+  const renderMiniCalendar = () => {
+    const today = new Date();
+    const currentDate = new Date(currentWeek);
+    const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+    const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+    const blanks = Array.from({ length: startingDayOfWeek }, (_, i) => i);
+    
+    const miniDaysShort = ["L", "M", "X", "J", "V", "S", "D"]; // Lunes a Domingo
+
+    // Obtener el primer día de la semana actual (lunes)
+    const weekStart = new Date(currentWeek);
+    const dayOfWeek = weekStart.getDay();
+    const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    weekStart.setDate(weekStart.getDate() + diff);
 
     return (
-      <div className="lg:col-span-2">
-        <div className="grid grid-cols-7 border-2 border-gray-200 rounded-xl overflow-hidden shadow-sm">
-          {weekDays.map((day, index) => {
-            const dateStr = day.toISOString().split("T")[0];
-            const dayAppointments = getAppointmentsForDay(dateStr);
-            const isSelected = selectedDate === dateStr;
-            const isTodayDate =
-              dateStr === new Date().toISOString().split("T")[0];
+      <div className="bg-white rounded-lg border border-gray-200 p-3 mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <button
+            onClick={() => {
+              const newDate = new Date(currentDate);
+              newDate.setMonth(newDate.getMonth() - 1);
+              setCurrentWeek(newDate);
+            }}
+            className="text-gray-600 hover:text-gray-900 text-sm"
+          >
+            ‹
+          </button>
+          <span className="text-sm font-semibold text-gray-700">
+            {months[currentDate.getMonth()]} {currentDate.getFullYear()}
+          </span>
+          <button
+            onClick={() => {
+              const newDate = new Date(currentDate);
+              newDate.setMonth(newDate.getMonth() + 1);
+              setCurrentWeek(newDate);
+            }}
+            className="text-gray-600 hover:text-gray-900 text-sm"
+          >
+            ›
+          </button>
+        </div>
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {miniDaysShort.map((day) => (
+            <div key={day} className="text-xs text-gray-500 text-center font-medium">
+              {day}
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {blanks.map((_, i) => (
+            <div key={`blank-${i}`} className="aspect-square"></div>
+          ))}
+          {days.map((day) => {
+            const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+            const isToday =
+              day === today.getDate() &&
+              currentDate.getMonth() === today.getMonth() &&
+              currentDate.getFullYear() === today.getFullYear();
+            const isInCurrentWeek = (() => {
+              const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+              const weekEnd = new Date(weekStart);
+              weekEnd.setDate(weekStart.getDate() + 6);
+              return date >= weekStart && date <= weekEnd;
+            })();
 
             return (
-              <div
-                key={index}
+              <button
+                key={day}
+                onClick={() => {
+                  const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+                  setCurrentWeek(newDate);
+                  setSelectedDate(dateStr);
+                }}
                 className={`
-                  border-r border-gray-200 last:border-r-0 min-h-[400px]
-                  ${
-                    isSelected
-                      ? "bg-blue-50 ring-2 ring-blue-500 ring-inset"
-                      : "bg-white"
-                  }
-                  ${isTodayDate && !isSelected ? "bg-yellow-50" : ""}
+                  aspect-square text-xs rounded flex items-center justify-center
+                  ${isToday ? "bg-blue-600 text-white font-bold" : ""}
+                  ${!isToday && isInCurrentWeek ? "bg-blue-100 text-blue-700 font-semibold" : ""}
+                  ${!isToday && !isInCurrentWeek ? "text-gray-700 hover:bg-gray-100" : ""}
                 `}
               >
+                {day}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // Renderizar vista de Semana estilo Google Calendar
+  const renderWeekView = () => {
+    const weekDays = getWeekDays();
+    const timeSlots = generateTimeSlots();
+    const currentTimePos = getCurrentTimePosition();
+    const today = new Date();
+
+    return (
+      <div className="flex gap-4 h-[calc(100vh-300px)] min-h-[600px]">
+        {/* Sidebar izquierdo con mini calendario */}
+        <div className="w-64 flex-shrink-0 space-y-4">
+          {renderMiniCalendar()}
+          
+          {/* Lista de calendarios (opcional, similar a Google Calendar) */}
+          <div className="bg-white rounded-lg border border-gray-200 p-3">
+            <div className="text-xs font-semibold text-gray-500 mb-2">Mis Calendarios</div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                <span className="text-xs text-gray-700">Citas</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Vista semanal principal */}
+        <div className="flex-1 bg-white rounded-lg border border-gray-200 overflow-hidden">
+          {/* Headers de días */}
+          <div className="grid grid-cols-7 border-b border-gray-200">
+            {weekDays.map((day, index) => {
+              const dateStr = day.toISOString().split("T")[0];
+              const isToday = dateStr === today.toISOString().split("T")[0];
+              const dayAppointments = getAppointmentsForDay(dateStr);
+              // Obtener el día de la semana (0=domingo, 1=lunes, etc.) y ajustar para el array que empieza en lunes
+              const dayOfWeek = day.getDay();
+              const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convertir domingo (0) a 6, y lunes (1) a 0
+
+              return (
                 <div
-                  onClick={() => setSelectedDate(dateStr)}
+                  key={index}
                   className={`
-                    p-3 border-b border-gray-200 cursor-pointer
-                    ${isSelected ? "bg-blue-100" : "bg-gray-50"}
+                    border-r border-gray-200 last:border-r-0 p-3 text-center
+                    ${isToday ? "bg-blue-50" : "bg-gray-50"}
                   `}
+                  onClick={() => setSelectedDate(dateStr)}
                 >
                   <div className="text-xs font-medium text-gray-500 mb-1">
-                    {daysFull[day.getDay()]}
+                    {daysShortWeek[dayIndex]}
                   </div>
                   <div
                     className={`
-                      text-lg font-bold
-                      ${
-                        isSelected
-                          ? "text-blue-700"
-                          : isTodayDate
-                          ? "text-yellow-700"
-                          : "text-gray-800"
-                      }
+                      text-lg font-bold w-8 h-8 mx-auto rounded-full flex items-center justify-center
+                      ${isToday ? "bg-blue-600 text-white" : "text-gray-800"}
                     `}
                   >
                     {day.getDate()}
                   </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {dayAppointments.length} cita{dayAppointments.length !== 1 ? "s" : ""}
+                  </div>
                 </div>
-                <div className="p-2 space-y-2">
-                  {dayAppointments
-                    .sort((a, b) => a.time.localeCompare(b.time))
-                    .map((apt) => (
+              );
+            })}
+          </div>
+
+          {/* Calendario con horarios */}
+          <div className="relative overflow-y-auto" style={{ height: "calc(100% - 80px)" }}>
+            <div className="grid grid-cols-7">
+              {/* Columna de horas */}
+              <div className="border-r border-gray-200">
+                {timeSlots.map((hour) => (
+                  <div
+                    key={hour}
+                    className="border-b border-gray-100 h-16 relative"
+                    style={{ minHeight: "64px" }}
+                  >
+                    <div className="absolute -top-3 -left-12 text-xs text-gray-500 pr-2 text-right w-10">
+                      {hour}:00
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Columnas de días */}
+              {weekDays.map((day, dayIndex) => {
+                const dateStr = day.toISOString().split("T")[0];
+                const dayAppointments = getAppointmentsForDay(dateStr);
+                const isToday = dateStr === today.toISOString().split("T")[0];
+
+                return (
+                  <div
+                    key={dayIndex}
+                    className="border-r border-gray-200 last:border-r-0 relative"
+                  >
+                    {/* Línea de tiempo actual */}
+                    {isToday && currentTimePos !== null && (
                       <div
-                        key={apt.id}
-                        onClick={() => handleAppointmentClick(apt)}
-                        className="bg-blue-500 text-white text-xs p-2 rounded-md cursor-pointer hover:bg-blue-600 transition-colors shadow-sm"
+                        className="absolute left-0 right-0 z-10"
+                        style={{ top: `${currentTimePos}%` }}
                       >
-                        <div className="font-semibold">{apt.time}</div>
-                        <div className="truncate">{apt.patientName}</div>
+                        <div className="h-0.5 bg-red-500 relative">
+                          <div className="absolute -left-1 -top-1 w-3 h-3 bg-red-500 rounded-full"></div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Slot de horas */}
+                    {timeSlots.map((hour) => (
+                      <div
+                        key={hour}
+                        className="border-b border-gray-100 h-16 relative"
+                        style={{ minHeight: "64px" }}
+                      >
+                        {/* Media hora */}
+                        <div className="absolute top-8 left-0 right-0 h-px bg-gray-100"></div>
                       </div>
                     ))}
-                </div>
-              </div>
-            );
-          })}
+
+                    {/* Citas posicionadas */}
+                    {dayAppointments.map((apt) => {
+                      const position = getAppointmentPosition(apt);
+                      const statusColors: Record<string, string> = {
+                        pending: "bg-blue-500",
+                        paid: "bg-green-500",
+                        completed: "bg-teal-500",
+                        cancelled: "bg-red-500",
+                      };
+                      const bgColor = statusColors[apt.status] || "bg-blue-500";
+
+                      return (
+                        <div
+                          key={apt.id}
+                          onClick={() => handleAppointmentClick(apt)}
+                          className={`
+                            absolute left-1 right-1 ${bgColor} text-white text-xs p-1.5 rounded cursor-pointer
+                            hover:opacity-90 transition-opacity shadow-sm z-20
+                          `}
+                          style={{
+                            top: `${position.top}%`,
+                            height: `${position.height}%`,
+                          }}
+                          title={`${apt.time} - ${apt.patientName}`}
+                        >
+                          <div className="font-semibold truncate">{apt.time}</div>
+                          <div className="truncate">{apt.patientName}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -893,6 +1235,19 @@ export const AppointmentsSection = () => {
               >
                 Hoy
               </button>
+              <button
+                onClick={() => {
+                  localStorage.removeItem("doctor_appointments");
+                  const newMocks = generateMockAppointments();
+                  setAppointments(newMocks);
+                  localStorage.setItem("doctor_appointments", JSON.stringify(newMocks));
+                  window.location.reload();
+                }}
+                className="px-4 py-2 text-sm text-red-700 hover:bg-red-100 rounded-lg transition-colors font-medium shadow-sm border border-red-300"
+                title="Regenerar citas mock (solo desarrollo)"
+              >
+                🔄 Regenerar Mocks
+              </button>
             </div>
             <h2 className="text-2xl font-bold text-gray-800">
               {navButtons.label}
@@ -942,15 +1297,15 @@ export const AppointmentsSection = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+        <div className={`${view === "week" ? "p-6" : "grid grid-cols-1 lg:grid-cols-3 gap-6 p-6"}`}>
           {/* Vista Principal según el tipo seleccionado */}
           {view === "month" && renderMonthView()}
           {view === "week" && renderWeekView()}
           {view === "day" && renderDayView()}
           {view === "list" && renderListView()}
 
-          {/* Panel lateral (solo para Mes, Semana y Día) */}
-          {view !== "list" && (
+          {/* Panel lateral (solo para Mes y Día, no para Semana que ya tiene su propio sidebar) */}
+          {view !== "list" && view !== "week" && (
             <div className="bg-white rounded-xl border-2 border-gray-200 p-6 shadow-sm">
               <h3 className="text-lg font-bold text-gray-800 mb-4">
                 Citas del {formatDate(selectedDate)}

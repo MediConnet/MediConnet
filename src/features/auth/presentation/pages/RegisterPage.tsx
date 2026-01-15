@@ -26,6 +26,7 @@ import {
 } from "@mui/icons-material";
 import { ROUTES } from "../../../../app/config/constants";
 import { useRegisterProfessional } from "../hooks/useRegisterProfessional";
+import { handleLetterInput, handleNumberInput, handlePhoneInput, handleEmailInput, handleBothInput } from "../../../../shared/lib/inputValidation";
 
 type ServiceType = "doctor" | "pharmacy" | "lab" | "ambulance" | "supplies";
 
@@ -432,10 +433,14 @@ export const RegisterPage = () => {
                   label="Nombre completo *"
                   name="nombreCompleto"
                   value={formik.values.nombreCompleto}
-                  onChange={formik.handleChange}
+                  onChange={(e) => {
+                    handleLetterInput(e, (value) => {
+                      formik.setFieldValue("nombreCompleto", value);
+                    });
+                  }}
                   onBlur={formik.handleBlur}
                   error={formik.touched.nombreCompleto && Boolean(formik.errors.nombreCompleto)}
-                  helperText={formik.touched.nombreCompleto && formik.errors.nombreCompleto}
+                  helperText={formik.touched.nombreCompleto ? formik.errors.nombreCompleto : "Solo letras y espacios"}
                   required
                   fullWidth
                 />
@@ -444,10 +449,14 @@ export const RegisterPage = () => {
                   name="email"
                   type="email"
                   value={formik.values.email}
-                  onChange={formik.handleChange}
+                  onChange={(e) => {
+                    handleEmailInput(e, (value) => {
+                      formik.setFieldValue("email", value);
+                    });
+                  }}
                   onBlur={formik.handleBlur}
                   error={formik.touched.email && Boolean(formik.errors.email)}
-                  helperText={formik.touched.email && formik.errors.email}
+                  helperText={formik.touched.email ? formik.errors.email : "Formato: ejemplo@correo.com"}
                   required
                   fullWidth
                 />
@@ -455,10 +464,14 @@ export const RegisterPage = () => {
                   label="Teléfono *"
                   name="telefono"
                   value={formik.values.telefono}
-                  onChange={formik.handleChange}
+                  onChange={(e) => {
+                    handlePhoneInput(e, (value) => {
+                      formik.setFieldValue("telefono", value);
+                    });
+                  }}
                   onBlur={formik.handleBlur}
                   error={formik.touched.telefono && Boolean(formik.errors.telefono)}
-                  helperText={formik.touched.telefono && formik.errors.telefono}
+                  helperText={formik.touched.telefono ? formik.errors.telefono : "Solo números, espacios, guiones y paréntesis"}
                   required
                   fullWidth
                 />
@@ -466,10 +479,14 @@ export const RegisterPage = () => {
                   label="WhatsApp *"
                   name="whatsapp"
                   value={formik.values.whatsapp}
-                  onChange={formik.handleChange}
+                  onChange={(e) => {
+                    handlePhoneInput(e, (value) => {
+                      formik.setFieldValue("whatsapp", value);
+                    });
+                  }}
                   onBlur={formik.handleBlur}
                   error={formik.touched.whatsapp && Boolean(formik.errors.whatsapp)}
-                  helperText={formik.touched.whatsapp && formik.errors.whatsapp}
+                  helperText={formik.touched.whatsapp ? formik.errors.whatsapp : "Solo números, espacios, guiones y paréntesis"}
                   required
                   fullWidth
                 />
@@ -574,10 +591,14 @@ export const RegisterPage = () => {
                       : "Nombre del establecimiento"
                   }
                   value={formik.values.nombreServicio}
-                  onChange={formik.handleChange}
+                  onChange={(e) => {
+                    handleBothInput(e, (value) => {
+                      formik.setFieldValue("nombreServicio", value);
+                    });
+                  }}
                   onBlur={formik.handleBlur}
                   error={formik.touched.nombreServicio && Boolean(formik.errors.nombreServicio)}
-                  helperText={formik.touched.nombreServicio && formik.errors.nombreServicio}
+                  helperText={formik.touched.nombreServicio ? formik.errors.nombreServicio : "Letras, números y caracteres especiales"}
                   required
                   fullWidth
                 />
@@ -587,10 +608,14 @@ export const RegisterPage = () => {
                     name="especialidad"
                     placeholder="Cardiología, Pediatría, etc."
                     value={formik.values.especialidad}
-                    onChange={formik.handleChange}
+                    onChange={(e) => {
+                      handleLetterInput(e, (value) => {
+                        formik.setFieldValue("especialidad", value);
+                      });
+                    }}
                     onBlur={formik.handleBlur}
                     error={formik.touched.especialidad && Boolean(formik.errors.especialidad)}
-                    helperText={formik.touched.especialidad && formik.errors.especialidad}
+                    helperText={formik.touched.especialidad ? formik.errors.especialidad : "Solo letras y espacios"}
                     required
                     fullWidth
                   />
@@ -600,10 +625,14 @@ export const RegisterPage = () => {
                   name="direccion"
                   placeholder="Calle Principal #123"
                   value={formik.values.direccion}
-                  onChange={formik.handleChange}
+                  onChange={(e) => {
+                    handleBothInput(e, (value) => {
+                      formik.setFieldValue("direccion", value);
+                    });
+                  }}
                   onBlur={formik.handleBlur}
                   error={formik.touched.direccion && Boolean(formik.errors.direccion)}
-                  helperText={formik.touched.direccion && formik.errors.direccion}
+                  helperText={formik.touched.direccion ? formik.errors.direccion : "Letras, números y caracteres especiales"}
                   required
                   fullWidth
                 />
@@ -612,10 +641,14 @@ export const RegisterPage = () => {
                   name="ciudad"
                   placeholder="Tu ciudad"
                   value={formik.values.ciudad}
-                  onChange={formik.handleChange}
+                  onChange={(e) => {
+                    handleLetterInput(e, (value) => {
+                      formik.setFieldValue("ciudad", value);
+                    });
+                  }}
                   onBlur={formik.handleBlur}
                   error={formik.touched.ciudad && Boolean(formik.errors.ciudad)}
-                  helperText={formik.touched.ciudad && formik.errors.ciudad}
+                  helperText={formik.touched.ciudad ? formik.errors.ciudad : "Solo letras y espacios"}
                   required
                   fullWidth
                 />
@@ -624,8 +657,13 @@ export const RegisterPage = () => {
                   name="tarifaConsulta"
                   placeholder="$50.00"
                   value={formik.values.tarifaConsulta}
-                  onChange={formik.handleChange}
+                  onChange={(e) => {
+                    handleNumberInput(e, (value) => {
+                      formik.setFieldValue("tarifaConsulta", value);
+                    });
+                  }}
                   onBlur={formik.handleBlur}
+                  helperText="Solo números y punto decimal"
                   fullWidth
                 />
               </Box>
@@ -635,10 +673,14 @@ export const RegisterPage = () => {
                 name="descripcion"
                 placeholder="Describe brevemente los servicios que ofreces..."
                 value={formik.values.descripcion}
-                onChange={formik.handleChange}
+                onChange={(e) => {
+                  handleBothInput(e, (value) => {
+                    formik.setFieldValue("descripcion", value);
+                  });
+                }}
                 onBlur={formik.handleBlur}
                 error={formik.touched.descripcion && Boolean(formik.errors.descripcion)}
-                helperText={formik.touched.descripcion && formik.errors.descripcion}
+                helperText={formik.touched.descripcion ? formik.errors.descripcion : "Letras, números y caracteres especiales"}
                 required
                 multiline
                 rows={4}

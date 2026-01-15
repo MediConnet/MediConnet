@@ -12,6 +12,7 @@ import type {
   LaboratoryDashboard,
   WorkSchedule,
 } from "../../domain/LaboratoryDashboard.entity";
+import { handleLetterInput, handlePhoneInput, handleEmailInput, handleBothInput } from "../../../../shared/lib/inputValidation";
 
 interface ProfileSectionProps {
   data: LaboratoryDashboard;
@@ -319,10 +320,11 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => handleChange("name", e.target.value)}
+                  onChange={(e) => handleBothInput(e, (value) => handleChange("name", value))}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1">Letras, números y caracteres especiales</p>
               </div>
               <div>
                 <label className="text-sm text-gray-600 mb-1 block">
@@ -331,10 +333,11 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
+                  onChange={(e) => handleEmailInput(e, (value) => handleChange("email", value))}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1">Formato: ejemplo@correo.com</p>
               </div>
               <div>
                 <label className="text-sm text-gray-600 mb-1 block">
@@ -343,10 +346,11 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 <input
                   type="text"
                   value={formData.whatsapp}
-                  onChange={(e) => handleChange("whatsapp", e.target.value)}
+                  onChange={(e) => handlePhoneInput(e, (value) => handleChange("whatsapp", value))}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1">Solo números, espacios, guiones y paréntesis</p>
               </div>
               <div>
                 <label className="text-sm text-gray-600 mb-1 block">
@@ -355,10 +359,11 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 <input
                   type="text"
                   value={formData.address}
-                  onChange={(e) => handleChange("address", e.target.value)}
+                  onChange={(e) => handleBothInput(e, (value) => handleChange("address", value))}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1">Letras, números y caracteres especiales</p>
               </div>
               {/* Eliminado el input de horario manual */}
             </div>
@@ -369,11 +374,12 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
               </label>
               <textarea
                 value={formData.description}
-                onChange={(e) => handleChange("description", e.target.value)}
+                onChange={(e) => handleBothInput(e, (value) => handleChange("description", value))}
                 rows={4}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
                 required
               />
+              <p className="text-xs text-gray-500 mt-1">Letras, números y caracteres especiales</p>
             </div>
 
             <div className="mt-6">

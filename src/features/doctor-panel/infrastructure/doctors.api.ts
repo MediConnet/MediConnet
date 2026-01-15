@@ -1,16 +1,26 @@
 // import { httpClient } from '../../../shared/lib/http'; // TODO: Descomentar cuando se implemente la API real
-import type { DoctorDashboard, WorkSchedule } from '../domain/DoctorDashboard.entity';
+import type { DoctorDashboard, WorkSchedule, PaymentMethod, ProfileStatus } from '../domain/DoctorDashboard.entity';
 
 export interface UpdateDoctorProfileParams {
-  name: string;
-  specialty: string;
-  email: string;
-  whatsapp: string;
-  address: string;
-  price: number;
-  description: string;
+  name?: string;
+  specialty?: string;
+  email?: string;
+  whatsapp?: string;
+  address?: string;
+  price?: number;
+  description?: string;
   experience?: number; 
   workSchedule?: WorkSchedule[];
+  profileStatus?: ProfileStatus;
+  paymentMethods?: PaymentMethod;
+  consultationDuration?: number;
+  blockedDates?: string[];
+  bankAccount?: {
+    bankName: string;
+    accountNumber: string;
+    accountType: string;
+    accountHolder: string;
+  };
 }
 
 // Mock data para el dashboard del doctor
@@ -35,6 +45,9 @@ const mockDoctorDashboard: DoctorDashboard = {
       { day: 'thursday', enabled: true, startTime: '09:00', endTime: '17:00' },
       { day: 'friday', enabled: true, startTime: '09:00', endTime: '17:00' },
     ],
+    profileStatus: 'draft',
+    paymentMethods: 'both',
+    consultationDuration: 30,
   },
 };
 
@@ -83,7 +96,20 @@ export const updateDoctorProfileAPI = async (
           ...currentData,
           doctor: {
             ...currentData.doctor,
-            ...params,
+            ...(params.name !== undefined && { name: params.name }),
+            ...(params.specialty !== undefined && { specialty: params.specialty }),
+            ...(params.email !== undefined && { email: params.email }),
+            ...(params.whatsapp !== undefined && { whatsapp: params.whatsapp }),
+            ...(params.address !== undefined && { address: params.address }),
+            ...(params.price !== undefined && { price: params.price }),
+            ...(params.description !== undefined && { description: params.description }),
+            ...(params.experience !== undefined && { experience: params.experience }),
+            ...(params.workSchedule !== undefined && { workSchedule: params.workSchedule }),
+            ...(params.profileStatus !== undefined && { profileStatus: params.profileStatus }),
+            ...(params.paymentMethods !== undefined && { paymentMethods: params.paymentMethods }),
+            ...(params.consultationDuration !== undefined && { consultationDuration: params.consultationDuration }),
+            ...(params.blockedDates !== undefined && { blockedDates: params.blockedDates }),
+            ...(params.bankAccount !== undefined && { bankAccount: params.bankAccount }),
           },
         };
         // Guardar en localStorage para persistencia
@@ -96,7 +122,20 @@ export const updateDoctorProfileAPI = async (
           ...mockDoctorDashboard,
           doctor: {
             ...mockDoctorDashboard.doctor,
-            ...params,
+            ...(params.name !== undefined && { name: params.name }),
+            ...(params.specialty !== undefined && { specialty: params.specialty }),
+            ...(params.email !== undefined && { email: params.email }),
+            ...(params.whatsapp !== undefined && { whatsapp: params.whatsapp }),
+            ...(params.address !== undefined && { address: params.address }),
+            ...(params.price !== undefined && { price: params.price }),
+            ...(params.description !== undefined && { description: params.description }),
+            ...(params.experience !== undefined && { experience: params.experience }),
+            ...(params.workSchedule !== undefined && { workSchedule: params.workSchedule }),
+            ...(params.profileStatus !== undefined && { profileStatus: params.profileStatus }),
+            ...(params.paymentMethods !== undefined && { paymentMethods: params.paymentMethods }),
+            ...(params.consultationDuration !== undefined && { consultationDuration: params.consultationDuration }),
+            ...(params.blockedDates !== undefined && { blockedDates: params.blockedDates }),
+            ...(params.bankAccount !== undefined && { bankAccount: params.bankAccount }),
           },
         };
         resolve(updatedDashboard);
