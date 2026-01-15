@@ -161,18 +161,6 @@ const AppointmentDetailModal = ({
             </p>
           </div>
 
-          {/* Notas adicionales */}
-          {appointment.notes && (
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-              <h4 className="font-semibold text-gray-900 mb-2">
-                Notas adicionales
-              </h4>
-              <p className="text-gray-600 text-sm leading-relaxed">
-                {appointment.notes}
-              </p>
-            </div>
-          )}
-
           {/* Estado de la cita */}
           <div className="border border-gray-200 rounded-xl p-4">
             <h4 className="font-semibold text-gray-900 mb-3">
@@ -1157,11 +1145,6 @@ export const AppointmentsSection = () => {
                           </div>
                         </div>
                         <p className="text-sm text-gray-600">{apt.reason}</p>
-                        {apt.notes && (
-                          <p className="text-xs text-gray-500 mt-1 italic">
-                            {apt.notes}
-                          </p>
-                        )}
                       </div>
                     </div>
                   </div>

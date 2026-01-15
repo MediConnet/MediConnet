@@ -1,5 +1,12 @@
 import { Star } from "@mui/icons-material";
 
+// Función para obtener fechas recientes
+const getRecentDate = (daysAgo: number) => {
+  const today = new Date();
+  today.setDate(today.getDate() - daysAgo);
+  return today.toISOString().split("T")[0];
+};
+
 // Mock data para reseñas
 const mockReviews = [
   {
@@ -7,21 +14,56 @@ const mockReviews = [
     name: "María García",
     rating: 5,
     comment: "Excelente laboratorio, resultados rápidos y confiables. Muy recomendado.",
-    date: "2024-01-20",
+    date: getRecentDate(3),
   },
   {
     id: "2",
     name: "Juan López",
     rating: 4,
     comment: "Buena atención, los resultados llegaron a tiempo. Profesional.",
-    date: "2024-01-15",
+    date: getRecentDate(7),
   },
   {
     id: "3",
     name: "Ana Martínez",
     rating: 5,
     comment: "Muy satisfecha con el servicio, personal amable y resultados precisos.",
-    date: "2024-01-10",
+    date: getRecentDate(10),
+  },
+  {
+    id: "4",
+    name: "Carlos Rodríguez",
+    rating: 5,
+    comment: "Resultados muy precisos y el personal muy profesional. Excelente servicio.",
+    date: getRecentDate(12),
+  },
+  {
+    id: "5",
+    name: "Laura Sánchez",
+    rating: 4,
+    comment: "Buen laboratorio, aunque la espera fue un poco larga. Pero los resultados fueron confiables.",
+    date: getRecentDate(15),
+  },
+  {
+    id: "6",
+    name: "Pedro González",
+    rating: 5,
+    comment: "Muy satisfecho. Resultados en línea muy práctico y el personal muy atento.",
+    date: getRecentDate(18),
+  },
+  {
+    id: "7",
+    name: "Sofía Ramírez",
+    rating: 5,
+    comment: "El mejor laboratorio que he visitado. Muy profesional y resultados rápidos.",
+    date: getRecentDate(22),
+  },
+  {
+    id: "8",
+    name: "Roberto Fernández",
+    rating: 4,
+    comment: "Buena atención y resultados precisos. Recomendado.",
+    date: getRecentDate(25),
   },
 ];
 

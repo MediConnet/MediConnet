@@ -6,8 +6,14 @@ import {
   TextField,
   CardContent,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Avatar,
+  Stack,
 } from "@mui/material";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -27,6 +33,8 @@ import {
 import { ROUTES } from "../../../../app/config/constants";
 import { useRegisterProfessional } from "../hooks/useRegisterProfessional";
 import { handleLetterInput, handleNumberInput, handlePhoneInput, handleEmailInput, handleBothInput } from "../../../../shared/lib/inputValidation";
+import { getPharmacyChains } from "../../../../shared/lib/pharmacy-chains";
+import type { PharmacyChain } from "../../../../admin-dashboard/domain/pharmacy-chain.entity";
 
 type ServiceType = "doctor" | "pharmacy" | "lab" | "ambulance" | "supplies";
 
@@ -71,6 +79,14 @@ export const RegisterPage = () => {
   const licenseInputRef = useRef<HTMLInputElement>(null);
   const certificateInputRef = useRef<HTMLInputElement>(null);
   const professionalTitleInputRef = useRef<HTMLInputElement>(null);
+  const [pharmacyChains, setPharmacyChains] = useState<PharmacyChain[]>([]);
+  
+  useEffect(() => {
+    if (selectedType === "pharmacy") {
+      const chains = getPharmacyChains();
+      setPharmacyChains(chains.filter((c) => c.isActive));
+    }
+  }, [selectedType]);
 
   // Esquema de validación para paso 1 (Información personal)
   const personalInfoSchema = Yup.object({
@@ -96,10 +112,7 @@ export const RegisterPage = () => {
 
   // Esquema de validación para paso 2 (Información del servicio)
   const getServiceInfoSchema = () => {
-    const baseSchema = {
-      nombreServicio: Yup.string()
-        .min(3, "El nombre del servicio debe tener al menos 3 caracteres")
-        .required("El nombre del servicio es requerido"),
+    const baseSchema: any = {
       descripcion: Yup.string()
         .min(10, "La descripción debe tener al menos 10 caracteres")
         .required("La descripción es requerida"),
@@ -114,11 +127,16 @@ export const RegisterPage = () => {
       instagram: Yup.string(),
     };
 
+    if (selectedType === "pharmacy") {
+      baseSchema.chainId = Yup.string().required("Debes seleccionar una cadena de farmacias");
+    } else {
+      baseSchema.nombreServicio = Yup.string()
+        .min(3, "El nombre del servicio debe tener al menos 3 caracteres")
+        .required("El nombre del servicio es requerido");
+    }
+
     if (selectedType === "doctor") {
-      return Yup.object({
-        ...baseSchema,
-        especialidad: Yup.string().required("La especialidad es requerida"),
-      });
+      baseSchema.especialidad = Yup.string().required("La especialidad es requerida");
     }
 
     return Yup.object(baseSchema);
@@ -140,6 +158,7 @@ export const RegisterPage = () => {
       direccion: "",
       ciudad: "",
       tarifaConsulta: "",
+      chainId: "", // Para farmacias
       // Social
       facebook: "",
       instagram: "",
@@ -158,11 +177,14 @@ export const RegisterPage = () => {
             email: values.email,
             phone: values.telefono,
             whatsapp: values.whatsapp,
-            serviceName: values.nombreServicio,
+            serviceName: selectedType === "pharmacy" 
+              ? (pharmacyChains.find(c => c.id === values.chainId)?.name || values.nombreServicio)
+              : values.nombreServicio,
             address: values.direccion,
             city: values.ciudad,
             price: values.tarifaConsulta,
             description: values.descripcion,
+            chainId: selectedType === "pharmacy" ? values.chainId : undefined,
           };
 
           await submit(professionalData);
@@ -582,26 +604,74 @@ export const RegisterPage = () => {
                   mb: 3,
                 }}
               >
-                <TextField
-                  label="Nombre del servicio *"
-                  name="nombreServicio"
-                  placeholder={
-                    selectedType === "doctor"
-                      ? "Consultorio Dr. Pérez"
-                      : "Nombre del establecimiento"
-                  }
-                  value={formik.values.nombreServicio}
-                  onChange={(e) => {
-                    handleBothInput(e, (value) => {
-                      formik.setFieldValue("nombreServicio", value);
-                    });
-                  }}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.nombreServicio && Boolean(formik.errors.nombreServicio)}
-                  helperText={formik.touched.nombreServicio ? formik.errors.nombreServicio : "Letras, números y caracteres especiales"}
-                  required
-                  fullWidth
-                />
+                {selectedType === "pharmacy" ? (
+                  <FormControl fullWidth required>
+                    <InputLabel>Cadena de Farmacias *</InputLabel>
+                    <Select
+                      name="chainId"
+                      value={formik.values.chainId}
+                      label="Cadena de Farmacias *"
+                      onChange={(e) => {
+                        formik.setFieldValue("chainId", e.target.value);
+                        const selectedChain = pharmacyChains.find(c => c.id === e.target.value);
+                        if (selectedChain) {
+                          formik.setFieldValue("nombreServicio", selectedChain.name);
+                        }
+                      }}
+                      onBlur={formik.handleBlur}
+                      error={formik.touched.chainId && Boolean((formik.errors as any).chainId)}
+                    >
+                      {pharmacyChains.map((chain) => (
+                        <MenuItem key={chain.id} value={chain.id}>
+                          <Stack direction="row" spacing={2} alignItems="center">
+                            {chain.logoUrl ? (
+                              <Box
+                                component="img"
+                                src={chain.logoUrl}
+                                alt={chain.name}
+                                sx={{ width: 32, height: 32, objectFit: "contain" }}
+                              />
+                            ) : (
+                              <Avatar sx={{ width: 24, height: 24 }}>
+                                <Medication fontSize="small" />
+                              </Avatar>
+                            )}
+                            <Typography>{chain.name}</Typography>
+                          </Stack>
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {(formik.touched.chainId && (formik.errors as any).chainId) && (
+                      <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                        {(formik.errors as any).chainId}
+                      </Typography>
+                    )}
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, ml: 1.75 }}>
+                      Si tu cadena no aparece, contacta al administrador
+                    </Typography>
+                  </FormControl>
+                ) : (
+                  <TextField
+                    label="Nombre del servicio *"
+                    name="nombreServicio"
+                    placeholder={
+                      selectedType === "doctor"
+                        ? "Consultorio Dr. Pérez"
+                        : "Nombre del establecimiento"
+                    }
+                    value={formik.values.nombreServicio}
+                    onChange={(e) => {
+                      handleBothInput(e, (value) => {
+                        formik.setFieldValue("nombreServicio", value);
+                      });
+                    }}
+                    onBlur={formik.handleBlur}
+                    error={formik.touched.nombreServicio && Boolean(formik.errors.nombreServicio)}
+                    helperText={formik.touched.nombreServicio ? formik.errors.nombreServicio : "Letras, números y caracteres especiales"}
+                    required
+                    fullWidth
+                  />
+                )}
                 {selectedType === "doctor" && (
                   <TextField
                     label="Especialidad *"
@@ -652,20 +722,22 @@ export const RegisterPage = () => {
                   required
                   fullWidth
                 />
-                <TextField
-                  label="Tarifa de consulta"
-                  name="tarifaConsulta"
-                  placeholder="$50.00"
-                  value={formik.values.tarifaConsulta}
-                  onChange={(e) => {
-                    handleNumberInput(e, (value) => {
-                      formik.setFieldValue("tarifaConsulta", value);
-                    });
-                  }}
-                  onBlur={formik.handleBlur}
-                  helperText="Solo números y punto decimal"
-                  fullWidth
-                />
+                {selectedType !== "pharmacy" && (
+                  <TextField
+                    label="Tarifa de consulta"
+                    name="tarifaConsulta"
+                    placeholder="$50.00"
+                    value={formik.values.tarifaConsulta}
+                    onChange={(e) => {
+                      handleNumberInput(e, (value) => {
+                        formik.setFieldValue("tarifaConsulta", value);
+                      });
+                    }}
+                    onBlur={formik.handleBlur}
+                    helperText="Solo números y punto decimal"
+                    fullWidth
+                  />
+                )}
               </Box>
 
               <TextField

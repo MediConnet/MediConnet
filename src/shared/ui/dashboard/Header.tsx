@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Menu as MenuIcon, Notifications } from "@mui/icons-material";
 import { NotificationsDropdown } from "./NotificationsDropdown";
 
@@ -40,6 +40,7 @@ export const Header = ({
   notificationType = "appointments",
 }: HeaderProps) => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [viewedNotifications, setViewedNotifications] = useState<Set<string>>(new Set());
 
   // Validar que user existe, si no, usar valores por defecto
   const safeUser = user || {
@@ -49,17 +50,79 @@ export const Header = ({
     isActive: false,
   };
 
+  // Cargar notificaciones vistas desde localStorage y limpiar las de días anteriores
+  useEffect(() => {
+    const saved = localStorage.getItem(`viewed-notifications-${notificationType}`);
+    const today = new Date().toISOString().split("T")[0];
+    
+    if (saved) {
+      try {
+        const viewed = JSON.parse(saved);
+        // Obtener IDs de notificaciones de hoy
+        const todayItems = notificationType === "orders"
+          ? orders.filter((order) => order.orderDate === today).map((o) => o.id)
+          : appointments.filter((apt) => apt.date === today).map((a) => a.id);
+        
+        // Solo mantener las notificaciones vistas que son de hoy
+        const todayViewed = viewed.filter((id: string) => todayItems.includes(id));
+        setViewedNotifications(new Set(todayViewed));
+        
+        // Guardar solo las de hoy
+        localStorage.setItem(
+          `viewed-notifications-${notificationType}`,
+          JSON.stringify(todayViewed)
+        );
+      } catch (error) {
+        console.error("Error loading viewed notifications:", error);
+      }
+    }
+  }, [notificationType, appointments, orders]);
+
   // Obtener solo las citas o pedidos de hoy
   const today = new Date().toISOString().split("T")[0];
-  let notificationCount = 0;
+  
+  // Filtrar notificaciones no vistas
+  const unreadNotifications = useMemo(() => {
+    if (notificationType === "orders") {
+      const todayOrders = orders.filter((order) => order.orderDate === today);
+      return todayOrders.filter((order) => !viewedNotifications.has(order.id));
+    } else {
+      const todayAppointments = appointments.filter((apt) => apt.date === today);
+      return todayAppointments.filter((apt) => !viewedNotifications.has(apt.id));
+    }
+  }, [appointments, orders, today, notificationType, viewedNotifications]);
 
-  if (notificationType === "orders") {
-    const todayOrders = orders.filter((order) => order.orderDate === today);
-    notificationCount = todayOrders.length;
-  } else {
-    const todayAppointments = appointments.filter((apt) => apt.date === today);
-    notificationCount = todayAppointments.length;
-  }
+  const notificationCount = unreadNotifications.length;
+
+  // Separar notificaciones no vistas por tipo
+  const unreadAppointments = notificationType === "appointments" 
+    ? (unreadNotifications as typeof appointments)
+    : [];
+  const unreadOrders = notificationType === "orders"
+    ? (unreadNotifications as typeof orders)
+    : [];
+
+  // Solo abrir/cerrar el dropdown sin marcar como vistas automáticamente
+  const handleNotificationsOpen = () => {
+    setNotificationsOpen(!notificationsOpen);
+  };
+
+  // Función para marcar todas las notificaciones como leídas manualmente
+  const handleMarkAllAsRead = () => {
+    const todayItems = notificationType === "orders"
+      ? orders.filter((order) => order.orderDate === today)
+      : appointments.filter((apt) => apt.date === today);
+    
+    const newViewed = new Set(viewedNotifications);
+    todayItems.forEach((item) => newViewed.add(item.id));
+    setViewedNotifications(newViewed);
+    
+    // Guardar en localStorage
+    localStorage.setItem(
+      `viewed-notifications-${notificationType}`,
+      JSON.stringify(Array.from(newViewed))
+    );
+  };
 
   return (
     <header
@@ -88,7 +151,7 @@ export const Header = ({
 
         <div className="relative">
           <button
-            onClick={() => setNotificationsOpen(!notificationsOpen)}
+            onClick={handleNotificationsOpen}
             className="relative text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-lg hover:bg-gray-100"
           >
             <Notifications />
@@ -101,9 +164,11 @@ export const Header = ({
           <NotificationsDropdown
             open={notificationsOpen}
             onClose={() => setNotificationsOpen(false)}
-            appointments={appointments}
-            orders={orders}
+            appointments={notificationType === "appointments" ? appointments.filter((apt) => apt.date === today) : []}
+            orders={notificationType === "orders" ? orders.filter((order) => order.orderDate === today) : []}
             notificationType={notificationType}
+            viewedNotifications={viewedNotifications}
+            onMarkAllAsRead={handleMarkAllAsRead}
           />
         </div>
 

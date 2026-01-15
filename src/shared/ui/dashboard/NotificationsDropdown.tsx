@@ -25,6 +25,8 @@ interface NotificationsDropdownProps {
   appointments: Appointment[];
   orders?: Order[];
   notificationType?: "appointments" | "orders";
+  viewedNotifications?: Set<string>;
+  onMarkAllAsRead?: () => void;
 }
 
 export const NotificationsDropdown = ({
@@ -33,6 +35,8 @@ export const NotificationsDropdown = ({
   appointments,
   orders = [],
   notificationType = "appointments",
+  viewedNotifications = new Set(),
+  onMarkAllAsRead,
 }: NotificationsDropdownProps) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -56,7 +60,7 @@ export const NotificationsDropdown = ({
     };
   }, [open, onClose]);
 
-  // Obtener solo las citas o pedidos de hoy
+  // Obtener solo las citas o pedidos de hoy (mostrar todas, no solo las no vistas)
   const today = new Date().toISOString().split("T")[0];
   const todayAppointments = appointments
     .filter((apt) => apt.date === today)
@@ -64,6 +68,11 @@ export const NotificationsDropdown = ({
   const todayOrders = orders
     .filter((order) => order.orderDate === today)
     .sort((a, b) => a.orderNumber.localeCompare(b.orderNumber));
+
+  // Contar cuántas no están vistas
+  const unreadCount = notificationType === "orders"
+    ? todayOrders.filter((order) => !viewedNotifications.has(order.id)).length
+    : todayAppointments.filter((apt) => !viewedNotifications.has(apt.id)).length;
 
   if (!open) return null;
 
@@ -95,11 +104,21 @@ export const NotificationsDropdown = ({
             <Close className="text-sm" />
           </button>
         </div>
-        <p className="text-sm text-gray-500 mt-2">
-          {notificationType === "orders"
-            ? `${todayOrders.length} pedido${todayOrders.length !== 1 ? "s" : ""} recibido${todayOrders.length !== 1 ? "s" : ""} hoy`
-            : `${todayAppointments.length} cita${todayAppointments.length !== 1 ? "s" : ""} programada${todayAppointments.length !== 1 ? "s" : ""} para hoy`}
-        </p>
+        <div className="flex items-center justify-between mt-2">
+          <p className="text-sm text-gray-500">
+            {notificationType === "orders"
+              ? `${todayOrders.length} pedido${todayOrders.length !== 1 ? "s" : ""} recibido${todayOrders.length !== 1 ? "s" : ""} hoy`
+              : `${todayAppointments.length} cita${todayAppointments.length !== 1 ? "s" : ""} programada${todayAppointments.length !== 1 ? "s" : ""} para hoy`}
+          </p>
+          {unreadCount > 0 && onMarkAllAsRead && (
+            <button
+              onClick={onMarkAllAsRead}
+              className="text-xs text-teal-600 hover:text-teal-700 font-medium underline"
+            >
+              Marcar todas como leídas
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Content */}
@@ -107,10 +126,14 @@ export const NotificationsDropdown = ({
         {notificationType === "orders" ? (
           todayOrders.length > 0 ? (
             <div className="divide-y divide-gray-100">
-              {todayOrders.map((order) => (
+              {todayOrders.map((order) => {
+                const isRead = viewedNotifications.has(order.id);
+                return (
                 <div
                   key={order.id}
-                  className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                  className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
+                    !isRead ? "bg-blue-50 border-l-4 border-blue-500" : ""
+                  }`}
                 >
                   <div className="flex items-start gap-3">
                     <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center shrink-0">
@@ -139,7 +162,8 @@ export const NotificationsDropdown = ({
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-12">
@@ -156,10 +180,14 @@ export const NotificationsDropdown = ({
           )
         ) : todayAppointments.length > 0 ? (
           <div className="divide-y divide-gray-100">
-            {todayAppointments.map((apt) => (
+            {todayAppointments.map((apt) => {
+              const isRead = viewedNotifications.has(apt.id);
+              return (
               <div
                 key={apt.id}
-                className="p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
+                  !isRead ? "bg-blue-50 border-l-4 border-blue-500" : ""
+                }`}
               >
                 <div className="flex items-start gap-3">
                   <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center shrink-0">
@@ -181,7 +209,8 @@ export const NotificationsDropdown = ({
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-12">

@@ -11,12 +11,14 @@ import {
   VisibilityOff,
 } from "@mui/icons-material";
 import {
+  Avatar,
   Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   FormControl,
   FormControlLabel,
   IconButton,
@@ -34,6 +36,8 @@ import {
 import Grid2 from "@mui/material/Grid2";
 import { useEffect, useRef, useState } from "react";
 import type { PharmacyProfile } from "../../domain/pharmacy-profile.entity";
+import { getPharmacyChains } from "../../../../shared/lib/pharmacy-chains";
+import type { PharmacyChain } from "../../../../admin-dashboard/domain/pharmacy-chain.entity";
 
 interface Props {
   open: boolean;
@@ -61,12 +65,48 @@ export const EditPharmacyModal = ({
     address: "",
     status: "draft",
     isActive: true,
+    chainId: "",
   });
 
   const [hasNewImage, setHasNewImage] = useState(false);
+  const [chains, setChains] = useState<PharmacyChain[]>([]);
+  const [selectedChain, setSelectedChain] = useState<PharmacyChain | null>(null);
 
   useEffect(() => {
-    if (initialData) {
+    const loadedChains = getPharmacyChains();
+    const activeChains = loadedChains.filter((c) => c.isActive);
+    setChains(activeChains);
+    
+    // Si hay initialData, buscar la cadena correspondiente
+    if (initialData && initialData.chainId) {
+      const chain = activeChains.find((c) => c.id === initialData.chainId);
+      if (chain) {
+        setSelectedChain(chain);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (initialData && open) {
+      const chainId = initialData.chainId || "";
+      const chain = chains.find((c) => c.id === chainId);
+      
+      // Si hay cadena, SIEMPRE usar el nombre y logo de la cadena (no del initialData)
+      if (chain) {
+        setSelectedChain(chain);
+        setFormData({
+          commercialName: chain.name, // SIEMPRE usar nombre de la cadena
+          ruc: initialData.ruc || "",
+          description: initialData.description || "",
+          websiteUrl: initialData.websiteUrl || "",
+          logoUrl: chain.logoUrl || "", // SIEMPRE usar logo de la cadena
+          address: initialData.address || "",
+          status: initialData.status || "draft",
+          isActive: initialData.isActive !== false,
+          chainId: chainId,
+        });
+      } else {
+        // Si no hay cadena, usar los datos iniciales normalmente
       setFormData({
         commercialName: initialData.commercialName,
         ruc: initialData.ruc || "",
@@ -76,18 +116,71 @@ export const EditPharmacyModal = ({
         address: initialData.address || "",
         status: initialData.status || "draft",
         isActive: initialData.isActive !== false,
+          chainId: chainId,
+        });
+      }
+      
+      if (chain) {
+        setSelectedChain(chain);
+        // Si hay una cadena seleccionada, usar su nombre y logo
+        if (!initialData.logoUrl && chain.logoUrl) {
+          setFormData((prev) => ({
+            ...prev,
+            logoUrl: chain.logoUrl,
+            commercialName: chain.name,
+          }));
+        }
+      }
+      
+      setHasNewImage(false);
+    } else if (!initialData && open) {
+      // Resetear formulario cuando se abre sin datos iniciales
+      setFormData({
+        commercialName: "",
+        ruc: "",
+        description: "",
+        websiteUrl: "",
+        logoUrl: "",
+        address: "",
+        status: "draft",
+        isActive: true,
+        chainId: "",
       });
+      setSelectedChain(null);
       setHasNewImage(false);
     }
-  }, [initialData, open]);
+  }, [initialData, open, chains]);
 
   const handleChange = (field: string, value: string) => {
+    // Si hay cadena seleccionada, NO permitir cambiar el nombre comercial ni el logo
+    if (selectedChain && (field === "commercialName" || field === "logoUrl")) {
+      return; // Ignorar cambios a estos campos
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleChainChange = (chainId: string) => {
+    const chain = chains.find((c) => c.id === chainId);
+    if (chain) {
+      setSelectedChain(chain);
+      // El nombre y logo SIEMPRE vienen de la cadena seleccionada
+      setFormData((prev) => ({
+        ...prev,
+        chainId: chain.id,
+        commercialName: chain.name, // Siempre usar el nombre de la cadena
+        logoUrl: chain.logoUrl || "", // Siempre usar el logo de la cadena
+      }));
+      setHasNewImage(false); // Resetear si había imagen personalizada
+    }
   };
 
   const handleUploadClick = () => fileInputRef.current?.click();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    // Si hay cadena seleccionada, NO permitir cambiar el logo
+    if (selectedChain) {
+      return;
+    }
     const file = event.target.files?.[0];
     if (file) {
       const objectUrl = URL.createObjectURL(file);
@@ -97,9 +190,19 @@ export const EditPharmacyModal = ({
   };
 
   const handleSave = () => {
-    // Aquí ya no procesamos horarios ni direcciones.
-    // Solo devolvemos la data de la marca.
+    // Si hay cadena seleccionada, FORZAR el logo y nombre de la cadena (NO se pueden editar)
+    if (selectedChain) {
+      const savedData = {
+        ...formData,
+        commercialName: selectedChain.name, // SIEMPRE usar el nombre de la cadena
+        logoUrl: selectedChain.logoUrl || "", // SIEMPRE usar el logo de la cadena
+        chainId: selectedChain.id, // Asegurar que el chainId esté correcto
+      };
+      onSave(savedData as PharmacyProfile);
+    } else {
+      // Si no hay cadena, usar los datos del formulario normalmente
     onSave(formData as PharmacyProfile);
+    }
     onClose();
   };
 
@@ -132,12 +235,131 @@ export const EditPharmacyModal = ({
 
       <DialogContent dividers>
         <Stack spacing={3} sx={{ mt: 1 }}>
-          {/* --- 1. LOGO DE LA MARCA (Visualización Previa + Carga) --- */}
+          {/* --- 0. CADENA ASIGNADA (Solo lectura si hay cadena) --- */}
+          {selectedChain && (
+            <Box>
+              <Typography variant="subtitle2" fontWeight={600} mb={1}>
+                Cadena de Farmacias
+              </Typography>
+              <Box
+                sx={{
+                  p: 2,
+                  border: "2px solid",
+                  borderColor: "primary.main",
+                  borderRadius: 2,
+                  bgcolor: alpha(theme.palette.primary.main, 0.05),
+                }}
+              >
+                <Stack direction="row" spacing={2} alignItems="center">
+                  {selectedChain.logoUrl ? (
+                    <Box
+                      component="img"
+                      src={selectedChain.logoUrl}
+                      alt={selectedChain.name}
+                      sx={{ width: 60, height: 60, objectFit: "contain" }}
+                    />
+                  ) : (
+                    <Avatar sx={{ width: 50, height: 50 }}>
+                      <Business />
+                    </Avatar>
+                  )}
+                  <Box>
+                    <Typography variant="h6" fontWeight={700}>
+                      {selectedChain.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Esta cadena está asignada a tu farmacia y no se puede cambiar
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Box>
+              <Typography variant="caption" color="error.main" mt={1} display="block" fontWeight={600}>
+                ⚠️ El nombre y logo de la cadena son controlados únicamente por el administrador. No puedes editarlos ni cambiarlos.
+              </Typography>
+            </Box>
+          )}
+
+          {/* --- 1. LOGO DE LA MARCA (SI hay cadena, SOLO mostrar, NO editar) --- */}
+          {selectedChain ? (
+            <Box>
+              <Typography variant="subtitle2" fontWeight={600} mb={1}>
+                Logo de la Cadena (Solo lectura)
+              </Typography>
+              <Box
+                sx={{
+                  border: `2px solid ${alpha(theme.palette.error.main, 0.2)}`,
+                  borderRadius: 3,
+                  p: 3,
+                  textAlign: "center",
+                  bgcolor: alpha(theme.palette.error.main, 0.02),
+                  minHeight: 160,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "not-allowed",
+                  pointerEvents: "none",
+                }}
+              >
+                {selectedChain?.logoUrl ? (
+                  <Box
+                    component="img"
+                    src={selectedChain.logoUrl}
+                    alt={`Logo de ${selectedChain.name}`}
+                    onError={(e) => {
+                      // Si falla la carga, mostrar icono
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = "none";
+                    }}
+                    sx={{
+                      maxHeight: 150,
+                      maxWidth: "100%",
+                      width: "auto",
+                      objectFit: "contain",
+                      mb: 1,
+                      borderRadius: 1,
+                    }}
+                  />
+                ) : formData.logoUrl ? (
+                  <Box
+                    component="img"
+                    src={formData.logoUrl}
+                    alt="Logo"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = "none";
+                    }}
+                    sx={{
+                      maxHeight: 150,
+                      maxWidth: "100%",
+                      width: "auto",
+                      objectFit: "contain",
+                      mb: 1,
+                      borderRadius: 1,
+                    }}
+                  />
+                ) : (
+                  <Business
+                    sx={{
+                      fontSize: 60,
+                      color: theme.palette.text.disabled,
+                      mb: 1,
+                    }}
+                  />
+                )}
+                <Typography variant="body2" fontWeight={600} color="text.secondary">
+                  Logo de {selectedChain.name}
+                </Typography>
+                <Typography variant="caption" color="error.main" mt={1} fontWeight={600}>
+                  ⚠️ Este logo NO se puede editar. Solo el administrador puede modificarlo.
+                </Typography>
+              </Box>
+            </Box>
+          ) : (
           <Box>
             <Typography variant="subtitle2" fontWeight={600} mb={1}>
               Logotipo / Imagen de Marca
             </Typography>
-
             <input
               type="file"
               accept="image/*"
@@ -145,7 +367,6 @@ export const EditPharmacyModal = ({
               style={{ display: "none" }}
               onChange={handleFileChange}
             />
-
             <Box
               onClick={handleUploadClick}
               sx={{
@@ -169,7 +390,6 @@ export const EditPharmacyModal = ({
                 overflow: "hidden",
               }}
             >
-              {/* VISTA PREVIA DE LA IMAGEN */}
               {formData.logoUrl ? (
                 <Box
                   component="img"
@@ -192,13 +412,11 @@ export const EditPharmacyModal = ({
                   }}
                 />
               )}
-
               <Typography variant="body2" fontWeight={600} color="primary.main">
                 {formData.logoUrl
                   ? "Click para cambiar logo"
                   : "Subir Logo de la Farmacia"}
               </Typography>
-
               {hasNewImage && (
                 <Stack
                   direction="row"
@@ -215,14 +433,42 @@ export const EditPharmacyModal = ({
               )}
             </Box>
           </Box>
+          )}
 
           {/* --- 2. DATOS DE IDENTIDAD --- */}
           <Grid2 container spacing={2}>
             <Grid2 size={{ xs: 12 }}>
+              {selectedChain ? (
+                <Box>
+                  <Typography variant="subtitle2" fontWeight={600} mb={1}>
+                    Nombre Comercial (Solo lectura - Controlado por Administrador)
+                  </Typography>
+                  <Box
+                    sx={{
+                      p: 2,
+                      border: "2px solid",
+                      borderColor: "error.main",
+                      borderRadius: 2,
+                      bgcolor: "rgba(211, 47, 47, 0.05)",
+                      cursor: "not-allowed",
+                    }}
+                  >
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Business color="disabled" />
+                      <Typography variant="body1" fontWeight={600} color="text.primary">
+                        {selectedChain.name}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                  <Typography variant="caption" color="error.main" mt={1} display="block" fontWeight={600}>
+                    ⚠️ Este nombre NO se puede editar. Solo el administrador puede modificarlo desde el panel de administración.
+                  </Typography>
+                </Box>
+              ) : (
               <TextField
                 fullWidth
                 label="Nombre Comercial"
-                placeholder="Ej: Farmacias Medicity"
+                  placeholder="Solo si no perteneces a ninguna cadena"
                 value={formData.commercialName}
                 onChange={(e) => handleChange("commercialName", e.target.value)}
                 InputProps={{
@@ -232,9 +478,12 @@ export const EditPharmacyModal = ({
                     </InputAdornment>
                   ),
                 }}
+                  helperText="Solo si tu farmacia es independiente (no pertenece a ninguna cadena)"
               />
+              )}
             </Grid2>
 
+            {/* RUC y Descripción - Siempre editables */}
             <Grid2 size={{ xs: 12 }}>
               <TextField
                 fullWidth
@@ -264,24 +513,12 @@ export const EditPharmacyModal = ({
                 }}
               />
             </Grid2>
-
-            <Grid2 size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                label="Sitio Web (Opcional)"
-                placeholder="www.mifarmacia.com"
-                value={formData.websiteUrl}
-                onChange={(e) => handleChange("websiteUrl", e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Language color="action" fontSize="small" />
-                    </InputAdornment>
-                  ),
-                }}
-              />
             </Grid2>
 
+          {/* Divider antes de Dirección y Sitio Web */}
+          <Divider sx={{ my: 2 }} />
+
+          <Grid2 container spacing={2}>
             <Grid2 size={{ xs: 12 }}>
               <TextField
                 fullWidth
@@ -302,65 +539,22 @@ export const EditPharmacyModal = ({
             </Grid2>
 
             <Grid2 size={{ xs: 12 }}>
-              <FormControl fullWidth>
-                <InputLabel>Estado del Perfil</InputLabel>
-                <Select
-                  value={formData.status || "draft"}
-                  label="Estado del Perfil"
-                  onChange={(e) => handleChange("status", e.target.value)}
-                  startAdornment={
+              <TextField
+                fullWidth
+                label="Sitio Web (Opcional)"
+                placeholder="www.mifarmacia.com"
+                value={formData.websiteUrl}
+                onChange={(e) => handleChange("websiteUrl", e.target.value)}
+                InputProps={{
+                  startAdornment: (
                     <InputAdornment position="start">
-                      {formData.status === "published" ? (
-                        <Visibility color="action" fontSize="small" />
-                      ) : (
-                        <VisibilityOff color="action" fontSize="small" />
-                      )}
+                      <Language color="action" fontSize="small" />
                     </InputAdornment>
-                  }
-                >
-                  <MenuItem value="draft">Borrador</MenuItem>
-                  <MenuItem value="published">Publicado</MenuItem>
-                  <MenuItem value="suspended">Suspendido</MenuItem>
-                </Select>
-              </FormControl>
+                  ),
+                }}
+              />
             </Grid2>
           </Grid2>
-
-          {/* Estado del Servicio */}
-          <Box
-            sx={{
-              p: 2,
-              borderRadius: 2,
-              border: "1px solid",
-              borderColor: "grey.200",
-              bgcolor: "grey.50",
-            }}
-          >
-            <Typography variant="subtitle2" fontWeight={600} mb={1}>
-              Estado del Servicio
-            </Typography>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.isActive !== false}
-                  onChange={(e) => {
-                    setFormData((prev) => ({ ...prev, isActive: e.target.checked }));
-                  }}
-                  color="primary"
-                />
-              }
-              label={
-                formData.isActive !== false
-                  ? "Servicio Activo (visible en la app)"
-                  : "Servicio Inactivo (oculto en la app)"
-              }
-            />
-            <Typography variant="caption" color="text.secondary" mt={1} display="block">
-              {formData.isActive !== false
-                ? "Tu servicio está visible y disponible para los usuarios"
-                : "Tu servicio está oculto y no aparecerá en la búsqueda"}
-            </Typography>
-          </Box>
         </Stack>
       </DialogContent>
 
@@ -372,7 +566,7 @@ export const EditPharmacyModal = ({
           variant="contained"
           onClick={handleSave}
           startIcon={<Save />}
-          disabled={!formData.commercialName}
+          disabled={selectedChain ? false : (!formData.commercialName && !formData.chainId)}
           sx={{
             borderRadius: 2,
             px: 3,

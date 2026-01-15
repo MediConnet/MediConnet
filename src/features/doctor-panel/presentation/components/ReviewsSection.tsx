@@ -1,5 +1,12 @@
 import { Star } from "@mui/icons-material";
 
+// Función para obtener fechas recientes
+const getRecentDate = (daysAgo: number) => {
+  const today = new Date();
+  today.setDate(today.getDate() - daysAgo);
+  return today.toISOString().split("T")[0];
+};
+
 // Mock data para reseñas
 const mockReviews = [
   {
@@ -7,21 +14,63 @@ const mockReviews = [
     name: "María García",
     rating: 5,
     comment: "Excelente doctor, muy profesional y atento. Me explicó todo con detalle.",
-    date: "2024-01-20",
+    date: getRecentDate(2),
   },
   {
     id: "2",
     name: "Juan López",
     rating: 4,
     comment: "Buena atención, un poco de espera pero valió la pena. Muy recomendado.",
-    date: "2024-01-15",
+    date: getRecentDate(5),
   },
   {
     id: "3",
     name: "Ana Martínez",
     rating: 5,
     comment: "Lo recomiendo ampliamente, muy dedicado y conocedor.",
-    date: "2024-01-10",
+    date: getRecentDate(8),
+  },
+  {
+    id: "4",
+    name: "Carlos Rodríguez",
+    rating: 5,
+    comment: "Muy satisfecho con la atención. El doctor fue muy claro en el diagnóstico y tratamiento.",
+    date: getRecentDate(12),
+  },
+  {
+    id: "5",
+    name: "Laura Sánchez",
+    rating: 4,
+    comment: "Buen servicio, aunque la espera fue un poco larga. Pero la consulta fue muy completa.",
+    date: getRecentDate(15),
+  },
+  {
+    id: "6",
+    name: "Pedro González",
+    rating: 5,
+    comment: "Excelente profesional. Muy empático y con gran conocimiento. Definitivamente volveré.",
+    date: getRecentDate(18),
+  },
+  {
+    id: "7",
+    name: "Sofía Ramírez",
+    rating: 5,
+    comment: "El mejor doctor que he visitado. Muy profesional y atento a los detalles.",
+    date: getRecentDate(22),
+  },
+  {
+    id: "8",
+    name: "Roberto Fernández",
+    rating: 4,
+    comment: "Buena atención médica. El doctor explicó todo muy bien y me sentí en confianza.",
+    date: getRecentDate(25),
+  },
+  {
+    id: "9",
+    name: "Carmen Torres",
+    rating: 5,
+    comment: "Muy recomendado. Atención de calidad y muy profesional.",
+    date: getRecentDate(30),
   },
 ];
 

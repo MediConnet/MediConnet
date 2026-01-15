@@ -17,6 +17,7 @@ import {
   Timeline,
   History,
   Percent,
+  Business,
 } from "@mui/icons-material";
 
 export type UserRole =
@@ -43,6 +44,7 @@ export const ADMIN_MENU: MenuItem[] = [
   { icon: <Percent />, label: "Comisiones", path: "/admin/commissions" },
   { icon: <Group />, label: "Usuarios", path: "/admin/users" },
   { icon: <Timeline />, label: "Actividad", path: "/admin/activity" },
+  { icon: <Business />, label: "Cadenas de Farmacias", path: "/admin/pharmacy-chains" },
   { icon: <Settings />, label: "Configuración", path: "/admin/settings" },
 ];
 

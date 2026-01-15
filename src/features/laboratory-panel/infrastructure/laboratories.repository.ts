@@ -45,6 +45,61 @@ const mockLaboratoryDashboard: LaboratoryDashboard = {
         name: "Glicemia en ayunas",
         preparation: "Ayuno de 8 horas",
       },
+      {
+        id: "study-5",
+        name: "Perfil tiroideo completo",
+        preparation: "Ayuno de 8 horas",
+      },
+      {
+        id: "study-6",
+        name: "Perfil hepático",
+        preparation: "Ayuno de 8 horas",
+      },
+      {
+        id: "study-7",
+        name: "Perfil renal",
+        preparation: "Ayuno de 8 horas",
+      },
+      {
+        id: "study-8",
+        name: "Química sanguínea completa",
+        preparation: "Ayuno de 12 horas",
+      },
+      {
+        id: "study-9",
+        name: "Examen de heces",
+        preparation: "Muestra fresca, sin conservantes",
+      },
+      {
+        id: "study-10",
+        name: "Hemoglobina glicosilada (HbA1c)",
+        preparation: "No requiere ayuno",
+      },
+      {
+        id: "study-11",
+        name: "Perfil de coagulación",
+        preparation: "Ayuno de 8 horas",
+      },
+      {
+        id: "study-12",
+        name: "Ácido úrico",
+        preparation: "Ayuno de 8 horas",
+      },
+      {
+        id: "study-13",
+        name: "Vitamina D",
+        preparation: "Ayuno de 8 horas",
+      },
+      {
+        id: "study-14",
+        name: "PSA (Antígeno prostático)",
+        preparation: "Ayuno de 8 horas",
+      },
+      {
+        id: "study-15",
+        name: "Perfil pre-operatorio completo",
+        preparation: "Ayuno de 12 horas",
+      },
     ],
     location: {
       latitude: -0.1807,

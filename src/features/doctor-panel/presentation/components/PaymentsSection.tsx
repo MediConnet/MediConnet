@@ -1,4 +1,4 @@
-import { AttachMoney, CreditCard, CheckCircle, HourglassEmpty, AccountBalance, Edit } from "@mui/icons-material";
+import { AttachMoney, CreditCard, CheckCircle, HourglassEmpty, AccountBalance, Edit, Search } from "@mui/icons-material";
 import {
   Box,
   Card,
@@ -23,6 +23,7 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  InputAdornment,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
 import { useState, useMemo, useEffect } from "react";
@@ -61,6 +62,7 @@ const ECUADOR_BANKS = [
 export const PaymentsSection = () => {
   const [payments] = useState<Payment[]>(getPaymentsMock());
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid">("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [bankDialogOpen, setBankDialogOpen] = useState(false);
   const { data, refetch } = useDoctorDashboard();
   const { updateProfile, loading: savingBank } = useUpdateDoctorProfile();
@@ -87,9 +89,33 @@ export const PaymentsSection = () => {
   };
 
   const filteredPayments = useMemo(() => {
-    if (statusFilter === "all") return payments;
-    return payments.filter((p) => p.status === statusFilter);
-  }, [payments, statusFilter]);
+    let filtered = payments;
+
+    // Filtrar por estado
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((p) => p.status === statusFilter);
+    }
+
+    // Filtrar por búsqueda (nombre del paciente, fecha, o monto)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((p) => {
+        const patientName = p.patientName.toLowerCase();
+        const date = new Date(p.date).toLocaleDateString("es-ES").toLowerCase();
+        const amount = p.amount.toString();
+        const netAmount = p.netAmount.toString();
+        
+        return (
+          patientName.includes(query) ||
+          date.includes(query) ||
+          amount.includes(query) ||
+          netAmount.includes(query)
+        );
+      });
+    }
+
+    return filtered;
+  }, [payments, statusFilter, searchQuery]);
 
   const totals = useMemo(() => {
     const totalAmount = filteredPayments.reduce((sum, p) => sum + p.amount, 0);
@@ -108,30 +134,6 @@ export const PaymentsSection = () => {
           </p>
         </div>
       </div>
-
-      {/* Filtro de estado */}
-      <Box mb={3}>
-        <Stack direction="row" spacing={1}>
-          <Chip
-            label="Todos"
-            onClick={() => setStatusFilter("all")}
-            color={statusFilter === "all" ? "primary" : "default"}
-            clickable
-          />
-          <Chip
-            label="Pendientes"
-            onClick={() => setStatusFilter("pending")}
-            color={statusFilter === "pending" ? "primary" : "default"}
-            clickable
-          />
-          <Chip
-            label="Pagados"
-            onClick={() => setStatusFilter("paid")}
-            color={statusFilter === "paid" ? "primary" : "default"}
-            clickable
-          />
-        </Stack>
-      </Box>
 
       {/* Resumen de totales */}
       <Grid2 container spacing={3} mb={4}>
@@ -255,6 +257,59 @@ export const PaymentsSection = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Barra de búsqueda y filtros */}
+      <Box mb={3}>
+        <Stack spacing={2}>
+          {/* Barra de búsqueda */}
+          <TextField
+            fullWidth
+            placeholder="Buscar por paciente, fecha o monto..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search sx={{ color: "text.secondary" }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                backgroundColor: "#f9fafb",
+                "&:hover": {
+                  backgroundColor: "#f3f4f6",
+                },
+                "&.Mui-focused": {
+                  backgroundColor: "white",
+                },
+              },
+            }}
+          />
+          
+          {/* Filtro de estado */}
+          <Stack direction="row" spacing={1}>
+            <Chip
+              label="Todos"
+              onClick={() => setStatusFilter("all")}
+              color={statusFilter === "all" ? "primary" : "default"}
+              clickable
+            />
+            <Chip
+              label="Pendientes"
+              onClick={() => setStatusFilter("pending")}
+              color={statusFilter === "pending" ? "primary" : "default"}
+              clickable
+            />
+            <Chip
+              label="Pagados"
+              onClick={() => setStatusFilter("paid")}
+              color={statusFilter === "paid" ? "primary" : "default"}
+              clickable
+            />
+          </Stack>
+        </Stack>
+      </Box>
 
       {/* Tabla de pagos */}
       <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #e5e7eb" }}>

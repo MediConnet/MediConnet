@@ -22,6 +22,7 @@ export interface PharmacyProfile {
   address: string; // Dirección principal
   status: "draft" | "published" | "suspended"; // Estado del perfil
   whatsapp: string; // Número de WhatsApp
+  chainId?: string; // ID de la cadena de farmacias (opcional)
   location?: {
     latitude: number;
     longitude: number;

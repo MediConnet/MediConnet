@@ -6,6 +6,14 @@ const getFutureDate = (daysFromToday: number) => {
   return `${futureDate.getFullYear()}-${String(futureDate.getMonth() + 1).padStart(2, "0")}-${String(futureDate.getDate()).padStart(2, "0")}`;
 };
 
+// Función helper para obtener fecha pasada
+const getPastDate = (daysAgo: number) => {
+  const today = new Date();
+  const pastDate = new Date(today);
+  pastDate.setDate(today.getDate() - daysAgo);
+  return `${pastDate.getFullYear()}-${String(pastDate.getMonth() + 1).padStart(2, "0")}-${String(pastDate.getDate()).padStart(2, "0")}`;
+};
+
 // Función para generar fechas futuras (solo del día de hoy en adelante)
 const getCurrentMonthDates = () => {
   return {
@@ -47,6 +55,80 @@ export const generateMockAppointments = (): DoctorAppointment[] => {
   };
   
   return [
+    // Citas pasadas (completadas) para reportes
+    {
+      id: "past-1",
+      patientName: "María García",
+      patientEmail: "maria.garcia@email.com",
+      patientPhone: "+593 99 123 4567",
+      date: getPastDate(2), // Hace 2 días
+      time: "10:00",
+      reason: "Consulta de seguimiento post-operatorio",
+      status: "completed",
+      paymentMethod: "card",
+      price: 50,
+    },
+    {
+      id: "past-2",
+      patientName: "Juan López",
+      patientEmail: "juan.lopez@email.com",
+      patientPhone: "+593 99 234 5678",
+      date: getPastDate(3), // Hace 3 días
+      time: "14:00",
+      reason: "Primera consulta médica general",
+      status: "completed",
+      paymentMethod: "cash",
+      price: 45,
+    },
+    {
+      id: "past-3",
+      patientName: "Ana Martínez",
+      patientEmail: "ana.martinez@email.com",
+      patientPhone: "+593 99 345 6789",
+      date: getPastDate(5), // Hace 5 días
+      time: "09:30",
+      reason: "Control de presión arterial",
+      status: "completed",
+      paymentMethod: "card",
+      price: 40,
+    },
+    {
+      id: "past-4",
+      patientName: "Carlos Rodríguez",
+      patientEmail: "carlos.rodriguez@email.com",
+      patientPhone: "+593 99 456 7890",
+      date: getPastDate(7), // Hace 7 días
+      time: "11:00",
+      reason: "Revisión de resultados de laboratorio",
+      status: "completed",
+      paymentMethod: "card",
+      price: 55,
+    },
+    {
+      id: "past-5",
+      patientName: "Laura Sánchez",
+      patientEmail: "laura.sanchez@email.com",
+      patientPhone: "+593 99 567 8901",
+      date: getPastDate(10), // Hace 10 días
+      time: "15:00",
+      reason: "Consulta ginecológica",
+      status: "completed",
+      paymentMethod: "card",
+      price: 75,
+    },
+    {
+      id: "past-6",
+      patientName: "Pedro González",
+      patientEmail: "pedro.gonzalez@email.com",
+      patientPhone: "+593 99 678 9012",
+      date: getPastDate(14), // Hace 14 días
+      time: "10:30",
+      reason: "Seguimiento de tratamiento para diabetes",
+      status: "completed",
+      paymentMethod: "card",
+      price: 60,
+    },
+    
     // Citas de hoy
     {
       id: "1",

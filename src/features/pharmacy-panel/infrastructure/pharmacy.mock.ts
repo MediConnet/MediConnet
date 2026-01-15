@@ -3,9 +3,12 @@ import type { PharmacyProfile } from "../domain/pharmacy-profile.entity";
 export const MOCK_PHARMACY_PROFILE: PharmacyProfile = {
   id: "pharma-001",
   
-  logoUrl: "https://ccelrecreo.com/wp-content/uploads/2024/07/Fybeca-El-Recreo.png",
+  // Asignado a la cadena Fybeca (ID: "1")
+  chainId: "1", // ID de la cadena Fybeca
   
-  commercialName: "Farmacias Fybeca",
+  // Logo y nombre vienen de la cadena (no se pueden editar)
+  logoUrl: "https://scalashopping.com/wp-content/uploads/2018/08/logo-Fybeca-01-1024x683.png",
+  commercialName: "Fybeca",
   
   // RUC Corporativo (Corporación GPF)
   ruc: "1790710319001", 

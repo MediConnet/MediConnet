@@ -782,26 +782,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
                 {/* Información de Contacto */}
                 <div className="mt-3 w-full space-y-2">
-                  {/* WhatsApp */}
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <Phone sx={{ fontSize: 16, color: "#25D366" }} />
-                    <span className="truncate">
-                      {isEditing
-                        ? formData.whatsapp || "WhatsApp no disponible"
-                        : doctor.whatsapp || "WhatsApp no disponible"}
-                    </span>
-                  </div>
-
-                  {/* Ubicación */}
-                  <div className="flex items-start gap-2 text-sm text-gray-700">
-                    <LocationOn sx={{ fontSize: 16, color: "#ef4444", flexShrink: 0, mt: 0.5 }} />
-                    <span className="line-clamp-2">
-                      {isEditing
-                        ? formData.address || "Dirección no disponible"
-                        : doctor.address || "Dirección no disponible"}
-                    </span>
-                  </div>
-
                   {/* Email */}
                   <div className="flex items-center gap-2 text-sm text-gray-700">
                     <Email sx={{ fontSize: 16, color: "#6b7280" }} />

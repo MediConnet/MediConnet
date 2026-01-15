@@ -8,16 +8,54 @@ import {
   Typography,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
-import { useState, useMemo } from "react";
-import { generateMockAppointments } from "../../infrastructure/appointments.mock";
+import { useState, useMemo, useEffect } from "react";
+import { generateMockAppointments, type DoctorAppointment } from "../../infrastructure/appointments.mock";
 import { getPaymentsMock } from "../../infrastructure/payments.mock";
 import { formatMoney } from "../../../../shared/lib/formatMoney";
 
 export const ReportsSection = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const appointments = generateMockAppointments();
+  const [appointments, setAppointments] = useState<DoctorAppointment[]>([]);
   const payments = getPaymentsMock();
+
+  // Cargar citas desde localStorage o generar mocks si no existen
+  useEffect(() => {
+    const loadAppointments = () => {
+      const savedAppointments = localStorage.getItem("doctor_appointments");
+      if (savedAppointments) {
+        try {
+          const parsed = JSON.parse(savedAppointments);
+          setAppointments(parsed);
+        } catch (error) {
+          console.error("Error loading appointments:", error);
+          setAppointments(generateMockAppointments());
+        }
+      } else {
+        setAppointments(generateMockAppointments());
+      }
+    };
+
+    loadAppointments();
+
+    // Escuchar cambios en localStorage
+    const handleStorageChange = () => {
+      loadAppointments();
+    };
+
+    // Escuchar el evento personalizado de actualización de citas
+    const handleAppointmentsUpdate = () => {
+      loadAppointments();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("appointments-updated", handleAppointmentsUpdate);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("appointments-updated", handleAppointmentsUpdate);
+    };
+  }, []);
 
   const filteredData = useMemo(() => {
     let filteredAppointments = appointments;

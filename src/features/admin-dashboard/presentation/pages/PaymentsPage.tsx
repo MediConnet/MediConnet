@@ -1,4 +1,4 @@
-import { AttachMoney, CreditCard, Visibility, CheckCircle, Payment } from "@mui/icons-material";
+import { AttachMoney, CreditCard, Visibility, CheckCircle, Payment, AccountBalance } from "@mui/icons-material";
 import {
   Avatar,
   Box,
@@ -25,6 +25,7 @@ import {
   Typography,
   Paper,
   Alert,
+  Divider,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
 import { useState, useMemo, useEffect } from "react";
@@ -148,6 +149,37 @@ export const PaymentsPage = () => {
     if (!selectedDoctor) return [];
     return paymentsByDoctor.get(selectedDoctor) || [];
   }, [selectedDoctor, paymentsByDoctor]);
+
+  // Función para obtener datos bancarios del doctor desde localStorage
+  const getDoctorBankAccount = (doctorName: string) => {
+    // Buscar en todos los perfiles de doctores guardados en localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("doctor-profile-")) {
+        try {
+          const profile = JSON.parse(localStorage.getItem(key) || "{}");
+          if (profile?.doctor?.name === doctorName && profile?.doctor?.bankAccount) {
+            return profile.doctor.bankAccount;
+          }
+        } catch (error) {
+          console.error("Error reading doctor profile:", error);
+        }
+      }
+    }
+    // Si no encuentra datos bancarios, retornar datos por defecto/mock
+    return {
+      bankName: "Banco Pichincha",
+      accountNumber: "2100123456789",
+      accountType: "checking",
+      accountHolder: doctorName,
+    };
+  };
+
+  // Obtener datos bancarios del doctor seleccionado
+  const selectedDoctorBankAccount = useMemo(() => {
+    if (!selectedDoctor) return null;
+    return getDoctorBankAccount(selectedDoctor);
+  }, [selectedDoctor]);
 
   const filteredPayments = useMemo(() => {
     let filtered = payments;
@@ -519,6 +551,81 @@ export const PaymentsPage = () => {
                   </Grid2>
                 </Paper>
 
+                {/* Datos Bancarios del Doctor */}
+                {selectedDoctorBankAccount && (
+                  <Paper 
+                    elevation={0} 
+                    sx={{ 
+                      p: 3, 
+                      mb: 3, 
+                      bgcolor: "#fff7ed", 
+                      border: "2px solid #fbbf24",
+                      borderRadius: 2
+                    }}
+                  >
+                    <Stack direction="row" spacing={1} alignItems="center" mb={2}>
+                      <AccountBalance sx={{ color: "#f59e0b", fontSize: 24 }} />
+                      <Typography variant="h6" fontWeight={700} color="#f59e0b">
+                        Datos Bancarios para Transferencia
+                      </Typography>
+                    </Stack>
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                      Utiliza esta información para realizar la transferencia externa al médico.
+                    </Alert>
+                    <Grid2 container spacing={2}>
+                      <Grid2 size={{ xs: 12, sm: 6 }}>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                            Banco
+                          </Typography>
+                          <Typography variant="body1" fontWeight={700} color="#1f2937">
+                            {selectedDoctorBankAccount.bankName}
+                          </Typography>
+                        </Box>
+                      </Grid2>
+                      <Grid2 size={{ xs: 12, sm: 6 }}>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                            Número de Cuenta
+                          </Typography>
+                          <Typography variant="body1" fontWeight={700} color="#1f2937" sx={{ fontFamily: "monospace" }}>
+                            {selectedDoctorBankAccount.accountNumber}
+                          </Typography>
+                        </Box>
+                      </Grid2>
+                      <Grid2 size={{ xs: 12, sm: 6 }}>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                            Tipo de Cuenta
+                          </Typography>
+                          <Typography variant="body1" fontWeight={700} color="#1f2937">
+                            {selectedDoctorBankAccount.accountType === "checking" ? "Corriente" : "Ahorros"}
+                          </Typography>
+                        </Box>
+                      </Grid2>
+                      <Grid2 size={{ xs: 12, sm: 6 }}>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                            Titular de la Cuenta
+                          </Typography>
+                          <Typography variant="body1" fontWeight={700} color="#1f2937">
+                            {selectedDoctorBankAccount.accountHolder}
+                          </Typography>
+                        </Box>
+                      </Grid2>
+                    </Grid2>
+                    <Divider sx={{ my: 2 }} />
+                    <Box sx={{ bgcolor: "#fef3c7", p: 2, borderRadius: 1 }}>
+                      <Typography variant="body2" fontWeight={600} color="#92400e" gutterBottom>
+                        Monto a Transferir:
+                      </Typography>
+                      <Typography variant="h5" fontWeight={700} color="#f59e0b">
+                        {formatMoney(getDoctorPendingTotal(selectedDoctor))}
+                      </Typography>
+                    </Box>
+                  </Paper>
+                )}
+
                 {/* Lista de Pagos */}
                 <Typography variant="subtitle1" fontWeight={600} mb={2}>
                   Pagos Individuales
@@ -604,39 +711,75 @@ export const PaymentsPage = () => {
             </Stack>
           </DialogTitle>
           <DialogContent>
-            {doctorToPay && (
-              <Stack spacing={3}>
-                <Alert severity="info">
-                  ¿Estás seguro de que deseas marcar todos los pagos pendientes de <strong>{doctorToPay}</strong> como pagados?
-                </Alert>
-                
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                    Resumen del pago:
-                  </Typography>
-                  <Paper elevation={0} sx={{ p: 2, bgcolor: "#f9fafb", border: "1px solid #e5e7eb" }}>
-                    <Stack spacing={1}>
-                      <Stack direction="row" justifyContent="space-between">
-                        <Typography variant="body2">Total a pagar:</Typography>
-                        <Typography variant="body2" fontWeight={700} color="#10b981">
-                          {formatMoney(getDoctorPendingTotal(doctorToPay))}
-                        </Typography>
+            {doctorToPay && (() => {
+              const bankAccount = getDoctorBankAccount(doctorToPay);
+              return (
+                <Stack spacing={3}>
+                  <Alert severity="info">
+                    ¿Estás seguro de que deseas marcar todos los pagos pendientes de <strong>{doctorToPay}</strong> como pagados?
+                  </Alert>
+                  
+                  <Box>
+                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                      Resumen del pago:
+                    </Typography>
+                    <Paper elevation={0} sx={{ p: 2, bgcolor: "#f9fafb", border: "1px solid #e5e7eb" }}>
+                      <Stack spacing={1}>
+                        <Stack direction="row" justifyContent="space-between">
+                          <Typography variant="body2">Total a pagar:</Typography>
+                          <Typography variant="body2" fontWeight={700} color="#10b981">
+                            {formatMoney(getDoctorPendingTotal(doctorToPay))}
+                          </Typography>
+                        </Stack>
+                        <Stack direction="row" justifyContent="space-between">
+                          <Typography variant="body2">Pagos pendientes:</Typography>
+                          <Typography variant="body2" fontWeight={600}>
+                            {doctorTotals.get(doctorToPay)?.pendingCount || 0} citas
+                          </Typography>
+                        </Stack>
                       </Stack>
-                      <Stack direction="row" justifyContent="space-between">
-                        <Typography variant="body2">Pagos pendientes:</Typography>
-                        <Typography variant="body2" fontWeight={600}>
-                          {doctorTotals.get(doctorToPay)?.pendingCount || 0} citas
-                        </Typography>
-                      </Stack>
-                    </Stack>
-                  </Paper>
-                </Box>
+                    </Paper>
+                  </Box>
 
-                <Alert severity="warning">
-                  Esta acción marcará todos los pagos pendientes como "Pagado". Asegúrate de haber realizado el pago externo (transferencia bancaria, etc.) antes de confirmar.
-                </Alert>
-              </Stack>
-            )}
+                  {/* Datos Bancarios */}
+                  {bankAccount && (
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                        Datos bancarios para transferencia:
+                      </Typography>
+                      <Paper elevation={0} sx={{ p: 2, bgcolor: "#fff7ed", border: "1px solid #fbbf24" }}>
+                        <Stack spacing={1}>
+                          <Stack direction="row" justifyContent="space-between">
+                            <Typography variant="body2" fontWeight={600}>Banco:</Typography>
+                            <Typography variant="body2" fontWeight={700}>{bankAccount.bankName}</Typography>
+                          </Stack>
+                          <Stack direction="row" justifyContent="space-between">
+                            <Typography variant="body2" fontWeight={600}>Número de Cuenta:</Typography>
+                            <Typography variant="body2" fontWeight={700} sx={{ fontFamily: "monospace" }}>
+                              {bankAccount.accountNumber}
+                            </Typography>
+                          </Stack>
+                          <Stack direction="row" justifyContent="space-between">
+                            <Typography variant="body2" fontWeight={600}>Tipo:</Typography>
+                            <Typography variant="body2" fontWeight={700}>
+                              {bankAccount.accountType === "checking" ? "Corriente" : "Ahorros"}
+                            </Typography>
+                          </Stack>
+                          <Stack direction="row" justifyContent="space-between">
+                            <Typography variant="body2" fontWeight={600}>Titular:</Typography>
+                            <Typography variant="body2" fontWeight={700}>{bankAccount.accountHolder}</Typography>
+                          </Stack>
+                        </Stack>
+                      </Paper>
+                    </Box>
+                  )}
+
+                  <Alert severity="warning">
+                    Esta acción marcará todos los pagos pendientes como "Pagado". Asegúrate de haber realizado el pago externo (transferencia bancaria, etc.) antes de confirmar.
+                  </Alert>
+                </Stack>
+              );
+            })()}
           </DialogContent>
           <DialogActions>
             <Button

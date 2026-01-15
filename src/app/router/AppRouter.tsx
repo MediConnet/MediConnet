@@ -29,6 +29,7 @@ import { PaymentsPage } from "../../features/admin-dashboard/presentation/pages/
 import { CommissionsPage } from "../../features/admin-dashboard/presentation/pages/CommissionsPage";
 import { UsersPage } from "../../features/admin-dashboard/presentation/pages/UsersPage";
 import { HistoryPage } from "../../features/admin-dashboard/presentation/pages/RejectedServicesPage";
+import { PharmacyChainsPage } from "../../features/admin-dashboard/presentation/pages/PharmacyChainsPage";
 
 // Pages - Doctor
 import { DoctorDashboardPage } from "../../features/doctor-panel/presentation/pages/DoctorDashboardPage";
@@ -88,6 +89,7 @@ export const AppRouter = () => {
           <Route path="users" element={<UsersPage />} />
           <Route path="services" element={<ServicesDashboardPage />} />
           <Route path="activity" element={<ActivityPage />} />
+          <Route path="pharmacy-chains" element={<PharmacyChainsPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
 

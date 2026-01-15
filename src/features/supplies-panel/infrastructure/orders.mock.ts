@@ -7,6 +7,22 @@ const getTodayDate = () => {
   return today.toISOString().split("T")[0];
 };
 
+// Función para obtener fechas futuras
+const getFutureDate = (daysFromToday: number) => {
+  const today = new Date();
+  const futureDate = new Date(today);
+  futureDate.setDate(today.getDate() + daysFromToday);
+  return futureDate.toISOString().split("T")[0];
+};
+
+// Función para obtener fechas pasadas recientes
+const getPastDate = (daysAgo: number) => {
+  const today = new Date();
+  const pastDate = new Date(today);
+  pastDate.setDate(today.getDate() - daysAgo);
+  return pastDate.toISOString().split("T")[0];
+};
+
 export const mockOrders: SupplyOrder[] = [
   {
     id: "1",
@@ -41,7 +57,7 @@ export const mockOrders: SupplyOrder[] = [
     totalAmount: 515.00,
     status: "pending",
     orderDate: getTodayDate(), // Pedido de hoy
-    deliveryDate: "2024-01-25",
+    deliveryDate: getFutureDate(3),
     notes: "Cliente requiere silla de ruedas para adulto",
   },
   {
@@ -76,8 +92,8 @@ export const mockOrders: SupplyOrder[] = [
     ],
     totalAmount: 140.00,
     status: "preparing",
-    orderDate: "2024-01-18",
-    deliveryDate: "2024-01-22",
+    orderDate: getPastDate(2),
+    deliveryDate: getFutureDate(2),
   },
   {
     id: "3",
@@ -104,8 +120,8 @@ export const mockOrders: SupplyOrder[] = [
     ],
     totalAmount: 110.00,
     status: "shipped",
-    orderDate: "2024-01-15",
-    deliveryDate: "2024-01-20",
+    orderDate: getPastDate(5),
+    deliveryDate: getFutureDate(1),
   },
   {
     id: "4",
@@ -132,8 +148,8 @@ export const mockOrders: SupplyOrder[] = [
     ],
     totalAmount: 1380.00,
     status: "delivered",
-    orderDate: "2024-01-10",
-    deliveryDate: "2024-01-15",
+    orderDate: getPastDate(10),
+    deliveryDate: getPastDate(5),
   },
   {
     id: "5",
@@ -168,7 +184,64 @@ export const mockOrders: SupplyOrder[] = [
     totalAmount: 115.00,
     status: "confirmed",
     orderDate: getTodayDate(), // Otro pedido de hoy
+    deliveryDate: getFutureDate(4),
     notes: "Cliente solicita productos para recuperación post-quirúrgica",
+  },
+  {
+    id: "6",
+    orderNumber: "ORD-2024-006",
+    clientName: "Pedro González",
+    clientEmail: "pedro.gonzalez@email.com",
+    clientPhone: "+593 99 666 7777",
+    clientAddress: "Av. 6 de Diciembre N24-120, Quito",
+    items: [
+      {
+        id: "14",
+        productName: "Andador con ruedas",
+        quantity: 1,
+        unitPrice: 120.00,
+        total: 120.00,
+      },
+      {
+        id: "15",
+        productName: "Muletas axilares ajustables (par)",
+        quantity: 1,
+        unitPrice: 45.00,
+        total: 45.00,
+      },
+    ],
+    totalAmount: 165.00,
+    status: "pending",
+    orderDate: getTodayDate(),
+    deliveryDate: getFutureDate(5),
+  },
+  {
+    id: "7",
+    orderNumber: "ORD-2024-007",
+    clientName: "Sofía Ramírez",
+    clientEmail: "sofia.ramirez@email.com",
+    clientPhone: "+593 99 777 8888",
+    clientAddress: "Av. Amazonas N25-50, Quito",
+    items: [
+      {
+        id: "16",
+        productName: "Faja lumbar ortopédica",
+        quantity: 2,
+        unitPrice: 42.00,
+        total: 84.00,
+      },
+      {
+        id: "17",
+        productName: "Rodillera ortopédica ajustable",
+        quantity: 1,
+        unitPrice: 35.00,
+        total: 35.00,
+      },
+    ],
+    totalAmount: 119.00,
+    status: "preparing",
+    orderDate: getPastDate(1),
+    deliveryDate: getFutureDate(2),
   },
 ];
 
