@@ -18,9 +18,10 @@ import {
   Typography,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { PharmacyProfile } from "../../domain/pharmacy-profile.entity";
 import { EditPharmacyModal } from "./EditPharmacyModal";
+import { getPharmacyChains } from "../../../../shared/lib/pharmacy-chains";
 
 interface ProfileSectionProps {
   profile: PharmacyProfile;
@@ -29,6 +30,29 @@ interface ProfileSectionProps {
 
 export const ProfileSection = ({ profile, onUpdate }: ProfileSectionProps) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [displayLogo, setDisplayLogo] = useState<string | null>(profile.logoUrl || null);
+  const [displayName, setDisplayName] = useState<string>(profile.commercialName);
+
+  // Cargar logo y nombre de la cadena si hay chainId
+  useEffect(() => {
+    if (profile.chainId) {
+      const chains = getPharmacyChains();
+      const chain = chains.find((c) => c.id === profile.chainId);
+      if (chain) {
+        // Usar logo y nombre de la cadena
+        setDisplayLogo(chain.logoUrl || profile.logoUrl || null);
+        setDisplayName(chain.name);
+      } else {
+        // Si no se encuentra la cadena, usar los del perfil
+        setDisplayLogo(profile.logoUrl || null);
+        setDisplayName(profile.commercialName);
+      }
+    } else {
+      // Si no hay cadena, usar los del perfil
+      setDisplayLogo(profile.logoUrl || null);
+      setDisplayName(profile.commercialName);
+    }
+  }, [profile.chainId, profile.logoUrl, profile.commercialName]);
 
   const getStatusLabel = (status: PharmacyProfile["status"]) => {
     switch (status) {
@@ -95,67 +119,66 @@ export const ProfileSection = ({ profile, onUpdate }: ProfileSectionProps) => {
             </Box>
 
             <Stack spacing={3}>
-          {/* Logo y Nombre Comercial */}
-          <Grid2 container spacing={3} alignItems="center">
-            <Grid2 size={{ xs: 12, md: 3 }}>
+          {/* Logo grande y Nombre como Título */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              mb: 4,
+            }}
+          >
+            {displayLogo ? (
               <Box
+                component="img"
+                src={displayLogo}
+                alt={displayName}
                 sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
+                  maxWidth: "100%",
+                  maxHeight: 200,
+                  width: "auto",
+                  height: "auto",
+                  objectFit: "contain",
+                  mb: 3,
                 }}
+              />
+            ) : (
+              <Avatar
+                sx={{
+                  width: 180,
+                  height: 180,
+                  bgcolor: "primary.light",
+                  borderRadius: 2,
+                  mb: 3,
+                }}
+                variant="rounded"
               >
-                {profile.logoUrl ? (
-                  <Avatar
-                    src={profile.logoUrl}
-                    alt={profile.commercialName}
-                    sx={{
-                      width: 120,
-                      height: 120,
-                      borderRadius: 2,
-                    }}
-                    variant="rounded"
-                  />
+                <Business sx={{ fontSize: 100 }} />
+              </Avatar>
+            )}
+            <Typography
+              variant="h3"
+              fontWeight={900}
+              color="primary.main"
+              sx={{ mb: 1, textAlign: "center" }}
+            >
+              {displayName}
+            </Typography>
+            <Chip
+              label={getStatusLabel(profile.status)}
+              color={getStatusColor(profile.status)}
+              size="medium"
+              icon={
+                profile.status === "published" ? (
+                  <Visibility fontSize="small" />
                 ) : (
-                  <Avatar
-                    sx={{
-                      width: 120,
-                      height: 120,
-                      bgcolor: "primary.light",
-                      borderRadius: 2,
-                    }}
-                    variant="rounded"
-                  >
-                    <Business sx={{ fontSize: 60 }} />
-                  </Avatar>
-                )}
-              </Box>
-            </Grid2>
-            <Grid2 size={{ xs: 12, md: 9 }}>
-              <Stack spacing={1}>
-                <Typography
-                  variant="h4"
-                  fontWeight={700}
-                  color="primary.main"
-                >
-                  {profile.commercialName}
-                </Typography>
-                <Chip
-                  label={getStatusLabel(profile.status)}
-                  color={getStatusColor(profile.status)}
-                  size="small"
-                  icon={
-                    profile.status === "published" ? (
-                      <Visibility fontSize="small" />
-                    ) : (
-                      <VisibilityOff fontSize="small" />
-                    )
-                  }
-                  sx={{ width: "fit-content" }}
-                />
-              </Stack>
-            </Grid2>
-          </Grid2>
+                  <VisibilityOff fontSize="small" />
+                )
+              }
+              sx={{ fontWeight: 600 }}
+            />
+          </Box>
 
           <Divider />
 
@@ -301,11 +324,11 @@ export const ProfileSection = ({ profile, onUpdate }: ProfileSectionProps) => {
                 justifyContent: "center",
               }}
             >
-              {profile.logoUrl ? (
+              {displayLogo ? (
                 <Box
                   component="img"
-                  src={profile.logoUrl}
-                  alt={profile.commercialName}
+                  src={displayLogo}
+                  alt={displayName}
                   sx={{
                     width: "100%",
                     height: "100%",
@@ -339,7 +362,7 @@ export const ProfileSection = ({ profile, onUpdate }: ProfileSectionProps) => {
                 color="text.primary"
                 sx={{ mb: 0.5 }}
               >
-                {profile.commercialName || "Nombre de la Farmacia"}
+                {displayName || "Nombre de la Farmacia"}
               </Typography>
 
               {/* Estado */}

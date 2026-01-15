@@ -77,11 +77,18 @@ export const EditPharmacyModal = ({
     const activeChains = loadedChains.filter((c) => c.isActive);
     setChains(activeChains);
     
-    // Si hay initialData, buscar la cadena correspondiente
+    // Si hay initialData, buscar la cadena correspondiente y configurar logo/nombre
     if (initialData && initialData.chainId) {
       const chain = activeChains.find((c) => c.id === initialData.chainId);
       if (chain) {
         setSelectedChain(chain);
+        // Actualizar logo y nombre inmediatamente desde la cadena
+        setFormData((prev) => ({
+          ...prev,
+          logoUrl: chain.logoUrl || prev.logoUrl || "",
+          commercialName: chain.name,
+          chainId: chain.id,
+        }));
       }
     }
   }, []);
@@ -107,15 +114,15 @@ export const EditPharmacyModal = ({
         });
       } else {
         // Si no hay cadena, usar los datos iniciales normalmente
-      setFormData({
-        commercialName: initialData.commercialName,
-        ruc: initialData.ruc || "",
-        description: initialData.description || "",
-        websiteUrl: initialData.websiteUrl || "",
-        logoUrl: initialData.logoUrl || "",
-        address: initialData.address || "",
-        status: initialData.status || "draft",
-        isActive: initialData.isActive !== false,
+        setFormData({
+          commercialName: initialData.commercialName,
+          ruc: initialData.ruc || "",
+          description: initialData.description || "",
+          websiteUrl: initialData.websiteUrl || "",
+          logoUrl: initialData.logoUrl || "",
+          address: initialData.address || "",
+          status: initialData.status || "draft",
+          isActive: initialData.isActive !== false,
           chainId: chainId,
         });
       }
@@ -201,7 +208,7 @@ export const EditPharmacyModal = ({
       onSave(savedData as PharmacyProfile);
     } else {
       // Si no hay cadena, usar los datos del formulario normalmente
-    onSave(formData as PharmacyProfile);
+      onSave(formData as PharmacyProfile);
     }
     onClose();
   };
@@ -301,44 +308,27 @@ export const EditPharmacyModal = ({
                   pointerEvents: "none",
                 }}
               >
-                {selectedChain?.logoUrl ? (
+                {(selectedChain?.logoUrl || formData.logoUrl) ? (
                   <Box
                     component="img"
-                    src={selectedChain.logoUrl}
-                    alt={`Logo de ${selectedChain.name}`}
+                    src={selectedChain?.logoUrl || formData.logoUrl || ""}
+                    alt={`Logo de ${selectedChain?.name || "Cadena"}`}
                     onError={(e) => {
-                      // Si falla la carga, mostrar icono
+                      // Si la imagen falla, mostrar icono
                       const target = e.target as HTMLImageElement;
                       target.style.display = "none";
+                      target.nextElementSibling?.classList.remove("hidden");
                     }}
                     sx={{
-                      maxHeight: 150,
+                      maxHeight: 120,
                       maxWidth: "100%",
-                      width: "auto",
                       objectFit: "contain",
                       mb: 1,
                       borderRadius: 1,
                     }}
                   />
-                ) : formData.logoUrl ? (
-                  <Box
-                    component="img"
-                    src={formData.logoUrl}
-                    alt="Logo"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = "none";
-                    }}
-                    sx={{
-                      maxHeight: 150,
-                      maxWidth: "100%",
-                      width: "auto",
-                      objectFit: "contain",
-                      mb: 1,
-                      borderRadius: 1,
-                    }}
-                  />
-                ) : (
+                ) : null}
+                {(!selectedChain?.logoUrl && !formData.logoUrl) && (
                   <Business
                     sx={{
                       fontSize: 60,
@@ -356,83 +346,83 @@ export const EditPharmacyModal = ({
               </Box>
             </Box>
           ) : (
-          <Box>
-            <Typography variant="subtitle2" fontWeight={600} mb={1}>
-              Logotipo / Imagen de Marca
-            </Typography>
-            <input
-              type="file"
-              accept="image/*"
-              ref={fileInputRef}
-              style={{ display: "none" }}
-              onChange={handleFileChange}
-            />
-            <Box
-              onClick={handleUploadClick}
-              sx={{
-                border: `2px dashed ${alpha(theme.palette.primary.main, 0.4)}`,
-                borderRadius: 3,
-                p: 2,
-                textAlign: "center",
-                cursor: "pointer",
-                transition: "all 0.2s",
-                bgcolor: alpha(theme.palette.primary.main, 0.04),
-                "&:hover": {
-                  borderColor: theme.palette.primary.main,
-                  bgcolor: alpha(theme.palette.primary.main, 0.08),
-                },
-                minHeight: 160,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
-              {formData.logoUrl ? (
-                <Box
-                  component="img"
-                  src={formData.logoUrl}
-                  alt="Logo Preview"
-                  sx={{
-                    maxHeight: 120,
-                    maxWidth: "100%",
-                    objectFit: "contain",
-                    mb: 1,
-                    borderRadius: 1,
-                  }}
-                />
-              ) : (
-                <CloudUpload
-                  sx={{
-                    fontSize: 40,
-                    color: theme.palette.primary.main,
-                    mb: 1,
-                  }}
-                />
-              )}
-              <Typography variant="body2" fontWeight={600} color="primary.main">
-                {formData.logoUrl
-                  ? "Click para cambiar logo"
-                  : "Subir Logo de la Farmacia"}
+            <Box>
+              <Typography variant="subtitle2" fontWeight={600} mb={1}>
+                Logotipo / Imagen de Marca
               </Typography>
-              {hasNewImage && (
-                <Stack
-                  direction="row"
-                  alignItems="center"
-                  spacing={0.5}
-                  mt={1}
-                  sx={{ color: "success.main" }}
-                >
-                  <CheckCircle fontSize="small" />
-                  <Typography variant="caption" fontWeight={600}>
-                    Nueva imagen lista
-                  </Typography>
-                </Stack>
-              )}
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                onChange={handleFileChange}
+              />
+              <Box
+                onClick={handleUploadClick}
+                sx={{
+                  border: `2px dashed ${alpha(theme.palette.primary.main, 0.4)}`,
+                  borderRadius: 3,
+                  p: 2,
+                  textAlign: "center",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  bgcolor: alpha(theme.palette.primary.main, 0.04),
+                  "&:hover": {
+                    borderColor: theme.palette.primary.main,
+                    bgcolor: alpha(theme.palette.primary.main, 0.08),
+                  },
+                  minHeight: 160,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                {formData.logoUrl ? (
+                  <Box
+                    component="img"
+                    src={formData.logoUrl}
+                    alt="Logo Preview"
+                    sx={{
+                      maxHeight: 120,
+                      maxWidth: "100%",
+                      objectFit: "contain",
+                      mb: 1,
+                      borderRadius: 1,
+                    }}
+                  />
+                ) : (
+                  <CloudUpload
+                    sx={{
+                      fontSize: 40,
+                      color: theme.palette.primary.main,
+                      mb: 1,
+                    }}
+                  />
+                )}
+                <Typography variant="body2" fontWeight={600} color="primary.main">
+                  {formData.logoUrl
+                    ? "Click para cambiar logo"
+                    : "Subir Logo de la Farmacia"}
+                </Typography>
+                {hasNewImage && (
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={0.5}
+                    mt={1}
+                    sx={{ color: "success.main" }}
+                  >
+                    <CheckCircle fontSize="small" />
+                    <Typography variant="caption" fontWeight={600}>
+                      Nueva imagen lista
+                    </Typography>
+                  </Stack>
+                )}
+              </Box>
             </Box>
-          </Box>
           )}
 
           {/* --- 2. DATOS DE IDENTIDAD --- */}
@@ -465,21 +455,21 @@ export const EditPharmacyModal = ({
                   </Typography>
                 </Box>
               ) : (
-              <TextField
-                fullWidth
-                label="Nombre Comercial"
+                <TextField
+                  fullWidth
+                  label="Nombre Comercial"
                   placeholder="Solo si no perteneces a ninguna cadena"
-                value={formData.commercialName}
-                onChange={(e) => handleChange("commercialName", e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Business color="action" fontSize="small" />
-                    </InputAdornment>
-                  ),
-                }}
+                  value={formData.commercialName}
+                  onChange={(e) => handleChange("commercialName", e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Business color="action" fontSize="small" />
+                      </InputAdornment>
+                    ),
+                  }}
                   helperText="Solo si tu farmacia es independiente (no pertenece a ninguna cadena)"
-              />
+                />
               )}
             </Grid2>
 
@@ -513,7 +503,7 @@ export const EditPharmacyModal = ({
                 }}
               />
             </Grid2>
-            </Grid2>
+          </Grid2>
 
           {/* Divider antes de Dirección y Sitio Web */}
           <Divider sx={{ my: 2 }} />

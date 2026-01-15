@@ -113,11 +113,11 @@ export const PharmacyDashboardPage = () => {
           )}
           {currentTab === "profile" && (
             <Box>
-              <Box mb={3}>
-                <Typography variant="h4" fontWeight={700} mb={1}>
+              <Box mb={2}>
+                <Typography variant="h3" fontWeight={800} mb={0.5}>
                   Mi Farmacia
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body1" color="text.secondary" sx={{ fontSize: "1.1rem" }}>
                   Gestiona el perfil, horarios y contacto de tu farmacia
                 </Typography>
               </Box>
