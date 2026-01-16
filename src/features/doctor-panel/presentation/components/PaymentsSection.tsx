@@ -60,13 +60,16 @@ const ECUADOR_BANKS = [
 ];
 
 export const PaymentsSection = () => {
-  const [payments] = useState<Payment[]>(getPaymentsMock());
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid">("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [bankDialogOpen, setBankDialogOpen] = useState(false);
   const { data, refetch } = useDoctorDashboard();
   const { updateProfile, loading: savingBank } = useUpdateDoctorProfile();
   const { user } = useAuthStore();
+  const doctorName = data?.doctor?.name || "Dr. Juan Pérez";
+  
+  // Obtener pagos del doctor actual (solo Dr. Juan Pérez)
+  const [payments] = useState<Payment[]>(() => getPaymentsMock(doctorName));
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [bankDialogOpen, setBankDialogOpen] = useState(false);
 
   const [bankData, setBankData] = useState({
     bankName: "",

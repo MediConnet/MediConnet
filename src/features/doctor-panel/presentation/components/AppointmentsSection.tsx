@@ -161,111 +161,51 @@ const AppointmentDetailModal = ({
             </p>
           </div>
 
-          {/* Estado de la cita */}
+          {/* Información de pago (solo lectura) */}
+          {(appointment.paymentMethod || appointment.status === "paid") && (
+            <div className="border border-gray-200 rounded-xl p-4">
+              <h4 className="font-semibold text-gray-900 mb-2">
+                Información de pago
+              </h4>
+              <div className="flex items-center gap-2">
+                <Payment className="text-green-600" />
+                <span className="text-gray-700">
+                  Pagada con {appointment.paymentMethod === "card" ? "Tarjeta" : "Efectivo"}
+                </span>
+              </div>
+              {appointment.price && (
+                <p className="text-sm text-gray-600 mt-1">
+                  Monto: ${appointment.price.toFixed(2)}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Estado de la cita - Solo "Atendida" como acción */}
           <div className="border border-gray-200 rounded-xl p-4">
             <h4 className="font-semibold text-gray-900 mb-3">
-              Estado de la cita
+              Marcar como atendida
             </h4>
             <div className="space-y-2">
-              <div
-                className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                  currentStatus === "pending"
-                    ? getStatusColor("pending")
-                    : "bg-white border-gray-200 hover:bg-gray-50"
-                }`}
-                onClick={() => handleStatusChange("pending")}
-              >
-                <Schedule
-                  className={`${
-                    currentStatus === "pending" ? "text-blue-600" : "text-gray-400"
-                  }`}
-                />
-                <span
-                  className={`font-medium ${
-                    currentStatus === "pending" ? "text-blue-700" : "text-gray-600"
-                  }`}
-                >
-                  Programada
-                </span>
-                {currentStatus === "pending" && (
-                  <CheckCircle className="text-blue-600 ml-auto" />
-                )}
-              </div>
-
-              <div
-                className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                  currentStatus === "paid"
-                    ? getStatusColor("paid")
-                    : "bg-white border-gray-200 hover:bg-gray-50"
-                }`}
-                onClick={() => handleStatusChange("paid")}
-              >
-                <Payment
-                  className={`${
-                    currentStatus === "paid" ? "text-green-600" : "text-gray-400"
-                  }`}
-                />
-                <span
-                  className={`font-medium ${
-                    currentStatus === "paid" ? "text-green-700" : "text-gray-600"
-                  }`}
-                >
-                  Pagada
-                </span>
-                {currentStatus === "paid" && (
-                  <CheckCircle className="text-green-600 ml-auto" />
-                )}
-              </div>
-
-              <div
-                className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                  currentStatus === "completed"
-                    ? getStatusColor("completed")
-                    : "bg-white border-gray-200 hover:bg-gray-50"
-                }`}
-                onClick={() => handleStatusChange("completed")}
-              >
-                <CheckCircle
-                  className={`${
-                    currentStatus === "completed" ? "text-teal-600" : "text-gray-400"
-                  }`}
-                />
-                <span
-                  className={`font-medium ${
-                    currentStatus === "completed" ? "text-teal-700" : "text-gray-600"
-                  }`}
-                >
-                  Atendida
-                </span>
-                {currentStatus === "completed" && (
+              {currentStatus === "completed" ? (
+                <div className={`flex items-center gap-3 p-3 rounded-lg border-2 ${getStatusColor("completed")}`}>
+                  <CheckCircle className="text-teal-600" />
+                  <span className="font-medium text-teal-700">
+                    Cita Atendida
+                  </span>
                   <CheckCircle className="text-teal-600 ml-auto" />
-                )}
-              </div>
-
-              <div
-                className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                  currentStatus === "finalizada"
-                    ? "bg-purple-100 text-purple-700 border-purple-300"
-                    : "bg-white border-gray-200 hover:bg-gray-50"
-                }`}
-                onClick={() => handleStatusChange("finalizada")}
-              >
-                <CheckCircle
-                  className={`${
-                    currentStatus === "finalizada" ? "text-purple-600" : "text-gray-400"
-                  }`}
-                />
-                <span
-                  className={`font-medium ${
-                    currentStatus === "finalizada" ? "text-purple-700" : "text-gray-600"
-                  }`}
+                </div>
+              ) : (
+                <button
+                  onClick={() => handleStatusChange("completed")}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg border-2 border-gray-200 hover:bg-gray-50 transition-all text-left"
                 >
-                  Consulta Finalizada
-                </span>
-                {currentStatus === "finalizada" && (
-                  <CheckCircle className="text-purple-600 ml-auto" />
-                )}
-              </div>
+                  <CheckCircle className="text-gray-400" />
+                  <span className="font-medium text-gray-700">
+                    Marcar como Atendida
+                  </span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -273,7 +213,7 @@ const AppointmentDetailModal = ({
         {/* Footer (Fijo) */}
         <div className="p-6 border-t border-gray-200 flex justify-between items-center shrink-0">
           <div>
-            {(currentStatus === "completed" || currentStatus === "finalizada") && (
+            {currentStatus === "completed" && (
               <button
                 onClick={() => {
                   if (onOpenDiagnosisModal) {
@@ -333,7 +273,7 @@ export const AppointmentsSection = () => {
           const [year, month, day] = apt.date.split("-").map(Number);
           const appointmentDate = new Date(year, month - 1, day);
           appointmentDate.setHours(0, 0, 0, 0);
-          return appointmentDate >= today && apt.status !== "finalizada";
+          return appointmentDate >= today;
         });
         
         if (hasValidAppointments && parsed.length > 0) {
@@ -364,8 +304,8 @@ export const AppointmentsSection = () => {
       setAppointments((currentAppointments) => {
         const now = new Date();
         const updated = currentAppointments.map((apt) => {
-          // Solo procesar citas que no estén ya completadas o finalizadas
-          if (apt.status === "completed" || apt.status === "finalizada") {
+          // Solo procesar citas que no estén ya completadas
+          if (apt.status === "completed") {
             return apt;
           }
 
@@ -418,9 +358,6 @@ export const AppointmentsSection = () => {
 
   // Filtrar citas: solo mostrar las del día de hoy en adelante (fecha y hora)
   const activeAppointments = mockAppointments.filter((apt) => {
-    // Excluir citas finalizadas
-    if (apt.status === "finalizada") return false;
-
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Inicio del día de hoy
     
@@ -438,9 +375,9 @@ export const AppointmentsSection = () => {
       const [hours, minutes] = apt.time.split(":").map(Number);
       const appointmentDateTime = new Date(year, month - 1, day, hours, minutes);
       
-      // Si la hora ya pasó y la cita está completada o finalizada, excluirla
+      // Si la hora ya pasó y la cita está completada, excluirla
       // Pero si está pendiente o pagada, mostrarla aunque la hora haya pasado (puede estar en curso)
-      if (appointmentDateTime < now && (apt.status === "completed" || apt.status === "finalizada")) {
+      if (appointmentDateTime < now && apt.status === "completed") {
         return false;
       }
     }
@@ -448,7 +385,7 @@ export const AppointmentsSection = () => {
     return true;
   });
 
-  // Obtener citas del día seleccionado (solo activas, sin finalizadas)
+  // Obtener citas del día seleccionado
   const appointmentsForDate = activeAppointments.filter(
     (apt) => apt.date === selectedDate
   );
@@ -587,7 +524,7 @@ export const AppointmentsSection = () => {
     return days;
   };
 
-  // Obtener todas las citas ordenadas por fecha y hora (solo activas, sin finalizadas)
+  // Obtener todas las citas ordenadas por fecha y hora (solo activas)
   const getAllAppointmentsSorted = () => {
     return [...activeAppointments].sort((a, b) => {
       const dateA = new Date(`${a.date}T${a.time}`);
@@ -618,17 +555,10 @@ export const AppointmentsSection = () => {
     // Disparar evento personalizado para notificar cambios
     window.dispatchEvent(new Event("appointments-updated"));
     
-    // Si se marca como finalizada, cerrar el modal y limpiar la selección
-    if (newStatus === "finalizada") {
-      setIsModalOpen(false);
-      setSelectedAppointment(null);
-      // Forzar actualización del calendario removiendo la cita de la vista inmediatamente
-      // El filtro activeAppointments ya la excluirá automáticamente
-    } else {
-      // Actualizar el appointment seleccionado si es el mismo
-      if (selectedAppointment && selectedAppointment.id === appointmentId) {
-        setSelectedAppointment({ ...selectedAppointment, status: newStatus as any });
-      }
+    // Si se marca como completada, mantener el modal abierto para permitir crear diagnóstico
+    // Actualizar el appointment seleccionado si es el mismo
+    if (selectedAppointment && selectedAppointment.id === appointmentId) {
+      setSelectedAppointment({ ...selectedAppointment, status: newStatus as any });
     }
   };
 
