@@ -9,5 +9,3 @@ export const getPharmacyChainsMock = (): PharmacyChain[] => {
 export const savePharmacyChains = (chains: PharmacyChain[]) => {
   localStorage.setItem("pharmacy-chains", JSON.stringify(chains));
 };
-
-    
