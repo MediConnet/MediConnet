@@ -1,12 +1,13 @@
 import type { AdRequest } from "../domain/ad-request.entity";
-import { MOCK_AD_REQUESTS } from "../infrastructure/ad-requests.mock";
+import { getAdRequests } from "../infrastructure/ad-requests.mock";
 import { loadAdsFromStorage } from "../infrastructure/ads.mock";
 
 export const getAdRequestByProviderUseCase = async (
   providerId: string
 ): Promise<AdRequest | null> => {
   await new Promise((resolve) => setTimeout(resolve, 200));
-  const request = MOCK_AD_REQUESTS.find(
+  const requests = getAdRequests();
+  const request = requests.find(
     (r) => r.providerId === providerId && r.status === "PENDING"
   );
   return request || null;
@@ -24,7 +25,8 @@ export const hasActiveAdUseCase = async (
   if (activeAd) return true;
 
   // También verificar en las solicitudes (backward compatibility)
-  const request = MOCK_AD_REQUESTS.find(
+  const requests = getAdRequests();
+  const request = requests.find(
     (r) => r.providerId === providerId && r.hasActiveAd === true
   );
   return !!request;
@@ -34,8 +36,9 @@ export const hasApprovedAdRequestUseCase = async (
   providerId: string
 ): Promise<boolean> => {
   await new Promise((resolve) => setTimeout(resolve, 200));
+  const requests = getAdRequests();
   // Verificar si hay una solicitud aprobada pero sin anuncio activo
-  const approvedRequest = MOCK_AD_REQUESTS.find(
+  const approvedRequest = requests.find(
     (r) => r.providerId === providerId && r.status === "APPROVED" && !r.hasActiveAd
   );
   

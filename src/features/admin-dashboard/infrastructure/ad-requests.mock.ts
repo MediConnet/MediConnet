@@ -1,6 +1,6 @@
 import type { AdRequest } from "../domain/ad-request.entity";
 
-export const MOCK_AD_REQUESTS: AdRequest[] = [
+const INITIAL_MOCK_AD_REQUESTS: AdRequest[] = [
   {
     id: "ad-1",
     providerId: "doc-1",
@@ -144,4 +144,28 @@ export const MOCK_AD_REQUESTS: AdRequest[] = [
     },
   },
 ];
+
+// Función helper para obtener todas las solicitudes (desde localStorage o mocks iniciales)
+export const getAdRequests = (): AdRequest[] => {
+  const saved = localStorage.getItem("ad-requests");
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch (error) {
+      console.error("Error loading ad requests from localStorage:", error);
+      // Si hay error, usar los mocks iniciales
+      return [...INITIAL_MOCK_AD_REQUESTS];
+    }
+  }
+  // Primera vez: usar los mocks iniciales
+  return [...INITIAL_MOCK_AD_REQUESTS];
+};
+
+// Función helper para guardar solicitudes en localStorage
+export const saveAdRequests = (requests: AdRequest[]): void => {
+  localStorage.setItem("ad-requests", JSON.stringify(requests));
+};
+
+// Exportar los mocks iniciales para compatibilidad
+export const MOCK_AD_REQUESTS = INITIAL_MOCK_AD_REQUESTS;
 

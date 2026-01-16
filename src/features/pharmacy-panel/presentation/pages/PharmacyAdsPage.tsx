@@ -225,16 +225,132 @@ export const PharmacyAdsPage = () => {
 
 
           {/* CONTENIDO PRINCIPAL */}
-          {ads.length === 0 && !hasActiveAd ? (
+          {ads.length === 0 && !hasActiveAd && !pendingRequest ? (
             <AdsEmptyState />
           ) : hasActiveAd ? (
-            <Box sx={{ bgcolor: "grey.50", p: 3, borderRadius: 2, border: "1px solid", borderColor: "grey.200" }}>
-              <Typography variant="body2" color="text.secondary">
-                Tu anuncio activo se mostrará aquí
-              </Typography>
+            <Box>
+              {ads.filter(ad => ad.status === "active").length > 0 ? (
+                <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 3 }}>
+                  {ads.filter(ad => ad.status === "active").map((ad) => (
+                    <Box
+                      key={ad.id}
+                      sx={{
+                        bgcolor: "background.paper",
+                        borderRadius: 2,
+                        border: "1px solid",
+                        borderColor: "divider",
+                        overflow: "hidden",
+                        boxShadow: 1,
+                      }}
+                    >
+                      {ad.imageUrl && (
+                        <Box
+                          component="img"
+                          src={ad.imageUrl}
+                          alt={ad.title}
+                          sx={{
+                            width: "100%",
+                            height: 200,
+                            objectFit: "cover",
+                          }}
+                        />
+                      )}
+                      <Box sx={{ p: 2 }}>
+                        <Typography variant="h6" fontWeight={600} gutterBottom>
+                          {ad.title}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                          {ad.description}
+                        </Typography>
+                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 2 }}>
+                          <Typography variant="caption" color="text.secondary">
+                            {ad.startDate} - {ad.endDate || "Sin fecha fin"}
+                          </Typography>
+                          <Box
+                            sx={{
+                              px: 1.5,
+                              py: 0.5,
+                              borderRadius: 1,
+                              bgcolor: "success.light",
+                              color: "success.contrastText",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                            }}
+                          >
+                            Activo
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              ) : (
+                <Box sx={{ bgcolor: "grey.50", p: 3, borderRadius: 2, border: "1px solid", borderColor: "grey.200" }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Tu anuncio activo se mostrará aquí
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          ) : pendingRequest ? (
+            <AdsEmptyState />
+          ) : ads.length > 0 ? (
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }, gap: 3 }}>
+              {ads.map((ad) => (
+                <Box
+                  key={ad.id}
+                  sx={{
+                    bgcolor: "background.paper",
+                    borderRadius: 2,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    overflow: "hidden",
+                    boxShadow: 1,
+                  }}
+                >
+                  {ad.imageUrl && (
+                    <Box
+                      component="img"
+                      src={ad.imageUrl}
+                      alt={ad.title}
+                      sx={{
+                        width: "100%",
+                        height: 200,
+                        objectFit: "cover",
+                      }}
+                    />
+                  )}
+                  <Box sx={{ p: 2 }}>
+                    <Typography variant="h6" fontWeight={600} gutterBottom>
+                      {ad.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      {ad.description}
+                    </Typography>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 2 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        {ad.startDate} - {ad.endDate || "Sin fecha fin"}
+                      </Typography>
+                      <Box
+                        sx={{
+                          px: 1.5,
+                          py: 0.5,
+                          borderRadius: 1,
+                          bgcolor: ad.status === "active" ? "success.light" : ad.status === "draft" ? "warning.light" : "grey.300",
+                          color: ad.status === "active" ? "success.contrastText" : ad.status === "draft" ? "warning.contrastText" : "text.secondary",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {ad.status === "active" ? "Activo" : ad.status === "draft" ? "Borrador" : "Inactivo"}
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+              ))}
             </Box>
           ) : (
-            <Typography>Listado de anuncios...</Typography>
+            <AdsEmptyState />
           )}
         </Box>
 
