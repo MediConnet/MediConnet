@@ -1,149 +1,7 @@
 import type { AdRequest } from "../domain/ad-request.entity";
 
-const INITIAL_MOCK_AD_REQUESTS: AdRequest[] = [
-  {
-    id: "ad-1",
-    providerId: "doc-1",
-    providerName: "Dr. Juan Pérez",
-    providerEmail: "juan.perez@example.com",
-    serviceType: "doctor",
-    submissionDate: "2024-01-15",
-    status: "PENDING",
-    hasActiveAd: false,
-    adContent: {
-      title: "Consulta Médica Especializada - Descuento del 20%",
-      description: "Aprovecha nuestro descuento especial del 20% en consultas médicas durante todo el mes. Atención de calidad con especialistas certificados. Agenda tu cita ahora.",
-      imageUrl: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=800&auto=format&fit=crop",
-      startDate: "2024-01-20",
-      endDate: "2024-02-20",
-    },
-  },
-  {
-    id: "ad-2",
-    providerId: "lab-1",
-    providerName: "Laboratorio Central",
-    providerEmail: "lab.central@example.com",
-    serviceType: "laboratory",
-    submissionDate: "2024-01-16",
-    status: "APPROVED",
-    approvedAt: "2024-01-17",
-    hasActiveAd: true,
-    adContent: {
-      title: "Exámenes de Laboratorio con Resultados Rápidos",
-      description: "Realiza tus exámenes de laboratorio con nosotros. Resultados en 24 horas. Equipos de última generación y personal altamente calificado.",
-      imageUrl: "https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=800&auto=format&fit=crop",
-      startDate: "2024-01-18",
-      endDate: "2024-03-18",
-    },
-  },
-  {
-    id: "ad-3",
-    providerId: "pharm-1",
-    providerName: "Farmacia San José",
-    providerEmail: "farmacia@example.com",
-    serviceType: "pharmacy",
-    submissionDate: "2024-01-14",
-    status: "REJECTED",
-    rejectedAt: "2024-01-15",
-    rejectionReason: "El anuncio no cumple con las políticas de contenido.",
-    hasActiveAd: false,
-    adContent: {
-      title: "Promoción Especial en Medicamentos",
-      description: "Descuentos especiales en medicamentos de marca y genéricos. Atención 24 horas.",
-      imageUrl: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=800&auto=format&fit=crop",
-      startDate: "2024-01-15",
-      endDate: "2024-02-15",
-    },
-  },
-  {
-    id: "ad-4",
-    providerId: "amb-1",
-    providerName: "Ambulancias Rápidas",
-    providerEmail: "ambulancias@example.com",
-    serviceType: "ambulance",
-    submissionDate: new Date().toISOString().split("T")[0],
-    status: "PENDING",
-    hasActiveAd: false,
-    adContent: {
-      title: "Servicio de Ambulancia 24/7 - Respuesta Inmediata",
-      description: "Servicio de ambulancia disponible las 24 horas del día. Unidades equipadas con tecnología de última generación. Llegamos en menos de 15 minutos.",
-      imageUrl: "https://images.unsplash.com/photo-1584555613497-9ecf9dd06f68?w=800&auto=format&fit=crop",
-      startDate: new Date().toISOString().split("T")[0],
-      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    },
-  },
-  {
-    id: "ad-5",
-    providerId: "doc-3",
-    providerName: "Dr. Carlos Mendoza",
-    providerEmail: "carlos.mendoza@example.com",
-    serviceType: "doctor",
-    submissionDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    status: "PENDING",
-    hasActiveAd: false,
-    adContent: {
-      title: "Consulta Pediátrica Especializada",
-      description: "Atención pediátrica de calidad. Especialistas en salud infantil. Consultas con cita previa.",
-      imageUrl: "https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?w=800&auto=format&fit=crop",
-      startDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      endDate: new Date(Date.now() + 35 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    },
-  },
-  {
-    id: "ad-6",
-    providerId: "pharm-2",
-    providerName: "Farmacia Salud Total",
-    providerEmail: "saludtotal@example.com",
-    serviceType: "pharmacy",
-    submissionDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    status: "APPROVED",
-    approvedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    hasActiveAd: true,
-    adContent: {
-      title: "Promoción: 2x1 en Vitaminas",
-      description: "Compra cualquier vitamina y lleva la segunda gratis. Promoción válida en todas nuestras sucursales.",
-      imageUrl: "https://images.unsplash.com/photo-1550572017-edd951b55104?w=800&auto=format&fit=crop",
-      startDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      endDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    },
-  },
-  {
-    id: "ad-7",
-    providerId: "lab-2",
-    providerName: "Laboratorio Diagnóstico",
-    providerEmail: "labdiagnostico@example.com",
-    serviceType: "laboratory",
-    submissionDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    status: "PENDING",
-    hasActiveAd: false,
-    adContent: {
-      title: "Paquete de Exámenes Pre-Operatorio",
-      description: "Paquete completo de exámenes pre-operatorios con descuento del 20%. Resultados en 48 horas.",
-      imageUrl: "https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=800&auto=format&fit=crop",
-      startDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      endDate: new Date(Date.now() + 33 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    },
-  },
-  {
-    id: "ad-8",
-    providerId: "supplies-1",
-    providerName: "Insumos Médicos Plus",
-    providerEmail: "insumos@example.com",
-    serviceType: "supplies",
-    submissionDate: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    status: "REJECTED",
-    rejectedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    rejectionReason: "El contenido del anuncio requiere revisión de imágenes.",
-    hasActiveAd: false,
-    adContent: {
-      title: "Equipos Médicos de Alta Calidad",
-      description: "Distribuidora de insumos y equipo médico. Vendemos al mayoreo y menudeo.",
-      imageUrl: "https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?w=800&auto=format&fit=crop",
-      startDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      endDate: new Date(Date.now() + 50 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    },
-  },
-];
+// Mocks iniciales vacíos - el usuario puede crear sus propias solicitudes de prueba
+const INITIAL_MOCK_AD_REQUESTS: AdRequest[] = [];
 
 // Función helper para obtener todas las solicitudes (desde localStorage o mocks iniciales)
 export const getAdRequests = (): AdRequest[] => {
@@ -153,17 +11,22 @@ export const getAdRequests = (): AdRequest[] => {
       return JSON.parse(saved);
     } catch (error) {
       console.error("Error loading ad requests from localStorage:", error);
-      // Si hay error, usar los mocks iniciales
-      return [...INITIAL_MOCK_AD_REQUESTS];
+      // Si hay error, retornar array vacío
+      return [];
     }
   }
-  // Primera vez: usar los mocks iniciales
-  return [...INITIAL_MOCK_AD_REQUESTS];
+  // Primera vez: retornar array vacío (sin mocks)
+  return [];
 };
 
 // Función helper para guardar solicitudes en localStorage
 export const saveAdRequests = (requests: AdRequest[]): void => {
   localStorage.setItem("ad-requests", JSON.stringify(requests));
+};
+
+// Limpiar todas las solicitudes de anuncios
+export const clearAdRequests = (): void => {
+  localStorage.removeItem("ad-requests");
 };
 
 // Exportar los mocks iniciales para compatibilidad

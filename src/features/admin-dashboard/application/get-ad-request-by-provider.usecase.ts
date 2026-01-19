@@ -1,6 +1,6 @@
 import type { AdRequest } from "../domain/ad-request.entity";
 import { getAdRequests } from "../infrastructure/ad-requests.mock";
-import { loadAdsFromStorage } from "../infrastructure/ads.mock";
+import { loadAdsFromStorage, saveAdsToStorage } from "../infrastructure/ads.mock";
 
 export const getAdRequestByProviderUseCase = async (
   providerId: string
@@ -22,7 +22,27 @@ export const hasActiveAdUseCase = async (
   const activeAd = ads.find(
     (ad) => ad.providerId === providerId && ad.status === "active"
   );
-  if (activeAd) return true;
+  
+  // Si el anuncio existe, verificar si ha expirado
+  if (activeAd) {
+    if (activeAd.endDate) {
+      const now = new Date().getTime();
+      const endDate = new Date(activeAd.endDate).getTime();
+      
+      // Si el anuncio ha expirado, marcarlo como inactivo
+      if (endDate < now) {
+        activeAd.status = "inactive";
+        // Guardar los cambios
+        const adIndex = ads.findIndex((a) => a.id === activeAd.id);
+        if (adIndex !== -1) {
+          ads[adIndex] = activeAd;
+          saveAdsToStorage(ads);
+        }
+        return false; // No hay anuncio activo si ha expirado
+      }
+    }
+    return true; // El anuncio está activo y no ha expirado
+  }
 
   // También verificar en las solicitudes (backward compatibility)
   const requests = getAdRequests();

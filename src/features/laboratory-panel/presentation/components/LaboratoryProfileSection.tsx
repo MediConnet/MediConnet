@@ -2,6 +2,9 @@ import {
   Description,
   Edit,
   PhotoCamera,
+  LocationOn,
+  AccessTime,
+  CloudUpload,
 } from "@mui/icons-material";
 import {
   Avatar,
@@ -49,17 +52,56 @@ export const LaboratoryProfileSection = ({
     }
   };
 
+  // Colores del tema para laboratorio (morado)
+  const themeColor = "#9333ea"; // Morado vibrante
+  const bgCardColor = "#f3e8ff"; // Fondo lila suave
+
+  // Función para generar el texto del horario
+  const getScheduleText = () => {
+    if (!data.laboratory.workSchedule || data.laboratory.workSchedule.length === 0) {
+      return data.laboratory.schedule || "Horario no definido";
+    }
+
+    const activeDays = data.laboratory.workSchedule.filter((s) => s.isOpen);
+    if (activeDays.length === 0) return "Cerrado temporalmente";
+
+    const dayMap: Record<string, string> = {
+      monday: "Lun",
+      tuesday: "Mar",
+      wednesday: "Mié",
+      thursday: "Jue",
+      friday: "Vie",
+      saturday: "Sáb",
+      sunday: "Dom",
+    };
+
+    const startDay = dayMap[activeDays[0].day];
+    const endDay = dayMap[activeDays[activeDays.length - 1].day];
+    const startTime = activeDays[0].startTime;
+    const endTime = activeDays[0].endTime;
+
+    if (activeDays.length === 1) {
+      return `${startDay} ${startTime}-${endTime}`;
+    }
+
+    return `${startDay}-${endDay} ${startTime}-${endTime}`;
+  };
+
   return (
     <Box>
-      <Paper
-        elevation={0}
-        sx={{
-          p: 4,
-          borderRadius: 3,
-          border: "1px solid",
-          borderColor: "grey.200",
-        }}
-      >
+      <Grid2 container spacing={3}>
+        {/* Columna izquierda: Información del Perfil */}
+        <Grid2 size={{ xs: 12, md: 8 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "grey.200",
+              height: "100%",
+            }}
+          >
         <Box
           display="flex"
           justifyContent="space-between"
@@ -194,6 +236,232 @@ export const LaboratoryProfileSection = ({
           </Box>
         </Stack>
       </Paper>
+        </Grid2>
+
+        {/* Columna derecha: Vista previa en App */}
+        <Grid2 size={{ xs: 12, md: 4 }}>
+          {/* Sección de carga de imagen */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "grey.200",
+              mb: 3,
+            }}
+          >
+            <Typography variant="h6" fontWeight={700} mb={2}>
+              Imagen de Perfil
+            </Typography>
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              onChange={handleImageChange}
+            />
+            <Box display="flex" alignItems="center" gap={2} mb={2}>
+              <Box
+                sx={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: "50%",
+                  bgcolor: "grey.100",
+                  overflow: "hidden",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "1px solid",
+                  borderColor: "grey.200",
+                }}
+              >
+                {data.laboratory.logoUrl ? (
+                  <Box
+                    component="img"
+                    src={data.laboratory.logoUrl}
+                    alt={data.laboratory.name}
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : (
+                  <PhotoCamera sx={{ color: "grey.400" }} />
+                )}
+              </Box>
+              <Button
+                variant="outlined"
+                startIcon={<CloudUpload />}
+                onClick={handleImageClick}
+                sx={{
+                  textTransform: "none",
+                  borderRadius: 2,
+                  fontWeight: 600,
+                }}
+              >
+                {data.laboratory.logoUrl ? "Cambiar foto" : "Subir foto"}
+              </Button>
+            </Box>
+            <Typography variant="caption" color="text.secondary">
+              Se recomienda una imagen rectangular para el banner.
+            </Typography>
+          </Paper>
+
+          {/* Vista previa en App */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "grey.200",
+            }}
+          >
+            <Typography variant="h6" fontWeight={700} mb={3}>
+              Vista previa en App
+            </Typography>
+
+            <Box display="flex" justifyContent="center">
+              {/* Card móvil de laboratorio */}
+              <Box
+                sx={{
+                  bgcolor: "white",
+                  borderRadius: 3,
+                  boxShadow: "0 8px 30px rgba(0,0,0,0.08)",
+                  overflow: "hidden",
+                  width: "100%",
+                  maxWidth: "300px",
+                  display: "flex",
+                  flexDirection: "column",
+                  border: "1px solid",
+                  borderColor: "grey.100",
+                }}
+              >
+                {/* Imagen Superior */}
+                <Box
+                  sx={{
+                    height: 176,
+                    width: "100%",
+                    bgcolor: "grey.200",
+                    position: "relative",
+                  }}
+                >
+                  {data.laboratory.logoUrl ? (
+                    <Box
+                      component="img"
+                      src={data.laboratory.logoUrl}
+                      alt={data.laboratory.name}
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        bgcolor: "grey.100",
+                        color: "grey.400",
+                      }}
+                    >
+                      <PhotoCamera sx={{ fontSize: 40, opacity: 0.5 }} />
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Contenido (Fondo Lila Suave) */}
+                <Box
+                  sx={{
+                    p: 2.5,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1.5,
+                    bgcolor: bgCardColor,
+                  }}
+                >
+                  {/* Nombre */}
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 800,
+                      color: "grey.900",
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {data.laboratory.name}
+                  </Typography>
+
+                  {/* Info: Dirección */}
+                  <Box display="flex" alignItems="flex-start" gap={1}>
+                    <LocationOn
+                      sx={{ fontSize: 18, color: "grey.600", mt: 0.5, flexShrink: 0 }}
+                    />
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "grey.600", lineHeight: 1.4 }}
+                    >
+                      {data.laboratory.address || "Dirección"}
+                    </Typography>
+                  </Box>
+
+                  {/* Info: Horario */}
+                  <Box display="flex" alignItems="flex-start" gap={1}>
+                    <AccessTime
+                      sx={{ fontSize: 18, color: "grey.600", mt: 0.5, flexShrink: 0 }}
+                    />
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "grey.600", lineHeight: 1.4 }}
+                    >
+                      {getScheduleText()}
+                    </Typography>
+                  </Box>
+
+                  {/* Botón Ver Información */}
+                  <Box mt={1} width="100%">
+                    <Box
+                      sx={{
+                        bgcolor: themeColor,
+                        color: "white",
+                        fontSize: "0.875rem",
+                        fontWeight: 700,
+                        px: 2,
+                        py: 1.25,
+                        borderRadius: 2,
+                        textAlign: "center",
+                        cursor: "default",
+                        transition: "transform 0.2s",
+                        "&:hover": {
+                          transform: "scale(1.02)",
+                        },
+                      }}
+                    >
+                      Ver información
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              textAlign="center"
+              display="block"
+              mt={2}
+            >
+              Así verán tu perfil los pacientes en la app
+            </Typography>
+          </Paper>
+        </Grid2>
+      </Grid2>
 
       {/* Modal de Edición */}
       <EditLaboratoryProfileModal

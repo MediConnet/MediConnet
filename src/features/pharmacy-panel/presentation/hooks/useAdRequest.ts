@@ -48,8 +48,10 @@ export const useAdRequest = () => {
   }, [user?.id]);
 
   const createRequest = async (adContent: {
-    title: string;
+    label: string;
+    discount: string;
     description: string;
+    buttonText: string;
     imageUrl?: string;
     startDate: string;
     endDate?: string;
@@ -73,8 +75,10 @@ export const useAdRequest = () => {
   };
 
   const createAd = async (adData: {
-    title: string;
+    label: string;
+    discount: string;
     description: string;
+    buttonText: string;
     imageUrl?: string;
     startDate: string;
     endDate?: string;

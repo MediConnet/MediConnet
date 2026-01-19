@@ -6,7 +6,9 @@ import {
 } from "../../../../features/admin-dashboard/application/get-ad-request-by-provider.usecase";
 import { createAdRequestUseCase } from "../../../../features/admin-dashboard/application/create-ad-request.usecase";
 import { createAdUseCase } from "../../../../features/admin-dashboard/application/create-ad.usecase";
+import { getAdByProviderUseCase } from "../../../../features/admin-dashboard/application/create-ad.usecase";
 import type { AdRequest } from "../../../../features/admin-dashboard/domain/ad-request.entity";
+import type { Ad } from "../../../../features/admin-dashboard/domain/ad.entity";
 import { useAuthStore } from "../../../../app/store/auth.store";
 
 export const useAdRequest = () => {
@@ -14,6 +16,7 @@ export const useAdRequest = () => {
   const [pendingRequest, setPendingRequest] = useState<AdRequest | null>(null);
   const [hasActiveAd, setHasActiveAd] = useState(false);
   const [hasApprovedRequest, setHasApprovedRequest] = useState(false);
+  const [activeAd, setActiveAd] = useState<Ad | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -25,21 +28,24 @@ export const useAdRequest = () => {
 
       setIsLoading(true);
       try {
-        const [request, activeAd, approvedRequest] = await Promise.all([
+        const [request, hasActive, approvedRequest, ad] = await Promise.all([
           getAdRequestByProviderUseCase(user.id),
           hasActiveAdUseCase(user.id),
           hasApprovedAdRequestUseCase(user.id),
+          getAdByProviderUseCase(user.id),
         ]);
 
         setPendingRequest(request);
-        setHasActiveAd(activeAd);
+        setHasActiveAd(hasActive);
         setHasApprovedRequest(approvedRequest);
+        setActiveAd(ad);
       } catch (error) {
         console.error("Error loading ad request status:", error);
         // En caso de error, establecer valores por defecto
         setPendingRequest(null);
         setHasActiveAd(false);
         setHasApprovedRequest(false);
+        setActiveAd(null);
       } finally {
         setIsLoading(false);
       }
@@ -49,8 +55,10 @@ export const useAdRequest = () => {
   }, [user?.id]);
 
   const createRequest = async (adContent: {
-    title: string;
+    label: string;
+    discount: string;
     description: string;
+    buttonText: string;
     imageUrl?: string;
     startDate: string;
     endDate?: string;
@@ -74,8 +82,10 @@ export const useAdRequest = () => {
   };
 
   const createAd = async (adData: {
-    title: string;
+    label: string;
+    discount: string;
     description: string;
+    buttonText: string;
     imageUrl?: string;
     startDate: string;
     endDate?: string;
@@ -104,20 +114,23 @@ export const useAdRequest = () => {
 
     setIsLoading(true);
     try {
-      const [request, activeAd, approvedRequest] = await Promise.all([
+      const [request, hasActive, approvedRequest, ad] = await Promise.all([
         getAdRequestByProviderUseCase(user.id),
         hasActiveAdUseCase(user.id),
         hasApprovedAdRequestUseCase(user.id),
+        getAdByProviderUseCase(user.id),
       ]);
 
       setPendingRequest(request);
-      setHasActiveAd(activeAd);
+      setHasActiveAd(hasActive);
       setHasApprovedRequest(approvedRequest);
+      setActiveAd(ad);
     } catch (error) {
       console.error("Error loading ad request status:", error);
       setPendingRequest(null);
       setHasActiveAd(false);
       setHasApprovedRequest(false);
+      setActiveAd(null);
     } finally {
       setIsLoading(false);
     }
@@ -127,6 +140,7 @@ export const useAdRequest = () => {
     pendingRequest,
     hasActiveAd,
     hasApprovedRequest,
+    activeAd,
     isLoading,
     createRequest,
     createAd,

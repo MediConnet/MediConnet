@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
 import type { AdRequest } from "../../domain/ad-request.entity";
+import { PromotionalBanner } from "../../../../shared/components/PromotionalBanner";
 
 interface AdDetailModalProps {
   open: boolean;
@@ -74,78 +75,65 @@ export const AdDetailModal = ({
                   overflow: "hidden",
                   bgcolor: "white",
                   boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                  p: 2,
+                  minHeight: 220,
                 }}
               >
-                {/* Imagen del Anuncio */}
-                {request.adContent.imageUrl ? (
-                  <Box
-                    sx={{
-                      width: "100%",
-                      height: 300,
-                      overflow: "hidden",
-                      position: "relative",
-                    }}
-                  >
-                    <Box
-                      component="img"
-                      src={request.adContent.imageUrl}
-                      alt={request.adContent.title}
-                      sx={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                        display: "block",
-                      }}
-                    />
-                  </Box>
+                {/* Usar PromotionalBanner si tiene los nuevos campos, sino mostrar formato legacy */}
+                {request.adContent.label && request.adContent.discount && request.adContent.buttonText ? (
+                  <PromotionalBanner
+                    label={request.adContent.label}
+                    discount={request.adContent.discount}
+                    description={request.adContent.description}
+                    buttonText={request.adContent.buttonText}
+                    imageUrl={request.adContent.imageUrl}
+                    endDate={request.adContent.endDate}
+                  />
                 ) : (
-                  <Box
-                    sx={{
-                      width: "100%",
-                      height: 300,
-                      bgcolor: "grey.100",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <ImageIcon sx={{ fontSize: 64, color: "grey.400" }} />
+                  /* Formato legacy para anuncios antiguos */
+                  <Box>
+                    {request.adContent.imageUrl && (
+                      <Box
+                        sx={{
+                          width: "100%",
+                          height: 200,
+                          overflow: "hidden",
+                          borderRadius: 2,
+                          mb: 2,
+                        }}
+                      >
+                        <Box
+                          component="img"
+                          src={request.adContent.imageUrl}
+                          alt={request.adContent.title || "Anuncio"}
+                          sx={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            display: "block",
+                          }}
+                        />
+                      </Box>
+                    )}
+                    <Box sx={{ p: 2 }}>
+                      <Typography variant="h6" fontWeight={700} mb={1}>
+                        {request.adContent.title || "Sin título"}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" mb={2}>
+                        {request.adContent.description}
+                      </Typography>
+                      <Chip
+                        label={`${request.providerName} - ${request.serviceType.charAt(0).toUpperCase() + request.serviceType.slice(1)}`}
+                        size="small"
+                        sx={{
+                          bgcolor: "primary.light",
+                          color: "primary.main",
+                          fontWeight: 600,
+                        }}
+                      />
+                    </Box>
                   </Box>
                 )}
-
-                {/* Contenido del Anuncio */}
-                <Box sx={{ p: 3, bgcolor: "white" }}>
-                  <Typography
-                    variant="h6"
-                    fontWeight={700}
-                    sx={{
-                      color: "text.primary",
-                      mb: 1.5,
-                      lineHeight: 1.3,
-                    }}
-                  >
-                    {request.adContent.title}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: "text.secondary",
-                      lineHeight: 1.6,
-                      mb: 2,
-                    }}
-                  >
-                    {request.adContent.description}
-                  </Typography>
-                  <Chip
-                    label={`${request.providerName} - ${request.serviceType.charAt(0).toUpperCase() + request.serviceType.slice(1)}`}
-                    size="small"
-                    sx={{
-                      bgcolor: "primary.light",
-                      color: "primary.main",
-                      fontWeight: 600,
-                    }}
-                  />
-                </Box>
               </Box>
             </Box>
           )}
@@ -159,25 +147,72 @@ export const AdDetailModal = ({
                 INFORMACIÓN DEL ANUNCIO
               </Typography>
 
-              {/* Título */}
-              <Box mb={2}>
-                <Typography variant="body2" color="text.secondary" fontWeight={600} mb={1}>
-                  TÍTULO DEL ANUNCIO
-                </Typography>
-                <Typography variant="body1" fontWeight={600}>
-                  {request.adContent.title}
-                </Typography>
-              </Box>
+              {/* Mostrar campos nuevos si existen, sino mostrar campos legacy */}
+              {request.adContent.label && request.adContent.discount && request.adContent.buttonText ? (
+                <>
+                  {/* Label */}
+                  <Box mb={2}>
+                    <Typography variant="body2" color="text.secondary" fontWeight={600} mb={1}>
+                      LABEL DEL ANUNCIO
+                    </Typography>
+                    <Typography variant="body1" fontWeight={600}>
+                      {request.adContent.label}
+                    </Typography>
+                  </Box>
 
-              {/* Descripción */}
-              <Box mb={3}>
-                <Typography variant="body2" color="text.secondary" fontWeight={600} mb={1}>
-                  DESCRIPCIÓN DEL ANUNCIO
-                </Typography>
-                <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
-                  {request.adContent.description}
-                </Typography>
-              </Box>
+                  {/* Descuento */}
+                  <Box mb={2}>
+                    <Typography variant="body2" color="text.secondary" fontWeight={600} mb={1}>
+                      DESCUENTO
+                    </Typography>
+                    <Typography variant="body1" fontWeight={600}>
+                      {request.adContent.discount}
+                    </Typography>
+                  </Box>
+
+                  {/* Descripción */}
+                  <Box mb={2}>
+                    <Typography variant="body2" color="text.secondary" fontWeight={600} mb={1}>
+                      DESCRIPCIÓN DEL ANUNCIO
+                    </Typography>
+                    <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
+                      {request.adContent.description}
+                    </Typography>
+                  </Box>
+
+                  {/* Texto del botón */}
+                  <Box mb={3}>
+                    <Typography variant="body2" color="text.secondary" fontWeight={600} mb={1}>
+                      TEXTO DEL BOTÓN
+                    </Typography>
+                    <Typography variant="body1" fontWeight={600}>
+                      {request.adContent.buttonText}
+                    </Typography>
+                  </Box>
+                </>
+              ) : (
+                <>
+                  {/* Formato legacy */}
+                  <Box mb={2}>
+                    <Typography variant="body2" color="text.secondary" fontWeight={600} mb={1}>
+                      TÍTULO DEL ANUNCIO
+                    </Typography>
+                    <Typography variant="body1" fontWeight={600}>
+                      {request.adContent.title || "Sin título"}
+                    </Typography>
+                  </Box>
+
+                  {/* Descripción */}
+                  <Box mb={3}>
+                    <Typography variant="body2" color="text.secondary" fontWeight={600} mb={1}>
+                      DESCRIPCIÓN DEL ANUNCIO
+                    </Typography>
+                    <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
+                      {request.adContent.description}
+                    </Typography>
+                  </Box>
+                </>
+              )}
 
               <Divider sx={{ my: 2 }} />
 

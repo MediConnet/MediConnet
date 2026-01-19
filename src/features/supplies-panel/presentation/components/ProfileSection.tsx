@@ -4,6 +4,9 @@ import {
   Description,
   Visibility,
   VisibilityOff,
+  LocationOn,
+  AccessTime,
+  CloudUpload,
 } from "@mui/icons-material";
 import {
   Box,
@@ -151,18 +154,26 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   }
 
   const supply = data.supply;
+  
+  // Colores del tema para insumos médicos (naranja)
+  const themeColor = "#f97316"; // Naranja
+  const bgCardColor = "#fff7ed"; // Fondo naranja suave
 
   return (
     <Box>
-      <Paper
-        elevation={0}
-        sx={{
-          p: 4,
-          borderRadius: 3,
-          border: "1px solid",
-          borderColor: "grey.200",
-        }}
-      >
+      <Grid2 container spacing={3}>
+        {/* Columna izquierda: Información del Perfil */}
+        <Grid2 size={{ xs: 12, md: 8 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "grey.200",
+              height: "100%",
+            }}
+          >
         <Box
           display="flex"
           justifyContent="space-between"
@@ -420,6 +431,236 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
           </Box>
         )}
       </Paper>
+        </Grid2>
+
+        {/* Columna derecha: Vista previa en App */}
+        <Grid2 size={{ xs: 12, md: 4 }}>
+          {/* Sección de carga de imagen */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "grey.200",
+              mb: 3,
+            }}
+          >
+            <Typography variant="h6" fontWeight={700} mb={2}>
+              Imagen de Perfil
+            </Typography>
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              onChange={handleImageChange}
+            />
+            <Box display="flex" alignItems="center" gap={2} mb={2}>
+              <Box
+                sx={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: "50%",
+                  bgcolor: "grey.100",
+                  overflow: "hidden",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "1px solid",
+                  borderColor: "grey.200",
+                }}
+              >
+                {profileImage ? (
+                  <Box
+                    component="img"
+                    src={profileImage}
+                    alt={supply.name}
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : (
+                  <PhotoCamera sx={{ color: "grey.400" }} />
+                )}
+              </Box>
+              <Button
+                variant="outlined"
+                startIcon={<CloudUpload />}
+                onClick={handleImageClick}
+                sx={{
+                  textTransform: "none",
+                  borderRadius: 2,
+                  fontWeight: 600,
+                }}
+              >
+                {profileImage ? "Cambiar foto" : "Subir foto"}
+              </Button>
+            </Box>
+            <Typography variant="caption" color="text.secondary">
+              Se recomienda una imagen rectangular para el banner.
+            </Typography>
+          </Paper>
+
+          {/* Vista previa en App */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 3,
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "grey.200",
+            }}
+          >
+            <Typography variant="h6" fontWeight={700} mb={3}>
+              Vista previa en App
+            </Typography>
+
+            <Box display="flex" justifyContent="center">
+              {/* Card móvil de insumos médicos */}
+              <Box
+                sx={{
+                  bgcolor: "white",
+                  borderRadius: 3,
+                  boxShadow: "0 8px 30px rgba(0,0,0,0.08)",
+                  overflow: "hidden",
+                  width: "100%",
+                  maxWidth: "300px",
+                  display: "flex",
+                  flexDirection: "column",
+                  border: "1px solid",
+                  borderColor: "grey.100",
+                }}
+              >
+                {/* Imagen Superior */}
+                <Box
+                  sx={{
+                    height: 176,
+                    width: "100%",
+                    bgcolor: "grey.200",
+                    position: "relative",
+                  }}
+                >
+                  {profileImage ? (
+                    <Box
+                      component="img"
+                      src={profileImage}
+                      alt={supply.name}
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        bgcolor: "grey.100",
+                        color: "grey.400",
+                      }}
+                    >
+                      <PhotoCamera sx={{ fontSize: 40, opacity: 0.5 }} />
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Contenido (Fondo Naranja Suave) */}
+                <Box
+                  sx={{
+                    p: 2.5,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1.5,
+                    bgcolor: bgCardColor,
+                  }}
+                >
+                  {/* Nombre */}
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 800,
+                      color: "grey.900",
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {isEditing ? formData.name || "Nombre del Negocio" : supply.name}
+                  </Typography>
+
+                  {/* Info: Dirección */}
+                  <Box display="flex" alignItems="flex-start" gap={1}>
+                    <LocationOn
+                      sx={{ fontSize: 18, color: "grey.600", mt: 0.5, flexShrink: 0 }}
+                    />
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "grey.600", lineHeight: 1.4 }}
+                    >
+                      {supply.address || "Dirección"}
+                    </Typography>
+                  </Box>
+
+                  {/* Info: Descripción (truncada) */}
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: "grey.600",
+                      lineHeight: 1.4,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {isEditing
+                      ? formData.description || "Descripción"
+                      : supply.description || "Sin descripción"}
+                  </Typography>
+
+                  {/* Botón Ver Información */}
+                  <Box mt={1} width="100%">
+                    <Box
+                      sx={{
+                        bgcolor: themeColor,
+                        color: "white",
+                        fontSize: "0.875rem",
+                        fontWeight: 700,
+                        px: 2,
+                        py: 1.25,
+                        borderRadius: 2,
+                        textAlign: "center",
+                        cursor: "default",
+                        transition: "transform 0.2s",
+                        "&:hover": {
+                          transform: "scale(1.02)",
+                        },
+                      }}
+                    >
+                      Ver información
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              textAlign="center"
+              display="block"
+              mt={2}
+            >
+              Así verán tu perfil los usuarios en la app
+            </Typography>
+          </Paper>
+        </Grid2>
+      </Grid2>
     </Box>
   );
 };

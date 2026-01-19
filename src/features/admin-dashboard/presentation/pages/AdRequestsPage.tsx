@@ -8,6 +8,7 @@ import {
   AirportShuttle,
   Inventory,
   Visibility,
+  DeleteOutline,
 } from "@mui/icons-material";
 import {
   Avatar,
@@ -34,6 +35,8 @@ import { RequestStatusBadge } from "../components/RequestStatusBadge";
 import { useAdRequests } from "../hooks/useAdRequests";
 import { approveAdRequestUseCase } from "../../application/approve-ad-request.usecase";
 import { rejectAdRequestUseCase } from "../../application/reject-ad-request.usecase";
+import { clearAdsFromStorage } from "../../infrastructure/ads.mock";
+import { clearAdRequests } from "../../infrastructure/ad-requests.mock";
 
 const CURRENT_ADMIN = {
   name: "Admin General",
@@ -107,6 +110,15 @@ export const AdRequestsPage = () => {
   const openDetailModal = (request: AdRequest) => {
     setSelectedRequest(request);
     setIsDetailModalOpen(true);
+  };
+
+  const handleClearAllAds = () => {
+    if (window.confirm("¿Estás seguro de que quieres limpiar TODOS los anuncios y solicitudes? Esta acción no se puede deshacer.")) {
+      clearAdsFromStorage();
+      clearAdRequests();
+      refetch();
+      alert("✅ Anuncios y solicitudes limpiados correctamente");
+    }
   };
 
   const columns: GridColDef<AdRequest>[] = [
@@ -285,16 +297,27 @@ export const AdRequestsPage = () => {
   return (
     <DashboardLayout role="ADMIN" userProfile={CURRENT_ADMIN}>
       <Box sx={{ p: 3 }}>
-        <Stack direction="row" spacing={2} alignItems="center" mb={3}>
-          <Campaign sx={{ fontSize: 32, color: "primary.main" }} />
-          <Box>
-            <Typography variant="h4" fontWeight={700}>
-              Solicitudes de Anuncios
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Gestiona las solicitudes de permisos para crear anuncios
-            </Typography>
-          </Box>
+        <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between" mb={3}>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Campaign sx={{ fontSize: 32, color: "primary.main" }} />
+            <Box>
+              <Typography variant="h4" fontWeight={700}>
+                Solicitudes de Anuncios
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Gestiona las solicitudes de permisos para crear anuncios
+              </Typography>
+            </Box>
+          </Stack>
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<DeleteOutline />}
+            onClick={handleClearAllAds}
+            sx={{ textTransform: "none" }}
+          >
+            Limpiar Todo
+          </Button>
         </Stack>
 
         {/* Filtros */}

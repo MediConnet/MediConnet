@@ -2,11 +2,17 @@ import type { RequestStatusType } from "./request-status.enum";
 import type { ServiceType } from "./provider-request.entity";
 
 export interface AdContent {
-  title: string;
-  description: string;
-  imageUrl?: string;
+  // Campos del banner promocional
+  label: string; // Ej: "PRIMERA CITA"
+  discount: string; // Ej: "20% OFF"
+  description: string; // Ej: "En tu primera consulta general con profesionales verificados."
+  buttonText: string; // Ej: "Canjear Ahora"
+  imageUrl?: string; // Imagen de profesionales
+  // Fechas
   startDate: string;
   endDate?: string;
+  // Campos legacy (mantener para compatibilidad)
+  title?: string; // Deprecated: usar label + discount
 }
 
 export interface AdRequest {

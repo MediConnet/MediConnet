@@ -19,8 +19,10 @@ interface Props {
   open: boolean;
   onClose: () => void;
   onCreateAd: (adData: {
-    title: string;
+    label: string;
+    discount: string;
     description: string;
+    buttonText: string;
     imageUrl?: string;
     startDate: string;
     endDate?: string;
@@ -29,12 +31,18 @@ interface Props {
 }
 
 const validationSchema = Yup.object({
-  title: Yup.string()
-    .min(3, "El título debe tener al menos 3 caracteres")
-    .required("El título es requerido"),
+  label: Yup.string()
+    .min(2, "El label debe tener al menos 2 caracteres")
+    .required("El label es requerido"),
+  discount: Yup.string()
+    .min(2, "El descuento debe tener al menos 2 caracteres")
+    .required("El descuento es requerido"),
   description: Yup.string()
     .min(10, "La descripción debe tener al menos 10 caracteres")
     .required("La descripción es requerida"),
+  buttonText: Yup.string()
+    .min(2, "El texto del botón debe tener al menos 2 caracteres")
+    .required("El texto del botón es requerido"),
   startDate: Yup.string().required("La fecha de inicio es requerida"),
   endDate: Yup.string().test(
     "endDate-after-startDate",
@@ -56,8 +64,10 @@ export const CreateAdModal = ({ open, onClose, onCreateAd, submitButtonText = "P
 
   const formik = useFormik({
     initialValues: {
-      title: "",
+      label: "",
+      discount: "",
       description: "",
+      buttonText: "",
       startDate: "",
       endDate: "",
     },
@@ -81,8 +91,10 @@ export const CreateAdModal = ({ open, onClose, onCreateAd, submitButtonText = "P
         }
 
         await onCreateAd({
-          title: values.title,
+          label: values.label,
+          discount: values.discount,
           description: values.description,
+          buttonText: values.buttonText,
           imageUrl,
           startDate: values.startDate,
           endDate: values.endDate || undefined,
@@ -162,17 +174,32 @@ export const CreateAdModal = ({ open, onClose, onCreateAd, submitButtonText = "P
             </Alert>
           )}
 
-          {/* Título */}
+          {/* Label (ej: "PRIMERA CITA") */}
           <TextField
             fullWidth
-            label="Título del anuncio"
-            name="title"
-            placeholder="Ej: Descuento especial del 20%"
-            value={formik.values.title}
+            label="Label del anuncio"
+            name="label"
+            placeholder="Ej: PRIMERA CITA"
+            value={formik.values.label}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            error={formik.touched.title && Boolean(formik.errors.title)}
-            helperText={formik.touched.title && formik.errors.title}
+            error={formik.touched.label && Boolean(formik.errors.label)}
+            helperText={formik.touched.label && formik.errors.label || "Texto que aparece en la etiqueta superior del banner"}
+            required
+            sx={{ mb: 3 }}
+          />
+
+          {/* Descuento (ej: "20% OFF") */}
+          <TextField
+            fullWidth
+            label="Descuento"
+            name="discount"
+            placeholder="Ej: 20% OFF"
+            value={formik.values.discount}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.touched.discount && Boolean(formik.errors.discount)}
+            helperText={formik.touched.discount && formik.errors.discount || "Ej: 20% OFF, 50% DESCUENTO, etc."}
             required
             sx={{ mb: 3 }}
           />
@@ -181,10 +208,10 @@ export const CreateAdModal = ({ open, onClose, onCreateAd, submitButtonText = "P
           <TextField
             fullWidth
             multiline
-            rows={4}
+            rows={3}
             label="Descripción del anuncio"
             name="description"
-            placeholder="Describe tu oferta o promoción..."
+            placeholder="Ej: En tu primera consulta general con profesionales verificados."
             value={formik.values.description}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
@@ -194,10 +221,28 @@ export const CreateAdModal = ({ open, onClose, onCreateAd, submitButtonText = "P
             sx={{ mb: 3 }}
           />
 
-          {/* Imagen */}
+          {/* Texto del botón */}
+          <TextField
+            fullWidth
+            label="Texto del botón"
+            name="buttonText"
+            placeholder="Ej: Canjear Ahora"
+            value={formik.values.buttonText}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.touched.buttonText && Boolean(formik.errors.buttonText)}
+            helperText={formik.touched.buttonText && formik.errors.buttonText || "Texto que aparece en el botón de acción"}
+            required
+            sx={{ mb: 3 }}
+          />
+
+          {/* Imagen de profesionales */}
           <Box sx={{ mb: 3 }}>
             <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
-              Imagen del anuncio (opcional)
+              Imagen de profesionales (opcional)
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+              Imagen que aparecerá en el lado derecho del banner
             </Typography>
             <input
               type="file"

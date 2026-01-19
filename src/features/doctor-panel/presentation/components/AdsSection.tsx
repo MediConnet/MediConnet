@@ -1,16 +1,42 @@
 import { Campaign, CheckCircle, HourglassEmpty, Add } from "@mui/icons-material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAdRequest } from "../hooks/useAdRequest";
 import { CreateAdModal } from "./CreateAdModal";
+import { PromotionalBanner } from "../../../../shared/components/PromotionalBanner";
 
 export const AdsSection = () => {
-  const { pendingRequest, hasActiveAd, hasApprovedRequest, isLoading, createRequest, refetch } = useAdRequest();
+  const { pendingRequest, hasActiveAd, hasApprovedRequest, activeAd, isLoading, createRequest, refetch } = useAdRequest();
   const [isCreating, setIsCreating] = useState(false);
   const [isCreateAdModalOpen, setIsCreateAdModalOpen] = useState(false);
 
+  // Verificar periódicamente si el anuncio ha expirado
+  useEffect(() => {
+    if (!activeAd || !activeAd.endDate) return;
+
+    const checkExpiration = () => {
+      const now = new Date().getTime();
+      const endDate = new Date(activeAd.endDate!).getTime();
+      
+      if (endDate < now) {
+        // El anuncio ha expirado, refrescar datos
+        refetch();
+      }
+    };
+
+    // Verificar cada minuto
+    const interval = setInterval(checkExpiration, 60000);
+    
+    // Verificar inmediatamente
+    checkExpiration();
+
+    return () => clearInterval(interval);
+  }, [activeAd?.endDate, refetch]);
+
   const handleRequestPermission = async (adData: {
-    title: string;
+    label: string;
+    discount: string;
     description: string;
+    buttonText: string;
     imageUrl?: string;
     startDate: string;
     endDate?: string;
@@ -67,10 +93,37 @@ export const AdsSection = () => {
           </p>
         </div>
 
-        {/* Aquí iría el anuncio activo */}
-        <div className="border border-gray-200 rounded-lg p-4">
-          <p className="text-sm text-gray-500">Anuncio activo (aquí se mostraría el anuncio)</p>
-        </div>
+        {/* Mostrar el banner promocional del anuncio activo */}
+        {activeAd && activeAd.label && activeAd.discount && activeAd.buttonText ? (
+          <div className="mt-4">
+            <PromotionalBanner
+              label={activeAd.label || ""}
+              discount={activeAd.discount || ""}
+              description={activeAd.description || ""}
+              buttonText={activeAd.buttonText || ""}
+              imageUrl={activeAd.imageUrl}
+              endDate={activeAd.endDate}
+            />
+          </div>
+        ) : activeAd ? (
+          <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 mt-4">
+            <p className="text-sm text-gray-500">
+              Anuncio activo (formato antiguo - actualiza tu anuncio para ver el nuevo diseño)
+            </p>
+            {activeAd.title && (
+              <p className="text-base font-medium text-gray-800 mt-2">{activeAd.title}</p>
+            )}
+            {activeAd.description && (
+              <p className="text-sm text-gray-600 mt-1">{activeAd.description}</p>
+            )}
+          </div>
+        ) : (
+          <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 mt-4">
+            <p className="text-sm text-gray-500">
+              No se pudo cargar el anuncio activo. Por favor, recarga la página.
+            </p>
+          </div>
+        )}
       </div>
     );
   }
