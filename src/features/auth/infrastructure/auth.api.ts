@@ -1,33 +1,124 @@
+import { httpClient, extractData } from '../../../shared/lib/http';
 import type { ResetPasswordRequest, ResetPasswordResponse } from '../domain/ResetPasswordRequest.entity';
 
 /**
+ * Tipos para autenticación
+ */
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  userId: string;
+  cognitoUserId: string;
+  email: string;
+  name: string;
+  role: string;
+  serviceType?: string;
+  token: string; // JWT Access Token de Cognito
+  refreshToken?: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  name: string;
+  role: 'ADMIN' | 'PROVIDER' | 'PROFESIONAL' | 'PATIENT';
+  serviceType?: 'doctor' | 'pharmacy' | 'laboratory' | 'ambulance' | 'supplies';
+}
+
+export interface RegisterResponse {
+  userId: string;
+  cognitoUserId: string;
+  email: string;
+  name: string;
+  message: string;
+}
+
+export interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
+export interface RefreshTokenResponse {
+  token: string;
+  refreshToken: string;
+}
+
+/**
+ * API: Login de usuario
+ * Endpoint: POST /api/auth/login
+ */
+export const loginAPI = async (credentials: LoginRequest): Promise<LoginResponse> => {
+  const response = await httpClient.post<{ success: boolean; data: LoginResponse }>(
+    '/auth/login',
+    credentials
+  );
+  return extractData(response);
+};
+
+/**
+ * API: Registro de usuario
+ * Endpoint: POST /api/auth/register
+ */
+export const registerAPI = async (data: RegisterRequest): Promise<RegisterResponse> => {
+  const response = await httpClient.post<{ success: boolean; data: RegisterResponse }>(
+    '/auth/register',
+    data
+  );
+  return extractData(response);
+};
+
+/**
+ * API: Obtener información del usuario actual
+ * Endpoint: GET /api/auth/me
+ */
+export const getCurrentUserAPI = async (): Promise<LoginResponse> => {
+  const response = await httpClient.get<{ success: boolean; data: LoginResponse }>(
+    '/auth/me'
+  );
+  return extractData(response);
+};
+
+/**
+ * API: Refrescar token
+ * Endpoint: POST /api/auth/refresh
+ */
+export const refreshTokenAPI = async (
+  refreshToken: string
+): Promise<RefreshTokenResponse> => {
+  const response = await httpClient.post<{ success: boolean; data: RefreshTokenResponse }>(
+    '/auth/refresh',
+    { refreshToken }
+  );
+  return extractData(response);
+};
+
+/**
  * API: Enviar enlace de restablecimiento de contraseña
- * TODO: Conectar con endpoint real del backend cuando esté disponible
- * Endpoint esperado: POST /api/auth/reset-password
+ * Endpoint: POST /api/auth/forgot-password
  */
 export const sendResetPasswordAPI = async (
   request: ResetPasswordRequest
 ): Promise<ResetPasswordResponse> => {
-  // TODO: Reemplazar con llamada real al backend
-  // const response = await httpClient.post<ResetPasswordResponse>('/auth/reset-password', request);
-  // return response.data;
-
-  // Simular delay de red
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  // NOTE: Simulación - en producción esto enviaría un email real
-  // Por ahora, solo validamos que el email tenga formato válido
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(request.email)) {
-    return {
-      success: false,
-      message: 'Por favor ingresa un correo electrónico válido',
-    };
-  }
-
-  return {
-    success: true,
-    message: 'Se ha enviado un enlace de restablecimiento a tu correo electrónico',
-  };
+  const response = await httpClient.post<{ success: boolean; data: ResetPasswordResponse }>(
+    '/auth/forgot-password',
+    request
+  );
+  return extractData(response);
 };
 
+/**
+ * API: Resetear contraseña
+ * Endpoint: POST /api/auth/reset-password
+ */
+export const resetPasswordAPI = async (
+  token: string,
+  newPassword: string
+): Promise<{ success: boolean; message: string }> => {
+  const response = await httpClient.post<{ success: boolean; data: { message: string } }>(
+    '/auth/reset-password',
+    { token, newPassword }
+  );
+  return extractData(response);
+};

@@ -1,26 +1,32 @@
-import type { ProviderRequest } from "../domain/provider-request.entity";
-import { MOCK_REQUESTS } from "./requests.mock";
+import { httpClient, extractData } from '../../../shared/lib/http';
+import type { ProviderRequest } from '../domain/provider-request.entity';
 
+/**
+ * API: Obtener solicitudes de proveedores
+ * Endpoint: GET /api/admin/requests
+ */
 export const getProviderRequestsAPI = async (): Promise<ProviderRequest[]> => {
-  return Promise.resolve(MOCK_REQUESTS);
+  const response = await httpClient.get<{ success: boolean; data: ProviderRequest[] }>(
+    '/admin/requests'
+  );
+  return extractData(response);
 };
 
+/**
+ * API: Aprobar solicitud de proveedor
+ * Endpoint: PUT /api/admin/requests/:id/approve
+ */
 export const approveProviderRequestAPI = async (id: string): Promise<void> => {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  const request = MOCK_REQUESTS.find((r) => r.id === id);
-  if (request) {
-    request.status = "APPROVED";
-  }
+  await httpClient.put<{ success: boolean }>(`/admin/requests/${id}/approve`);
 };
 
+/**
+ * API: Rechazar solicitud de proveedor
+ * Endpoint: PUT /api/admin/requests/:id/reject
+ */
 export const rejectProviderRequestAPI = async (
   id: string,
   reason: string
 ): Promise<void> => {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  const request = MOCK_REQUESTS.find((r) => r.id === id);
-  if (request) {
-    request.status = "REJECTED";
-    request.rejectionReason = reason;
-  }
+  await httpClient.put<{ success: boolean }>(`/admin/requests/${id}/reject`, { reason });
 };
