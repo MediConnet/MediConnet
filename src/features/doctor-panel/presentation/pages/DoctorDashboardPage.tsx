@@ -35,13 +35,6 @@ export const DoctorDashboardPage = () => {
       .slice(0, 2);
   };
 
-  const userProfile = {
-    name: user?.name || "Dr. Usuario",
-    roleLabel: data?.doctor.specialty || "Médico",
-    initials: getInitials(user?.name || "Dr. Usuario"),
-    isActive: true,
-  };
-
   // Obtener citas para las notificaciones
   const appointments = generateMockAppointments().map((apt) => ({
     id: apt.id,
@@ -50,6 +43,15 @@ export const DoctorDashboardPage = () => {
     time: apt.time,
     reason: apt.reason,
   }));
+
+  // Crear userProfile de forma segura, usando optional chaining y valores por defecto
+  // ⚠️ CRÍTICO: Usar optional chaining en todos los accesos para evitar errores cuando data es null/undefined
+  const userProfile = {
+    name: user?.name || "Dr. Usuario",
+    roleLabel: data?.doctor?.specialty || "Médico", // ⚠️ Optional chaining para evitar errores
+    initials: getInitials(user?.name || "Dr. Usuario"),
+    isActive: true,
+  };
 
   if (loading) {
     return (
@@ -66,6 +68,17 @@ export const DoctorDashboardPage = () => {
       <DashboardLayout role="PROVIDER" userProfile={userProfile} appointments={appointments}>
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-red-500">Error al cargar los datos del dashboard</div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // ⚠️ Validación adicional: asegurar que data.doctor existe antes de renderizar
+  if (!data.doctor) {
+    return (
+      <DashboardLayout role="PROVIDER" userProfile={userProfile} appointments={appointments}>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="text-yellow-500">Datos del perfil no disponibles. Por favor, completa tu perfil.</div>
         </div>
       </DashboardLayout>
     );

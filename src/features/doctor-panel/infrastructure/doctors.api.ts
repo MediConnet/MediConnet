@@ -26,12 +26,69 @@ export interface UpdateDoctorProfileParams {
 /**
  * API: Obtener dashboard del doctor
  * Endpoint: GET /api/doctors/dashboard
+ * 
+ * ⚠️ NOTA: El backend retorna `provider` pero el frontend espera `doctor`.
+ * Se mapea la respuesta para convertir la estructura.
  */
 export const getDoctorDashboardAPI = async (userId: string): Promise<DoctorDashboard> => {
-  const response = await httpClient.get<{ success: boolean; data: DoctorDashboard }>(
+  const response = await httpClient.get<{ 
+    success: boolean; 
+    data: {
+      totalAppointments?: number;
+      pendingAppointments?: number;
+      completedAppointments?: number;
+      totalRevenue?: number;
+      averageRating?: number;
+      totalReviews?: number;
+      upcomingAppointments?: any[];
+      provider: {
+        id: string | null;
+        commercial_name: string | null;
+        description: string | null;
+        specialty: string | null;
+        logoUrl: string | null;
+        category: string | null;
+        branches?: any[];
+        [key: string]: any; // Para otros campos que pueda retornar el backend
+      };
+    } 
+  }>(
     `/doctors/dashboard?userId=${userId}`
   );
-  return extractData(response);
+  
+  const backendData = extractData(response);
+  
+  // ⚠️ CRÍTICO: Asegurar que provider existe, si no, crear un objeto vacío
+  const provider = backendData.provider || {};
+  
+  // Mapear la estructura del backend (provider) a la estructura del frontend (doctor)
+  // Siempre crear un objeto doctor válido, incluso si provider es null/undefined
+  const mappedData: DoctorDashboard = {
+    visits: backendData.totalAppointments || 0,
+    contacts: 0, // El backend no retorna este campo, usar 0 por defecto
+    reviews: backendData.totalReviews || 0,
+    rating: backendData.averageRating || 0,
+    doctor: {
+      name: provider.commercial_name || "Dr. Usuario",
+      specialty: provider.specialty || "Médico",
+      email: "", // El backend no retorna email en provider, se obtiene del usuario
+      whatsapp: "", // El backend no retorna whatsapp en provider
+      address: "", // El backend no retorna address en provider
+      price: 0, // El backend no retorna price en provider
+      description: provider.description || "",
+      // Campos opcionales
+      experience: undefined,
+      workSchedule: undefined,
+      isActive: true,
+      profileStatus: 'draft' as ProfileStatus,
+      paymentMethods: 'both' as PaymentMethod,
+      consultationDuration: undefined,
+      blockedDates: undefined,
+      bankAccount: undefined,
+    },
+  };
+  
+  return mappedData;
 };
 
 /**

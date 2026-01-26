@@ -133,13 +133,20 @@ export const LoginPage = () => {
         }
         console.log('📋 Role recibido:', user.role);
         console.log('📋 ServiceType recibido:', user.serviceType);
+        console.log('📋 Tipo recibido:', user.tipo);
 
         // Determinar el role para el store (normalizar a minúsculas)
         const roleForStore = user.role?.toLowerCase() || "patient";
         console.log('🔀 Role normalizado para store:', roleForStore);
 
-        // Normalizar serviceType a minúsculas para consistencia
+        // ⚠️ CRÍTICO: Priorizar 'tipo' del backend (para guards), luego 'serviceType' (para redirección)
+        // Ambos deben estar normalizados a minúsculas
+        const tipoFromBackend = user.tipo?.toLowerCase() || null;
         const serviceTypeNormalized = user.serviceType?.toLowerCase() || null;
+        // Usar 'tipo' si viene del backend, sino usar 'serviceType' normalizado
+        const tipoForStore = tipoFromBackend || serviceTypeNormalized;
+        
+        console.log('🔀 Tipo para store (priorizado):', tipoForStore);
         
         // Guardar usuario y TOKEN REAL del backend
         authStore.login(
@@ -148,7 +155,7 @@ export const LoginPage = () => {
             email: user.email,
             name: user.name,
             role: roleForStore,
-            tipo: serviceTypeNormalized, // Guardar serviceType normalizado como "tipo"
+            tipo: tipoForStore, // ⚠️ CRÍTICO: Priorizar 'tipo' del backend, luego 'serviceType'
           },
           token // <-- TOKEN REAL del backend (prioriza accessToken)
         );
@@ -167,9 +174,9 @@ export const LoginPage = () => {
           console.log('✅ Redirigiendo a admin dashboard');
           navigate("/admin/dashboard", { replace: true });
         } else if (roleForStore === "provider") {
-          // Usar el serviceType normalizado que ya guardamos
-          const serviceType = serviceTypeNormalized;
-          console.log('✅ Redirigiendo provider con serviceType:', serviceType);
+          // Usar 'tipo' o 'serviceType' para redirección (ambos tienen el mismo valor)
+          const serviceType = tipoForStore || serviceTypeNormalized;
+          console.log('✅ Redirigiendo provider con serviceType/tipo:', serviceType);
           
           switch (serviceType) {
             case "doctor":

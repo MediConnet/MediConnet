@@ -15,7 +15,8 @@ export interface LoginResponse {
     email: string;
     name: string;
     role: string;
-    serviceType?: string;
+    serviceType?: string; // Para lógica de redirección y UI
+    tipo?: string; // ⚠️ CRÍTICO: Para guards de rutas (prioridad sobre serviceType)
   };
   token: string; // JWT Access Token
   accessToken?: string; // Por si el backend usa este nombre
@@ -61,7 +62,8 @@ export const loginAPI = async (credentials: LoginRequest): Promise<LoginResponse
         email: string;
         name: string;
         role: string;
-        serviceType?: string;
+        serviceType?: string; // Para lógica de redirección y UI
+        tipo?: string; // ⚠️ CRÍTICO: Para guards de rutas (prioridad sobre serviceType)
       };
       token?: string;
       accessToken?: string;
