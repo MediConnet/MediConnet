@@ -1,19 +1,21 @@
 export interface WorkSchedule {
   day: string; // 'monday', 'tuesday', etc.
-  enabled: boolean;
+  day_id?: number; // Añadido para coincidir con backend (0-6)
+  enabled: boolean; // Mapear desde 'is_active'
   startTime: string; // 'HH:mm'
   endTime: string; // 'HH:mm'
-  timeSlots?: TimeSlot[]; // Bloques horarios predefinidos
-  blockedHours?: string[]; // Horas bloqueadas específicas ['09:00', '10:00']
+  timeSlots?: TimeSlot[]; 
+  blockedHours?: string[];
 }
 
 export interface TimeSlot {
-  startTime: string; // 'HH:mm'
-  endTime: string; // 'HH:mm'
+  startTime: string;
+  endTime: string;
   available: boolean;
 }
 
-export type PaymentMethod = 'card' | 'cash' | 'both';
+// Mantenemos tus tipos para que el UI (Selects/Checkboxes) siga funcionando
+export type PaymentMethod = 'card' | 'cash' | 'both'; 
 export type ProfileStatus = 'draft' | 'published' | 'suspended';
 
 export interface DoctorDashboard {
@@ -22,6 +24,7 @@ export interface DoctorDashboard {
   reviews: number;
   rating: number;
   doctor: {
+    id?: string; // Útil tener el ID
     name: string;
     specialty: string;
     email: string;
@@ -31,16 +34,10 @@ export interface DoctorDashboard {
     description: string;
     experience?: number; 
     workSchedule?: WorkSchedule[];
-    isActive?: boolean; // Estado del servicio: Activo / Inactivo
-    profileStatus?: ProfileStatus; // Borrador, Publicado, Suspendido
-    paymentMethods?: PaymentMethod; // Formas de pago aceptadas
-    consultationDuration?: number; // Duración de consulta en minutos
-    blockedDates?: string[]; // Fechas bloqueadas ['2024-01-15', '2024-01-20']
-    bankAccount?: {
-      bankName: string;
-      accountNumber: string;
-      accountType: string; // 'checking' | 'savings'
-      accountHolder: string;
-    };
+    isActive?: boolean; 
+    profileStatus?: ProfileStatus; 
+    paymentMethods?: PaymentMethod; 
+    consultationDuration?: number; 
+    // bankAccount... (pendiente en backend)
   };
 }
