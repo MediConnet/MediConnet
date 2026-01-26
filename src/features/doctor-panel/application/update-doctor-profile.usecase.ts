@@ -1,10 +1,24 @@
-import { updateDoctorProfileAPI, type UpdateDoctorProfileParams } from "../infrastructure/doctors.api";
 import type { DoctorDashboard } from "../domain/DoctorDashboard.entity";
+import {
+  updateDoctorProfileAPI,
+  updateDoctorScheduleAPI,
+  type UpdateDoctorProfileParams
+} from "../infrastructure/doctors.api";
 
 export const updateDoctorProfileUseCase = async (
-  userId: string,
   params: UpdateDoctorProfileParams
 ): Promise<DoctorDashboard> => {
-  return await updateDoctorProfileAPI(userId, params);
-};
+  
+  const profileResult = await updateDoctorProfileAPI(params);
 
+  if (params.workSchedule) {
+    try {
+      await updateDoctorScheduleAPI(params.workSchedule);
+      profileResult.doctor.workSchedule = params.workSchedule;
+    } catch (error) {
+      console.error("Error actualizando horarios:", error);
+    }
+  }
+
+  return profileResult;
+};

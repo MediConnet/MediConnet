@@ -6,8 +6,8 @@ import type { DoctorDashboard, PaymentMethod, ProfileStatus, WorkSchedule } from
 interface BackendSchedule {
   day_id: number;
   day: string;
-  start: string; // ISO String
-  end: string;   // ISO String
+  start: string; 
+  end: string;   
   is_active: boolean;
 }
 
@@ -15,7 +15,8 @@ interface BackendProfileResponse {
   id: string;
   full_name: string;
   email: string;
-  specialty: string;
+  specialty?: string; // String formateado "Cardiología, Pediatría"
+  specialties_list?: string[]; // Array crudo ["Cardiología", "Pediatría"]
   category: string;
   years_of_experience: number;
   consultation_fee: number;
@@ -29,9 +30,17 @@ interface BackendProfileResponse {
   schedules: BackendSchedule[];
 }
 
+// Interface para la lista de especialidades disponibles (Select)
+export interface Specialty {
+  id: string;
+  name: string;
+  description?: string;
+  color_hex?: string;
+}
+
 export interface UpdateDoctorProfileParams {
   name?: string;
-  specialty?: string;
+  specialties?: string[]; 
   email?: string;
   whatsapp?: string;
   address?: string;
@@ -79,21 +88,56 @@ const mapFrontendPaymentsToBackend = (method: PaymentMethod): string[] => {
  * Convierte Horarios del Backend (ISO Strings) -> Frontend (HH:mm)
  */
 const mapBackendScheduleToFrontend = (backendSchedules: BackendSchedule[]): WorkSchedule[] => {
-  if (!backendSchedules || !Array.isArray(backendSchedules)) return [];
+  const safeSchedules = Array.isArray(backendSchedules) ? backendSchedules : [];
   
-  const daysMap = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+  const daysTemplate = [
+    { day: "monday", day_id: 1 },
+    { day: "tuesday", day_id: 2 },
+    { day: "wednesday", day_id: 3 },
+    { day: "thursday", day_id: 4 },
+    { day: "friday", day_id: 5 },
+  ];
 
-  return backendSchedules.map(sch => ({
-    day: daysMap[sch.day_id] || sch.day.toLowerCase(), // 'monday'
-    day_id: sch.day_id,
-    enabled: sch.is_active,
-    // Extraer solo la hora HH:mm del ISO String
-    startTime: sch.start ? new Date(sch.start).toISOString().substring(11, 16) : "09:00",
-    endTime: sch.end ? new Date(sch.end).toISOString().substring(11, 16) : "17:00",
-  }));
+  return daysTemplate.map(template => {
+    const found = safeSchedules.find(sch => 
+      sch.day_id === template.day_id || 
+      sch.day.toLowerCase() === template.day
+    );
+
+    if (found) {
+      // CASO A: El día existe en base de datos. Usamos sus datos reales.
+      return {
+        day: template.day,
+        day_id: template.day_id,
+        enabled: found.is_active,
+        startTime: found.start ? new Date(found.start).toISOString().substring(11, 16) : "09:00",
+        endTime: found.end ? new Date(found.end).toISOString().substring(11, 16) : "17:00",
+      };
+    } else {
+      // CASO B: El día NO vino del backend (hueco). Lo rellenamos como "Cerrado".
+      return {
+        day: template.day,
+        day_id: template.day_id,
+        enabled: false, 
+        startTime: "09:00",
+        endTime: "17:00",
+      };
+    }
+  });
 };
 
 // --- API FUNCTIONS ---
+
+/**
+ * API: Obtener lista de especialidades disponibles
+ * Endpoint: GET /api/specialties
+ */
+export const getSpecialtiesAPI = async (): Promise<Specialty[]> => {
+  const response = await httpClient.get<{ success: boolean; data: Specialty[] }>(
+    '/specialties'
+  );
+  return extractData(response);
+};
 
 /**
  * API: Obtener dashboard del doctor
@@ -110,7 +154,7 @@ export const getDoctorDashboardAPI = async (userId: string): Promise<DoctorDashb
       averageRating?: number;
       totalReviews?: number;
       upcomingAppointments?: any[];
-      provider: any; // Usamos any aquí porque el dashboard puede traer una estructura parcial
+      provider: any; 
     } 
   }>(
     `/doctors/dashboard?userId=${userId}`
@@ -119,7 +163,11 @@ export const getDoctorDashboardAPI = async (userId: string): Promise<DoctorDashb
   const backendData = extractData(response);
   const provider = backendData.provider || {};
   
-  // Mapeo defensivo para evitar errores si faltan datos
+  // Preferimos la lista de especialidades (array) si existe, sino el string
+  const specialtyValue = (provider.specialties_list && provider.specialties_list.length > 0)
+    ? provider.specialties_list
+    : (provider.specialty || provider.specialties || "Médico");
+
   return {
     visits: backendData.totalAppointments || 0,
     contacts: 0,
@@ -127,8 +175,8 @@ export const getDoctorDashboardAPI = async (userId: string): Promise<DoctorDashb
     rating: backendData.averageRating || 0,
     doctor: {
       name: provider.commercial_name || "Dr. Usuario",
-      specialty: provider.specialty || "Médico",
-      email: "", 
+      specialty: specialtyValue, // Puede ser string o array
+      email: provider.email || (provider.users && provider.users.email) || "", 
       whatsapp: provider.phone_contact || "", 
       address: provider.address_text || "", 
       price: Number(provider.consultation_fee) || 0,
@@ -137,7 +185,7 @@ export const getDoctorDashboardAPI = async (userId: string): Promise<DoctorDashb
       isActive: provider.verification_status === 'APPROVED',
       profileStatus: provider.is_active ? 'published' : 'draft',
       paymentMethods: mapBackendPaymentsToFrontend(provider.payment_methods || []),
-      workSchedule: [], // El dashboard usualmente no trae horarios completos
+      workSchedule: mapBackendScheduleToFrontend(provider.schedules || []), 
     },
   };
 };
@@ -147,14 +195,16 @@ export const getDoctorDashboardAPI = async (userId: string): Promise<DoctorDashb
  * Endpoint: GET /api/doctors/profile
  */
 export const getDoctorProfileAPI = async (): Promise<DoctorDashboard> => {
-  // Solicitamos al endpoint que acabamos de probar en Thunder Client
   const response = await httpClient.get<{ success: boolean; data: BackendProfileResponse }>(
     '/doctors/profile'
   );
   
   const backendData = extractData(response);
 
-  // Transformamos la respuesta plana del backend a la estructura anidada del frontend
+  const specialtyValue = (backendData.specialties_list && backendData.specialties_list.length > 0) 
+    ? backendData.specialties_list 
+    : (backendData.specialty || "");
+
   return {
     visits: 0, 
     contacts: 0,
@@ -164,18 +214,18 @@ export const getDoctorProfileAPI = async (): Promise<DoctorDashboard> => {
       id: backendData.id,
       name: backendData.full_name || "",
       email: backendData.email || "",
-      specialty: backendData.specialty || "",
+      
+      specialty: specialtyValue as any, 
+      
       whatsapp: backendData.whatsapp || backendData.phone || "",
       address: backendData.address || "",
       price: Number(backendData.consultation_fee) || 0,
       description: backendData.description || "",
       experience: backendData.years_of_experience || 0,
       
-      // Mapeo de Estado
       isActive: backendData.status === 'APPROVED',
       profileStatus: backendData.is_published ? 'published' : 'draft',
       
-      // Mapeo de Arrays y Enums
       paymentMethods: mapBackendPaymentsToFrontend(backendData.payment_methods || []),
       workSchedule: mapBackendScheduleToFrontend(backendData.schedules || [])
     }
@@ -190,26 +240,24 @@ export const updateDoctorProfileAPI = async (
   params: UpdateDoctorProfileParams
 ): Promise<DoctorDashboard> => {
   
-  // 1. Convertimos los datos del Formulario (Frontend) -> JSON para Backend
   const backendPayload = {
     full_name: params.name,
     bio: params.description,
     address: params.address,
-    phone: params.whatsapp, // Asumimos whatsapp como contacto principal
+    phone: params.whatsapp,
     whatsapp: params.whatsapp,
     years_of_experience: params.experience,
     consultation_fee: params.price,
     
-    // Transformar booleano de publicación
     is_published: params.profileStatus === 'published',
     
-    // Transformar enum de pagos a array de strings
+    specialties: params.specialties,
+    
     payment_methods: params.paymentMethods 
       ? mapFrontendPaymentsToBackend(params.paymentMethods) 
       : undefined,
-      
-    // Nota: El horario (schedule) se suele actualizar en un endpoint aparte o 
-    // requiere una lógica más compleja de transformación si se envía aquí.
+
+    workSchedule: params.workSchedule,
   };
 
   const response = await httpClient.put<{ success: boolean; data: BackendProfileResponse }>(
@@ -219,7 +267,11 @@ export const updateDoctorProfileAPI = async (
   
   const backendData = extractData(response);
 
-  // 2. Convertimos la respuesta del Backend -> Estructura Frontend (para actualizar la UI)
+  // Mapeamos la respuesta actualizada
+  const specialtyValue = (backendData.specialties_list && backendData.specialties_list.length > 0) 
+    ? backendData.specialties_list 
+    : (backendData.specialty || "");
+
   return {
     visits: 0, 
     contacts: 0,
@@ -229,7 +281,7 @@ export const updateDoctorProfileAPI = async (
       id: backendData.id,
       name: backendData.full_name,
       email: backendData.email,
-      specialty: backendData.specialty,
+      specialty: specialtyValue as any,
       whatsapp: backendData.whatsapp,
       address: backendData.address,
       price: Number(backendData.consultation_fee),
@@ -300,13 +352,10 @@ export const getDoctorPaymentsAPI = async (): Promise<any[]> => {
  * Endpoint: GET /api/doctors/schedule
  */
 export const getDoctorScheduleAPI = async (): Promise<WorkSchedule[]> => {
-  // Nota: Si el backend devuelve el horario dentro de /profile, podrías reutilizar getDoctorProfileAPI
-  // O crear un endpoint específico en el backend. Por ahora asumo que existe la ruta.
   const response = await httpClient.get<{ success: boolean; data: any[] }>(
     '/doctors/schedule'
   );
   const data = extractData(response);
-  // Reutilizamos el mapper para consistencia
   return mapBackendScheduleToFrontend(data);
 };
 
