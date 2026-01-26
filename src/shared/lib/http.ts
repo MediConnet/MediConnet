@@ -22,8 +22,18 @@ export const httpClient: AxiosInstance = axios.create({
 // Interceptor de request - Agrega el token de autenticación a cada petición
 httpClient.interceptors.request.use(
   (config) => {
+    // Buscar token en múltiples lugares (prioridad: store > accessToken > auth-token > token)
     const authStore = useAuthStore();
-    const token = authStore.getState().token;
+    let token = authStore.getState().token;
+    
+    // Si no hay token en el store, intentar leer de localStorage directamente
+    if (!token) {
+      token = 
+        localStorage.getItem('accessToken') || 
+        localStorage.getItem('auth-token') || 
+        localStorage.getItem('token');
+    }
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -49,6 +59,10 @@ httpClient.interceptors.response.use(
     if (status === 401) {
       const authStore = useAuthStore();
       authStore.logout();
+      // Limpiar todos los tokens de localStorage
+      localStorage.removeItem('auth-token');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('token');
       // No redirigir automáticamente, dejar que cada componente maneje el logout
       console.warn('Sesión expirada o no autorizado');
     }

@@ -26,14 +26,20 @@ let authState: AuthState = {
     authState.user = user;
     authState.token = token;
     authState.isAuthenticated = true;
+    // Guardar token en múltiples lugares para compatibilidad
     localStorage.setItem('auth-token', token);
+    localStorage.setItem('accessToken', token); // Recomendado por el backend
+    localStorage.setItem('token', token); // Por compatibilidad adicional
     localStorage.setItem('auth-user', JSON.stringify(user));
   },
   logout: () => {
     authState.user = null;
     authState.token = null;
     authState.isAuthenticated = false;
+    // Limpiar todos los tokens de localStorage
     localStorage.removeItem('auth-token');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('token');
     localStorage.removeItem('auth-user');
   },
   updateUser: (userData) => {
@@ -45,18 +51,28 @@ let authState: AuthState = {
 };
 
 // NOTE: Cargar estado desde localStorage al iniciar
+// Buscar token en múltiples lugares (prioridad: accessToken > auth-token > token)
 try {
-  const savedToken = localStorage.getItem('auth-token');
+  const savedToken = 
+    localStorage.getItem('accessToken') || 
+    localStorage.getItem('auth-token') || 
+    localStorage.getItem('token');
   const savedUser = localStorage.getItem('auth-user');
   if (savedToken && savedUser) {
     authState.token = savedToken;
     authState.user = JSON.parse(savedUser);
     authState.isAuthenticated = true;
+    // Sincronizar todos los lugares con el token encontrado
+    localStorage.setItem('auth-token', savedToken);
+    localStorage.setItem('accessToken', savedToken);
+    localStorage.setItem('token', savedToken);
   }
 } catch (error) {
   console.error('Error loading auth state from localStorage:', error);
   // Limpiar datos corruptos
   localStorage.removeItem('auth-token');
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('token');
   localStorage.removeItem('auth-user');
 }
 

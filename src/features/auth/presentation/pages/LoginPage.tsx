@@ -23,6 +23,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { ROUTES } from "../../../../app/config/constants";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import { loginAPI } from "../../infrastructure/auth.api";
 
 // Mock users para cuentas de prueba
 const mockUsers = [
@@ -84,14 +85,7 @@ const serviceLabels: Record<string, string> = {
   supplies: "Insumos Médicos",
 };
 
-// Función para autenticar usuario
-const authenticateUser = (email: string, password: string) => {
-  return (
-    mockUsers.find(
-      (user) => user.email === email && user.password === password
-    ) || null
-  );
-};
+// NOTE: authenticateUser y mockUsers ya no se usan porque ahora usamos la API real del backend
 
 // Esquema de validación
 const loginValidationSchema = Yup.object({
@@ -119,73 +113,119 @@ export const LoginPage = () => {
     onSubmit: async (values) => {
       setIsLoading(true);
       try {
-        await new Promise((resolve) => setTimeout(resolve, 800));
-        const user = authenticateUser(values.email, values.password);
+        // Llamar a la API real de login
+        const response = await loginAPI({
+          email: values.email,
+          password: values.password,
+        });
 
-      if (user) {
-        // 1. Determinar el role para el store
-        let roleForStore = "patient";
-        if (user.role === "admin") {
-          roleForStore = "admin";
-        } else if (user.role === "profesional") {
-          roleForStore = "provider";
+        // Leer datos del usuario desde response.user
+        const user = response.user;
+        // Priorizar accessToken (recomendado por el backend), luego token
+        const token = response.accessToken || response.token || '';
+
+        // DEBUG: Verificar datos recibidos del backend
+        console.log('📥 Respuesta completa del login:', response);
+        console.log('👤 Usuario recibido:', user);
+        console.log('🔑 Token recibido del backend:', token ? 'SÍ' : 'NO');
+        if (token) {
+          console.log('🔑 Token (primeros 20 chars):', token.substring(0, 20) + '...');
         }
+        console.log('📋 Role recibido:', user.role);
+        console.log('📋 ServiceType recibido:', user.serviceType);
 
+        // Determinar el role para el store (normalizar a minúsculas)
+        const roleForStore = user.role?.toLowerCase() || "patient";
+        console.log('🔀 Role normalizado para store:', roleForStore);
+
+        // Normalizar serviceType a minúsculas para consistencia
+        const serviceTypeNormalized = user.serviceType?.toLowerCase() || null;
+        
+        // Guardar usuario y TOKEN REAL del backend
         authStore.login(
           {
-            id: user.id,
+            id: user.userId,
             email: user.email,
-            name: user.nombre,
+            name: user.name,
             role: roleForStore,
-            tipo: user.tipo || null,
+            tipo: serviceTypeNormalized, // Guardar serviceType normalizado como "tipo"
           },
-          "mock-token"
+          token // <-- TOKEN REAL del backend (prioriza accessToken)
         );
 
-        // 2. Lógica de Redirección
-        if (user.role === "admin") {
-          navigate("/admin/dashboard");
-        } else if (user.role === "profesional") {
-          switch (user.tipo) {
+        // DEBUG: Verificar que el token se guardó correctamente
+        console.log('🔑 Token guardado en store:', authStore.getState().token ? 'SÍ' : 'NO');
+        console.log('🔑 Token guardado en localStorage (accessToken):', localStorage.getItem('accessToken') ? 'SÍ' : 'NO');
+        console.log('🔑 Token guardado en localStorage (auth-token):', localStorage.getItem('auth-token') ? 'SÍ' : 'NO');
+
+        // Lógica de Redirección según especificación del backend
+        console.log('🚀 Iniciando lógica de redirección...');
+        console.log('🔀 roleForStore:', roleForStore);
+        console.log('🔀 serviceType:', user.serviceType);
+        
+        if (roleForStore === "admin") {
+          console.log('✅ Redirigiendo a admin dashboard');
+          navigate("/admin/dashboard", { replace: true });
+        } else if (roleForStore === "provider") {
+          // Usar el serviceType normalizado que ya guardamos
+          const serviceType = serviceTypeNormalized;
+          console.log('✅ Redirigiendo provider con serviceType:', serviceType);
+          
+          switch (serviceType) {
             case "doctor":
-              navigate("/doctor/dashboard?tab=profile");
+              console.log('✅ Redirigiendo a /doctor/dashboard');
+              navigate("/doctor/dashboard", { replace: true });
+              break;
+
+            case "pharmacy":
+              console.log('✅ Redirigiendo a /provider/pharmacy/dashboard');
+              navigate("/provider/pharmacy/dashboard", { replace: true });
               break;
 
             // CASO LABORATORIO (Ruta raíz)
+            case "laboratory":
             case "lab":
-              navigate("/laboratory/dashboard?tab=profile");
+              console.log('✅ Redirigiendo a /laboratory/dashboard');
+              // Usar replace: true para evitar que el usuario pueda volver atrás al login
+              navigate("/laboratory/dashboard?tab=profile", { replace: true });
               break;
 
             // CASO AMBULANCIA (Ruta provider)
             case "ambulance":
-              navigate("/provider/ambulance/dashboard");
-              break;
-
-            // CASO FARMACIA (Ruta provider)
-            case "pharmacy":
-              navigate("/provider/pharmacy/dashboard");
+              console.log('✅ Redirigiendo a /provider/ambulance/dashboard');
+              navigate("/provider/ambulance/dashboard", { replace: true });
               break;
 
             // CASO INSUMOS MÉDICOS
             case "supplies":
-              navigate("/supply/dashboard?tab=profile");
+              console.log('✅ Redirigiendo a /supply/dashboard');
+              navigate("/supply/dashboard?tab=profile", { replace: true });
               break;
 
             default:
+              console.warn('⚠️ serviceType no reconocido:', serviceType);
+              console.warn('⚠️ Redirigiendo a HOME porque serviceType no coincide');
+              console.warn('⚠️ Valores recibidos - role:', roleForStore, 'serviceType:', serviceType);
               navigate(ROUTES.HOME);
           }
+        } else if (roleForStore === "patient") {
+          console.log('✅ Redirigiendo a /patients/dashboard');
+          navigate("/patients/dashboard", { replace: true });
         } else {
+          console.warn('⚠️ role no reconocido:', roleForStore);
+          console.warn('⚠️ Redirigiendo a HOME porque role no coincide');
+          console.warn('⚠️ Valores recibidos - role:', roleForStore, 'serviceType:', user.serviceType);
           navigate(ROUTES.HOME);
         }
-      } else {
-        formik.setFieldError("password", "Credenciales incorrectas");
+      } catch (error: any) {
+        console.error("Error al iniciar sesión:", error);
+        // Mostrar error del backend si está disponible
+        const errorMessage =
+          error?.message || "Error al iniciar sesión. Verifica tus credenciales.";
+        formik.setFieldError("password", errorMessage);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error al iniciar sesión:", error);
-      formik.setFieldError("password", "Error al iniciar sesión");
-    } finally {
-      setIsLoading(false);
-    }
     },
   });
 

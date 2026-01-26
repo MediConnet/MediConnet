@@ -10,13 +10,15 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  userId: string;
-  cognitoUserId: string;
-  email: string;
-  name: string;
-  role: string;
-  serviceType?: string;
-  token: string; // JWT Access Token de Cognito
+  user: {
+    userId: string;
+    email: string;
+    name: string;
+    role: string;
+    serviceType?: string;
+  };
+  token: string; // JWT Access Token
+  accessToken?: string; // Por si el backend usa este nombre
   refreshToken?: string;
 }
 
@@ -48,13 +50,37 @@ export interface RefreshTokenResponse {
 /**
  * API: Login de usuario
  * Endpoint: POST /api/auth/login
+ * El backend retorna: { success: true, data: { user: {...}, token: "..." } }
  */
 export const loginAPI = async (credentials: LoginRequest): Promise<LoginResponse> => {
-  const response = await httpClient.post<{ success: boolean; data: LoginResponse }>(
+  const response = await httpClient.post<{ 
+    success: boolean; 
+    data: {
+      user: {
+        userId: string;
+        email: string;
+        name: string;
+        role: string;
+        serviceType?: string;
+      };
+      token?: string;
+      accessToken?: string;
+      refreshToken?: string;
+    }
+  }>(
     '/auth/login',
     credentials
   );
-  return extractData(response);
+  
+  const data = extractData(response);
+  
+  // Retornar en formato compatible con el código existente
+  return {
+    user: data.user,
+    token: data.token || data.accessToken || '',
+    accessToken: data.accessToken,
+    refreshToken: data.refreshToken,
+  };
 };
 
 /**

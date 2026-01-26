@@ -23,10 +23,16 @@ export const LaboratoryRoute = ({ children }: LaboratoryRouteProps) => {
     user?.role === "provider" ||
     user?.role === "patient" ||
     user?.role === "profesional";
-  const isLabType = user?.tipo === "lab";
+  // Aceptar tanto "lab" como "laboratory" (el backend puede enviar cualquiera)
+  const isLabType = user?.tipo === "lab" || user?.tipo === "laboratory";
 
   if (!user || !hasValidRole || !isLabType) {
     // Si no es laboratorio, redirige a home
+    console.warn('⚠️ LaboratoryRoute: Usuario no autorizado', { 
+      role: user?.role, 
+      tipo: user?.tipo,
+      isAuthenticated 
+    });
     return <Navigate to="/home" replace />;
   }
 
