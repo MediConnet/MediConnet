@@ -1148,19 +1148,6 @@ export const AppointmentsSection = () => {
               >
                 Hoy
               </button>
-              <button
-                onClick={() => {
-                  localStorage.removeItem("doctor_appointments");
-                  const newMocks = generateMockAppointments();
-                  setAppointments(newMocks);
-                  localStorage.setItem("doctor_appointments", JSON.stringify(newMocks));
-                  window.location.reload();
-                }}
-                className="px-4 py-2 text-sm text-red-700 hover:bg-red-100 rounded-lg transition-colors font-medium shadow-sm border border-red-300"
-                title="Regenerar citas mock (solo desarrollo)"
-              >
-                🔄 Regenerar Mocks
-              </button>
             </div>
             <h2 className="text-2xl font-bold text-gray-800">
               {navButtons.label}
