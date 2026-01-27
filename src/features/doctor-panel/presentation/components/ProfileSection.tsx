@@ -1,88 +1,189 @@
 import {
-  CloudUpload,
-  Edit,
-  PhotoCamera,
-  Visibility,
-  WorkOutline,
-  CreditCard,
   AttachMoney,
-  Publish,
-  VisibilityOff,
-  Phone,
-  LocationOn,
+  CloudUpload,
+  CreditCard,
+  Edit,
   Email,
+  LocationOn,
+  Phone,
+  PhotoCamera,
+  Publish,
+  Visibility,
+  VisibilityOff,
+  WorkOutline,
 } from "@mui/icons-material";
-import { Button, Chip, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
-import type { PaymentMethod, ProfileStatus } from "../../domain/DoctorDashboard.entity";
-import { useEffect, useRef, useState } from "react";
+import {
+  Box,
+  Button,
+  Checkbox,
+  Chip,
+  FormControl,
+  ListItemText,
+  MenuItem,
+  OutlinedInput,
+  Select,
+  type SelectChangeEvent,
+} from "@mui/material";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import {
+  handleBothInput,
+  handleEmailInput,
+  handleLetterInput,
+  handleNumberInput,
+  handlePhoneInput,
+} from "../../../../shared/lib/inputValidation";
 import type {
   DoctorDashboard,
+  PaymentMethod,
+  ProfileStatus,
   WorkSchedule,
 } from "../../domain/DoctorDashboard.entity";
+import {
+  getSpecialtiesAPI,
+  type Specialty,
+} from "../../infrastructure/doctors.api";
 import { useUpdateDoctorProfile } from "../hooks/useUpdateDoctorProfile";
-import { handleLetterInput, handleNumberInput, handlePhoneInput, handleEmailInput, handleBothInput } from "../../../../shared/lib/inputValidation";
 
 interface ProfileSectionProps {
   data: DoctorDashboard;
   onUpdate?: (updatedData: DoctorDashboard) => void;
 }
 
+// Configuración del menú desplegable del Select
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
+
+// Esto define el orden y los días que SIEMPRE deben aparecer en el formulario
+const DEFAULT_SCHEDULE_TEMPLATE: WorkSchedule[] = [
+  { day: "monday", enabled: true, startTime: "09:00", endTime: "17:00" },
+  { day: "tuesday", enabled: true, startTime: "09:00", endTime: "17:00" },
+  { day: "wednesday", enabled: true, startTime: "09:00", endTime: "17:00" },
+  { day: "thursday", enabled: true, startTime: "09:00", endTime: "17:00" },
+  { day: "friday", enabled: true, startTime: "09:00", endTime: "17:00" },
+];
+
 export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Estado para la lista de especialidades disponibles desde la API
+  const [specialtiesList, setSpecialtiesList] = useState<Specialty[]>([]);
+  const [loadingSpecialties, setLoadingSpecialties] = useState(false);
+
+  // Estado para detectar si estamos usando horarios por defecto (BD vacía)
+  const [isUsingDefaultSchedule, setIsUsingDefaultSchedule] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const authStore = useAuthStore();
   const { user } = authStore;
   const { updateProfile, loading: saving } = useUpdateDoctorProfile();
 
-  const defaultSchedule: WorkSchedule[] = [
-    { day: "monday", enabled: true, startTime: "09:00", endTime: "17:00" },
-    { day: "tuesday", enabled: true, startTime: "09:00", endTime: "17:00" },
-    { day: "wednesday", enabled: true, startTime: "09:00", endTime: "17:00" },
-    { day: "thursday", enabled: true, startTime: "09:00", endTime: "17:00" },
-    { day: "friday", enabled: true, startTime: "09:00", endTime: "17:00" },
-  ];
-
+  // Estado del formulario actual
   const [formData, setFormData] = useState({
-    name: data?.doctor?.name || "",
-    specialty: data?.doctor?.specialty || "",
-    email: data?.doctor?.email || "",
-    whatsapp: data?.doctor?.whatsapp || "",
-    address: data?.doctor?.address || "",
-    price: (data?.doctor?.price || 0).toString(),
-    experience: (data?.doctor?.experience || 0).toString(),
-    description: data?.doctor?.description || "",
-    workSchedule: data?.doctor?.workSchedule || defaultSchedule,
-    isActive: data?.doctor?.isActive !== false,
-    profileStatus: (data?.doctor?.profileStatus || 'draft') as ProfileStatus,
-    paymentMethods: (data?.doctor?.paymentMethods || 'both') as PaymentMethod,
+    name: "",
+    specialty: [] as string[],
+    email: "",
+    whatsapp: "",
+    address: "",
+    price: "0",
+    experience: "0",
+    description: "",
+    workSchedule: DEFAULT_SCHEDULE_TEMPLATE,
+    isActive: true,
+    profileStatus: "draft" as ProfileStatus,
+    paymentMethods: "both" as PaymentMethod,
   });
+
+  // Estado para guardar los datos originales y comparar cambios
+  const [initialFormData, setInitialFormData] = useState<
+    typeof formData | null
+  >(null);
+
+  useEffect(() => {
+    const fetchSpecialties = async () => {
+      try {
+        setLoadingSpecialties(true);
+        const list = await getSpecialtiesAPI();
+        setSpecialtiesList(list);
+      } catch (error) {
+        console.error("Error cargando especialidades:", error);
+        setSpecialtiesList([{ id: "gen", name: "Medicina General" }]);
+      } finally {
+        setLoadingSpecialties(false);
+      }
+    };
+    fetchSpecialties();
+  }, []);
 
   useEffect(() => {
     if (data?.doctor) {
-      setFormData({
-        name: data.doctor.name,
-        specialty: data.doctor.specialty,
-        email: data.doctor.email,
-        whatsapp: data.doctor.whatsapp,
-        address: data.doctor.address,
-        price: data.doctor.price.toString(),
-        experience: (data.doctor.experience || 0).toString(),
-        description: data.doctor.description,
-        workSchedule: data.doctor.workSchedule || defaultSchedule,
-        isActive: data.doctor.isActive !== false,
-        profileStatus: (data.doctor.profileStatus || 'draft') as ProfileStatus,
-        paymentMethods: (data.doctor.paymentMethods || 'both') as PaymentMethod,
+      let incomingSpecialty: string[] = [];
+
+      if (Array.isArray(data.doctor.specialty)) {
+        incomingSpecialty = data.doctor.specialty as unknown as string[];
+      } else if (
+        typeof data.doctor.specialty === "string" &&
+        data.doctor.specialty
+      ) {
+        incomingSpecialty = [data.doctor.specialty];
+      }
+
+      const backendSchedule = data.doctor.workSchedule;
+
+      // Iteramos sobre la plantilla base (Lunes a Viernes)
+      const scheduleToUse = DEFAULT_SCHEDULE_TEMPLATE.map((defaultDay) => {
+        if (!backendSchedule || backendSchedule.length === 0) return defaultDay;
+
+        const found = backendSchedule.find(
+          (s) => s.day.toLowerCase() === defaultDay.day.toLowerCase(),
+        );
+
+        if (found) {
+          return found;
+        } else {
+          return { ...defaultDay, enabled: false };
+        }
       });
+
+      const isDefault = !backendSchedule || backendSchedule.length === 0;
+      setIsUsingDefaultSchedule(isDefault);
+
+      const newFormData = {
+        name: data.doctor.name || "",
+        specialty: incomingSpecialty,
+        email: data.doctor.email || "",
+        whatsapp: data.doctor.whatsapp || "",
+        address: data.doctor.address || "",
+        price: (data.doctor.price || 0).toString(),
+        experience: (data.doctor.experience || 0).toString(),
+        description: data.doctor.description || "",
+
+        workSchedule: scheduleToUse,
+
+        isActive: data.doctor.isActive !== false,
+        profileStatus: (data.doctor.profileStatus || "draft") as ProfileStatus,
+        paymentMethods: (data.doctor.paymentMethods || "both") as PaymentMethod,
+      };
+
+      setFormData(newFormData);
+      setInitialFormData(newFormData);
     }
   }, [data]);
 
+  // Cargar imagen guardada localmente
   useEffect(() => {
     if (user?.id) {
       const savedImage = localStorage.getItem(
-        `doctor-profile-image-${user.id}`
+        `doctor-profile-image-${user.id}`,
       );
       if (savedImage) {
         setProfileImage(savedImage);
@@ -90,40 +191,63 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     }
   }, [user?.id]);
 
+  // --- LÓGICA DE DETECCIÓN DE CAMBIOS ---
+  const isModified = useMemo(() => {
+    if (!initialFormData) return false;
+
+    // 1. Comparar campos simples
+    if (formData.name !== initialFormData.name) return true;
+    if (formData.email !== initialFormData.email) return true;
+    if (formData.whatsapp !== initialFormData.whatsapp) return true;
+    if (formData.address !== initialFormData.address) return true;
+    if (formData.price !== initialFormData.price) return true;
+    if (formData.experience !== initialFormData.experience) return true;
+    if (formData.description !== initialFormData.description) return true;
+    if (formData.profileStatus !== initialFormData.profileStatus) return true;
+    if (formData.paymentMethods !== initialFormData.paymentMethods) return true;
+
+    // 2. Comparar Arrays (Specialties)
+    const currentSpecs = [...formData.specialty].sort();
+    const initialSpecs = [...initialFormData.specialty].sort();
+    if (JSON.stringify(currentSpecs) !== JSON.stringify(initialSpecs))
+      return true;
+
+    // 3. Comparar Objetos Complejos (Schedule)
+    if (
+      JSON.stringify(formData.workSchedule) !==
+      JSON.stringify(initialFormData.workSchedule)
+    )
+      return true;
+
+    return false;
+  }, [formData, initialFormData]);
+
+  const isSaveDisabled = saving || (!isModified && !isUsingDefaultSchedule);
+
   const handleEdit = () => {
     setIsEditing(true);
   };
 
   const handleCancel = () => {
     setIsEditing(false);
-    if (data?.doctor) {
-      setFormData({
-        name: data.doctor.name,
-        specialty: data.doctor.specialty,
-        email: data.doctor.email,
-        whatsapp: data.doctor.whatsapp,
-        address: data.doctor.address,
-        price: data.doctor.price.toString(),
-        experience: (data.doctor.experience || 0).toString(),
-        description: data.doctor.description,
-        workSchedule: data.doctor.workSchedule || defaultSchedule,
-        isActive: data.doctor.isActive !== false,
-        profileStatus: (data.doctor.profileStatus || 'draft') as ProfileStatus,
-        paymentMethods: (data.doctor.paymentMethods || 'both') as PaymentMethod,
-      });
+    if (initialFormData) {
+      setFormData(initialFormData);
     }
   };
 
   const handleTogglePublish = async () => {
     if (!user?.id) return;
-    
-    const newStatus: ProfileStatus = formData.profileStatus === 'published' ? 'draft' : 'published';
-    const updatedData = await updateProfile(user.id, {
+
+    const newStatus: ProfileStatus =
+      formData.profileStatus === "published" ? "draft" : "published";
+    const updatedData = await updateProfile({
       profileStatus: newStatus,
     });
 
     if (updatedData) {
-      setFormData((prev) => ({ ...prev, profileStatus: newStatus }));
+      const newData = { ...formData, profileStatus: newStatus };
+      setFormData(newData);
+      setInitialFormData(newData);
       if (onUpdate) {
         onUpdate(updatedData);
       }
@@ -133,9 +257,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const handleSave = async () => {
     if (!user?.id) return;
 
-    const updatedData = await updateProfile(user.id, {
+    const updatedData = await updateProfile({
       name: formData.name,
-      specialty: formData.specialty,
+      specialties: formData.specialty,
       email: formData.email,
       whatsapp: formData.whatsapp,
       address: formData.address,
@@ -149,25 +273,33 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
     if (updatedData) {
       setIsEditing(false);
-      if (onUpdate) {
-        onUpdate(updatedData);
-      }
+      setIsUsingDefaultSchedule(false);
+      setInitialFormData(formData);
+      if (onUpdate) onUpdate(updatedData);
     }
   };
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSpecialtyChange = (event: SelectChangeEvent<string[]>) => {
+    const {
+      target: { value },
+    } = event;
+    const newValue = typeof value === "string" ? value.split(",") : value;
+    setFormData((prev) => ({ ...prev, specialty: newValue }));
   };
 
   const handleScheduleChange = (
     day: string,
     field: "enabled" | "startTime" | "endTime",
-    value: boolean | string
+    value: boolean | string,
   ) => {
     setFormData((prev) => ({
       ...prev,
       workSchedule: prev.workSchedule.map((schedule: WorkSchedule) =>
-        schedule.day === day ? { ...schedule, [field]: value } : schedule
+        schedule.day === day ? { ...schedule, [field]: value } : schedule,
       ),
     }));
   };
@@ -225,7 +357,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* --- COLUMNA IZQUIERDA: Formulario de Edición --- */}
+      {/* --- COLUMNA IZQUIERDA: Formulario --- */}
       <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -247,8 +379,12 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
           ) : (
             <button
               onClick={handleSave}
-              disabled={saving}
-              className="bg-teal-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isSaveDisabled}
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+                isSaveDisabled
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-teal-600 text-white hover:bg-teal-700"
+              }`}
             >
               {saving ? (
                 <span className="text-sm">Guardando...</span>
@@ -263,27 +399,67 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
           // VISTA: Solo Lectura
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              {[
-                { label: "Nombre completo", val: doctor.name },
-                { label: "Especialidad", val: doctor.specialty },
-                { label: "Email", val: doctor.email },
-                { label: "WhatsApp", val: doctor.whatsapp },
-                { label: "Dirección", val: doctor.address },
-                {
-                  label: "Tarifa de consulta",
-                  val: `$${doctor.price.toFixed(2)}`,
-                },
-                // Mostrar experiencia en el form de solo lectura
-                {
-                  label: "Años de Experiencia",
-                  val: `${doctor.experience || 0} años`,
-                },
-              ].map((item, idx) => (
-                <div key={idx}>
-                  <label className="text-sm text-gray-600">{item.label}</label>
-                  <p className="text-gray-800 font-medium mt-1">{item.val}</p>
+              <div>
+                <label className="text-sm text-gray-600">Nombre completo</label>
+                <p className="text-gray-800 font-medium mt-1">{doctor.name}</p>
+              </div>
+
+              {/* Especialidades */}
+              <div>
+                <label className="text-sm text-gray-600">
+                  Especialidad(es)
+                </label>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {(Array.isArray(doctor.specialty)
+                    ? doctor.specialty
+                    : [doctor.specialty]
+                  ).map((spec: any, idx: number) =>
+                    spec ? (
+                      <Chip
+                        key={idx}
+                        label={spec}
+                        size="small"
+                        sx={{ backgroundColor: "#e0f2f1", color: "#00695c" }}
+                      />
+                    ) : (
+                      <span>-</span>
+                    ),
+                  )}
                 </div>
-              ))}
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-600">Email</label>
+                <p className="text-gray-800 font-medium mt-1">{doctor.email}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">WhatsApp</label>
+                <p className="text-gray-800 font-medium mt-1">
+                  {doctor.whatsapp}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">Dirección</label>
+                <p className="text-gray-800 font-medium mt-1">
+                  {doctor.address}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">
+                  Tarifa de consulta
+                </label>
+                <p className="text-gray-800 font-medium mt-1">
+                  ${doctor.price.toFixed(2)}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">
+                  Años de Experiencia
+                </label>
+                <p className="text-gray-800 font-medium mt-1">
+                  {doctor.experience || 0} años
+                </p>
+              </div>
             </div>
 
             <div className="mt-6">
@@ -293,11 +469,13 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
               </p>
             </div>
 
-            {/* Formas de Pago Aceptadas */}
             <div className="mt-6">
-              <label className="text-sm text-gray-600">Formas de pago aceptadas</label>
+              <label className="text-sm text-gray-600">
+                Formas de pago aceptadas
+              </label>
               <div className="mt-2 flex gap-2">
-                {(doctor.paymentMethods === 'card' || doctor.paymentMethods === 'both') && (
+                {(doctor.paymentMethods === "card" ||
+                  doctor.paymentMethods === "both") && (
                   <Chip
                     icon={<CreditCard />}
                     label="Tarjeta"
@@ -305,7 +483,8 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                     size="small"
                   />
                 )}
-                {(doctor.paymentMethods === 'cash' || doctor.paymentMethods === 'both') && (
+                {(doctor.paymentMethods === "cash" ||
+                  doctor.paymentMethods === "both") && (
                   <Chip
                     icon={<AttachMoney />}
                     label="Presencial"
@@ -316,44 +495,72 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
               </div>
             </div>
 
-            {/* Estado del Perfil */}
             <div className="mt-6">
               <label className="text-sm text-gray-600">Estado del perfil</label>
               <div className="mt-2 flex items-center gap-3">
                 <Chip
                   label={
-                    doctor.profileStatus === 'published' ? 'Publicado' :
-                    doctor.profileStatus === 'suspended' ? 'Suspendido' : 'Borrador'
+                    doctor.profileStatus === "published"
+                      ? "Publicado"
+                      : doctor.profileStatus === "suspended"
+                        ? "Suspendido"
+                        : "Borrador"
                   }
                   color={
-                    doctor.profileStatus === 'published' ? 'success' :
-                    doctor.profileStatus === 'suspended' ? 'error' : 'default'
+                    doctor.profileStatus === "published"
+                      ? "success"
+                      : doctor.profileStatus === "suspended"
+                        ? "error"
+                        : "default"
                   }
                   size="medium"
                   sx={{ fontWeight: 600 }}
                 />
                 <Button
-                  variant={doctor.profileStatus === 'published' ? 'outlined' : 'contained'}
-                  startIcon={doctor.profileStatus === 'published' ? <VisibilityOff /> : <Publish />}
+                  variant={
+                    doctor.profileStatus === "published"
+                      ? "outlined"
+                      : "contained"
+                  }
+                  startIcon={
+                    doctor.profileStatus === "published" ? (
+                      <VisibilityOff />
+                    ) : (
+                      <Publish />
+                    )
+                  }
                   onClick={handleTogglePublish}
                   sx={{
-                    textTransform: 'none',
-                    ...(doctor.profileStatus === 'published' 
-                      ? { borderColor: '#ef4444', color: '#ef4444', '&:hover': { borderColor: '#dc2626', backgroundColor: '#fef2f2' } }
-                      : { backgroundColor: '#10b981', '&:hover': { backgroundColor: '#059669' } }
-                    )
+                    textTransform: "none",
+                    ...(doctor.profileStatus === "published"
+                      ? {
+                          borderColor: "#ef4444",
+                          color: "#ef4444",
+                          "&:hover": {
+                            borderColor: "#dc2626",
+                            backgroundColor: "#fef2f2",
+                          },
+                        }
+                      : {
+                          backgroundColor: "#10b981",
+                          "&:hover": { backgroundColor: "#059669" },
+                        }),
                   }}
                 >
-                  {doctor.profileStatus === 'published' ? 'Ocultar en la app' : 'Publicar en la app'}
+                  {doctor.profileStatus === "published"
+                    ? "Ocultar en la app"
+                    : "Publicar en la app"}
                 </Button>
               </div>
             </div>
 
-            {doctor.workSchedule && doctor.workSchedule.length > 0 && (
-              <div className="mt-6">
-                <label className="text-sm text-gray-600 mb-3 block font-semibold">
-                  Horario Laboral
-                </label>
+            <div className="mt-6">
+              <label className="text-sm text-gray-600 mb-3 block font-semibold">
+                Horario Laboral
+              </label>
+
+              {/* --- VISTA: Muestra mensaje si no hay horarios --- */}
+              {doctor.workSchedule && doctor.workSchedule.length > 0 ? (
                 <div className="space-y-2">
                   {doctor.workSchedule.map((schedule: WorkSchedule) => (
                     <div
@@ -373,24 +580,36 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="p-4 bg-gray-50 rounded-lg border border-dashed border-gray-300 text-center">
+                  <p className="text-sm text-gray-500 italic">
+                    No tienes horarios configurados. Haz clic en{" "}
+                    <span className="font-semibold">Editar</span> para
+                    establecer tus horas de atención.
+                  </p>
+                </div>
+              )}
+              {/* ----------------------------------------------- */}
+            </div>
 
-            {/* Información de Contacto y Ubicación */}
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="text-sm text-gray-600 mb-1 block flex items-center gap-2">
                   <Phone sx={{ fontSize: 18, color: "#25D366" }} />
                   WhatsApp
                 </label>
-                <p className="text-gray-800 font-medium mt-1">{doctor.whatsapp || "No disponible"}</p>
+                <p className="text-gray-800 font-medium mt-1">
+                  {doctor.whatsapp || "No disponible"}
+                </p>
               </div>
               <div>
                 <label className="text-sm text-gray-600 mb-1 block flex items-center gap-2">
                   <LocationOn sx={{ fontSize: 18, color: "#ef4444" }} />
                   Ubicación / Dirección
                 </label>
-                <p className="text-gray-800 font-medium mt-1">{doctor.address || "No disponible"}</p>
+                <p className="text-gray-800 font-medium mt-1">
+                  {doctor.address || "No disponible"}
+                </p>
               </div>
             </div>
           </>
@@ -410,25 +629,61 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => handleLetterInput(e, (value) => handleChange("name", value))}
+                  onChange={(e) =>
+                    handleLetterInput(e, (value) => handleChange("name", value))
+                  }
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">Solo letras y espacios</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Solo letras y espacios
+                </p>
               </div>
+
               <div>
                 <label className="text-sm text-gray-600 mb-1 block">
-                  Especialidad
+                  Especialidad(es)
                 </label>
-                <input
-                  type="text"
-                  value={formData.specialty}
-                  onChange={(e) => handleLetterInput(e, (value) => handleChange("specialty", value))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-1">Solo letras y espacios</p>
+                <FormControl fullWidth>
+                  <Select
+                    multiple
+                    value={formData.specialty}
+                    onChange={handleSpecialtyChange}
+                    input={<OutlinedInput />}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                        {selected.map((value) => (
+                          <Chip key={value} label={value} size="small" />
+                        ))}
+                      </Box>
+                    )}
+                    MenuProps={MenuProps}
+                    className="bg-white"
+                    disabled={loadingSpecialties}
+                  >
+                    <MenuItem value="" disabled>
+                      <em>
+                        {loadingSpecialties
+                          ? "Cargando..."
+                          : "Selecciona especialidades"}
+                      </em>
+                    </MenuItem>
+                    {specialtiesList.map((spec) => (
+                      <MenuItem key={spec.id} value={spec.name}>
+                        <Checkbox
+                          checked={formData.specialty.indexOf(spec.name) > -1}
+                        />
+                        <ListItemText primary={spec.name} />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <p className="text-xs text-gray-500 mt-1">
+                  Puedes seleccionar múltiples opciones
+                </p>
               </div>
+
+              {/* ... Resto de inputs (email, whatsapp, address, price, experience) ... */}
               <div>
                 <label className="text-sm text-gray-600 mb-1 block">
                   Email
@@ -436,11 +691,15 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => handleEmailInput(e, (value) => handleChange("email", value))}
+                  onChange={(e) =>
+                    handleEmailInput(e, (value) => handleChange("email", value))
+                  }
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">Formato: ejemplo@correo.com</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Formato: ejemplo@correo.com
+                </p>
               </div>
               <div>
                 <label className="text-sm text-gray-600 mb-1 block">
@@ -449,12 +708,18 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 <input
                   type="text"
                   value={formData.whatsapp}
-                  onChange={(e) => handlePhoneInput(e, (value) => handleChange("whatsapp", value))}
+                  onChange={(e) =>
+                    handlePhoneInput(e, (value) =>
+                      handleChange("whatsapp", value),
+                    )
+                  }
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   placeholder="+593 99 123 4567"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">Solo números, espacios, guiones y paréntesis</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Solo números, espacios, guiones y paréntesis
+                </p>
               </div>
               <div>
                 <label className="text-sm text-gray-600 mb-1 block">
@@ -463,11 +728,17 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 <input
                   type="text"
                   value={formData.address}
-                  onChange={(e) => handleBothInput(e, (value) => handleChange("address", value))}
+                  onChange={(e) =>
+                    handleBothInput(e, (value) =>
+                      handleChange("address", value),
+                    )
+                  }
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">Letras, números y caracteres especiales</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Letras, números y caracteres especiales
+                </p>
               </div>
               <div>
                 <label className="text-sm text-gray-600 mb-1 block">
@@ -476,15 +747,19 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 <input
                   type="text"
                   value={formData.price}
-                  onChange={(e) => handleNumberInput(e, (value) => handleChange("price", value))}
+                  onChange={(e) =>
+                    handleNumberInput(e, (value) =>
+                      handleChange("price", value),
+                    )
+                  }
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   placeholder="0.00"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">Solo números y punto decimal</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Solo números y punto decimal
+                </p>
               </div>
-
-              {/* Campo de Experiencia Editable */}
               <div>
                 <label className="text-sm text-gray-600 mb-1 block">
                   Años de Experiencia
@@ -492,7 +767,11 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 <input
                   type="text"
                   value={formData.experience}
-                  onChange={(e) => handleNumberInput(e, (value) => handleChange("experience", value))}
+                  onChange={(e) =>
+                    handleNumberInput(e, (value) =>
+                      handleChange("experience", value),
+                    )
+                  }
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   placeholder="0"
                   required
@@ -507,15 +786,20 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
               </label>
               <textarea
                 value={formData.description}
-                onChange={(e) => handleBothInput(e, (value) => handleChange("description", value))}
+                onChange={(e) =>
+                  handleBothInput(e, (value) =>
+                    handleChange("description", value),
+                  )
+                }
                 rows={4}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">Letras, números y caracteres especiales</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Letras, números y caracteres especiales
+              </p>
             </div>
 
-            {/* Formas de Pago */}
             <div className="mt-6">
               <label className="text-sm text-gray-600 mb-1 block">
                 Formas de pago aceptadas
@@ -523,7 +807,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
               <FormControl fullWidth>
                 <Select
                   value={formData.paymentMethods}
-                  onChange={(e) => handleChange("paymentMethods", e.target.value)}
+                  onChange={(e) =>
+                    handleChange("paymentMethods", e.target.value)
+                  }
                   className="w-full"
                 >
                   <MenuItem value="card">Solo Tarjeta</MenuItem>
@@ -533,7 +819,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
               </FormControl>
             </div>
 
-            {/* Estado del Perfil */}
             <div className="mt-6">
               <label className="text-sm text-gray-600 mb-1 block">
                 Estado del perfil
@@ -541,7 +826,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
               <FormControl fullWidth>
                 <Select
                   value={formData.profileStatus}
-                  onChange={(e) => handleChange("profileStatus", e.target.value)}
+                  onChange={(e) =>
+                    handleChange("profileStatus", e.target.value)
+                  }
                   className="w-full"
                 >
                   <MenuItem value="draft">Borrador</MenuItem>
@@ -550,9 +837,12 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 </Select>
               </FormControl>
               <p className="text-xs text-gray-500 mt-2">
-                {formData.profileStatus === 'published' && 'Tu perfil es visible en la app'}
-                {formData.profileStatus === 'draft' && 'Tu perfil no es visible en la app'}
-                {formData.profileStatus === 'suspended' && 'Tu perfil está suspendido y no es visible'}
+                {formData.profileStatus === "published" &&
+                  "Tu perfil es visible en la app"}
+                {formData.profileStatus === "draft" &&
+                  "Tu perfil no es visible en la app"}
+                {formData.profileStatus === "suspended" &&
+                  "Tu perfil está suspendido y no es visible"}
               </p>
             </div>
 
@@ -574,7 +864,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                           handleScheduleChange(
                             schedule.day,
                             "enabled",
-                            e.target.checked
+                            e.target.checked,
                           )
                         }
                         className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
@@ -592,7 +882,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                             handleScheduleChange(
                               schedule.day,
                               "startTime",
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
@@ -605,7 +895,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                             handleScheduleChange(
                               schedule.day,
                               "endTime",
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
@@ -617,38 +907,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                     )}
                   </div>
                 ))}
-              </div>
-            </div>
-
-            {/* Información de Contacto y Ubicación */}
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-sm text-gray-600 mb-1 block flex items-center gap-2">
-                  <Phone sx={{ fontSize: 18, color: "#25D366" }} />
-                  WhatsApp
-                </label>
-                <input
-                  type="text"
-                  value={formData.whatsapp}
-                  onChange={(e) => handlePhoneInput(e, (value) => handleChange("whatsapp", value))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  placeholder="+593 99 123 4567"
-                />
-                <p className="text-xs text-gray-500 mt-1">Solo números, espacios, guiones y paréntesis</p>
-              </div>
-              <div>
-                <label className="text-sm text-gray-600 mb-1 block flex items-center gap-2">
-                  <LocationOn sx={{ fontSize: 18, color: "#ef4444" }} />
-                  Ubicación / Dirección
-                </label>
-                <input
-                  type="text"
-                  value={formData.address}
-                  onChange={(e) => handleBothInput(e, (value) => handleChange("address", value))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  placeholder="Av. Principal 123, Ciudad"
-                />
-                <p className="text-xs text-gray-500 mt-1">Letras, números y caracteres especiales</p>
               </div>
             </div>
 
@@ -753,16 +1011,27 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                     : doctor.name}
                 </h4>
 
-                {/* Fila: Chip de Especialidad + Experiencia */}
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span
-                    className="text-white px-3 py-1 rounded-md text-xs font-bold"
-                    style={{ backgroundColor: appThemeColor }}
-                  >
-                    {isEditing
-                      ? formData.specialty || "General"
-                      : doctor.specialty}
-                  </span>
+                {/* Fila: Chips de Especialidades + Experiencia */}
+                <div className="flex flex-wrap gap-2 items-center">
+                  {/* Renderizamos cada especialidad como un Chip */}
+                  {(isEditing
+                    ? formData.specialty
+                    : Array.isArray(doctor.specialty)
+                      ? doctor.specialty
+                      : [doctor.specialty]
+                  )
+                    .flat()
+                    .map((spec: string, i: number) =>
+                      spec ? (
+                        <span
+                          key={i}
+                          className="text-white px-3 py-1 rounded-md text-xs font-bold"
+                          style={{ backgroundColor: appThemeColor }}
+                        >
+                          {spec}
+                        </span>
+                      ) : null,
+                    )}
 
                   {/* Icono Gris + Años */}
                   <div className="flex items-center gap-1 text-gray-500">
@@ -801,9 +1070,12 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 {/* Precio */}
                 <div className="mt-3 w-full">
                   <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                    <span className="text-xs text-gray-600">Tarifa de consulta</span>
+                    <span className="text-xs text-gray-600">
+                      Tarifa de consulta
+                    </span>
                     <span className="text-sm font-bold text-gray-900">
-                      ${isEditing
+                      $
+                      {isEditing
                         ? parseFloat(formData.price) || 0
                         : doctor.price || 0}
                     </span>

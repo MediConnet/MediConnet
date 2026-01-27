@@ -8,14 +8,13 @@ export const useUpdateDoctorProfile = () => {
   const [error, setError] = useState<string | null>(null);
 
   const updateProfile = async (
-    userId: string,
     params: UpdateDoctorProfileParams
   ): Promise<DoctorDashboard | null> => {
     setLoading(true);
     setError(null);
 
     try {
-      const updatedDashboard = await updateDoctorProfileUseCase(userId, params);
+      const updatedDashboard = await updateDoctorProfileUseCase(params);
       setLoading(false);
       return updatedDashboard;
     } catch (err) {
@@ -27,4 +26,3 @@ export const useUpdateDoctorProfile = () => {
 
   return { updateProfile, loading, error };
 };
-
