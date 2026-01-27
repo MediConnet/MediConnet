@@ -32,7 +32,7 @@ import {
 } from "@mui/icons-material";
 import { ROUTES } from "../../../../app/config/constants";
 import { useRegisterProfessional } from "../hooks/useRegisterProfessional";
-import { handleLetterInput, handleNumberInput, handlePhoneInput, handleEmailInput, handleBothInput } from "../../../../shared/lib/inputValidation";
+import { handleLetterInput, handleNumberInput, handlePhoneInput, handleEmailInput, handleBothInput, handleEcuadorPhoneInput } from "../../../../shared/lib/inputValidation";
 import { getPharmacyChains } from "../../../../shared/lib/pharmacy-chains";
 import type { PharmacyChain } from "../../../../admin-dashboard/domain/pharmacy-chain.entity";
 
@@ -63,6 +63,30 @@ const serviceIcons: Record<ServiceType, React.ReactNode> = {
   ambulance: <LocalShipping sx={{ fontSize: 40 }} />,
   supplies: <Inventory sx={{ fontSize: 40 }} />,
 };
+
+// Especialidades médicas disponibles
+const medicalSpecialties = [
+  "Medicina General",
+  "Cardiología",
+  "Dermatología",
+  "Ginecología",
+  "Pediatría",
+  "Oftalmología",
+  "Traumatología",
+  "Neurología",
+  "Psiquiatría",
+  "Urología",
+  "Endocrinología",
+  "Gastroenterología",
+  "Neumología",
+  "Otorrinolaringología",
+  "Oncología",
+  "Reumatología",
+  "Nefrología",
+  "Cirugía General",
+  "Anestesiología",
+  "Odontología",
+];
 
 export const RegisterPage = () => {
   const navigate = useNavigate();
@@ -97,13 +121,14 @@ export const RegisterPage = () => {
       .email("Correo electrónico inválido")
       .required("El correo electrónico es requerido"),
     telefono: Yup.string()
-      .min(10, "El teléfono debe tener al menos 10 dígitos")
+      .matches(/^\d{10}$/, "El teléfono debe tener exactamente 10 dígitos")
       .required("El teléfono es requerido"),
     whatsapp: Yup.string()
-      .min(10, "El WhatsApp debe tener al menos 10 dígitos")
+      .matches(/^\d{10}$/, "El WhatsApp debe tener exactamente 10 dígitos")
       .required("El WhatsApp es requerido"),
     password: Yup.string()
       .min(6, "La contraseña debe tener al menos 6 caracteres")
+      .max(50, "La contraseña no puede tener más de 50 caracteres")
       .required("La contraseña es requerida"),
     confirmPassword: Yup.string()
       .oneOf([Yup.ref("password")], "Las contraseñas no coinciden")
@@ -123,8 +148,6 @@ export const RegisterPage = () => {
         .min(2, "La ciudad debe tener al menos 2 caracteres")
         .required("La ciudad es requerida"),
       tarifaConsulta: Yup.string(),
-      facebook: Yup.string(),
-      instagram: Yup.string(),
     };
 
     if (selectedType === "pharmacy") {
@@ -159,9 +182,6 @@ export const RegisterPage = () => {
       ciudad: "",
       tarifaConsulta: "",
       chainId: "", // Para farmacias
-      // Social
-      facebook: "",
-      instagram: "",
     },
     validationSchema: step === 1 ? personalInfoSchema : step === 2 ? getServiceInfoSchema() : undefined,
     enableReinitialize: true,
@@ -487,30 +507,32 @@ export const RegisterPage = () => {
                   name="telefono"
                   value={formik.values.telefono}
                   onChange={(e) => {
-                    handlePhoneInput(e, (value) => {
+                    handleEcuadorPhoneInput(e, (value) => {
                       formik.setFieldValue("telefono", value);
                     });
                   }}
                   onBlur={formik.handleBlur}
                   error={formik.touched.telefono && Boolean(formik.errors.telefono)}
-                  helperText={formik.touched.telefono ? formik.errors.telefono : "Solo números, espacios, guiones y paréntesis"}
+                  helperText={formik.touched.telefono ? formik.errors.telefono : "Solo números, máximo 10 dígitos (Ecuador)"}
                   required
                   fullWidth
+                  inputProps={{ maxLength: 10 }}
                 />
                 <TextField
                   label="WhatsApp *"
                   name="whatsapp"
                   value={formik.values.whatsapp}
                   onChange={(e) => {
-                    handlePhoneInput(e, (value) => {
+                    handleEcuadorPhoneInput(e, (value) => {
                       formik.setFieldValue("whatsapp", value);
                     });
                   }}
                   onBlur={formik.handleBlur}
                   error={formik.touched.whatsapp && Boolean(formik.errors.whatsapp)}
-                  helperText={formik.touched.whatsapp ? formik.errors.whatsapp : "Solo números, espacios, guiones y paréntesis"}
+                  helperText={formik.touched.whatsapp ? formik.errors.whatsapp : "Solo números, máximo 10 dígitos (Ecuador)"}
                   required
                   fullWidth
+                  inputProps={{ maxLength: 10 }}
                 />
               </Box>
 
@@ -533,9 +555,10 @@ export const RegisterPage = () => {
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   error={formik.touched.password && Boolean(formik.errors.password)}
-                  helperText={formik.touched.password && formik.errors.password}
+                  helperText={formik.touched.password ? formik.errors.password : "Mínimo 6 caracteres, máximo 50"}
                   required
                   fullWidth
+                  inputProps={{ maxLength: 50 }}
                 />
                 <TextField
                   label="Confirmar contraseña *"
@@ -545,9 +568,10 @@ export const RegisterPage = () => {
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   error={formik.touched.confirmPassword && Boolean(formik.errors.confirmPassword)}
-                  helperText={formik.touched.confirmPassword && formik.errors.confirmPassword}
+                  helperText={formik.touched.confirmPassword ? formik.errors.confirmPassword : "Mínimo 6 caracteres, máximo 50"}
                   required
                   fullWidth
+                  inputProps={{ maxLength: 50 }}
                 />
               </Box>
 
@@ -673,22 +697,30 @@ export const RegisterPage = () => {
                   />
                 )}
                 {selectedType === "doctor" && (
-                  <TextField
-                    label="Especialidad *"
-                    name="especialidad"
-                    placeholder="Cardiología, Pediatría, etc."
-                    value={formik.values.especialidad}
-                    onChange={(e) => {
-                      handleLetterInput(e, (value) => {
-                        formik.setFieldValue("especialidad", value);
-                      });
-                    }}
-                    onBlur={formik.handleBlur}
-                    error={formik.touched.especialidad && Boolean(formik.errors.especialidad)}
-                    helperText={formik.touched.especialidad ? formik.errors.especialidad : "Solo letras y espacios"}
-                    required
-                    fullWidth
-                  />
+                  <FormControl fullWidth required>
+                    <InputLabel>Especialidad *</InputLabel>
+                    <Select
+                      name="especialidad"
+                      value={formik.values.especialidad}
+                      label="Especialidad *"
+                      onChange={(e) => {
+                        formik.setFieldValue("especialidad", e.target.value);
+                      }}
+                      onBlur={formik.handleBlur}
+                      error={formik.touched.especialidad && Boolean(formik.errors.especialidad)}
+                    >
+                      {medicalSpecialties.map((specialty) => (
+                        <MenuItem key={specialty} value={specialty}>
+                          {specialty}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {formik.touched.especialidad && formik.errors.especialidad && (
+                      <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                        {formik.errors.especialidad}
+                      </Typography>
+                    )}
+                  </FormControl>
                 )}
                 <TextField
                   label="Dirección *"
@@ -1046,38 +1078,6 @@ export const RegisterPage = () => {
                 </Box>
               </Box>
 
-              {/* Social Networks */}
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: "text.secondary" }}>
-                  Redes sociales (opcional)
-                </Typography>
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-                    gap: 3,
-                  }}
-                >
-                  <TextField
-                    label="Facebook"
-                    name="facebook"
-                    placeholder="facebook.com/tupagina"
-                    value={formik.values.facebook}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    fullWidth
-                  />
-                  <TextField
-                    label="Instagram"
-                    name="instagram"
-                    placeholder="@tucuenta"
-                    value={formik.values.instagram}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    fullWidth
-                  />
-                </Box>
-              </Box>
 
               <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
                 <Button

@@ -73,6 +73,21 @@ export const handlePhoneInput = (
 };
 
 /**
+ * Valida formato de teléfono de Ecuador (solo números, máximo 10 dígitos)
+ */
+export const handleEcuadorPhoneInput = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  callback: (value: string) => void
+) => {
+  const value = e.target.value;
+  // Solo números, sin espacios ni caracteres especiales
+  const numbersOnly = value.replace(/[^0-9]/g, '');
+  // Limitar a 10 dígitos máximo
+  const limited = numbersOnly.slice(0, 10);
+  callback(limited);
+};
+
+/**
  * Valida formato de email
  */
 export const handleEmailInput = (

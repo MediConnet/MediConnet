@@ -14,6 +14,7 @@ import { ReportsSection } from "../components/ReportsSection";
 import { StatsCards } from "../components/StatsCards";
 import { DashboardContent } from "../components/DashboardContent";
 import { generateMockAppointments } from "../../infrastructure/appointments.mock";
+import type { DoctorDashboard, ProfileStatus, PaymentMethod } from "../../domain/DoctorDashboard.entity";
 
 type TabType = "dashboard" | "profile" | "ads" | "reviews" | "appointments" | "patients" | "payments" | "reports" | "settings";
 
@@ -44,15 +45,38 @@ export const DoctorDashboardPage = () => {
     reason: apt.reason,
   }));
 
-  // Crear userProfile de forma segura, usando optional chaining y valores por defecto
-  // ⚠️ CRÍTICO: Usar optional chaining en todos los accesos para evitar errores cuando data es null/undefined
+  // Crear datos por defecto para usuarios nuevos (valores en 0, campos vacíos)
+  const defaultData: DoctorDashboard = {
+    visits: 0,
+    contacts: 0,
+    reviews: 0,
+    rating: 0,
+    doctor: {
+      name: user?.name || "Dr. Usuario",
+      specialty: "Médico",
+      email: user?.email || "",
+      whatsapp: "",
+      address: "",
+      price: 0,
+      description: "",
+      isActive: true,
+      profileStatus: 'draft' as ProfileStatus,
+      paymentMethods: 'both' as PaymentMethod,
+    },
+  };
+
+  // Usar datos reales si existen, sino usar datos por defecto (para usuarios nuevos)
+  const displayData = data || defaultData;
+
+  // Crear userProfile de forma segura
   const userProfile = {
     name: user?.name || "Dr. Usuario",
-    roleLabel: data?.doctor?.specialty || "Médico", // ⚠️ Optional chaining para evitar errores
+    roleLabel: displayData?.doctor?.specialty || "Médico",
     initials: getInitials(user?.name || "Dr. Usuario"),
     isActive: true,
   };
 
+  // Solo mostrar loading durante la carga inicial
   if (loading) {
     return (
       <DashboardLayout role="PROVIDER" userProfile={userProfile} appointments={appointments}>
@@ -63,31 +87,12 @@ export const DoctorDashboardPage = () => {
     );
   }
 
-  if (!data) {
-    return (
-      <DashboardLayout role="PROVIDER" userProfile={userProfile} appointments={appointments}>
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="text-red-500">Error al cargar los datos del dashboard</div>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  // ⚠️ Validación adicional: asegurar que data.doctor existe antes de renderizar
-  if (!data.doctor) {
-    return (
-      <DashboardLayout role="PROVIDER" userProfile={userProfile} appointments={appointments}>
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="text-yellow-500">Datos del perfil no disponibles. Por favor, completa tu perfil.</div>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  // SIEMPRE renderizar el contenido, usando datos por defecto si no hay datos (usuarios nuevos)
 
   return (
     <DashboardLayout role="PROVIDER" userProfile={userProfile} appointments={appointments}>
       {/* Cards de Estadísticas - Solo mostrar en la pestaña de dashboard */}
-      {currentTab === "dashboard" && <StatsCards data={data} />}
+      {currentTab === "dashboard" && <StatsCards data={displayData} />}
 
       {/* Contenido según la pestaña activa */}
       <div className={currentTab === "dashboard" || currentTab === "appointments" ? "" : "mt-6"}>
@@ -102,16 +107,16 @@ export const DoctorDashboardPage = () => {
               </Typography>
             </Box>
             <DashboardContent
-              visits={data.visits}
-              contacts={data.contacts}
-              reviews={data.reviews}
-              rating={data.rating}
+              visits={displayData.visits}
+              contacts={displayData.contacts}
+              reviews={displayData.reviews}
+              rating={displayData.rating}
             />
           </Box>
         )}
         {currentTab === "profile" && (
           <ProfileSection
-            data={data}
+            data={displayData}
             onUpdate={(updatedData) => {
               // Actualizar los datos directamente sin recargar
               if (setData) {
