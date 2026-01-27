@@ -126,15 +126,20 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
   useEffect(() => {
     if (data?.doctor) {
+      // --- LÓGICA DE ESPECIALIDADES ROBUSTA ---
       let incomingSpecialty: string[] = [];
 
       if (Array.isArray(data.doctor.specialty)) {
+        // Si ya es un array, lo usamos tal cual
         incomingSpecialty = data.doctor.specialty as unknown as string[];
       } else if (
         typeof data.doctor.specialty === "string" &&
         data.doctor.specialty
       ) {
-        incomingSpecialty = [data.doctor.specialty];
+        // Si es un string separado por comas, lo convertimos a array
+        incomingSpecialty = data.doctor.specialty.includes(",")
+          ? data.doctor.specialty.split(",").map((s) => s.trim())
+          : [data.doctor.specialty];
       }
 
       const backendSchedule = data.doctor.workSchedule;
@@ -350,8 +355,8 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     price: 0,
     description: "",
     isActive: true,
-    profileStatus: 'draft' as ProfileStatus,
-    paymentMethods: 'both' as PaymentMethod,
+    profileStatus: "draft" as ProfileStatus,
+    paymentMethods: "both" as PaymentMethod,
   };
   const appThemeColor = "#06b6d4";
 

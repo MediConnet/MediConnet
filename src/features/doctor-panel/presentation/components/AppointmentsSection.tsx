@@ -1,13 +1,11 @@
 import { AccessTime, CalendarToday, Person } from "@mui/icons-material";
 import { useEffect, useState } from "react";
-import { useAuthStore } from "../../../../app/store/auth.store";
 import type { DoctorAppointment } from "../../domain/Appointment.entity";
 import type { AppointmentStatus } from "../../domain/Patient.entity";
 import {
   getAppointmentsAPI,
   updateAppointmentStatusAPI,
 } from "../../infrastructure/appointments.api";
-import { useDoctorDashboard } from "../hooks/useDoctorDashboard";
 import { AppointmentDetailModal } from "./modals/AppointmentDetailModal";
 import { CreateDiagnosisModal } from "./modals/CreateDiagnosisModal";
 
@@ -35,9 +33,6 @@ export const AppointmentsSection = () => {
     useState<DoctorAppointment | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDiagnosisModalOpen, setIsDiagnosisModalOpen] = useState(false);
-
-  const { user } = useAuthStore();
-  const { data: dashboardData } = useDoctorDashboard();
 
   // --- API CALLS ---
 
@@ -128,15 +123,6 @@ export const AppointmentsSection = () => {
     "Octubre",
     "Noviembre",
     "Diciembre",
-  ];
-  const daysFull = [
-    "Domingo",
-    "Lunes",
-    "Martes",
-    "Miércoles",
-    "Jueves",
-    "Viernes",
-    "Sábado",
   ];
 
   // Navegación
@@ -680,8 +666,6 @@ export const AppointmentsSection = () => {
           open={isDiagnosisModalOpen}
           onClose={() => setIsDiagnosisModalOpen(false)}
           appointment={selectedAppointment}
-          doctorId={user?.id || ""}
-          doctorName={user?.name || "Dr. Usuario"}
           onSuccess={() => {
             setIsDiagnosisModalOpen(false);
             fetchAppointments();

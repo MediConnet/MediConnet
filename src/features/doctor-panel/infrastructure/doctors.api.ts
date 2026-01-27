@@ -201,9 +201,17 @@ export const getDoctorProfileAPI = async (): Promise<DoctorDashboard> => {
   
   const backendData = extractData(response);
 
-  const specialtyValue = (backendData.specialties_list && backendData.specialties_list.length > 0) 
-    ? backendData.specialties_list 
-    : (backendData.specialty || "");
+  // --- CORRECCIÓN AQUÍ: Prioridad correcta para especialidades ---
+  // Si backendData.specialties_list existe y tiene datos, úsalo.
+  // Si no, usa backendData.specialty (string).
+  // Si no, usa un array vacío.
+  let specialtyValue: string | string[] = [];
+  
+  if (backendData.specialties_list && backendData.specialties_list.length > 0) {
+      specialtyValue = backendData.specialties_list;
+  } else if (backendData.specialty) {
+      specialtyValue = backendData.specialty; // Puede ser un string "Cardiología, Pediatría"
+  }
 
   return {
     visits: 0, 
@@ -212,16 +220,23 @@ export const getDoctorProfileAPI = async (): Promise<DoctorDashboard> => {
     rating: 0,
     doctor: {
       id: backendData.id,
-      name: backendData.full_name || "",
+      
+      // Mapeo correcto de nombres snake_case -> camelCase
+      name: backendData.full_name || "",  
       email: backendData.email || "",
       
       specialty: specialtyValue as any, 
       
       whatsapp: backendData.whatsapp || backendData.phone || "",
       address: backendData.address || "",
+      
+      // Conversión numérica segura
       price: Number(backendData.consultation_fee) || 0,
+      
       description: backendData.description || "",
-      experience: backendData.years_of_experience || 0,
+      
+      // ESTE ERA EL ERROR PRINCIPAL: years_of_experience -> experience
+      experience: Number(backendData.years_of_experience) || 0,
       
       isActive: backendData.status === 'APPROVED',
       profileStatus: backendData.is_published ? 'published' : 'draft',
@@ -321,20 +336,6 @@ export const updateAppointmentStatusAPI = async (
   return extractData(response);
 };
 
-/**
- * API: Crear diagnóstico
- * Endpoint: POST /api/doctors/appointments/:id/diagnosis
- */
-export const createDiagnosisAPI = async (
-  appointmentId: string,
-  diagnosisData: any
-): Promise<any> => {
-  const response = await httpClient.post<{ success: boolean; data: any }>(
-    `/doctors/appointments/${appointmentId}/diagnosis`,
-    diagnosisData
-  );
-  return extractData(response);
-};
 
 /**
  * API: Obtener pagos del doctor

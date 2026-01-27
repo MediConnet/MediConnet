@@ -1,24 +1,28 @@
 import { httpClient } from "../../../shared/lib/http";
 
 export interface DiagnosisParams {
-  title: string;
-  description: string;
-  prescription?: string;
-  notes?: string;
+  diagnosis: string;    // Título (Ej: Faringitis Aguda)
+  treatment: string;    // Medicamentos / Receta
+  indications: string;  // Indicaciones / Cuidados
+  observations?: string; // Notas opcionales
 }
 
-// Interfaz de respuesta del diagnóstico (si la necesitas para tipar el retorno)
+// Interfaz de respuesta (Lo que devuelve la BD - medical_history)
 export interface Diagnosis {
   id: string;
-  appointment_id: string;
-  title: string;
-  description: string;
-  prescription: string | null;
+  patient_id: string;
+  provider_id: string;
+  appointment_id?: string;
+  diagnosis: string;
+  treatment: string | null;
+  indications: string | null;
+  observations: string | null;
+  date: string;
   created_at: string;
 }
 
 /**
- * Crea un diagnóstico para una cita específica
+ * Crea o Actualiza un diagnóstico para una cita específica
  * Endpoint: POST /api/doctors/appointments/:id/diagnosis
  */
 export const createDiagnosisAPI = async (
@@ -29,26 +33,24 @@ export const createDiagnosisAPI = async (
     `/doctors/appointments/${appointmentId}/diagnosis`,
     data
   );
-  
-  // Retornamos true si la operación fue exitosa
   return response.data.success;
 };
 
 /**
- * TODO: Obtener diagnóstico por cita
- * Nota: Actualmente tu backend no tiene un endpoint específico GET para esto,
- * o el endpoint de appointments no está devolviendo el diagnóstico incluido.
- * * Por ahora dejaremos esta función preparada para cuando actualices el backend.
+ * Obtener diagnóstico por cita
+ * Endpoint: GET /api/doctors/appointments/:id/diagnosis
+ * Retorna el objeto Diagnosis si existe, o null si no existe (404).
  */
 export const getDiagnosisByAppointmentAPI = async (appointmentId: string): Promise<Diagnosis | null> => {
   try {
-    // Ejemplo de cómo sería la llamada si existiera el endpoint
-    // const response = await httpClient.get<{ success: boolean; data: Diagnosis }>(
-    //   `/doctors/appointments/${appointmentId}/diagnosis`
-    // );
-    // return extractData(response);
-    return null;
+    const response = await httpClient.get<{ success: boolean; data: Diagnosis }>(
+      `/doctors/appointments/${appointmentId}/diagnosis`
+    );
+    return response.data.data;
   } catch (error) {
+    // Si da error (ej: 404 Not Found porque aún no se ha creado), 
+    // retornamos null para que el frontend sepa que debe mostrar el formulario vacío.
+    console.warn("No se encontró diagnóstico previo o error de conexión", error);
     return null;
   }
 };
