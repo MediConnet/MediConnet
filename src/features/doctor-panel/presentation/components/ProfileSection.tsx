@@ -339,15 +339,20 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     }
   };
 
-  if (!data || !data.doctor) {
-    return (
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <p className="text-gray-500">Cargando información del perfil...</p>
-      </div>
-    );
-  }
-
-  const doctor = data.doctor;
+  // Usar datos por defecto si no existen (para usuarios nuevos)
+  // Esto permite que el formulario se muestre vacío en lugar de "Cargando..."
+  const doctor = data?.doctor || {
+    name: user?.name || "",
+    specialty: "",
+    email: user?.email || "",
+    whatsapp: "",
+    address: "",
+    price: 0,
+    description: "",
+    isActive: true,
+    profileStatus: 'draft' as ProfileStatus,
+    paymentMethods: 'both' as PaymentMethod,
+  };
   const appThemeColor = "#06b6d4";
 
   return (

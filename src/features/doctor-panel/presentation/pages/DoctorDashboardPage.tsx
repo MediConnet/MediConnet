@@ -7,7 +7,6 @@ import { useDoctorDashboard } from "../hooks/useDoctorDashboard";
 // Componentes de secciones
 import { AdsSection } from "../components/AdsSection";
 import { AppointmentsSection } from "../components/AppointmentsSection";
-import { DashboardContent } from "../components/DashboardContent";
 import { PatientsSection } from "../components/PatientsSection";
 import { PaymentsSection } from "../components/PaymentsSection";
 import { ProfileSection } from "../components/ProfileSection";
@@ -16,7 +15,13 @@ import { ReviewsSection } from "../components/ReviewsSection";
 import { SettingsSection } from "../components/SettingsSection";
 import { StatsCards } from "../components/StatsCards";
 // IMPORT NUEVO: Usamos la API real en lugar del Mock eliminado
+import type {
+  DoctorDashboard,
+  PaymentMethod,
+  ProfileStatus,
+} from "../../domain/DoctorDashboard.entity";
 import { getAppointmentsAPI } from "../../infrastructure/appointments.api";
+import { DashboardContent } from "../components/DashboardContent";
 
 type TabType =
   | "dashboard"
@@ -78,15 +83,38 @@ export const DoctorDashboardPage = () => {
 
     fetchAppointments();
   }, []);
+  // Crear datos por defecto para usuarios nuevos (valores en 0, campos vacíos)
+  const defaultData: DoctorDashboard = {
+    visits: 0,
+    contacts: 0,
+    reviews: 0,
+    rating: 0,
+    doctor: {
+      name: user?.name || "Dr. Usuario",
+      specialty: "Médico",
+      email: user?.email || "",
+      whatsapp: "",
+      address: "",
+      price: 0,
+      description: "",
+      isActive: true,
+      profileStatus: "draft" as ProfileStatus,
+      paymentMethods: "both" as PaymentMethod,
+    },
+  };
+
+  // Usar datos reales si existen, sino usar datos por defecto (para usuarios nuevos)
+  const displayData = data || defaultData;
 
   // Crear userProfile de forma segura
   const userProfile = {
     name: user?.name || "Dr. Usuario",
-    roleLabel: data?.doctor?.specialty || "Médico",
+    roleLabel: displayData?.doctor?.specialty || "Médico",
     initials: getInitials(user?.name || "Dr. Usuario"),
     isActive: true,
   };
 
+  // Solo mostrar loading durante la carga inicial
   if (loading) {
     return (
       <DashboardLayout
@@ -132,6 +160,7 @@ export const DoctorDashboardPage = () => {
       </DashboardLayout>
     );
   }
+  // SIEMPRE renderizar el contenido, usando datos por defecto si no hay datos (usuarios nuevos)
 
   return (
     <DashboardLayout
@@ -140,7 +169,7 @@ export const DoctorDashboardPage = () => {
       appointments={sidebarAppointments}
     >
       {/* Cards de Estadísticas - Solo mostrar en la pestaña de dashboard */}
-      {currentTab === "dashboard" && <StatsCards data={data} />}
+      {currentTab === "dashboard" && <StatsCards data={displayData} />}
 
       {/* Contenido según la pestaña activa */}
       <div
@@ -161,16 +190,16 @@ export const DoctorDashboardPage = () => {
               </Typography>
             </Box>
             <DashboardContent
-              visits={data.visits}
-              contacts={data.contacts}
-              reviews={data.reviews}
-              rating={data.rating}
+              visits={displayData.visits}
+              contacts={displayData.contacts}
+              reviews={displayData.reviews}
+              rating={displayData.rating}
             />
           </Box>
         )}
         {currentTab === "profile" && (
           <ProfileSection
-            data={data}
+            data={displayData}
             onUpdate={(updatedData) => {
               if (setData) {
                 setData(updatedData);
