@@ -1,27 +1,27 @@
 import {
-  Box,
-  Typography,
-  Paper,
-  Stack,
-  Divider,
-  Chip,
-  Card,
-  CardContent,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-} from "@mui/material";
-import {
+  Assignment,
+  CalendarToday,
   ExpandMore,
   LocalHospital,
-  CalendarToday,
   Person,
-  Assignment,
 } from "@mui/icons-material";
-import { useState, useEffect } from "react";
-import { getDiagnosesMock, getDiagnosesByPatientMock } from "../../../doctor-panel/infrastructure/diagnoses.mock";
-import type { Diagnosis } from "../../../doctor-panel/domain/Diagnosis.entity";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Card,
+  CardContent,
+  Chip,
+  Divider,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material";
+import { useEffect, useState } from "react";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import type { Diagnosis } from "../../../doctor-panel/domain/Diagnosis.entity";
+import { getDiagnosesByPatientMock } from "../../../doctor-panel/infrastructure/diagnoses.api";
 
 export const MedicalHistorySection = () => {
   const [diagnoses, setDiagnoses] = useState<Diagnosis[]>([]);
@@ -88,9 +88,15 @@ export const MedicalHistorySection = () => {
 
       <Stack spacing={3}>
         {diagnoses
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          .sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+          )
           .map((diagnosis) => (
-            <Card key={diagnosis.id} elevation={0} sx={{ border: "1px solid", borderColor: "grey.200" }}>
+            <Card
+              key={diagnosis.id}
+              elevation={0}
+              sx={{ border: "1px solid", borderColor: "grey.200" }}
+            >
               <Accordion defaultExpanded={diagnoses.indexOf(diagnosis) === 0}>
                 <AccordionSummary
                   expandIcon={<ExpandMore />}
@@ -99,7 +105,12 @@ export const MedicalHistorySection = () => {
                     "&:hover": { bgcolor: "grey.100" },
                   }}
                 >
-                  <Stack direction="row" spacing={2} alignItems="center" sx={{ width: "100%" }}>
+                  <Stack
+                    direction="row"
+                    spacing={2}
+                    alignItems="center"
+                    sx={{ width: "100%" }}
+                  >
                     <Box
                       sx={{
                         p: 1.5,
@@ -116,15 +127,30 @@ export const MedicalHistorySection = () => {
                       </Typography>
                       <Stack direction="row" spacing={2} mt={0.5}>
                         <Typography variant="body2" color="text.secondary">
-                          <CalendarToday sx={{ fontSize: 14, mr: 0.5, verticalAlign: "middle" }} />
-                          {new Date(diagnosis.date).toLocaleDateString("es-ES", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          })}
+                          <CalendarToday
+                            sx={{
+                              fontSize: 14,
+                              mr: 0.5,
+                              verticalAlign: "middle",
+                            }}
+                          />
+                          {new Date(diagnosis.date).toLocaleDateString(
+                            "es-ES",
+                            {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            },
+                          )}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          <Person sx={{ fontSize: 14, mr: 0.5, verticalAlign: "middle" }} />
+                          <Person
+                            sx={{
+                              fontSize: 14,
+                              mr: 0.5,
+                              verticalAlign: "middle",
+                            }}
+                          />
                           {diagnosis.doctorName}
                         </Typography>
                       </Stack>
@@ -136,46 +162,81 @@ export const MedicalHistorySection = () => {
                     <Stack spacing={3}>
                       {diagnosis.symptoms && (
                         <Box>
-                          <Typography variant="subtitle2" fontWeight={700} color="text.secondary" gutterBottom>
+                          <Typography
+                            variant="subtitle2"
+                            fontWeight={700}
+                            color="text.secondary"
+                            gutterBottom
+                          >
                             Síntomas Presentados
                           </Typography>
-                          <Typography variant="body1">{diagnosis.symptoms}</Typography>
+                          <Typography variant="body1">
+                            {diagnosis.symptoms}
+                          </Typography>
                         </Box>
                       )}
 
                       {diagnosis.treatment && (
                         <Box>
-                          <Typography variant="subtitle2" fontWeight={700} color="text.secondary" gutterBottom>
+                          <Typography
+                            variant="subtitle2"
+                            fontWeight={700}
+                            color="text.secondary"
+                            gutterBottom
+                          >
                             Tratamiento Prescrito
                           </Typography>
-                          <Typography variant="body1">{diagnosis.treatment}</Typography>
+                          <Typography variant="body1">
+                            {diagnosis.treatment}
+                          </Typography>
                         </Box>
                       )}
 
                       {diagnosis.medications && (
                         <Box>
-                          <Typography variant="subtitle2" fontWeight={700} color="text.secondary" gutterBottom>
+                          <Typography
+                            variant="subtitle2"
+                            fontWeight={700}
+                            color="text.secondary"
+                            gutterBottom
+                          >
                             Medicamentos Recetados
                           </Typography>
-                          <Typography variant="body1">{diagnosis.medications}</Typography>
+                          <Typography variant="body1">
+                            {diagnosis.medications}
+                          </Typography>
                         </Box>
                       )}
 
                       {diagnosis.observations && (
                         <Box>
-                          <Typography variant="subtitle2" fontWeight={700} color="text.secondary" gutterBottom>
+                          <Typography
+                            variant="subtitle2"
+                            fontWeight={700}
+                            color="text.secondary"
+                            gutterBottom
+                          >
                             Observaciones
                           </Typography>
-                          <Typography variant="body1">{diagnosis.observations}</Typography>
+                          <Typography variant="body1">
+                            {diagnosis.observations}
+                          </Typography>
                         </Box>
                       )}
 
                       {diagnosis.recommendations && (
                         <Box>
-                          <Typography variant="subtitle2" fontWeight={700} color="text.secondary" gutterBottom>
+                          <Typography
+                            variant="subtitle2"
+                            fontWeight={700}
+                            color="text.secondary"
+                            gutterBottom
+                          >
                             Recomendaciones
                           </Typography>
-                          <Typography variant="body1">{diagnosis.recommendations}</Typography>
+                          <Typography variant="body1">
+                            {diagnosis.recommendations}
+                          </Typography>
                         </Box>
                       )}
 
@@ -193,13 +254,16 @@ export const MedicalHistorySection = () => {
 
                       <Typography variant="caption" color="text.secondary">
                         Diagnóstico creado el{" "}
-                        {new Date(diagnosis.createdAt).toLocaleDateString("es-ES", {
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {new Date(diagnosis.createdAt).toLocaleDateString(
+                          "es-ES",
+                          {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          },
+                        )}
                       </Typography>
                     </Stack>
                   </CardContent>
@@ -211,4 +275,3 @@ export const MedicalHistorySection = () => {
     </Box>
   );
 };
-
