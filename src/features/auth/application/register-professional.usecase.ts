@@ -1,25 +1,25 @@
 import type { ProfessionalRequest } from '../domain/ProfessionalRequest.entity';
+import { httpClient, extractData } from '../../../shared/lib/http';
 
 /**
  * Caso de uso: Registrar solicitud de profesional
- * TODO: Conectar con endpoint real del backend cuando esté disponible
  */
 export const registerProfessionalUseCase = async (
   data: ProfessionalRequest
 ): Promise<{ success: boolean; message: string }> => {
-  // TODO: Reemplazar con llamada real al backend
-  // const response = await httpClient.post('/auth/register-professional', data);
-  // return response.data;
+  const response = await httpClient.post<{
+    success: boolean;
+    data: { message?: string } | null;
+    message?: string;
+  }>('/auth/register-professional', data);
 
-  // Simular delay de red
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  // Preferir message dentro de data; fallback a message raíz
+  const extracted = extractData(response);
+  const message =
+    extracted?.message ||
+    response.data?.message ||
+    'Tu solicitud ha sido enviada. Te contactaremos pronto.';
 
-  // NOTE: Simulación - en producción esto guardaría la solicitud
-  console.log('Solicitud de registro profesional:', data);
-
-  return {
-    success: true,
-    message: 'Tu solicitud ha sido enviada. Te contactaremos pronto.',
-  };
+  return { success: true, message };
 };
 

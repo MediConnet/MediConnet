@@ -433,6 +433,13 @@ export const HomePage = () => {
                 borderColor: '#06b6d4',
               },
               {
+                icon: <LocalHospital sx={{ fontSize: 40 }} />,
+                title: 'Clínicas',
+                description: 'Administra médicos, agenda centralizada y recepción',
+                color: '#14b8a6',
+                borderColor: '#14b8a6',
+              },
+              {
                 icon: <LocalPharmacy sx={{ fontSize: 40 }} />,
                 title: 'Farmacias',
                 description: 'Directorio informativo con contacto y ubicación',
