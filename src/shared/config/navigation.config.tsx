@@ -2,24 +2,24 @@ import {
   Assignment,
   AttachMoney,
   Biotech,
+  Business,
   CalendarToday,
   Campaign,
   Dashboard,
   Group,
+  History,
   Inventory,
+  LocalHospital,
   LocalPharmacy,
   LocalShipping,
   MedicalServices,
+  Percent,
   Person,
+  Receipt,
   Settings,
   StarRate,
   Store,
   Timeline,
-  History,
-  Percent,
-  Business,
-  LocalHospital,
-  Receipt,
 } from "@mui/icons-material";
 
 export type UserRole =
@@ -39,14 +39,26 @@ export interface MenuItem {
 export const ADMIN_MENU: MenuItem[] = [
   { icon: <Dashboard />, label: "Dashboard", path: "/admin/dashboard" },
   { icon: <Assignment />, label: "Solicitudes", path: "/admin/requests" },
-  { icon: <Campaign />, label: "Solicitudes de Anuncios", path: "/admin/ad-requests" },
-  { icon: <MedicalServices />, label: "Servicios Aprobados", path: "/admin/services" },
+  {
+    icon: <Campaign />,
+    label: "Solicitudes de Anuncios",
+    path: "/admin/ad-requests",
+  },
+  {
+    icon: <MedicalServices />,
+    label: "Servicios Aprobados",
+    path: "/admin/services",
+  },
   { icon: <History />, label: "Historial", path: "/admin/history" },
   { icon: <AttachMoney />, label: "Pagos", path: "/admin/payments" },
   { icon: <Percent />, label: "Comisiones", path: "/admin/commissions" },
   { icon: <Group />, label: "Usuarios", path: "/admin/users" },
   { icon: <Timeline />, label: "Actividad", path: "/admin/activity" },
-  { icon: <Business />, label: "Cadenas de Farmacias", path: "/admin/pharmacy-chains" },
+  {
+    icon: <Business />,
+    label: "Cadenas de Farmacias",
+    path: "/admin/pharmacy-chains",
+  },
   { icon: <Settings />, label: "Configuración", path: "/admin/settings" },
 ];
 
@@ -55,7 +67,7 @@ export const DOCTOR_MENU: MenuItem[] = [
   {
     icon: <Dashboard />,
     label: "Dashboard",
-    path: "/doctor/dashboard?tab=dashboard",
+    path: "/doctor/dashboard",
   },
   {
     icon: <Person />,
@@ -100,7 +112,7 @@ export const AMBULANCE_MENU: MenuItem[] = [
   {
     icon: <Dashboard />,
     label: "Dashboard",
-    path: "/provider/ambulance/dashboard?tab=dashboard",
+    path: "/provider/ambulance/dashboard",
   },
   {
     icon: <LocalShipping />,
@@ -129,7 +141,7 @@ export const PHARMACY_MENU: MenuItem[] = [
   {
     icon: <Dashboard />,
     label: "Dashboard",
-    path: "/provider/pharmacy/dashboard?tab=dashboard",
+    path: "/provider/pharmacy/dashboard",
   },
   {
     icon: <LocalPharmacy />,
@@ -163,7 +175,7 @@ export const LAB_MENU: MenuItem[] = [
   {
     icon: <Dashboard />,
     label: "Dashboard",
-    path: "/laboratory/dashboard?tab=dashboard",
+    path: "/laboratory/dashboard",
   },
   {
     icon: <Biotech />,
@@ -192,7 +204,7 @@ export const SUPPLIES_MENU: MenuItem[] = [
   {
     icon: <Dashboard />,
     label: "Dashboard",
-    path: "/supply/dashboard?tab=dashboard",
+    path: "/supply/dashboard",
   },
   {
     icon: <Person />,
@@ -226,7 +238,7 @@ export const CLINIC_MENU: MenuItem[] = [
   {
     icon: <Dashboard />,
     label: "Dashboard",
-    path: "/clinic/dashboard?tab=dashboard",
+    path: "/clinic/dashboard",
   },
   {
     icon: <LocalHospital />,
@@ -258,7 +270,7 @@ export const CLINIC_MENU: MenuItem[] = [
 // --- FUNCIÓN HELPER ---
 export const getMenuByRole = (
   role: UserRole,
-  providerType?: string | null
+  providerType?: string | null,
 ): MenuItem[] => {
   const normalizedRole = role.toUpperCase();
 
