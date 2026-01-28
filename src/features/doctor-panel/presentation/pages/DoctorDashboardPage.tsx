@@ -1,12 +1,17 @@
 import { Box, Typography } from "@mui/material";
-import { useEffect, useState } from "react"; // Añadido useEffect y useState
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuthStore } from "../../../../app/store/auth.store";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
+
+// Hooks
 import { useDoctorDashboard } from "../hooks/useDoctorDashboard";
+import { useDoctorProfile } from "../hooks/useDoctorProfile";
+
 // Componentes de secciones
 import { AdsSection } from "../components/AdsSection";
 import { AppointmentsSection } from "../components/AppointmentsSection";
+import { DashboardContent } from "../components/DashboardContent";
 import { PatientsSection } from "../components/PatientsSection";
 import { PaymentsSection } from "../components/PaymentsSection";
 import { ProfileSection } from "../components/ProfileSection";
@@ -14,14 +19,14 @@ import { ReportsSection } from "../components/ReportsSection";
 import { ReviewsSection } from "../components/ReviewsSection";
 import { SettingsSection } from "../components/SettingsSection";
 import { StatsCards } from "../components/StatsCards";
-// IMPORT NUEVO: Usamos la API real en lugar del Mock eliminado
+
+// Entidades y APIs
 import type {
   DoctorDashboard,
   PaymentMethod,
   ProfileStatus,
 } from "../../domain/DoctorDashboard.entity";
 import { getAppointmentsAPI } from "../../infrastructure/appointments.api";
-import { DashboardContent } from "../components/DashboardContent";
 
 type TabType =
   | "dashboard"
@@ -36,9 +41,17 @@ type TabType =
 
 export const DoctorDashboardPage = () => {
   const [searchParams] = useSearchParams();
-  const { data, loading, setData, refetch } = useDoctorDashboard();
   const authStore = useAuthStore();
   const { user } = authStore;
+
+  const {
+    data: dashboardData,
+    loading: dashboardLoading,
+    setData: setDashboardData,
+    refetch: refetchDashboard,
+  } = useDoctorDashboard();
+
+  const { profileData, refetch: refetchProfile } = useDoctorProfile();
 
   // Estado para las citas de la barra lateral (Notificaciones)
   const [sidebarAppointments, setSidebarAppointments] = useState<any[]>([]);
@@ -55,15 +68,11 @@ export const DoctorDashboardPage = () => {
       .slice(0, 2);
   };
 
-  // EFECTO NUEVO: Cargar citas reales para el layout
+  // EFECTO: Cargar citas reales para el layout (Sidebar)
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        // Traemos las citas reales
         const allAppointments = await getAppointmentsAPI();
-
-        // Filtramos solo las pendientes/confirmadas y tomamos las próximas 5
-        // para no saturar la barra lateral
         const upcoming = allAppointments
           .filter((a) => a.status === "CONFIRMED" || a.status === "PENDING")
           .slice(0, 5)
@@ -83,7 +92,8 @@ export const DoctorDashboardPage = () => {
 
     fetchAppointments();
   }, []);
-  // Crear datos por defecto para usuarios nuevos (valores en 0, campos vacíos)
+
+  // Datos por defecto para usuarios nuevos
   const defaultData: DoctorDashboard = {
     visits: 0,
     contacts: 0,
@@ -103,19 +113,26 @@ export const DoctorDashboardPage = () => {
     },
   };
 
-  // Usar datos reales si existen, sino usar datos por defecto (para usuarios nuevos)
-  const displayData = data || defaultData;
+  // --- LÓGICA DE SELECCIÓN DE DATOS ---
+  const displayData =
+    currentTab === "profile" && profileData
+      ? profileData
+      : dashboardData || defaultData;
 
-  // Crear userProfile de forma segura
   const userProfile = {
     name: user?.name || "Dr. Usuario",
-    roleLabel: displayData?.doctor?.specialty || "Médico",
+    roleLabel: displayData?.doctor?.specialty
+      ? Array.isArray(displayData.doctor.specialty)
+        ? displayData.doctor.specialty[0]
+        : displayData.doctor.specialty
+      : "Médico",
     initials: getInitials(user?.name || "Dr. Usuario"),
     isActive: true,
   };
 
-  // Solo mostrar loading durante la carga inicial
-  if (loading) {
+  // --- RENDERIZADO CONDICIONAL DE CARGA Y ERRORES ---
+
+  if (dashboardLoading) {
     return (
       <DashboardLayout
         role="PROVIDER"
@@ -129,7 +146,7 @@ export const DoctorDashboardPage = () => {
     );
   }
 
-  if (!data) {
+  if (!dashboardData && !profileData) {
     return (
       <DashboardLayout
         role="PROVIDER"
@@ -144,23 +161,6 @@ export const DoctorDashboardPage = () => {
       </DashboardLayout>
     );
   }
-
-  if (!data.doctor) {
-    return (
-      <DashboardLayout
-        role="PROVIDER"
-        userProfile={userProfile}
-        appointments={[]}
-      >
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="text-yellow-500">
-            Datos del perfil no disponibles. Por favor, completa tu perfil.
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
-  // SIEMPRE renderizar el contenido, usando datos por defecto si no hay datos (usuarios nuevos)
 
   return (
     <DashboardLayout
@@ -197,18 +197,22 @@ export const DoctorDashboardPage = () => {
             />
           </Box>
         )}
+
         {currentTab === "profile" && (
           <ProfileSection
             data={displayData}
             onUpdate={(updatedData) => {
-              if (setData) {
-                setData(updatedData);
+              refetchProfile();
+
+              if (setDashboardData) {
+                setDashboardData(updatedData);
               } else {
-                refetch();
+                refetchDashboard();
               }
             }}
           />
         )}
+
         {currentTab === "ads" && <AdsSection />}
         {currentTab === "reviews" && <ReviewsSection />}
         {currentTab === "appointments" && <AppointmentsSection />}
