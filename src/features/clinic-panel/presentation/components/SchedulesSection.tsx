@@ -10,10 +10,14 @@ import {
   Button,
   Divider,
 } from "@mui/material";
-import { Save } from "@mui/icons-material";
+import { Save, Edit } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import type { ClinicSchedule, DaySchedule } from "../../domain/clinic.entity";
 import { useClinicProfile } from "../hooks/useClinicProfile";
+import { useClinicDoctors } from "../hooks/useClinicDoctors";
+import { useDoctorSchedule } from "../hooks/useDoctorSchedule";
+import type { ClinicDoctor } from "../../domain/doctor.entity";
+import type { DoctorSchedule } from "../../domain/doctor-schedule.entity";
 
 interface SchedulesSectionProps {
   clinicId: string;
@@ -152,8 +156,222 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
         Horarios de Médicos
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Los horarios específicos de cada médico se configuran desde su perfil individual.
+        Configura los horarios específicos de cada médico en esta clínica
       </Typography>
+
+      <DoctorSchedulesList clinicId={clinicId} />
     </Box>
+  );
+};
+
+// Componente para listar y editar horarios de médicos
+const DoctorSchedulesList = ({ clinicId }: { clinicId: string }) => {
+  const { doctors, loading } = useClinicDoctors(clinicId);
+  const [expandedDoctor, setExpandedDoctor] = useState<string | null>(null);
+
+  if (loading) {
+    return <Typography>Cargando médicos...</Typography>;
+  }
+
+  if (doctors.length === 0) {
+    return (
+      <Card>
+        <CardContent>
+          <Typography variant="body2" color="text.secondary" textAlign="center" py={3}>
+            No hay médicos registrados. Invita médicos desde la sección "Gestión de Médicos".
+          </Typography>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const activeDoctors = doctors.filter((doctor) => doctor.isActive);
+
+  if (activeDoctors.length === 0) {
+    return (
+      <Card>
+        <CardContent>
+          <Typography variant="body2" color="text.secondary" textAlign="center" py={3}>
+            No hay médicos activos. Activa médicos desde la sección "Gestión de Médicos".
+          </Typography>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Box>
+      {activeDoctors.map((doctor) => (
+        <DoctorScheduleCard
+          key={doctor.id}
+          doctor={doctor}
+          isExpanded={expandedDoctor === doctor.id}
+          onToggleExpand={() => setExpandedDoctor(expandedDoctor === doctor.id ? null : doctor.id)}
+        />
+      ))}
+    </Box>
+  );
+};
+
+// Componente para editar horarios de un médico
+const DoctorScheduleCard = ({
+  doctor,
+  isExpanded,
+  onToggleExpand,
+}: {
+  doctor: ClinicDoctor;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+}) => {
+  const { schedule, loading, updateSchedule } = useDoctorSchedule(doctor.id);
+  const [localSchedule, setLocalSchedule] = useState<DoctorSchedule | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (schedule) {
+      setLocalSchedule(schedule);
+    }
+  }, [schedule]);
+
+  const handleDayChange = (
+    day: keyof Omit<DoctorSchedule, 'id' | 'doctorId' | 'clinicId' | 'createdAt' | 'updatedAt'>,
+    field: keyof DaySchedule,
+    value: any
+  ) => {
+    if (!localSchedule) return;
+    
+    setLocalSchedule({
+      ...localSchedule,
+      [day]: {
+        ...localSchedule[day],
+        [field]: value,
+      },
+    });
+  };
+
+  const handleSave = async () => {
+    if (!localSchedule) return;
+    
+    setSaving(true);
+    try {
+      await updateSchedule(localSchedule);
+    } catch (error) {
+      console.error('Error al guardar horarios:', error);
+      alert('Error al guardar horarios. Intenta nuevamente.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading || !localSchedule) {
+    return (
+      <Card sx={{ mb: 2 }}>
+        <CardContent>
+          <Typography>Cargando horarios de {doctor.name}...</Typography>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card sx={{ mb: 2 }}>
+      <CardContent>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            cursor: 'pointer',
+            mb: isExpanded ? 2 : 0,
+          }}
+          onClick={onToggleExpand}
+        >
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              {doctor.name}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {doctor.specialty} {doctor.officeNumber && `• Consultorio ${doctor.officeNumber}`}
+            </Typography>
+          </Box>
+          <Button variant="outlined" size="small" startIcon={<Edit />}>
+            {isExpanded ? 'Ocultar' : 'Editar Horarios'}
+          </Button>
+        </Box>
+
+        {isExpanded && (
+          <Box sx={{ mt: 2 }}>
+            <Grid2 container spacing={2}>
+              {daysOfWeek.map((day) => {
+                const daySchedule = localSchedule[day.key];
+                return (
+                  <Grid2 key={day.key} size={{ xs: 12 }}>
+                    <Box
+                      sx={{
+                        p: 2,
+                        border: '1px solid #e0e0e0',
+                        borderRadius: 2,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                      }}
+                    >
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={daySchedule.enabled}
+                            onChange={(e) =>
+                              handleDayChange(day.key, 'enabled', e.target.checked)
+                            }
+                          />
+                        }
+                        label={day.label}
+                        sx={{ minWidth: 100 }}
+                      />
+                      {daySchedule.enabled && (
+                        <>
+                          <TextField
+                            type="time"
+                            label="Inicio"
+                            value={daySchedule.startTime}
+                            onChange={(e) =>
+                              handleDayChange(day.key, 'startTime', e.target.value)
+                            }
+                            InputLabelProps={{ shrink: true }}
+                            size="small"
+                          />
+                          <TextField
+                            type="time"
+                            label="Fin"
+                            value={daySchedule.endTime}
+                            onChange={(e) =>
+                              handleDayChange(day.key, 'endTime', e.target.value)
+                            }
+                            InputLabelProps={{ shrink: true }}
+                            size="small"
+                          />
+                        </>
+                      )}
+                    </Box>
+                  </Grid2>
+                );
+              })}
+            </Grid2>
+
+            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                variant="contained"
+                startIcon={<Save />}
+                onClick={handleSave}
+                disabled={saving}
+                sx={{ backgroundColor: '#14b8a6', '&:hover': { backgroundColor: '#0d9488' } }}
+              >
+                {saving ? 'Guardando...' : 'Guardar Horarios'}
+              </Button>
+            </Box>
+          </Box>
+        )}
+      </CardContent>
+    </Card>
   );
 };

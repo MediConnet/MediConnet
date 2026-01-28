@@ -1,5 +1,6 @@
 import { httpClient, extractData } from '../../../shared/lib/http';
 import type { ClinicDoctor, DoctorInvitation } from '../domain/doctor.entity';
+import type { DoctorSchedule } from '../domain/doctor-schedule.entity';
 
 /**
  * API: Obtener lista de médicos de la clínica
@@ -100,6 +101,32 @@ export const assignOfficeAPI = async (doctorId: string, officeNumber: string): P
   const response = await httpClient.patch<{ success: boolean; data: ClinicDoctor }>(
     `/clinics/doctors/${doctorId}/office`,
     { officeNumber }
+  );
+  return extractData(response);
+};
+
+/**
+ * API: Obtener horarios de un médico
+ * Endpoint: GET /api/clinics/doctors/:doctorId/schedule
+ */
+export const getDoctorScheduleAPI = async (doctorId: string): Promise<DoctorSchedule> => {
+  const response = await httpClient.get<{ success: boolean; data: DoctorSchedule }>(
+    `/clinics/doctors/${doctorId}/schedule`
+  );
+  return extractData(response);
+};
+
+/**
+ * API: Actualizar horarios de un médico
+ * Endpoint: PUT /api/clinics/doctors/:doctorId/schedule
+ */
+export const updateDoctorScheduleAPI = async (
+  doctorId: string,
+  schedule: Partial<DoctorSchedule>
+): Promise<DoctorSchedule> => {
+  const response = await httpClient.put<{ success: boolean; data: DoctorSchedule }>(
+    `/clinics/doctors/${doctorId}/schedule`,
+    schedule
   );
   return extractData(response);
 };
