@@ -23,15 +23,25 @@ export const useAdRequest = () => {
 
     setIsLoading(true);
     try {
-      const ad = await getMyAdAPI(); 
+      const response = await getMyAdAPI(); 
 
+      // Resetear estados
       setActiveAd(null);
       setPendingRequest(null);
       setHasActiveAd(false);
       setHasApprovedRequest(false);
 
+      let ad: Ad | null = null;
+      
+      if (Array.isArray(response)) {
+        ad = response[0] || null;
+      } else {
+        ad = response;
+      }
+
       if (ad) {
-        if (ad.status === 'APPROVED' && ad.is_active) {
+        // Validación de estados
+        if (ad.status === 'APPROVED' && ad.is_active === true) {
           setActiveAd(ad);
           setHasActiveAd(true);
           setHasApprovedRequest(true); 
@@ -56,9 +66,7 @@ export const useAdRequest = () => {
 
     try {
       await createAdAPI(adData);
-      
       await loadData();
-      
       return true;
     } catch (error) {
       console.error("Error creating ad request:", error);
@@ -69,12 +77,9 @@ export const useAdRequest = () => {
   return {
     activeAd,
     pendingRequest,
-    
     hasActiveAd,
     hasApprovedRequest,
-    
     isLoading,
-    
     createRequest,
     refetch: loadData,
   };

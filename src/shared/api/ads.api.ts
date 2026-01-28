@@ -51,8 +51,11 @@ export const createAdAPI = async (params: CreateAdParams): Promise<void> => {
  */
 export const getMyAdAPI = async (): Promise<Ad | null> => {
   try {
-    const response = await httpClient.get<Ad>("/ads/my-latest");
-    return response.data;
+    
+    const response = await httpClient.get<any>("/ads");
+    const adData = response.data?.data || response.data;
+
+    return adData;
   } catch (error) {
     console.warn("No se pudo obtener el anuncio activo o no existe:", error);
     return null;
