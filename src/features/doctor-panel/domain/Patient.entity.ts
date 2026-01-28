@@ -1,10 +1,10 @@
 export type AppointmentStatus = 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'PENDING';
-export type PaymentMethodType = 'CASH' | 'CARD';
+export type PaymentMethodType = 'CASH' | 'CARD' | 'UNKNOWN';
 
 export interface AppointmentHistory {
   id: string;
-  date: string;       // YYYY-MM-DD
-  time: string;       // HH:mm
+  date: string;       
+  time: string;       
   reason: string;
   status: AppointmentStatus; 
   paymentMethod: PaymentMethodType;
@@ -15,7 +15,13 @@ export interface Patient {
   id: string;
   name: string;
   phone: string;
-  email: string;
+  email: string | null;
+  birthDate?: string | null;
+  
+  // Totales calculados (opcional para mostrar en tabla)
+  totalAppointments?: number;
+  lastAppointmentDate?: string | null;
+
   appointments: AppointmentHistory[];
-  profilePicture?: string; // Agregado porque el backend lo devuelve
+  profilePicture?: string | null;
 }
