@@ -132,6 +132,15 @@ export const getServiceCategoriesAPI = async (): Promise<ServiceCategory[]> => {
       shadowColor: 'rgba(59, 130, 246, 0.4)',
     },
     {
+      id: '6',
+      title: 'Clínicas',
+      description: 'Panel de clínica y administración',
+      icon: 'LocalHospital',
+      route: '/clinic/dashboard?tab=dashboard',
+      color: '#14b8a6',
+      shadowColor: 'rgba(20, 184, 166, 0.4)',
+    },
+    {
       id: '2',
       title: 'Farmacias',
       description: 'Farmacias y medicamentos',
