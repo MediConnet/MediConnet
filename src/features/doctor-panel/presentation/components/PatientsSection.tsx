@@ -1,8 +1,19 @@
-import { Person, Phone, Email } from "@mui/icons-material";
+import {
+  Email,
+  KeyboardArrowDown,
+  KeyboardArrowUp,
+  Person,
+  Phone,
+} from "@mui/icons-material";
 import {
   Box,
   Chip,
+  CircularProgress,
+  Collapse,
+  IconButton,
   InputAdornment,
+  Pagination,
+  Paper,
   Stack,
   Table,
   TableBody,
@@ -12,50 +23,24 @@ import {
   TableRow,
   TextField,
   Typography,
-  Paper,
-  IconButton,
-  Collapse,
 } from "@mui/material";
-import { useState, useEffect } from "react";
-import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
-import { getPatientsMock } from "../../infrastructure/patients.mock";
-import type { Patient } from "../../domain/Patient.entity";
+import { useState } from "react";
+import { CustomAvatar } from "../../../../shared/components/CustomAvatar";
+import { usePatients } from "../hooks/usePatients";
 
 export const PatientsSection = () => {
-  const [patients, setPatients] = useState<Patient[]>(getPatientsMock());
-  const [searchText, setSearchText] = useState("");
+  const {
+    patients,
+    loading,
+    page,
+    totalPages,
+    totalPatients,
+    search,
+    setPage,
+    setSearch,
+  } = usePatients();
+
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-
-  // Actualizar pacientes cuando cambien las citas en localStorage
-  useEffect(() => {
-    const updatePatients = () => {
-      setPatients(getPatientsMock());
-    };
-
-    // Escuchar el evento personalizado de actualización de citas
-    const handleAppointmentsUpdate = () => {
-      updatePatients();
-    };
-
-    // Escuchar cambios en localStorage (para cambios desde otras pestañas)
-    const handleStorageChange = () => {
-      updatePatients();
-    };
-
-    window.addEventListener("appointments-updated", handleAppointmentsUpdate);
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("appointments-updated", handleAppointmentsUpdate);
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
-
-  const filteredPatients = patients.filter((patient) =>
-    patient.name.toLowerCase().includes(searchText.toLowerCase()) ||
-    patient.phone.includes(searchText) ||
-    patient.email.toLowerCase().includes(searchText.toLowerCase())
-  );
 
   const toggleRow = (patientId: string) => {
     const newExpanded = new Set(expandedRows);
@@ -69,12 +54,14 @@ export const PatientsSection = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "completed":
+      case "COMPLETED":
         return "success";
-      case "cancelled":
+      case "CANCELLED":
         return "error";
-      case "no-show":
+      case "PENDING":
         return "warning";
+      case "CONFIRMED":
+        return "primary";
       default:
         return "default";
     }
@@ -82,15 +69,23 @@ export const PatientsSection = () => {
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case "completed":
+      case "COMPLETED":
         return "Atendida";
-      case "cancelled":
+      case "CANCELLED":
         return "Cancelada";
-      case "no-show":
-        return "No asistió";
+      case "PENDING":
+        return "Pendiente";
+      case "CONFIRMED":
+        return "Confirmada";
       default:
         return status;
     }
+  };
+
+  const getPaymentLabel = (method: string) => {
+    if (method === "CARD") return "Tarjeta";
+    if (method === "CASH") return "Efectivo";
+    return "Desconocido";
   };
 
   return (
@@ -99,7 +94,7 @@ export const PatientsSection = () => {
         <div>
           <h3 className="text-xl font-bold text-gray-800">Pacientes</h3>
           <p className="text-sm text-gray-500 mt-1">
-            Base automática de pacientes generada por citas
+            Historial de pacientes atendidos y sus citas
           </p>
         </div>
       </div>
@@ -108,20 +103,26 @@ export const PatientsSection = () => {
       <TextField
         fullWidth
         placeholder="Buscar por nombre, teléfono o email..."
-        value={searchText}
-        onChange={(e) => setSearchText(e.target.value)}
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
         sx={{ mb: 3 }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Person />
-            </InputAdornment>
-          ),
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <Person color="action" />
+              </InputAdornment>
+            ),
+          },
         }}
       />
 
       {/* Tabla de pacientes */}
-      <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #e5e7eb" }}>
+      <TableContainer
+        component={Paper}
+        elevation={0}
+        sx={{ border: "1px solid #e5e7eb" }}
+      >
         <Table>
           <TableHead>
             <TableRow sx={{ bgcolor: "#f9fafb" }}>
@@ -139,7 +140,16 @@ export const PatientsSection = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredPatients.length === 0 ? (
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
+                  <CircularProgress size={30} />
+                  <Typography variant="body2" color="text.secondary" mt={2}>
+                    Cargando pacientes...
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ) : patients.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
                   <Typography color="text.secondary">
@@ -148,127 +158,212 @@ export const PatientsSection = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredPatients.map((patient) => {
+              patients.map((patient) => {
                 const isExpanded = expandedRows.has(patient.id);
-                const lastAppointment = patient.appointments[patient.appointments.length - 1];
+                const lastApptDate = patient.lastAppointmentDate
+                  ? new Date(patient.lastAppointmentDate).toLocaleDateString(
+                      "es-ES",
+                    )
+                  : "-";
 
                 return (
-                  <>
-                    <TableRow key={patient.id} hover>
+                  <div key={patient.id} style={{ display: "contents" }}>
+                    <TableRow hover>
                       <TableCell>
                         <Stack direction="row" spacing={1} alignItems="center">
-                          <Person sx={{ color: "#14b8a6" }} />
-                          <Typography fontWeight={600}>{patient.name}</Typography>
+                          <CustomAvatar
+                            name={patient.name}
+                            src={patient.profilePicture}
+                            size={32}
+                          />
+
+                          <Typography fontWeight={600}>
+                            {patient.name}
+                          </Typography>
                         </Stack>
                       </TableCell>
                       <TableCell>
                         <Stack spacing={0.5}>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <Phone sx={{ fontSize: 14, color: "text.secondary" }} />
-                            <Typography variant="body2">{patient.phone}</Typography>
-                          </Stack>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <Email sx={{ fontSize: 14, color: "text.secondary" }} />
-                            <Typography variant="body2" color="text.secondary">
-                              {patient.email}
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            alignItems="center"
+                          >
+                            <Phone
+                              sx={{ fontSize: 14, color: "text.secondary" }}
+                            />
+                            <Typography variant="body2">
+                              {patient.phone}
                             </Typography>
                           </Stack>
+                          {patient.email && (
+                            <Stack
+                              direction="row"
+                              spacing={1}
+                              alignItems="center"
+                            >
+                              <Email
+                                sx={{ fontSize: 14, color: "text.secondary" }}
+                              />
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                {patient.email}
+                              </Typography>
+                            </Stack>
+                          )}
                         </Stack>
                       </TableCell>
                       <TableCell align="center">
                         <Chip
-                          label={patient.appointments.length}
+                          label={
+                            patient.totalAppointments ||
+                            patient.appointments.length
+                          }
                           color="primary"
                           size="small"
                         />
                       </TableCell>
                       <TableCell align="center">
-                        {lastAppointment ? (
-                          <Stack spacing={0.5} alignItems="center">
-                            <Typography variant="body2">
-                              {new Date(lastAppointment.date).toLocaleDateString("es-ES")}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {lastAppointment.time}
-                            </Typography>
-                          </Stack>
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">
-                            -
-                          </Typography>
-                        )}
+                        <Typography variant="body2">{lastApptDate}</Typography>
                       </TableCell>
                       <TableCell align="center">
                         <IconButton
                           size="small"
                           onClick={() => toggleRow(patient.id)}
                         >
-                          {isExpanded ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+                          {isExpanded ? (
+                            <KeyboardArrowUp />
+                          ) : (
+                            <KeyboardArrowDown />
+                          )}
                         </IconButton>
                       </TableCell>
                     </TableRow>
+
+                    {/* Fila Colapsable: Historial de Citas */}
                     <TableRow>
                       <TableCell
                         style={{ paddingBottom: 0, paddingTop: 0 }}
                         colSpan={5}
                       >
                         <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                          <Box sx={{ margin: 2 }}>
-                            <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+                          <Box
+                            sx={{
+                              margin: 2,
+                              bgcolor: "#f8fafc",
+                              borderRadius: 2,
+                              p: 2,
+                            }}
+                          >
+                            <Typography
+                              variant="subtitle2"
+                              gutterBottom
+                              sx={{ color: "#64748b", fontWeight: 700 }}
+                            >
                               Historial de Citas
                             </Typography>
-                            <Table size="small">
-                              <TableHead>
-                                <TableRow>
-                                  <TableCell sx={{ fontWeight: 600 }}>Fecha</TableCell>
-                                  <TableCell sx={{ fontWeight: 600 }}>Hora</TableCell>
-                                  <TableCell sx={{ fontWeight: 600 }}>Motivo</TableCell>
-                                  <TableCell sx={{ fontWeight: 600 }} align="center">
-                                    Estado
-                                  </TableCell>
-                                  <TableCell sx={{ fontWeight: 600 }} align="center">
-                                    Pago
-                                  </TableCell>
-                                </TableRow>
-                              </TableHead>
-                              <TableBody>
-                                {patient.appointments.map((appointment) => (
-                                  <TableRow key={appointment.id}>
-                                    <TableCell>
-                                      {new Date(appointment.date).toLocaleDateString("es-ES")}
+                            {patient.appointments.length > 0 ? (
+                              <Table size="small">
+                                <TableHead>
+                                  <TableRow>
+                                    <TableCell sx={{ fontWeight: 600 }}>
+                                      Fecha
                                     </TableCell>
-                                    <TableCell>{appointment.time}</TableCell>
-                                    <TableCell>{appointment.reason}</TableCell>
-                                    <TableCell align="center">
-                                      <Chip
-                                        label={getStatusLabel(appointment.status)}
-                                        color={getStatusColor(appointment.status) as any}
-                                        size="small"
-                                      />
+                                    <TableCell sx={{ fontWeight: 600 }}>
+                                      Hora
                                     </TableCell>
-                                    <TableCell align="center">
-                                      <Stack spacing={0.5} alignItems="center">
+                                    <TableCell sx={{ fontWeight: 600 }}>
+                                      Motivo
+                                    </TableCell>
+                                    <TableCell
+                                      sx={{ fontWeight: 600 }}
+                                      align="center"
+                                    >
+                                      Estado
+                                    </TableCell>
+                                    <TableCell
+                                      sx={{ fontWeight: 600 }}
+                                      align="center"
+                                    >
+                                      Pago
+                                    </TableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  {patient.appointments.map((appointment) => (
+                                    <TableRow key={appointment.id}>
+                                      <TableCell>
+                                        {new Date(
+                                          appointment.date,
+                                        ).toLocaleDateString("es-ES")}
+                                      </TableCell>
+                                      <TableCell>{appointment.time}</TableCell>
+                                      <TableCell>
+                                        {appointment.reason}
+                                      </TableCell>
+                                      <TableCell align="center">
                                         <Chip
-                                          label={appointment.paymentMethod === "card" ? "Tarjeta" : "Efectivo"}
+                                          label={getStatusLabel(
+                                            appointment.status,
+                                          )}
+                                          color={
+                                            getStatusColor(
+                                              appointment.status,
+                                            ) as any
+                                          }
                                           size="small"
                                           variant="outlined"
                                         />
-                                        {appointment.amount && (
-                                          <Typography variant="caption" color="text.secondary">
-                                            ${appointment.amount}
-                                          </Typography>
-                                        )}
-                                      </Stack>
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
+                                      </TableCell>
+                                      <TableCell align="center">
+                                        <Stack
+                                          spacing={0.5}
+                                          alignItems="center"
+                                        >
+                                          <Chip
+                                            label={getPaymentLabel(
+                                              appointment.paymentMethod,
+                                            )}
+                                            size="small"
+                                            variant="filled"
+                                            sx={{
+                                              height: 20,
+                                              fontSize: "0.7rem",
+                                            }}
+                                          />
+                                          {appointment.amount !== undefined && (
+                                            <Typography
+                                              variant="caption"
+                                              color="text.secondary"
+                                            >
+                                              $
+                                              {Number(
+                                                appointment.amount,
+                                              ).toFixed(2)}
+                                            </Typography>
+                                          )}
+                                        </Stack>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            ) : (
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{ py: 2, textAlign: "center" }}
+                              >
+                                No hay historial disponible.
+                              </Typography>
+                            )}
                           </Box>
                         </Collapse>
                       </TableCell>
                     </TableRow>
-                  </>
+                  </div>
                 );
               })
             )}
@@ -276,13 +371,29 @@ export const PatientsSection = () => {
         </Table>
       </TableContainer>
 
-      {/* Resumen */}
-      <Box mt={3} p={2} bgcolor="#f0fdfa" borderRadius={2}>
-        <Typography variant="body2" color="text.secondary">
-          Total de pacientes: <strong>{filteredPatients.length}</strong>
-        </Typography>
-      </Box>
+      {/* Pie de página: Resumen y Paginación */}
+      <div className="flex flex-col md:flex-row items-center justify-between mt-4 gap-4">
+        <Box
+          p={1.5}
+          bgcolor="#f0fdfa"
+          borderRadius={2}
+          border="1px solid #ccfbf1"
+        >
+          <Typography variant="body2" color="text.secondary">
+            Total pacientes encontrados: <strong>{totalPatients}</strong>
+          </Typography>
+        </Box>
+
+        <Pagination
+          count={totalPages}
+          page={page}
+          onChange={(_, value) => setPage(value)}
+          color="primary"
+          showFirstButton
+          showLastButton
+          disabled={loading}
+        />
+      </div>
     </div>
   );
 };
-
