@@ -289,6 +289,32 @@ Este documento contiene todos los usuarios y servicios que están registrados en
 
 ---
 
+## 🏥 Clínicas
+
+### Clínica Central
+```json
+{
+  "email": "clinic@medicones.com",
+  "password": "clinic123",
+  "name": "Clínica Central",
+  "role": "provider",
+  "serviceType": "clinic",
+  "isActive": true,
+  "providerProfile": {
+    "commercialName": "Clínica Central",
+    "description": "Clínica médica con múltiples especialidades y médicos asociados.",
+    "address": "Av. Principal 456, Quito",
+    "phone": "0998765432",
+    "whatsapp": "+593 99 876 5432",
+    "specialties": ["Medicina General", "Cardiología", "Pediatría", "Ginecología"],
+    "logoUrl": null,
+    "isActive": true
+  }
+}
+```
+
+---
+
 ## 📦 Insumos Médicos
 
 ### Insumos Médicos Plus
@@ -498,6 +524,9 @@ Password: ambulancia123
 ```
 Email: insumos@medicones.com
 Password: insumos123
+
+Email: clinic@medicones.com
+Password: clinic123
 ```
 
 ---

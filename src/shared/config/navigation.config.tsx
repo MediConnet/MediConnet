@@ -18,6 +18,8 @@ import {
   History,
   Percent,
   Business,
+  LocalHospital,
+  Receipt,
 } from "@mui/icons-material";
 
 export type UserRole =
@@ -219,6 +221,40 @@ export const SUPPLIES_MENU: MenuItem[] = [
   },
 ];
 
+// --- 7. MENÚ CLÍNICA ---
+export const CLINIC_MENU: MenuItem[] = [
+  {
+    icon: <Dashboard />,
+    label: "Dashboard",
+    path: "/clinic/dashboard?tab=dashboard",
+  },
+  {
+    icon: <LocalHospital />,
+    label: "Perfil de Clínica",
+    path: "/clinic/dashboard?tab=profile",
+  },
+  {
+    icon: <Group />,
+    label: "Gestión de Médicos",
+    path: "/clinic/dashboard?tab=doctors",
+  },
+  {
+    icon: <CalendarToday />,
+    label: "Agenda Centralizada",
+    path: "/clinic/dashboard?tab=appointments",
+  },
+  {
+    icon: <Receipt />,
+    label: "Recepción / Control Diario",
+    path: "/clinic/dashboard?tab=reception",
+  },
+  {
+    icon: <Settings />,
+    label: "Configuración de Horarios",
+    path: "/clinic/dashboard?tab=schedules",
+  },
+];
+
 // --- FUNCIÓN HELPER ---
 export const getMenuByRole = (
   role: UserRole,
@@ -240,9 +276,12 @@ export const getMenuByRole = (
         case "pharmacy":
           return PHARMACY_MENU;
         case "lab":
+        case "laboratory":
           return LAB_MENU;
         case "supplies":
           return SUPPLIES_MENU;
+        case "clinic":
+          return CLINIC_MENU;
         default:
           return [];
       }

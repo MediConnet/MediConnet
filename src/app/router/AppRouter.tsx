@@ -8,6 +8,7 @@ import {
 import { DoctorRoute } from "./DoctorRoute";
 import { LaboratoryRoute } from "./LaboratoryRoute";
 import { SupplyRoute } from "./SupplyRoute";
+import { ClinicRoute } from "./ClinicRoute";
 
 // Layouts
 import { AppLayout } from "../../shared/layouts/AppLayout";
@@ -47,6 +48,9 @@ import { LaboratoryDashboardPage } from "../../features/laboratory-panel/present
 
 // Pages - Insumos Médicos
 import { SupplyDashboardPage } from "../../features/supplies-panel/presentation/pages/SupplyDashboardPage";
+
+// Pages - Clínica
+import { ClinicDashboardPage } from "../../features/clinic-panel/presentation/pages/ClinicDashboardPage";
 
 // Pages - Insumos & Checkout & Search
 import { SettingsPage } from "../../features/admin-dashboard/presentation/pages/SettingsPage";
@@ -127,6 +131,18 @@ export const AppRouter = () => {
           }
         >
           <Route path="dashboard" element={<SupplyDashboardPage />} />
+        </Route>
+
+        {/* --- Panel de Clínica --- */}
+        <Route
+          path="/clinic"
+          element={
+            <ClinicRoute>
+              <Outlet />
+            </ClinicRoute>
+          }
+        >
+          <Route path="dashboard" element={<ClinicDashboardPage />} />
         </Route>
 
         {/* --- RUTAS DE PROVEEDORES (Estructura Anidada) --- */}

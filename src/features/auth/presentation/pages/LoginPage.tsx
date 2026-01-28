@@ -24,6 +24,7 @@ import * as Yup from "yup";
 import { ROUTES } from "../../../../app/config/constants";
 import { useAuthStore } from "../../../../app/store/auth.store";
 import { loginAPI } from "../../infrastructure/auth.api";
+import { env } from "../../../../app/config/env";
 
 // Mock users para cuentas de prueba
 const mockUsers = [
@@ -75,6 +76,14 @@ const mockUsers = [
     role: "profesional" as const,
     tipo: "supplies" as string,
   },
+  {
+    id: "7",
+    email: "clinic@medicones.com",
+    password: "clinic123",
+    nombre: "Clínica Central",
+    role: "profesional" as const,
+    tipo: "clinic" as string,
+  },
 ];
 
 const serviceLabels: Record<string, string> = {
@@ -83,6 +92,7 @@ const serviceLabels: Record<string, string> = {
   lab: "Laboratorio",
   ambulance: "Ambulancia",
   supplies: "Insumos Médicos",
+  clinic: "Clínica",
 };
 
 // NOTE: authenticateUser y mockUsers ya no se usan porque ahora usamos la API real del backend
@@ -209,6 +219,12 @@ export const LoginPage = () => {
               navigate("/supply/dashboard?tab=profile", { replace: true });
               break;
 
+            // CASO CLÍNICA
+            case "clinic":
+              console.log('✅ Redirigiendo a /clinic/dashboard');
+              navigate("/clinic/dashboard", { replace: true });
+              break;
+
             default:
               console.warn('⚠️ serviceType no reconocido:', serviceType);
               console.warn('⚠️ Redirigiendo a HOME porque serviceType no coincide');
@@ -226,9 +242,22 @@ export const LoginPage = () => {
         }
       } catch (error: any) {
         console.error("Error al iniciar sesión:", error);
-        // Mostrar error del backend si está disponible
-        const errorMessage =
-          error?.message || "Error al iniciar sesión. Verifica tus credenciales.";
+        
+        // Detectar errores de conexión
+        let errorMessage = "Error al iniciar sesión. Verifica tus credenciales.";
+        
+        if (error?.code === 'ERR_NETWORK' || error?.code === 'ECONNREFUSED' || error?.message?.includes('Network Error')) {
+          errorMessage = `No se pudo conectar al servidor. Verifica que el backend esté corriendo en ${env.API_URL}`;
+        } else if (error?.response?.status === 401) {
+          errorMessage = "Credenciales incorrectas. Verifica tu email y contraseña.";
+        } else if (error?.response?.status === 404) {
+          errorMessage = "Endpoint no encontrado. Verifica la configuración del backend.";
+        } else if (error?.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error?.message) {
+          errorMessage = error.message;
+        }
+        
         formik.setFieldError("password", errorMessage);
       } finally {
         setIsLoading(false);
