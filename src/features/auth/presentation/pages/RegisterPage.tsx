@@ -36,12 +36,13 @@ import { handleLetterInput, handleNumberInput, handlePhoneInput, handleEmailInpu
 import { getPharmacyChains } from "../../../../shared/lib/pharmacy-chains";
 import type { PharmacyChain } from "../../../../admin-dashboard/domain/pharmacy-chain.entity";
 
-type ServiceType = "doctor" | "pharmacy" | "lab" | "ambulance" | "supplies";
+type ServiceType = "doctor" | "pharmacy" | "lab" | "ambulance" | "supplies" | "clinic";
 
-const serviceTypes: ServiceType[] = ["doctor", "pharmacy", "lab", "ambulance", "supplies"];
+const serviceTypes: ServiceType[] = ["doctor", "clinic", "pharmacy", "lab", "ambulance", "supplies"];
 
 const serviceLabels: Record<ServiceType, string> = {
   doctor: "Médico",
+  clinic: "Clínica",
   pharmacy: "Farmacia",
   lab: "Laboratorio",
   ambulance: "Ambulancia",
@@ -50,6 +51,7 @@ const serviceLabels: Record<ServiceType, string> = {
 
 const serviceDescriptions: Record<ServiceType, string> = {
   doctor: "Consultas médicas, especialistas y atención personalizada",
+  clinic: "Administra médicos, agenda centralizada y recepción",
   pharmacy: "Venta de medicamentos y productos de salud",
   lab: "Análisis clínicos y estudios de laboratorio",
   ambulance: "Servicios de emergencia y traslados médicos",
@@ -58,6 +60,7 @@ const serviceDescriptions: Record<ServiceType, string> = {
 
 const serviceIcons: Record<ServiceType, React.ReactNode> = {
   doctor: <LocalHospital sx={{ fontSize: 40 }} />,
+  clinic: <LocalHospital sx={{ fontSize: 40 }} />,
   pharmacy: <Medication sx={{ fontSize: 40 }} />,
   lab: <Science sx={{ fontSize: 40 }} />,
   ambulance: <LocalShipping sx={{ fontSize: 40 }} />,
@@ -195,6 +198,7 @@ export const RegisterPage = () => {
             type: selectedType!,
             name: values.nombreCompleto,
             email: values.email,
+            password: values.password,
             phone: values.telefono,
             whatsapp: values.whatsapp,
             serviceName: selectedType === "pharmacy" 
@@ -202,7 +206,7 @@ export const RegisterPage = () => {
               : values.nombreServicio,
             address: values.direccion,
             city: values.ciudad,
-            price: values.tarifaConsulta,
+            price: selectedType === "doctor" ? values.tarifaConsulta : "",
             description: values.descripcion,
             chainId: selectedType === "pharmacy" ? values.chainId : undefined,
           };
@@ -472,8 +476,9 @@ export const RegisterPage = () => {
                 }}
               >
                 <TextField
-                  label="Nombre completo *"
+                  label={selectedType === "clinic" ? "Nombre del administrador *" : "Nombre completo *"}
                   name="nombreCompleto"
+                  placeholder={selectedType === "clinic" ? "Nombre y apellido del administrador" : undefined}
                   value={formik.values.nombreCompleto}
                   onChange={(e) => {
                     handleLetterInput(e, (value) => {
@@ -482,7 +487,13 @@ export const RegisterPage = () => {
                   }}
                   onBlur={formik.handleBlur}
                   error={formik.touched.nombreCompleto && Boolean(formik.errors.nombreCompleto)}
-                  helperText={formik.touched.nombreCompleto ? formik.errors.nombreCompleto : "Solo letras y espacios"}
+                  helperText={
+                    formik.touched.nombreCompleto
+                      ? formik.errors.nombreCompleto
+                      : selectedType === "clinic"
+                      ? "Nombre del administrador (solo letras y espacios)"
+                      : "Solo letras y espacios"
+                  }
                   required
                   fullWidth
                 />
@@ -676,11 +687,13 @@ export const RegisterPage = () => {
                   </FormControl>
                 ) : (
                   <TextField
-                    label="Nombre del servicio *"
+                    label={selectedType === "clinic" ? "Nombre de la clínica *" : "Nombre del servicio *"}
                     name="nombreServicio"
                     placeholder={
                       selectedType === "doctor"
                         ? "Consultorio Dr. Pérez"
+                        : selectedType === "clinic"
+                        ? "Clínica Central"
                         : "Nombre del establecimiento"
                     }
                     value={formik.values.nombreServicio}
@@ -754,7 +767,7 @@ export const RegisterPage = () => {
                   required
                   fullWidth
                 />
-                {selectedType !== "pharmacy" && (
+                {selectedType === "doctor" && (
                   <TextField
                     label="Tarifa de consulta"
                     name="tarifaConsulta"
@@ -792,7 +805,8 @@ export const RegisterPage = () => {
                 sx={{ mb: 3 }}
               />
 
-              {/* Documents Upload */}
+              {/* Documents Upload (solo para médicos) */}
+              {selectedType === "doctor" && (
               <Box sx={{ mb: 3 }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 3 }}>
                   Documentos de respaldo
@@ -1077,6 +1091,7 @@ export const RegisterPage = () => {
                   )}
                 </Box>
               </Box>
+              )}
 
 
               <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
