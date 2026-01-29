@@ -3,18 +3,20 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ROUTES } from "../../../app/config/constants";
 import { useAuthStore } from "../../../app/store/auth.store";
 import { logoutUseCase } from "../../../features/auth/application/logout.usecase";
-import { getMenuByRole, type UserRole } from "../../config/navigation.config";
+import { getMenuByRole, type UserRole, type MenuItem } from "../../config/navigation.config";
 
 interface SidebarProps {
   role: UserRole;
   isOpen: boolean;
+  menuItems?: MenuItem[]; // ⭐ Menú personalizado opcional
 }
 
-export const Sidebar = ({ role, isOpen }: SidebarProps) => {
+export const Sidebar = ({ role, isOpen, menuItems: customMenuItems }: SidebarProps) => {
   const authStore = useAuthStore();
   const { user } = authStore;
 
-  const menuItems = getMenuByRole(role, user?.tipo);
+  // ⭐ Usar menú personalizado si se proporciona, sino usar el menú por defecto
+  const menuItems = customMenuItems || getMenuByRole(role, user?.tipo);
 
   const location = useLocation();
   const navigate = useNavigate();

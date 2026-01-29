@@ -44,11 +44,57 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
     saturday: { enabled: false, startTime: "09:00", endTime: "18:00" },
     sunday: { enabled: false, startTime: "09:00", endTime: "18:00" },
   };
-  const [schedule, setSchedule] = useState<ClinicSchedule>(profile?.generalSchedule || defaultSchedule);
+
+  // ⭐ Función para normalizar el schedule y asegurar que todos los días existan
+  const normalizeSchedule = (schedule: any): ClinicSchedule => {
+    if (!schedule || typeof schedule !== 'object') {
+      return defaultSchedule;
+    }
+
+    // Si viene como array, convertir a objeto
+    if (Array.isArray(schedule)) {
+      const normalized: ClinicSchedule = { ...defaultSchedule };
+      schedule.forEach((item: any) => {
+        const dayKey = item.day?.toLowerCase() || item.dayOfWeek;
+        if (dayKey && normalized[dayKey as keyof ClinicSchedule]) {
+          normalized[dayKey as keyof ClinicSchedule] = {
+            enabled: item.enabled ?? item.is_active ?? false,
+            startTime: item.startTime || item.start_time || "09:00",
+            endTime: item.endTime || item.end_time || "18:00",
+          };
+        }
+      });
+      return normalized;
+    }
+
+    // Si viene como objeto, asegurar que todos los días existan
+    const normalized: ClinicSchedule = { ...defaultSchedule };
+    const dayKeys: (keyof ClinicSchedule)[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    
+    dayKeys.forEach((dayKey) => {
+      const dayData = schedule[dayKey];
+      if (dayData && typeof dayData === 'object') {
+        normalized[dayKey] = {
+          enabled: dayData.enabled ?? dayData.is_active ?? false,
+          startTime: dayData.startTime || dayData.start_time || "09:00",
+          endTime: dayData.endTime || dayData.end_time || "18:00",
+        };
+      }
+    });
+
+    return normalized;
+  };
+
+  const [schedule, setSchedule] = useState<ClinicSchedule>(
+    profile?.generalSchedule ? normalizeSchedule(profile.generalSchedule) : defaultSchedule
+  );
   
   useEffect(() => {
     if (profile?.generalSchedule) {
-      setSchedule(profile.generalSchedule);
+      const normalized = normalizeSchedule(profile.generalSchedule);
+      setSchedule(normalized);
+    } else {
+      setSchedule(defaultSchedule);
     }
   }, [profile]);
 
@@ -88,7 +134,20 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
         <CardContent>
           <Grid2 container spacing={3}>
             {daysOfWeek.map((day) => {
-              const daySchedule = schedule[day.key];
+              // ⭐ Validación segura: asegurar que daySchedule siempre existe
+              const daySchedule = schedule[day.key] || {
+                enabled: false,
+                startTime: "09:00",
+                endTime: "18:00",
+              };
+              
+              // Validación adicional de propiedades
+              const safeDaySchedule: DaySchedule = {
+                enabled: Boolean(daySchedule?.enabled ?? false),
+                startTime: daySchedule?.startTime || "09:00",
+                endTime: daySchedule?.endTime || "18:00",
+              };
+
               return (
                 <Grid2 key={day.key} size={{ xs: 12 }}>
                   <Box
@@ -104,19 +163,19 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
                     <FormControlLabel
                       control={
                         <Switch
-                          checked={daySchedule.enabled}
+                          checked={safeDaySchedule.enabled}
                           onChange={(e) => handleDayChange(day.key, "enabled", e.target.checked)}
                         />
                       }
                       label={day.label}
                       sx={{ minWidth: 100 }}
                     />
-                    {daySchedule.enabled && (
+                    {safeDaySchedule.enabled && (
                       <>
                         <TextField
                           type="time"
                           label="Inicio"
-                          value={daySchedule.startTime}
+                          value={safeDaySchedule.startTime}
                           onChange={(e) => handleDayChange(day.key, "startTime", e.target.value)}
                           InputLabelProps={{ shrink: true }}
                           size="small"
@@ -124,7 +183,7 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
                         <TextField
                           type="time"
                           label="Fin"
-                          value={daySchedule.endTime}
+                          value={safeDaySchedule.endTime}
                           onChange={(e) => handleDayChange(day.key, "endTime", e.target.value)}
                           InputLabelProps={{ shrink: true }}
                           size="small"

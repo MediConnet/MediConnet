@@ -2,6 +2,7 @@ import {
   Assignment,
   AttachMoney,
   Biotech,
+  Block,
   Business,
   CalendarToday,
   Campaign,
@@ -13,6 +14,8 @@ import {
   LocalPharmacy,
   LocalShipping,
   MedicalServices,
+  Message,
+  Notifications,
   Percent,
   Person,
   Receipt,
@@ -104,6 +107,45 @@ export const DOCTOR_MENU: MenuItem[] = [
     icon: <Settings />,
     label: "Configuración",
     path: "/doctor/dashboard?tab=settings",
+  },
+];
+
+// --- 2.1. MENÚ DOCTOR ASOCIADO A CLÍNICA (Tabs limitados) ---
+export const CLINIC_ASSOCIATED_DOCTOR_MENU: MenuItem[] = [
+  {
+    icon: <Dashboard />,
+    label: "Dashboard",
+    path: "/doctor/dashboard",
+  },
+  {
+    icon: <Person />,
+    label: "Mi Perfil",
+    path: "/doctor/dashboard?tab=profile",
+  },
+  {
+    icon: <CalendarToday />,
+    label: "Mis Citas",
+    path: "/doctor/dashboard?tab=appointments",
+  },
+  {
+    icon: <Group />,
+    label: "Pacientes",
+    path: "/doctor/dashboard?tab=patients",
+  },
+  {
+    icon: <Message />,
+    label: "Recepción",
+    path: "/doctor/dashboard?tab=reception",
+  },
+  {
+    icon: <Block />,
+    label: "Solicitar Bloqueos",
+    path: "/doctor/dashboard?tab=date-blocks",
+  },
+  {
+    icon: <Notifications />,
+    label: "Notificaciones",
+    path: "/doctor/dashboard?tab=notifications",
   },
 ];
 

@@ -1,5 +1,5 @@
 import { type ReactNode, useState } from "react";
-import type { UserRole } from "../config/navigation.config";
+import type { UserRole, MenuItem } from "../config/navigation.config";
 import { Header, type UserHeaderProfile } from "../ui/dashboard/Header";
 import { Sidebar } from "../ui/dashboard/Sidebar";
 
@@ -23,6 +23,7 @@ interface DashboardLayoutProps {
     totalAmount?: number;
   }>;
   notificationType?: "appointments" | "orders";
+  menuItems?: MenuItem[]; // ⭐ Menú personalizado opcional
 }
 
 export const DashboardLayout = ({
@@ -32,12 +33,13 @@ export const DashboardLayout = ({
   appointments = [],
   orders = [],
   notificationType = "appointments",
+  menuItems,
 }: DashboardLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar role={role} isOpen={isSidebarOpen} />
+      <Sidebar role={role} isOpen={isSidebarOpen} menuItems={menuItems} />
 
       {/* Contenedor Principal */}
       <div
