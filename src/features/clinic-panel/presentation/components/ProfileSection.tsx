@@ -1,10 +1,11 @@
-import { Box, Typography, Button, TextField, Grid2, Card, CardContent, Stack, Chip } from "@mui/material";
-import { Save, CloudUpload } from "@mui/icons-material";
+import { Box, Typography, Button, TextField, Grid2, Card, CardContent, Stack, Chip, Divider } from "@mui/material";
+import { Save, CloudUpload, LocationOn } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import { useClinicProfile } from "../hooks/useClinicProfile";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { uploadClinicLogoAPI } from "../../infrastructure/clinic.api";
+import { Map } from "../../../../shared/ui/Map";
 
 interface ProfileSectionProps {
   clinicId: string;
@@ -36,6 +37,8 @@ const medicalSpecialties = [
 const validationSchema = Yup.object({
   name: Yup.string().required("El nombre es requerido"),
   address: Yup.string().required("La dirección es requerida"),
+  latitude: Yup.number().nullable().min(-90).max(90),
+  longitude: Yup.number().nullable().min(-180).max(180),
   phone: Yup.string().matches(/^\d{10}$/, "El teléfono debe tener 10 dígitos").required("El teléfono es requerido"),
   whatsapp: Yup.string().matches(/^\d{10}$/, "El WhatsApp debe tener 10 dígitos").required("El WhatsApp es requerido"),
   description: Yup.string().min(10, "La descripción debe tener al menos 10 caracteres").required("La descripción es requerida"),
@@ -56,6 +59,8 @@ export const ProfileSection = ({ clinicId }: ProfileSectionProps) => {
     initialValues: {
       name: profile?.name || "",
       address: profile?.address || "",
+      latitude: profile?.latitude?.toString() || "",
+      longitude: profile?.longitude?.toString() || "",
       phone: profile?.phone || "",
       whatsapp: profile?.whatsapp || "",
       description: profile?.description || "",
@@ -67,6 +72,8 @@ export const ProfileSection = ({ clinicId }: ProfileSectionProps) => {
       await updateProfile({
         ...profile,
         ...values,
+        latitude: values.latitude && values.latitude !== "" ? Number(values.latitude) : undefined,
+        longitude: values.longitude && values.longitude !== "" ? Number(values.longitude) : undefined,
         specialties: selectedSpecialties.length > 0 ? selectedSpecialties : profile.specialties,
       });
     },
@@ -174,6 +181,34 @@ export const ProfileSection = ({ clinicId }: ProfileSectionProps) => {
               <Grid2 size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
+                  type="number"
+                  label="Latitud (opcional)"
+                  name="latitude"
+                  value={formik.values.latitude}
+                  onChange={formik.handleChange}
+                  error={formik.touched.latitude && Boolean(formik.errors.latitude)}
+                  helperText={(formik.touched.latitude && formik.errors.latitude) || "Ejemplo: -0.180653"}
+                  inputProps={{ step: "any" }}
+                />
+              </Grid2>
+
+              <Grid2 size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Longitud (opcional)"
+                  name="longitude"
+                  value={formik.values.longitude}
+                  onChange={formik.handleChange}
+                  error={formik.touched.longitude && Boolean(formik.errors.longitude)}
+                  helperText={(formik.touched.longitude && formik.errors.longitude) || "Ejemplo: -78.467834"}
+                  inputProps={{ step: "any" }}
+                />
+              </Grid2>
+
+              <Grid2 size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
                   label="Teléfono *"
                   name="phone"
                   value={formik.values.phone}
@@ -225,6 +260,30 @@ export const ProfileSection = ({ clinicId }: ProfileSectionProps) => {
           </form>
         </CardContent>
       </Card>
+
+      {/* Mapa de Ubicación */}
+      {profile.latitude && profile.longitude && (
+        <Card sx={{ mt: 3 }}>
+          <CardContent>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <LocationOn sx={{ color: "error.main", mr: 1 }} />
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                Ubicación en el Mapa
+              </Typography>
+            </Box>
+            <Map
+              latitude={profile.latitude}
+              longitude={profile.longitude}
+              address={profile.address}
+              height={400}
+            />
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+              Ingresa las coordenadas (latitud y longitud) para mostrar la ubicación en el mapa.
+              Puedes obtenerlas desde Google Maps haciendo clic derecho en cualquier ubicación.
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
     </Box>
   );
 };
