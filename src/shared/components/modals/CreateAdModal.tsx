@@ -1,18 +1,18 @@
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Box,
-  Typography,
-  IconButton,
-  Alert,
-} from "@mui/material";
 import { Close, CloudUpload } from "@mui/icons-material";
-import { useState, useRef } from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { useFormik } from "formik";
+import { useRef, useState } from "react";
 import * as Yup from "yup";
 
 interface Props {
@@ -44,18 +44,25 @@ const validationSchema = Yup.object({
     .min(2, "El texto del botón debe tener al menos 2 caracteres")
     .required("El texto del botón es requerido"),
   startDate: Yup.string().required("La fecha de inicio es requerida"),
-  endDate: Yup.string().test(
-    "endDate-after-startDate",
-    "La fecha de fin debe ser posterior a la fecha de inicio",
-    function (value) {
-      const { startDate } = this.parent;
-      if (!value || !startDate) return true;
-      return new Date(value) >= new Date(startDate);
-    }
-  ),
+  endDate: Yup.string()
+    .nullable()
+    .test(
+      "endDate-after-startDate",
+      "La fecha de fin debe ser posterior a la fecha de inicio",
+      function (value) {
+        const { startDate } = this.parent;
+        if (!value || !startDate) return true;
+        return new Date(value) >= new Date(startDate);
+      },
+    ),
 });
 
-export const CreateAdModal = ({ open, onClose, onCreateAd, submitButtonText = "Publicar Anuncio" }: Props) => {
+export const CreateAdModal = ({
+  open,
+  onClose,
+  onCreateAd,
+  submitButtonText = "Publicar Anuncio",
+}: Props) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -76,18 +83,13 @@ export const CreateAdModal = ({ open, onClose, onCreateAd, submitButtonText = "P
       setIsSubmitting(true);
       setError("");
       try {
-        // Convertir imagen a base64 (aquí simulado)
+        // En el futuro, aquí subiremos el 'selectedImage' a S3 y obtendremos la URL real.
+
         let imageUrl: string | undefined;
+
         if (selectedImage) {
-          // En producción, aquí subirías la imagen a un servidor
-          imageUrl = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              resolve(reader.result as string);
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(selectedImage!);
-          });
+          imageUrl =
+            "https://placehold.co/600x400/0d9488/ffffff?text=Banner+Promocional";
         }
 
         await onCreateAd({
@@ -113,6 +115,7 @@ export const CreateAdModal = ({ open, onClose, onCreateAd, submitButtonText = "P
     },
   });
 
+  // Manejo visual de la imagen
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -184,7 +187,10 @@ export const CreateAdModal = ({ open, onClose, onCreateAd, submitButtonText = "P
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             error={formik.touched.label && Boolean(formik.errors.label)}
-            helperText={formik.touched.label && formik.errors.label || "Texto que aparece en la etiqueta superior del banner"}
+            helperText={
+              (formik.touched.label && formik.errors.label) ||
+              "Texto que aparece en la etiqueta superior del banner"
+            }
             required
             sx={{ mb: 3 }}
           />
@@ -199,7 +205,10 @@ export const CreateAdModal = ({ open, onClose, onCreateAd, submitButtonText = "P
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             error={formik.touched.discount && Boolean(formik.errors.discount)}
-            helperText={formik.touched.discount && formik.errors.discount || "Ej: 20% OFF, 50% DESCUENTO, etc."}
+            helperText={
+              (formik.touched.discount && formik.errors.discount) ||
+              "Ej: 20% OFF, 50% DESCUENTO, etc."
+            }
             required
             sx={{ mb: 3 }}
           />
@@ -215,7 +224,9 @@ export const CreateAdModal = ({ open, onClose, onCreateAd, submitButtonText = "P
             value={formik.values.description}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            error={formik.touched.description && Boolean(formik.errors.description)}
+            error={
+              formik.touched.description && Boolean(formik.errors.description)
+            }
             helperText={formik.touched.description && formik.errors.description}
             required
             sx={{ mb: 3 }}
@@ -230,8 +241,13 @@ export const CreateAdModal = ({ open, onClose, onCreateAd, submitButtonText = "P
             value={formik.values.buttonText}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            error={formik.touched.buttonText && Boolean(formik.errors.buttonText)}
-            helperText={formik.touched.buttonText && formik.errors.buttonText || "Texto que aparece en el botón de acción"}
+            error={
+              formik.touched.buttonText && Boolean(formik.errors.buttonText)
+            }
+            helperText={
+              (formik.touched.buttonText && formik.errors.buttonText) ||
+              "Texto que aparece en el botón de acción"
+            }
             required
             sx={{ mb: 3 }}
           />
@@ -241,7 +257,11 @@ export const CreateAdModal = ({ open, onClose, onCreateAd, submitButtonText = "P
             <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
               Imagen de profesionales (opcional)
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ mb: 1, display: "block" }}
+            >
               Imagen que aparecerá en el lado derecho del banner
             </Typography>
             <input
@@ -321,7 +341,13 @@ export const CreateAdModal = ({ open, onClose, onCreateAd, submitButtonText = "P
           </Box>
 
           {/* Fechas */}
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 3 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+              gap: 3,
+            }}
+          >
             <TextField
               fullWidth
               type="date"
@@ -330,10 +356,12 @@ export const CreateAdModal = ({ open, onClose, onCreateAd, submitButtonText = "P
               value={formik.values.startDate}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              error={formik.touched.startDate && Boolean(formik.errors.startDate)}
+              error={
+                formik.touched.startDate && Boolean(formik.errors.startDate)
+              }
               helperText={formik.touched.startDate && formik.errors.startDate}
               required
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
             <TextField
               fullWidth
@@ -345,7 +373,7 @@ export const CreateAdModal = ({ open, onClose, onCreateAd, submitButtonText = "P
               onBlur={formik.handleBlur}
               error={formik.touched.endDate && Boolean(formik.errors.endDate)}
               helperText={formik.touched.endDate && formik.errors.endDate}
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
           </Box>
         </DialogContent>
@@ -386,4 +414,3 @@ export const CreateAdModal = ({ open, onClose, onCreateAd, submitButtonText = "P
     </Dialog>
   );
 };
-

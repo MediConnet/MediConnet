@@ -1,57 +1,76 @@
-import { Campaign, CheckCircle, HourglassEmpty, Add } from "@mui/icons-material";
-import { useState, useEffect } from "react";
-import { useAdRequest } from "../hooks/useAdRequest";
-import { CreateAdModal } from "./CreateAdModal";
+import {
+  Add,
+  Campaign,
+  CheckCircle,
+  HourglassEmpty,
+} from "@mui/icons-material";
+import { Alert, Snackbar } from "@mui/material";
+import { useEffect, useState } from "react";
+import {
+  createAdAPI,
+  type CreateAdParams,
+} from "../../../../shared/api/ads.api";
+import { CreateAdModal } from "../../../../shared/components/modals/CreateAdModal";
 import { PromotionalBanner } from "../../../../shared/components/PromotionalBanner";
+import { useAdRequest } from "../../../../shared/hooks/useAdRequest";
 
 export const AdsSection = () => {
-  const { pendingRequest, hasActiveAd, hasApprovedRequest, activeAd, isLoading, createRequest, refetch } = useAdRequest();
+  const { pendingRequest, hasActiveAd, activeAd, isLoading, refetch } =
+    useAdRequest();
+
   const [isCreating, setIsCreating] = useState(false);
   const [isCreateAdModalOpen, setIsCreateAdModalOpen] = useState(false);
 
-  // Verificar periódicamente si el anuncio ha expirado
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
   useEffect(() => {
     if (!activeAd || !activeAd.endDate) return;
 
     const checkExpiration = () => {
       const now = new Date().getTime();
       const endDate = new Date(activeAd.endDate!).getTime();
-      
+
       if (endDate < now) {
-        // El anuncio ha expirado, refrescar datos
         refetch();
       }
     };
 
-    // Verificar cada minuto
     const interval = setInterval(checkExpiration, 60000);
-    
-    // Verificar inmediatamente
     checkExpiration();
 
     return () => clearInterval(interval);
   }, [activeAd?.endDate, refetch]);
 
-  const handleRequestPermission = async (adData: {
-    label: string;
-    discount: string;
-    description: string;
-    buttonText: string;
-    imageUrl?: string;
-    startDate: string;
-    endDate?: string;
-  }) => {
+  // --- NUEVA LÓGICA DE INTEGRACIÓN ---
+  const handleRequestPermission = async (adData: CreateAdParams) => {
     setIsCreating(true);
     try {
-      await createRequest(adData);
+      await createAdAPI(adData);
+
+      setIsCreateAdModalOpen(false);
+
+      setFeedback({
+        type: "success",
+        message:
+          "¡Solicitud enviada correctamente! El administrador la revisará pronto.",
+      });
+
       await refetch();
     } catch (error) {
       console.error("Error creating request:", error);
-      throw error;
+      setFeedback({
+        type: "error",
+        message: "Hubo un error al enviar la solicitud. Inténtalo de nuevo.",
+      });
     } finally {
       setIsCreating(false);
     }
   };
+
+  const handleCloseFeedback = () => setFeedback(null);
 
   if (isLoading) {
     return (
@@ -63,13 +82,16 @@ export const AdsSection = () => {
     );
   }
 
-  // Si tiene anuncio activo, mostrar el anuncio y bloquear crear nuevo
+  // --- RENDERIZADO CONDICIONAL ---
+
   if (hasActiveAd) {
     return (
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-xl font-bold text-gray-800">Anuncios Promocionales</h3>
+            <h3 className="text-xl font-bold text-gray-800">
+              Anuncios Promocionales
+            </h3>
             <p className="text-sm text-gray-500 mt-1">
               Gestiona tu anuncio activo
             </p>
@@ -89,52 +111,37 @@ export const AdsSection = () => {
             <span className="font-medium">Tienes un anuncio activo</span>
           </div>
           <p className="text-sm text-gray-600 mt-2">
-            Ya tienes un anuncio publicado. Si deseas crear otro, debes solicitar permiso nuevamente al administrador.
+            Ya tienes un anuncio publicado. Si deseas crear otro, debes esperar
+            a que este expire o contactar al administrador.
           </p>
         </div>
 
         {/* Mostrar el banner promocional del anuncio activo */}
-        {activeAd && activeAd.label && activeAd.discount && activeAd.buttonText ? (
+        {activeAd && (
           <div className="mt-4">
             <PromotionalBanner
-              label={activeAd.label || ""}
-              discount={activeAd.discount || ""}
-              description={activeAd.description || ""}
-              buttonText={activeAd.buttonText || ""}
-              imageUrl={activeAd.imageUrl}
-              endDate={activeAd.endDate}
+              label={activeAd.label || activeAd.badge_text || ""}
+              discount={activeAd.discount || activeAd.title || ""}
+              description={activeAd.description || activeAd.subtitle || ""}
+              buttonText={activeAd.buttonText || activeAd.action_text || ""}
+              imageUrl={activeAd.imageUrl || activeAd.image_url || undefined}
+              endDate={activeAd.endDate || activeAd.end_date || undefined}
             />
-          </div>
-        ) : activeAd ? (
-          <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 mt-4">
-            <p className="text-sm text-gray-500">
-              Anuncio activo (formato antiguo - actualiza tu anuncio para ver el nuevo diseño)
-            </p>
-            {activeAd.title && (
-              <p className="text-base font-medium text-gray-800 mt-2">{activeAd.title}</p>
-            )}
-            {activeAd.description && (
-              <p className="text-sm text-gray-600 mt-1">{activeAd.description}</p>
-            )}
-          </div>
-        ) : (
-          <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 mt-4">
-            <p className="text-sm text-gray-500">
-              No se pudo cargar el anuncio activo. Por favor, recarga la página.
-            </p>
           </div>
         )}
       </div>
     );
   }
 
-  // Si tiene solicitud pendiente
+  // Si tiene solicitud pendiente (backend status: PENDING)
   if (pendingRequest) {
     return (
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-xl font-bold text-gray-800">Anuncios Promocionales</h3>
+            <h3 className="text-xl font-bold text-gray-800">
+              Anuncios Promocionales
+            </h3>
             <p className="text-sm text-gray-500 mt-1">
               Solicitud de permiso para crear anuncio
             </p>
@@ -156,48 +163,23 @@ export const AdsSection = () => {
             Solicitud pendiente de aprobación
           </p>
           <p className="text-sm text-gray-500 text-center max-w-md">
-            Tu solicitud para crear un anuncio está siendo revisada por el administrador. 
-            Te notificaremos cuando sea aprobada.
+            Tu solicitud para crear un anuncio está siendo revisada por el
+            administrador. Te notificaremos cuando sea aprobada.
           </p>
         </div>
       </div>
     );
   }
 
-  // Si tiene solicitud aprobada, el anuncio ya debería estar activo
-  // Este caso no debería ocurrir si el flujo es correcto, pero lo mantenemos por seguridad
-  if (hasApprovedRequest) {
-    return (
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-xl font-bold text-gray-800">Anuncios Promocionales</h3>
-            <p className="text-sm text-gray-500 mt-1">
-              Tu solicitud fue aprobada
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-          <div className="flex items-center gap-2 text-green-700">
-            <CheckCircle />
-            <span className="font-medium">Solicitud aprobada</span>
-          </div>
-          <p className="text-sm text-gray-600 mt-2">
-            Tu solicitud ha sido aprobada y tu anuncio está activo.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Estado inicial: no tiene solicitud, mostrar botón para solicitar permiso
+  // Estado inicial: Crear nueva solicitud
   return (
     <>
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-xl font-bold text-gray-800">Anuncios Promocionales</h3>
+            <h3 className="text-xl font-bold text-gray-800">
+              Anuncios Promocionales
+            </h3>
             <p className="text-sm text-gray-500 mt-1">
               Crea y solicita permiso para publicar tu anuncio
             </p>
@@ -222,8 +204,8 @@ export const AdsSection = () => {
             Crea tu anuncio promocional
           </p>
           <p className="text-sm text-gray-500 text-center max-w-md">
-            Completa el formulario con la información de tu anuncio. Una vez enviado, 
-            el administrador revisará y aprobará tu solicitud.
+            Completa el formulario con la información de tu anuncio. Una vez
+            enviado, el administrador revisará y aprobará tu solicitud.
           </p>
         </div>
       </div>
@@ -234,7 +216,23 @@ export const AdsSection = () => {
         onCreateAd={handleRequestPermission}
         submitButtonText="Enviar solicitud"
       />
+
+      {/* Feedback Visual (Snackbar) */}
+      <Snackbar
+        open={!!feedback}
+        autoHideDuration={6000}
+        onClose={handleCloseFeedback}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          onClose={handleCloseFeedback}
+          severity={feedback?.type}
+          sx={{ width: "100%" }}
+          variant="filled"
+        >
+          {feedback?.message}
+        </Alert>
+      </Snackbar>
     </>
   );
 };
-

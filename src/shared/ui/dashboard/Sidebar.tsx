@@ -52,7 +52,9 @@ export const Sidebar = ({ role, isOpen }: SidebarProps) => {
       <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto overflow-x-hidden">
         {menuItems.map((item, index) => {
           const [itemPath, itemQuery] = item.path.split("?");
-          const isPathMatch = location.pathname.startsWith(itemPath);
+
+          const isPathMatch = location.pathname === itemPath;
+
           let isActive = false;
 
           if (isPathMatch) {
@@ -60,10 +62,14 @@ export const Sidebar = ({ role, isOpen }: SidebarProps) => {
               if (location.search) {
                 isActive = location.search.includes(itemQuery);
               } else {
-                isActive = itemQuery.includes("tab=profile");
+                isActive = itemQuery.includes("tab=dashboard");
               }
             } else {
-              isActive = true;
+              if (!location.search) {
+                isActive = true;
+              } else {
+                isActive = false;
+              }
             }
           }
 
