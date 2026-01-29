@@ -88,6 +88,33 @@ interface DaySchedule {
 }
 ```
 
+**⚠️ IMPORTANTE - Formato de `generalSchedule`:**
+
+El frontend espera que `generalSchedule` sea un **objeto** (no un array) con las siguientes propiedades:
+
+```json
+{
+  "generalSchedule": {
+    "monday": { "enabled": true, "startTime": "08:00", "endTime": "18:00" },
+    "tuesday": { "enabled": true, "startTime": "08:00", "endTime": "18:00" },
+    "wednesday": { "enabled": true, "startTime": "08:00", "endTime": "18:00" },
+    "thursday": { "enabled": true, "startTime": "08:00", "endTime": "18:00" },
+    "friday": { "enabled": true, "startTime": "08:00", "endTime": "18:00" },
+    "saturday": { "enabled": true, "startTime": "09:00", "endTime": "13:00" },
+    "sunday": { "enabled": false, "startTime": "09:00", "endTime": "13:00" }
+  }
+}
+```
+
+**Requisitos:**
+- ✅ **TODOS los 7 días** deben estar presentes (monday, tuesday, wednesday, thursday, friday, saturday, sunday)
+- ✅ Cada día debe tener las propiedades `enabled`, `startTime`, `endTime`
+- ✅ `enabled` debe ser un boolean (true/false)
+- ✅ `startTime` y `endTime` deben ser strings en formato "HH:mm"
+- ❌ **NO enviar como array** (aunque la base de datos use tabla `clinic_schedules`, el backend debe convertir a objeto)
+
+**Si el backend envía un array**, el frontend intentará normalizarlo, pero es preferible que el backend envíe el objeto directamente.
+
 ### 2.3. ClinicDashboard
 ```typescript
 interface ClinicDashboard {
@@ -771,6 +798,71 @@ CREATE TABLE clinic_schedules (
   UNIQUE(clinic_id, day_of_week)
 );
 ```
+
+**⚠️ IMPORTANTE - Conversión de Array a Objeto:**
+
+Aunque la base de datos almacena los horarios en la tabla `clinic_schedules` (formato array con `day_of_week`), el backend **DEBE convertir** este array a un objeto antes de enviarlo al frontend en el campo `generalSchedule`.
+
+**Ejemplo de conversión (TypeScript/JavaScript):**
+```typescript
+// 1. Obtener horarios de la BD (array)
+const schedulesArray = await prisma.clinic_schedules.findMany({
+  where: { clinic_id: clinicId }
+});
+
+// 2. Función helper para obtener horario de un día
+function getDaySchedule(schedules: any[], dayOfWeek: number): DaySchedule {
+  const day = schedules.find(s => s.day_of_week === dayOfWeek);
+  if (day) {
+    return {
+      enabled: day.enabled,
+      startTime: formatTime(day.start_time), // Convertir TIME a "HH:mm"
+      endTime: formatTime(day.end_time),
+    };
+  }
+  // Si no existe en BD, retornar valores por defecto
+  return {
+    enabled: false,
+    startTime: "09:00",
+    endTime: "18:00",
+  };
+}
+
+// 3. Convertir TIME a formato "HH:mm"
+function formatTime(time: string): string {
+  // Si viene como "09:00:00" o "09:00:00.000", tomar solo "09:00"
+  if (time && time.length >= 5) {
+    return time.substring(0, 5);
+  }
+  return time || "09:00";
+}
+
+// 4. Construir objeto generalSchedule
+const generalSchedule: ClinicSchedule = {
+  monday: getDaySchedule(schedulesArray, 0),    // day_of_week = 0
+  tuesday: getDaySchedule(schedulesArray, 1),   // day_of_week = 1
+  wednesday: getDaySchedule(schedulesArray, 2), // day_of_week = 2
+  thursday: getDaySchedule(schedulesArray, 3), // day_of_week = 3
+  friday: getDaySchedule(schedulesArray, 4),    // day_of_week = 4
+  saturday: getDaySchedule(schedulesArray, 5),  // day_of_week = 5
+  sunday: getDaySchedule(schedulesArray, 6),    // day_of_week = 6
+};
+
+// 5. Incluir en la respuesta
+return {
+  success: true,
+  data: {
+    ...clinicData,
+    generalSchedule: generalSchedule
+  }
+};
+```
+
+**Requisitos:**
+- ✅ **TODOS los 7 días** deben estar presentes en el objeto `generalSchedule`
+- ✅ Si un día no existe en la BD, usar valores por defecto: `{ enabled: false, startTime: "09:00", endTime: "18:00" }`
+- ✅ Convertir `start_time` y `end_time` (TIME) a formato "HH:mm" (string)
+- ✅ `enabled` debe ser boolean (no string, no null)
 
 ### 4.4. Tabla: `clinic_doctors`
 ```sql

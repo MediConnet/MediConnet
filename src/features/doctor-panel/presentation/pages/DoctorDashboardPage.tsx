@@ -7,6 +7,7 @@ import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 // Hooks
 import { useDoctorDashboard } from "../hooks/useDoctorDashboard";
 import { useDoctorProfile } from "../hooks/useDoctorProfile";
+import { useClinicAssociatedDoctor } from "../hooks/useClinicAssociatedDoctor";
 
 // Componentes de secciones
 import { AdsSection } from "../components/AdsSection";
@@ -19,6 +20,15 @@ import { ReportsSection } from "../components/ReportsSection";
 import { ReviewsSection } from "../components/ReviewsSection";
 import { SettingsSection } from "../components/SettingsSection";
 import { StatsCards } from "../components/StatsCards";
+
+// Componentes para médico asociado a clínica
+import { ClinicAssociatedProfileSection } from "../components/ClinicAssociatedProfileSection";
+import { ClinicAssociatedAppointmentsSection } from "../components/ClinicAssociatedAppointmentsSection";
+import { ClinicReceptionMessages } from "../components/ClinicReceptionMessages";
+import { DateBlockRequest } from "../components/DateBlockRequest";
+
+// Configuración de menú
+import { DOCTOR_MENU, CLINIC_ASSOCIATED_DOCTOR_MENU } from "../../../../shared/config/navigation.config";
 
 // Entidades y APIs
 import type {
@@ -37,7 +47,10 @@ type TabType =
   | "patients"
   | "payments"
   | "reports"
-  | "settings";
+  | "settings"
+  | "reception"
+  | "date-blocks"
+  | "notifications";
 
 export const DoctorDashboardPage = () => {
   const [searchParams] = useSearchParams();
@@ -52,6 +65,22 @@ export const DoctorDashboardPage = () => {
   } = useDoctorDashboard();
 
   const { profileData, refetch: refetchProfile } = useDoctorProfile();
+
+  // ⭐ Detectar si es médico asociado a clínica
+  // Primero verificar desde dashboardData (más confiable)
+  const isClinicAssociatedFromDashboard = dashboardData?.clinic !== null && dashboardData?.clinic !== undefined;
+  const { isClinicAssociated: isClinicAssociatedFromHook, clinicInfo, loading: loadingClinicInfo } = useClinicAssociatedDoctor();
+  
+  // Usar dashboardData primero, luego el hook como fallback
+  const isClinicAssociated = isClinicAssociatedFromDashboard || isClinicAssociatedFromHook;
+  const finalClinicInfo = dashboardData?.clinic ? {
+    id: dashboardData.clinic.id,
+    name: dashboardData.clinic.name,
+    address: dashboardData.clinic.address || "",
+    phone: dashboardData.clinic.phone || "",
+    whatsapp: dashboardData.clinic.whatsapp || "",
+    logoUrl: dashboardData.clinic.logoUrl,
+  } : clinicInfo;
 
   // Estado para las citas de la barra lateral (Notificaciones)
   const [sidebarAppointments, setSidebarAppointments] = useState<any[]>([]);
@@ -162,11 +191,15 @@ export const DoctorDashboardPage = () => {
     );
   }
 
+  // ⭐ Determinar qué menú usar
+  const menuItems = isClinicAssociated ? CLINIC_ASSOCIATED_DOCTOR_MENU : DOCTOR_MENU;
+
   return (
     <DashboardLayout
       role="PROVIDER"
       userProfile={userProfile}
       appointments={sidebarAppointments}
+      menuItems={menuItems}
     >
       {/* Cards de Estadísticas - Solo mostrar en la pestaña de dashboard */}
       {currentTab === "dashboard" && <StatsCards data={displayData} />}
@@ -179,47 +212,138 @@ export const DoctorDashboardPage = () => {
             : "mt-6"
         }
       >
-        {currentTab === "dashboard" && (
-          <Box>
-            <Box mb={3}>
-              <Typography variant="h4" fontWeight={700} mb={1}>
-                Dashboard
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Resumen de tus estadísticas y métricas principales
-              </Typography>
-            </Box>
-            <DashboardContent
-              visits={displayData.visits}
-              contacts={displayData.contacts}
-              reviews={displayData.reviews}
-              rating={displayData.rating}
-            />
-          </Box>
+        {isClinicAssociated ? (
+          // ⭐ PANEL DE MÉDICO ASOCIADO A CLÍNICA
+          <>
+            {currentTab === "dashboard" && (
+              <Box>
+                <Box mb={3}>
+                  <Typography variant="h4" fontWeight={700} mb={1}>
+                    Dashboard
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Resumen de tus estadísticas y métricas principales
+                  </Typography>
+                </Box>
+                <DashboardContent
+                  visits={displayData.visits}
+                  contacts={displayData.contacts}
+                  reviews={displayData.reviews}
+                  rating={displayData.rating}
+                />
+              </Box>
+            )}
+
+            {currentTab === "profile" && finalClinicInfo && (
+              <ClinicAssociatedProfileSection
+                clinicId={finalClinicInfo.id}
+                clinicName={finalClinicInfo.name}
+              />
+            )}
+
+            {currentTab === "appointments" && <ClinicAssociatedAppointmentsSection />}
+            {currentTab === "patients" && <PatientsSection />}
+            {currentTab === "reception" && finalClinicInfo && <ClinicReceptionMessages />}
+            {currentTab === "date-blocks" && finalClinicInfo && <DateBlockRequest />}
+            {currentTab === "notifications" && (
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>
+                  Notificaciones
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Las notificaciones aparecerán aquí cuando se agenden o cancelen citas.
+                </Typography>
+              </Box>
+            )}
+
+            {/* Ocultar secciones financieras y administrativas */}
+            {currentTab === "ads" && (
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>
+                  Anuncios
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Los anuncios son gestionados por la clínica.
+                </Typography>
+              </Box>
+            )}
+            {currentTab === "payments" && (
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>
+                  Pagos e Ingresos
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  La gestión de pagos es responsabilidad de la clínica.
+                </Typography>
+              </Box>
+            )}
+            {currentTab === "reports" && (
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>
+                  Reportes
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Los reportes son gestionados por la clínica.
+                </Typography>
+              </Box>
+            )}
+            {currentTab === "settings" && (
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>
+                  Configuración
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  La configuración de horarios y precios es gestionada por la clínica.
+                </Typography>
+              </Box>
+            )}
+          </>
+        ) : (
+          // ⭐ PANEL DE MÉDICO INDEPENDIENTE (código original)
+          <>
+            {currentTab === "dashboard" && (
+              <Box>
+                <Box mb={3}>
+                  <Typography variant="h4" fontWeight={700} mb={1}>
+                    Dashboard
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Resumen de tus estadísticas y métricas principales
+                  </Typography>
+                </Box>
+                <DashboardContent
+                  visits={displayData.visits}
+                  contacts={displayData.contacts}
+                  reviews={displayData.reviews}
+                  rating={displayData.rating}
+                />
+              </Box>
+            )}
+
+            {currentTab === "profile" && (
+              <ProfileSection
+                data={displayData}
+                onUpdate={(updatedData) => {
+                  refetchProfile();
+
+                  if (setDashboardData) {
+                    setDashboardData(updatedData);
+                  } else {
+                    refetchDashboard();
+                  }
+                }}
+              />
+            )}
+
+            {currentTab === "ads" && <AdsSection />}
+            {currentTab === "reviews" && <ReviewsSection />}
+            {currentTab === "appointments" && <AppointmentsSection />}
+            {currentTab === "patients" && <PatientsSection />}
+            {currentTab === "payments" && <PaymentsSection />}
+            {currentTab === "reports" && <ReportsSection />}
+            {currentTab === "settings" && <SettingsSection />}
+          </>
         )}
-
-        {currentTab === "profile" && (
-          <ProfileSection
-            data={displayData}
-            onUpdate={(updatedData) => {
-              refetchProfile();
-
-              if (setDashboardData) {
-                setDashboardData(updatedData);
-              } else {
-                refetchDashboard();
-              }
-            }}
-          />
-        )}
-
-        {currentTab === "ads" && <AdsSection />}
-        {currentTab === "reviews" && <ReviewsSection />}
-        {currentTab === "appointments" && <AppointmentsSection />}
-        {currentTab === "patients" && <PatientsSection />}
-        {currentTab === "payments" && <PaymentsSection />}
-        {currentTab === "reports" && <ReportsSection />}
-        {currentTab === "settings" && <SettingsSection />}
       </div>
     </DashboardLayout>
   );
