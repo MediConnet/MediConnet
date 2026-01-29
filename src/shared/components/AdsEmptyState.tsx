@@ -1,7 +1,15 @@
 import { Campaign } from "@mui/icons-material";
 import { Box, Typography, alpha, useTheme } from "@mui/material";
 
-export const AdsEmptyState = () => {
+interface AdsEmptyStateProps {
+  title?: string;
+  description?: string;
+}
+
+export const AdsEmptyState = ({
+  title = "Crea tu anuncio promocional",
+  description = "Completa el formulario con la información de tu anuncio. Una vez enviado, el administrador revisará y aprobará tu solicitud.",
+}: AdsEmptyStateProps) => {
   const theme = useTheme();
 
   return (
@@ -32,13 +40,26 @@ export const AdsEmptyState = () => {
           mb: 2,
         }}
       >
-        <Campaign sx={{ fontSize: 40, opacity: 0.5 }} />
+        <Campaign sx={{ fontSize: 40, opacity: 0.8 }} />
       </Box>
-      <Typography variant="h6" fontWeight={600} gutterBottom>
-        No tienes anuncios activos
+
+      <Typography
+        variant="h6"
+        fontWeight={700}
+        gutterBottom
+        align="center"
+        color="text.primary"
+      >
+        {title}
       </Typography>
-      <Typography variant="body2" color="text.secondary" align="center">
-        Crea un anuncio para promocionar tu servicio de ambulancia.
+
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        align="center"
+        sx={{ maxWidth: 450, lineHeight: 1.6 }}
+      >
+        {description}
       </Typography>
     </Box>
   );
