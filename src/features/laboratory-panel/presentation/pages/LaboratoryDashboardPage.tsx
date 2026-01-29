@@ -1,17 +1,17 @@
-import { useSearchParams } from "react-router-dom";
 import { Box, Stack, Typography } from "@mui/material";
-import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
-import { useLaboratoryDashboard } from "../hooks/useLaboratoryDashboard";
+import { useSearchParams } from "react-router-dom";
 import { useAuthStore } from "../../../../app/store/auth.store";
-import { LaboratoryProfileSection } from "../components/LaboratoryProfileSection";
-import { ServicesSection } from "../components/ServicesSection";
-import { LaboratoryScheduleSection } from "../components/LaboratoryScheduleSection";
-import { LaboratoryContactLocationSection } from "../components/LaboratoryContactLocationSection";
+import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { AdsSection } from "../components/AdsSection";
+import { DashboardContent } from "../components/DashboardContent";
+import { LaboratoryContactLocationSection } from "../components/LaboratoryContactLocationSection";
+import { LaboratoryProfileSection } from "../components/LaboratoryProfileSection";
+import { LaboratoryScheduleSection } from "../components/LaboratoryScheduleSection";
 import { ReviewsSection } from "../components/ReviewsSection";
+import { ServicesSection } from "../components/ServicesSection";
 import { SettingsSection } from "../components/SettingsSection";
 import { StatsCards } from "../components/StatsCards";
-import { DashboardContent } from "../components/DashboardContent";
+import { useLaboratoryDashboard } from "../hooks/useLaboratoryDashboard";
 
 type TabType = "dashboard" | "profile" | "ads" | "reviews" | "settings";
 
@@ -54,7 +54,9 @@ export const LaboratoryDashboardPage = () => {
     return (
       <DashboardLayout role="PROVIDER" userProfile={userProfile}>
         <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="text-red-500">Error al cargar los datos del dashboard</div>
+          <div className="text-red-500">
+            Error al cargar los datos del dashboard
+          </div>
         </div>
       </DashboardLayout>
     );
@@ -92,7 +94,8 @@ export const LaboratoryDashboardPage = () => {
                 Mi Laboratorio
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Gestiona el perfil, servicios, horarios y contacto de tu laboratorio
+                Gestiona el perfil, servicios, horarios y contacto de tu
+                laboratorio
               </Typography>
             </Box>
             <Stack spacing={4}>
