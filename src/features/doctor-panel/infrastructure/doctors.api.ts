@@ -187,6 +187,15 @@ export const getDoctorDashboardAPI = async (userId: string): Promise<DoctorDashb
       paymentMethods: mapBackendPaymentsToFrontend(provider.payment_methods || []),
       workSchedule: mapBackendScheduleToFrontend(provider.schedules || []), 
     },
+    // ⭐ Información de clínica si el médico está asociado
+    clinic: (backendData as any).clinic ? {
+      id: (backendData as any).clinic.id,
+      name: (backendData as any).clinic.name,
+      address: (backendData as any).clinic.address,
+      phone: (backendData as any).clinic.phone,
+      whatsapp: (backendData as any).clinic.whatsapp,
+      logoUrl: (backendData as any).clinic.logoUrl,
+    } : null
   };
 };
 
@@ -243,7 +252,16 @@ export const getDoctorProfileAPI = async (): Promise<DoctorDashboard> => {
       
       paymentMethods: mapBackendPaymentsToFrontend(backendData.payment_methods || []),
       workSchedule: mapBackendScheduleToFrontend(backendData.schedules || [])
-    }
+    },
+    // ⭐ Información de clínica si el médico está asociado
+    clinic: (backendData as any).clinic ? {
+      id: (backendData as any).clinic.id,
+      name: (backendData as any).clinic.name,
+      address: (backendData as any).clinic.address,
+      phone: (backendData as any).clinic.phone,
+      whatsapp: (backendData as any).clinic.whatsapp,
+      logoUrl: (backendData as any).clinic.logoUrl,
+    } : null
   };
 };
 

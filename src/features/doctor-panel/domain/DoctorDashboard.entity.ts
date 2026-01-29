@@ -40,4 +40,13 @@ export interface DoctorDashboard {
     consultationDuration?: number; 
     // bankAccount... (pendiente en backend)
   };
+  // Información de clínica si el médico está asociado
+  clinic?: {
+    id: string;
+    name: string;
+    address?: string;
+    phone?: string;
+    whatsapp?: string;
+    logoUrl?: string;
+  } | null;
 }
