@@ -4,6 +4,8 @@ export interface ClinicProfile {
   logoUrl?: string;
   specialties: string[]; // Especialidades que ofrece la clínica
   address: string;
+  latitude?: number; // Coordenada de latitud para el mapa
+  longitude?: number; // Coordenada de longitud para el mapa
   phone: string;
   whatsapp: string;
   generalSchedule: ClinicSchedule; // Horarios generales de la clínica

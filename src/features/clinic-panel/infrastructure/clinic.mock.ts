@@ -16,6 +16,8 @@ export const MOCK_CLINIC_PROFILE: ClinicProfile = {
   logoUrl: 'https://via.placeholder.com/150',
   specialties: ['Medicina General', 'Cardiología', 'Pediatría', 'Ginecología'],
   address: 'Av. Principal 123, Quito, Ecuador',
+  latitude: -0.180653, // Coordenadas de Quito, Ecuador
+  longitude: -78.467834,
   phone: '0991234567',
   whatsapp: '0991234567',
   generalSchedule: mockClinicSchedule,
