@@ -2,6 +2,7 @@ import { Logout } from "@mui/icons-material";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ROUTES } from "../../../app/config/constants";
 import { useAuthStore } from "../../../app/store/auth.store";
+import { logoutUseCase } from "../../../features/auth/application/logout.usecase";
 import { getMenuByRole, type UserRole } from "../../config/navigation.config";
 
 interface SidebarProps {
@@ -12,14 +13,20 @@ interface SidebarProps {
 export const Sidebar = ({ role, isOpen }: SidebarProps) => {
   const authStore = useAuthStore();
   const { user } = authStore;
+
   const menuItems = getMenuByRole(role, user?.tipo);
+
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = authStore;
 
-  const handleLogout = () => {
-    logout();
-    navigate(ROUTES.HOME);
+  const handleLogout = async () => {
+    try {
+      await logoutUseCase();
+      navigate(ROUTES.HOME);
+    } catch (error) {
+      console.error("Error durante el logout:", error);
+      navigate(ROUTES.HOME);
+    }
   };
 
   return (
@@ -52,11 +59,10 @@ export const Sidebar = ({ role, isOpen }: SidebarProps) => {
       <nav className="flex-1 px-3 py-4 space-y-2 overflow-y-auto overflow-x-hidden">
         {menuItems.map((item, index) => {
           const [itemPath, itemQuery] = item.path.split("?");
-
           const isPathMatch = location.pathname === itemPath;
-
           let isActive = false;
 
+          // Lógica de activación de Tabs
           if (isPathMatch) {
             if (itemQuery) {
               if (location.search) {

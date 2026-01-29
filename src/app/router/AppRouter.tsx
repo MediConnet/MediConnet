@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   BrowserRouter,
   Navigate,
@@ -5,16 +6,20 @@ import {
   Route,
   Routes,
 } from "react-router-dom";
+import { useAuthStore } from "../../app/store/auth.store";
+
+// Guards / Rutas Protegidas
+import { ClinicRoute } from "./ClinicRoute";
 import { DoctorRoute } from "./DoctorRoute";
 import { LaboratoryRoute } from "./LaboratoryRoute";
 import { SupplyRoute } from "./SupplyRoute";
-import { ClinicRoute } from "./ClinicRoute";
 
 // Layouts
 import { AppLayout } from "../../shared/layouts/AppLayout";
 import { AuthLayout } from "../../shared/layouts/AuthLayout";
 
 // Pages - Auth & General
+import { ForgotPasswordPage } from "../../features/auth/presentation/pages/ForgotPasswordPage";
 import { LoginPage } from "../../features/auth/presentation/pages/LoginPage";
 import { RegisterPage } from "../../features/auth/presentation/pages/RegisterPage";
 import { HomePage } from "../../features/home/presentation/pages/HomePage";
@@ -22,48 +27,65 @@ import { ServicesCatalogPage } from "../../features/home/presentation/pages/Serv
 
 // Pages - Admin
 import { ActivityPage } from "../../features/admin-dashboard/presentation/pages/ActivityPage";
-import { AdminDashboardPage } from "../../features/admin-dashboard/presentation/pages/AdminDashboardPage";
-import { RequestsPage } from "../../features/admin-dashboard/presentation/pages/RequestsPage";
 import { AdRequestsPage } from "../../features/admin-dashboard/presentation/pages/AdRequestsPage";
-import { ServicesDashboardPage } from "../../features/admin-dashboard/presentation/pages/ServicesDashboardPage";
-import { PaymentsPage } from "../../features/admin-dashboard/presentation/pages/PaymentsPage";
+import { AdminDashboardPage } from "../../features/admin-dashboard/presentation/pages/AdminDashboardPage";
 import { CommissionsPage } from "../../features/admin-dashboard/presentation/pages/CommissionsPage";
-import { UsersPage } from "../../features/admin-dashboard/presentation/pages/UsersPage";
-import { HistoryPage } from "../../features/admin-dashboard/presentation/pages/RejectedServicesPage";
+import { PaymentsPage } from "../../features/admin-dashboard/presentation/pages/PaymentsPage";
 import { PharmacyChainsPage } from "../../features/admin-dashboard/presentation/pages/PharmacyChainsPage";
+import { HistoryPage } from "../../features/admin-dashboard/presentation/pages/RejectedServicesPage";
+import { RequestsPage } from "../../features/admin-dashboard/presentation/pages/RequestsPage";
+import { ServicesDashboardPage } from "../../features/admin-dashboard/presentation/pages/ServicesDashboardPage";
+import { SettingsPage } from "../../features/admin-dashboard/presentation/pages/SettingsPage";
+import { UsersPage } from "../../features/admin-dashboard/presentation/pages/UsersPage";
 
 // Pages - Doctor
 import { DoctorDashboardPage } from "../../features/doctor-panel/presentation/pages/DoctorDashboardPage";
 
 // Pages - Ambulancia
+import { AmbulanceAdsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceAdsPage";
 import { AmbulanceDashboardPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceDashboardPage";
 import { AmbulanceReviewsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceReviewsPage";
 import { AmbulanceSettingsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceSettingsPage";
 
 // Pages - Farmacia
+import { PharmacyAdsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyAdsPage";
+import { PharmacyBranchesPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyBranchesPage";
 import { PharmacyDashboardPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyDashboardPage";
+import { PharmacyReviewsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyReviewsPage";
+import { PharmacySettingsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacySettingsPage";
 
 // Pages - Laboratorio
 import { LaboratoryDashboardPage } from "../../features/laboratory-panel/presentation/pages/LaboratoryDashboardPage";
 
 // Pages - Insumos Médicos
+import { SuppliesListPage } from "../../features/supplies-panel/presentation/pages/SuppliesListPage";
 import { SupplyDashboardPage } from "../../features/supplies-panel/presentation/pages/SupplyDashboardPage";
+import { SupplyStoreDetailPage } from "../../features/supplies-panel/presentation/pages/SupplyStoreDetailPage";
 
 // Pages - Clínica
 import { ClinicDashboardPage } from "../../features/clinic-panel/presentation/pages/ClinicDashboardPage";
-
-// Pages - Insumos & Checkout & Search
-import { SettingsPage } from "../../features/admin-dashboard/presentation/pages/SettingsPage";
-import { AmbulanceAdsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceAdsPage";
-import { ForgotPasswordPage } from "../../features/auth/presentation/pages/ForgotPasswordPage";
-import { PharmacyAdsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyAdsPage";
-import { PharmacyBranchesPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyBranchesPage";
-import { PharmacyReviewsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyReviewsPage";
-import { PharmacySettingsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacySettingsPage";
-import { SuppliesListPage } from "../../features/supplies-panel/presentation/pages/SuppliesListPage";
-import { SupplyStoreDetailPage } from "../../features/supplies-panel/presentation/pages/SupplyStoreDetailPage";
+import { httpClient } from "../../shared/lib/http";
 
 export const AppRouter = () => {
+  const token = useAuthStore((state) => state.token);
+  const logout = useAuthStore((state) => state.logout);
+
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      if (!token) return;
+
+      try {
+        await httpClient.get("/auth/me");
+        console.log("✅ Sesión verificada correctamente");
+      } catch (error) {
+        console.error("❌ Sesión expirada o token inválido", error);
+        logout();
+      }
+    };
+
+    checkAuthStatus();
+  }, [token, logout]);
+
   return (
     <BrowserRouter>
       <Routes>

@@ -1,19 +1,19 @@
-// NOTE: Caso de uso para cerrar sesión
-// TODO: Agregar llamada al backend para invalidar token si es necesario
-
 import { useAuthStore } from '../../../app/store/auth.store';
 
 /**
- * Caso de uso para cerrar sesión
- * Limpia el estado de autenticación y redirige al login
+ * Caso de uso para cerrar sesión.
+ * Actúa como orquestador entre la UI y el Store.
  */
-export const logoutUseCase = () => {
-  const authStore = useAuthStore();
+export const logoutUseCase = async (): Promise<void> => {
   
-  // NOTE: Limpiar estado de autenticación
-  authStore.logout();
-  
-  // TODO: Si hay un token en el servidor, hacer una llamada para invalidarlo
-  // await logoutAPI();
-};
+  const { logout } = useAuthStore.getState();
 
+  await logout();
+  
+  console.log('✅ [USE CASE] Logout completado');
+  
+  // Aquí se pueden agregar otras operaciones relacionadas con el logout.
+  // Ejemplo: Limpiar el carrito de compras, trackear evento en Google Analytics, etc.
+  // useCartStore.getState().clearCart();
+  // Analytics.track('logout');
+};

@@ -1,5 +1,4 @@
 // NOTE: Tipos relacionados con autenticación
-// TODO: Agregar más tipos según sea necesario
 
 export interface LoginCredentials {
   email: string;
@@ -10,19 +9,25 @@ export interface RegisterCredentials {
   name: string;
   email: string;
   password: string;
-  // Note: 'confirmPassword' se maneja solo en la UI para validación, no se envía al backend.
+  // Note: 'confirmPassword' se maneja solo en la UI para validación
 }
 
 export interface AuthResponse {
   user: {
-    id: string;
+    id: string;       // ID interno (UUID)
+    userId: string;   // Alias de id (por compatibilidad)
     email: string;
     name: string;
-    role: string;
+    role: string;     // 'admin', 'provider', 'patient'
+    tipo?: string;    // 'doctor', 'pharmacy', etc. (Para guards)
+    serviceType?: string; // Alias de tipo (Para redirección)
+    provider?: {      // Información extra si es proveedor
+      id: string;
+      commercialName: string;
+      logoUrl?: string | null;
+    };
   };
   token: string;
+  accessToken: string;
+  refreshToken?: string;
 }
-
-
-
-
