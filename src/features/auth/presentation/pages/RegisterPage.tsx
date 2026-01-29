@@ -1,44 +1,74 @@
 import {
+  ArrowBack,
+  ArrowForward,
+  AttachMoney as AttachMoneyIcon,
+  Business as BusinessIcon,
+  CheckCircle,
+  Close,
+  CloudUpload,
+  Description,
+  Email as EmailIcon,
+  Inventory,
+  LocalHospital,
+  LocalShipping,
+  LocationOn as LocationIcon,
+  Lock as LockIcon,
+  Map as MapIcon,
+  Medication,
+  Person as PersonIcon,
+  Phone as PhoneIcon,
+  Science,
+  WhatsApp as WhatsAppIcon,
+} from "@mui/icons-material";
+import {
+  Avatar,
   Box,
-  Card,
-  Typography,
   Button,
-  TextField,
+  Card,
   CardContent,
   CircularProgress,
   FormControl,
+  InputAdornment,
   InputLabel,
-  Select,
   MenuItem,
-  Avatar,
+  Select,
   Stack,
+  TextField,
+  Typography,
 } from "@mui/material";
-import { useState, useRef, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFormik } from "formik";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import * as Yup from "yup";
-import {
-  LocalHospital,
-  Medication,
-  Science,
-  LocalShipping,
-  Inventory,
-  ArrowBack,
-  ArrowForward,
-  CheckCircle,
-  CloudUpload,
-  Close,
-  Description,
-} from "@mui/icons-material";
 import { ROUTES } from "../../../../app/config/constants";
-import { useRegisterProfessional } from "../hooks/useRegisterProfessional";
-import { handleLetterInput, handleNumberInput, handlePhoneInput, handleEmailInput, handleBothInput, handleEcuadorPhoneInput } from "../../../../shared/lib/inputValidation";
+import type { PharmacyChain } from "../../../../features/admin-dashboard/domain/pharmacy-chain.entity";
+import {
+  handleBothInput,
+  handleEcuadorPhoneInput,
+  handleEmailInput,
+  handleLetterInput,
+  handleNumberInput,
+} from "../../../../shared/lib/inputValidation";
 import { getPharmacyChains } from "../../../../shared/lib/pharmacy-chains";
-import type { PharmacyChain } from "../../../../admin-dashboard/domain/pharmacy-chain.entity";
+import { useRegisterProfessional } from "../hooks/useRegisterProfessional";
 
-type ServiceType = "doctor" | "pharmacy" | "lab" | "ambulance" | "supplies" | "clinic";
+// Tipos
+type ServiceType =
+  | "doctor"
+  | "pharmacy"
+  | "lab"
+  | "ambulance"
+  | "supplies"
+  | "clinic";
 
-const serviceTypes: ServiceType[] = ["doctor", "clinic", "pharmacy", "lab", "ambulance", "supplies"];
+const serviceTypes: ServiceType[] = [
+  "doctor",
+  "clinic",
+  "pharmacy",
+  "lab",
+  "ambulance",
+  "supplies",
+];
 
 const serviceLabels: Record<ServiceType, string> = {
   doctor: "Médico",
@@ -67,7 +97,6 @@ const serviceIcons: Record<ServiceType, React.ReactNode> = {
   supplies: <Inventory sx={{ fontSize: 40 }} />,
 };
 
-// Especialidades médicas disponibles
 const medicalSpecialties = [
   "Medicina General",
   "Cardiología",
@@ -98,16 +127,23 @@ export const RegisterPage = () => {
 
   const initialType = searchParams.get("tipo") as ServiceType | null;
   const [step, setStep] = useState(initialType ? 1 : 0);
-  const [selectedType, setSelectedType] = useState<ServiceType | null>(initialType);
+  const [selectedType, setSelectedType] = useState<ServiceType | null>(
+    initialType,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Estados para archivos
   const [licenses, setLicenses] = useState<File[]>([]);
   const [certificates, setCertificates] = useState<File[]>([]);
   const [professionalTitles, setProfessionalTitles] = useState<File[]>([]);
+
+  // Refs para inputs de archivos
   const licenseInputRef = useRef<HTMLInputElement>(null);
   const certificateInputRef = useRef<HTMLInputElement>(null);
   const professionalTitleInputRef = useRef<HTMLInputElement>(null);
+
   const [pharmacyChains, setPharmacyChains] = useState<PharmacyChain[]>([]);
-  
+
   useEffect(() => {
     if (selectedType === "pharmacy") {
       const chains = getPharmacyChains();
@@ -115,54 +151,46 @@ export const RegisterPage = () => {
     }
   }, [selectedType]);
 
-  // Esquema de validación para paso 1 (Información personal)
+  // Esquemas de Validación
   const personalInfoSchema = Yup.object({
     nombreCompleto: Yup.string()
-      .min(3, "El nombre debe tener al menos 3 caracteres")
-      .required("El nombre completo es requerido"),
-    email: Yup.string()
-      .email("Correo electrónico inválido")
-      .required("El correo electrónico es requerido"),
+      .min(3, "Mínimo 3 caracteres")
+      .required("Requerido"),
+    email: Yup.string().email("Email inválido").required("Requerido"),
     telefono: Yup.string()
-      .matches(/^\d{10}$/, "El teléfono debe tener exactamente 10 dígitos")
-      .required("El teléfono es requerido"),
+      .matches(/^\d{10}$/, "Debe tener 10 dígitos")
+      .required("Requerido"),
     whatsapp: Yup.string()
-      .matches(/^\d{10}$/, "El WhatsApp debe tener exactamente 10 dígitos")
-      .required("El WhatsApp es requerido"),
-    password: Yup.string()
-      .min(6, "La contraseña debe tener al menos 6 caracteres")
-      .max(50, "La contraseña no puede tener más de 50 caracteres")
-      .required("La contraseña es requerida"),
+      .matches(/^\d{10}$/, "Debe tener 10 dígitos")
+      .required("Requerido"),
+    password: Yup.string().min(6, "Mínimo 6 caracteres").required("Requerido"),
     confirmPassword: Yup.string()
       .oneOf([Yup.ref("password")], "Las contraseñas no coinciden")
-      .required("Debes confirmar tu contraseña"),
+      .required("Requerido"),
   });
 
-  // Esquema de validación para paso 2 (Información del servicio)
   const getServiceInfoSchema = () => {
     const baseSchema: any = {
       descripcion: Yup.string()
-        .min(10, "La descripción debe tener al menos 10 caracteres")
-        .required("La descripción es requerida"),
+        .min(10, "Mínimo 10 caracteres")
+        .required("Requerido"),
       direccion: Yup.string()
-        .min(5, "La dirección debe tener al menos 5 caracteres")
-        .required("La dirección es requerida"),
-      ciudad: Yup.string()
-        .min(2, "La ciudad debe tener al menos 2 caracteres")
-        .required("La ciudad es requerida"),
+        .min(5, "Mínimo 5 caracteres")
+        .required("Requerido"),
+      ciudad: Yup.string().min(2, "Mínimo 2 caracteres").required("Requerido"),
       tarifaConsulta: Yup.string(),
     };
 
     if (selectedType === "pharmacy") {
-      baseSchema.chainId = Yup.string().required("Debes seleccionar una cadena de farmacias");
+      baseSchema.chainId = Yup.string().required("Selecciona una cadena");
     } else {
       baseSchema.nombreServicio = Yup.string()
-        .min(3, "El nombre del servicio debe tener al menos 3 caracteres")
-        .required("El nombre del servicio es requerido");
+        .min(3, "Mínimo 3 caracteres")
+        .required("Requerido");
     }
 
     if (selectedType === "doctor") {
-      baseSchema.especialidad = Yup.string().required("La especialidad es requerida");
+      baseSchema.especialidad = Yup.string().required("Requerido");
     }
 
     return Yup.object(baseSchema);
@@ -170,23 +198,26 @@ export const RegisterPage = () => {
 
   const formik = useFormik({
     initialValues: {
-      // Personal Info
       nombreCompleto: "",
       email: "",
       telefono: "",
       whatsapp: "",
       password: "",
       confirmPassword: "",
-      // Service Info
       nombreServicio: "",
       especialidad: "",
       descripcion: "",
       direccion: "",
       ciudad: "",
       tarifaConsulta: "",
-      chainId: "", // Para farmacias
+      chainId: "",
     },
-    validationSchema: step === 1 ? personalInfoSchema : step === 2 ? getServiceInfoSchema() : undefined,
+    validationSchema:
+      step === 1
+        ? personalInfoSchema
+        : step === 2
+          ? getServiceInfoSchema()
+          : undefined,
     enableReinitialize: true,
     onSubmit: async (values) => {
       if (step === 1) {
@@ -194,6 +225,7 @@ export const RegisterPage = () => {
       } else if (step === 2) {
         setIsSubmitting(true);
         try {
+          // Construcción del Payload para el Backend
           const professionalData = {
             type: selectedType!,
             name: values.nombreCompleto,
@@ -201,18 +233,28 @@ export const RegisterPage = () => {
             password: values.password,
             phone: values.telefono,
             whatsapp: values.whatsapp,
-            serviceName: selectedType === "pharmacy" 
-              ? (pharmacyChains.find(c => c.id === values.chainId)?.name || values.nombreServicio)
-              : values.nombreServicio,
+            serviceName:
+              selectedType === "pharmacy"
+                ? pharmacyChains.find((c) => c.id === values.chainId)?.name ||
+                  values.nombreServicio
+                : values.nombreServicio,
             address: values.direccion,
             city: values.ciudad,
             price: selectedType === "doctor" ? values.tarifaConsulta : "",
             description: values.descripcion,
             chainId: selectedType === "pharmacy" ? values.chainId : undefined,
+            specialty:
+              selectedType === "doctor" ? values.especialidad : undefined,
+            files: {
+              licenses: selectedType === "doctor" ? licenses : [],
+              certificates: selectedType === "doctor" ? certificates : [],
+              titles: selectedType === "doctor" ? professionalTitles : [],
+            },
           };
 
+          // Llamada al hook (que a su vez llama al backend)
           await submit(professionalData);
-          setStep(3); // Step 3 - Success
+          setStep(3); // Éxito
         } catch (error) {
           console.error("Error al enviar solicitud:", error);
         } finally {
@@ -227,6 +269,64 @@ export const RegisterPage = () => {
     setStep(1);
   };
 
+  // Helper para renderizar lista de archivos
+  const renderFileList = (
+    files: File[],
+    setFiles: React.Dispatch<React.SetStateAction<File[]>>,
+  ) => (
+    <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 1 }}>
+      {files.map((file, index) => (
+        <Box
+          key={index}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            p: 1.5,
+            backgroundColor: "#f0fdfa",
+            borderRadius: 2,
+            border: "1px solid #d1fae5",
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              flex: 1,
+              overflow: "hidden",
+            }}
+          >
+            <Description sx={{ color: "#14b8a6", fontSize: 20 }} />
+            <Typography variant="body2" noWrap sx={{ flex: 1 }}>
+              {file.name}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ color: "text.secondary", flexShrink: 0 }}
+            >
+              {(file.size / 1024).toFixed(2)} KB
+            </Typography>
+          </Box>
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+              setFiles((prev) => prev.filter((_, i) => i !== index));
+            }}
+            sx={{
+              minWidth: "auto",
+              p: 0.5,
+              color: "#ef4444",
+              "&:hover": { backgroundColor: "#fee2e2" },
+            }}
+          >
+            <Close fontSize="small" />
+          </Button>
+        </Box>
+      ))}
+    </Box>
+  );
+
   return (
     <Box
       minHeight="100vh"
@@ -238,7 +338,7 @@ export const RegisterPage = () => {
         px: 2,
       }}
     >
-      {/* Background Effects */}
+      {/* Background Decor */}
       <Box
         sx={{
           position: "absolute",
@@ -267,14 +367,9 @@ export const RegisterPage = () => {
       />
 
       <Box
-        sx={{
-          maxWidth: "1200px",
-          mx: "auto",
-          position: "relative",
-          zIndex: 1,
-        }}
+        sx={{ maxWidth: "1200px", mx: "auto", position: "relative", zIndex: 1 }}
       >
-        {/* Header */}
+        {/* Header Navigation */}
         <Box
           sx={{
             display: "flex",
@@ -287,47 +382,35 @@ export const RegisterPage = () => {
           <Button
             variant="text"
             startIcon={<ArrowBack />}
-            onClick={() => (step > 0 ? setStep(step - 1) : navigate(ROUTES.HOME))}
-            sx={{
-              color: "#14b8a6",
-              fontWeight: 600,
-              textTransform: "uppercase",
-              "&:hover": {
-                backgroundColor: "rgba(20, 184, 166, 0.1)",
-              },
-            }}
+            onClick={() =>
+              step > 0 && step < 3 ? setStep(step - 1) : navigate(ROUTES.HOME)
+            }
+            sx={{ color: "#14b8a6", fontWeight: 600 }}
           >
-            {step > 0 ? "Atrás" : "Volver al inicio"}
+            {step > 0 && step < 3 ? "Atrás" : "Volver al inicio"}
           </Button>
-
-          {/* Progress Indicator */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {[0, 1, 2].map((s) => (
-              <Box
-                key={s}
-                sx={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: "50%",
-                  backgroundColor: step >= s ? "#14b8a6" : "#d1fae5",
-                  transition: "all 0.3s ease",
-                }}
-              />
-            ))}
-          </Box>
+          {/* Steps Indicator */}
+          {step < 3 && (
+            <Box sx={{ display: "flex", gap: 1 }}>
+              {[0, 1, 2].map((s) => (
+                <Box
+                  key={s}
+                  sx={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: "50%",
+                    bgcolor: step >= s ? "#14b8a6" : "#d1fae5",
+                    transition: "all 0.3s",
+                  }}
+                />
+              ))}
+            </Box>
+          )}
         </Box>
 
-        {/* Step 0: Select Service Type */}
+        {/* STEP 0: SELECT TYPE */}
         {step === 0 && (
-          <Box
-            sx={{
-              animation: "fadeIn 0.5s ease-in",
-              "@keyframes fadeIn": {
-                from: { opacity: 0, transform: "translateY(20px)" },
-                to: { opacity: 1, transform: "translateY(0)" },
-              },
-            }}
-          >
+          <Box sx={{ animation: "fadeIn 0.5s ease-in" }}>
             <Box sx={{ textAlign: "center", mb: 6 }}>
               <Typography
                 variant="h3"
@@ -339,17 +422,10 @@ export const RegisterPage = () => {
               >
                 ¿Qué tipo de servicio ofreces?
               </Typography>
-              <Typography
-                variant="body1"
-                sx={{
-                  color: "text.secondary",
-                  fontSize: { xs: "1rem", md: "1.125rem" },
-                }}
-              >
+              <Typography variant="body1" sx={{ color: "text.secondary" }}>
                 Selecciona el tipo de servicio que deseas registrar en MEDICONES
               </Typography>
             </Box>
-
             <Box
               sx={{
                 display: "grid",
@@ -371,22 +447,15 @@ export const RegisterPage = () => {
                     textAlign: "center",
                     cursor: "pointer",
                     background: selectedType === type ? "#f0fdfa" : "#f8fffd",
-                    border: selectedType === type ? "2px solid #14b8a6" : "2px solid transparent",
+                    border:
+                      selectedType === type
+                        ? "2px solid #14b8a6"
+                        : "2px solid transparent",
                     transition: "all 0.3s ease",
                     animation: `slideUp 0.5s ease ${index * 0.1}s both`,
-                    "@keyframes slideUp": {
-                      from: {
-                        opacity: 0,
-                        transform: "translateY(30px)",
-                      },
-                      to: {
-                        opacity: 1,
-                        transform: "translateY(0)",
-                      },
-                    },
                     "&:hover": {
-                      boxShadow: 6,
                       transform: "translateY(-8px)",
+                      boxShadow: 6,
                       borderColor: "#14b8a6",
                     },
                   }}
@@ -394,29 +463,26 @@ export const RegisterPage = () => {
                   <CardContent>
                     <Box
                       sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
                         width: 80,
                         height: 80,
                         borderRadius: 2,
-                        backgroundColor: "rgba(20, 184, 166, 0.1)",
+                        bgcolor: "rgba(20, 184, 166, 0.1)",
                         mx: "auto",
                         mb: 3,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                         color: "#14b8a6",
                       }}
                     >
                       {serviceIcons[type]}
                     </Box>
-                    <Typography
-                      variant="h6"
-                      sx={{ fontWeight: 600, mb: 1 }}
-                    >
+                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
                       {serviceLabels[type]}
                     </Typography>
                     <Typography
                       variant="body2"
-                      sx={{ color: "text.secondary", fontSize: "0.875rem" }}
+                      sx={{ color: "text.secondary" }}
                     >
                       {serviceDescriptions[type]}
                     </Typography>
@@ -427,7 +493,7 @@ export const RegisterPage = () => {
           </Box>
         )}
 
-        {/* Step 1: Personal Information */}
+        {/* STEP 1: PERSONAL INFO */}
         {step === 1 && selectedType && (
           <Card
             sx={{
@@ -435,10 +501,6 @@ export const RegisterPage = () => {
               p: { xs: 3, md: 5 },
               boxShadow: "0 20px 60px rgba(0,0,0,.08)",
               animation: "fadeIn 0.5s ease-in",
-              "@keyframes fadeIn": {
-                from: { opacity: 0, transform: "translateY(20px)" },
-                to: { opacity: 1, transform: "translateY(0)" },
-              },
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
@@ -447,7 +509,7 @@ export const RegisterPage = () => {
                   width: 56,
                   height: 56,
                   borderRadius: 2,
-                  backgroundColor: "rgba(20, 184, 166, 0.1)",
+                  bgcolor: "rgba(20, 184, 166, 0.1)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -476,81 +538,122 @@ export const RegisterPage = () => {
                 }}
               >
                 <TextField
-                  label={selectedType === "clinic" ? "Nombre del administrador *" : "Nombre completo *"}
-                  name="nombreCompleto"
-                  placeholder={selectedType === "clinic" ? "Nombre y apellido del administrador" : undefined}
-                  value={formik.values.nombreCompleto}
-                  onChange={(e) => {
-                    handleLetterInput(e, (value) => {
-                      formik.setFieldValue("nombreCompleto", value);
-                    });
-                  }}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.nombreCompleto && Boolean(formik.errors.nombreCompleto)}
-                  helperText={
-                    formik.touched.nombreCompleto
-                      ? formik.errors.nombreCompleto
-                      : selectedType === "clinic"
-                      ? "Nombre del administrador (solo letras y espacios)"
-                      : "Solo letras y espacios"
-                  }
-                  required
                   fullWidth
+                  required
+                  label="Nombre completo"
+                  name="nombreCompleto"
+                  value={formik.values.nombreCompleto}
+                  onChange={(e) =>
+                    handleLetterInput(e, (val) =>
+                      formik.setFieldValue("nombreCompleto", val),
+                    )
+                  }
+                  onBlur={formik.handleBlur}
+                  error={
+                    formik.touched.nombreCompleto &&
+                    Boolean(formik.errors.nombreCompleto)
+                  }
+                  helperText={
+                    formik.touched.nombreCompleto &&
+                    formik.errors.nombreCompleto
+                  }
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PersonIcon sx={{ color: "#9ca3af" }} />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
                 />
                 <TextField
-                  label="Correo electrónico *"
+                  fullWidth
+                  required
+                  label="Email"
                   name="email"
                   type="email"
                   value={formik.values.email}
-                  onChange={(e) => {
-                    handleEmailInput(e, (value) => {
-                      formik.setFieldValue("email", value);
-                    });
-                  }}
+                  onChange={(e) =>
+                    handleEmailInput(e, (val) =>
+                      formik.setFieldValue("email", val),
+                    )
+                  }
                   onBlur={formik.handleBlur}
                   error={formik.touched.email && Boolean(formik.errors.email)}
-                  helperText={formik.touched.email ? formik.errors.email : "Formato: ejemplo@correo.com"}
-                  required
-                  fullWidth
+                  helperText={formik.touched.email && formik.errors.email}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <EmailIcon sx={{ color: "#9ca3af" }} />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
                 />
                 <TextField
-                  label="Teléfono *"
+                  fullWidth
+                  required
+                  label="Teléfono"
                   name="telefono"
-                  value={formik.values.telefono}
-                  onChange={(e) => {
-                    handleEcuadorPhoneInput(e, (value) => {
-                      formik.setFieldValue("telefono", value);
-                    });
-                  }}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.telefono && Boolean(formik.errors.telefono)}
-                  helperText={formik.touched.telefono ? formik.errors.telefono : "Solo números, máximo 10 dígitos (Ecuador)"}
-                  required
-                  fullWidth
                   inputProps={{ maxLength: 10 }}
+                  value={formik.values.telefono}
+                  onChange={(e) =>
+                    handleEcuadorPhoneInput(e, (val) =>
+                      formik.setFieldValue("telefono", val),
+                    )
+                  }
+                  onBlur={formik.handleBlur}
+                  error={
+                    formik.touched.telefono && Boolean(formik.errors.telefono)
+                  }
+                  helperText={formik.touched.telefono && formik.errors.telefono}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PhoneIcon sx={{ color: "#9ca3af" }} />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
                 />
                 <TextField
-                  label="WhatsApp *"
-                  name="whatsapp"
-                  value={formik.values.whatsapp}
-                  onChange={(e) => {
-                    handleEcuadorPhoneInput(e, (value) => {
-                      formik.setFieldValue("whatsapp", value);
-                    });
-                  }}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.whatsapp && Boolean(formik.errors.whatsapp)}
-                  helperText={formik.touched.whatsapp ? formik.errors.whatsapp : "Solo números, máximo 10 dígitos (Ecuador)"}
-                  required
                   fullWidth
+                  required
+                  label="WhatsApp"
+                  name="whatsapp"
                   inputProps={{ maxLength: 10 }}
+                  value={formik.values.whatsapp}
+                  onChange={(e) =>
+                    handleEcuadorPhoneInput(e, (val) =>
+                      formik.setFieldValue("whatsapp", val),
+                    )
+                  }
+                  onBlur={formik.handleBlur}
+                  error={
+                    formik.touched.whatsapp && Boolean(formik.errors.whatsapp)
+                  }
+                  helperText={formik.touched.whatsapp && formik.errors.whatsapp}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <WhatsAppIcon sx={{ color: "#9ca3af" }} />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
                 />
               </Box>
 
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, mt: 3 }}>
-                Contraseña
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: 600, mb: 2, mt: 3 }}
+              >
+                Seguridad
               </Typography>
-
               <Box
                 sx={{
                   display: "grid",
@@ -559,30 +662,54 @@ export const RegisterPage = () => {
                 }}
               >
                 <TextField
-                  label="Contraseña *"
+                  fullWidth
+                  required
+                  label="Contraseña"
                   name="password"
                   type="password"
                   value={formik.values.password}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  error={formik.touched.password && Boolean(formik.errors.password)}
-                  helperText={formik.touched.password ? formik.errors.password : "Mínimo 6 caracteres, máximo 50"}
-                  required
-                  fullWidth
-                  inputProps={{ maxLength: 50 }}
+                  error={
+                    formik.touched.password && Boolean(formik.errors.password)
+                  }
+                  helperText={formik.touched.password && formik.errors.password}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LockIcon sx={{ color: "#9ca3af" }} />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
                 />
                 <TextField
-                  label="Confirmar contraseña *"
+                  fullWidth
+                  required
+                  label="Confirmar Contraseña"
                   name="confirmPassword"
                   type="password"
                   value={formik.values.confirmPassword}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  error={formik.touched.confirmPassword && Boolean(formik.errors.confirmPassword)}
-                  helperText={formik.touched.confirmPassword ? formik.errors.confirmPassword : "Mínimo 6 caracteres, máximo 50"}
-                  required
-                  fullWidth
-                  inputProps={{ maxLength: 50 }}
+                  error={
+                    formik.touched.confirmPassword &&
+                    Boolean(formik.errors.confirmPassword)
+                  }
+                  helperText={
+                    formik.touched.confirmPassword &&
+                    formik.errors.confirmPassword
+                  }
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LockIcon sx={{ color: "#9ca3af" }} />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
                 />
               </Box>
 
@@ -594,10 +721,8 @@ export const RegisterPage = () => {
                   sx={{
                     px: 5,
                     py: 1.5,
-                    backgroundColor: "#14b8a6",
-                    "&:hover": {
-                      backgroundColor: "#0d9488",
-                    },
+                    bgcolor: "#14b8a6",
+                    "&:hover": { bgcolor: "#0d9488" },
                   }}
                 >
                   Continuar
@@ -607,7 +732,7 @@ export const RegisterPage = () => {
           </Card>
         )}
 
-        {/* Step 2: Service Details */}
+        {/* STEP 2: SERVICE INFO */}
         {step === 2 && selectedType && (
           <Card
             sx={{
@@ -615,10 +740,6 @@ export const RegisterPage = () => {
               p: { xs: 3, md: 5 },
               boxShadow: "0 20px 60px rgba(0,0,0,.08)",
               animation: "fadeIn 0.5s ease-in",
-              "@keyframes fadeIn": {
-                from: { opacity: 0, transform: "translateY(20px)" },
-                to: { opacity: 1, transform: "translateY(0)" },
-              },
             }}
           >
             <Box sx={{ mb: 3 }}>
@@ -641,30 +762,45 @@ export const RegisterPage = () => {
               >
                 {selectedType === "pharmacy" ? (
                   <FormControl fullWidth required>
-                    <InputLabel>Cadena de Farmacias *</InputLabel>
+                    <InputLabel>Cadena de Farmacias</InputLabel>
                     <Select
                       name="chainId"
                       value={formik.values.chainId}
-                      label="Cadena de Farmacias *"
+                      label="Cadena de Farmacias"
                       onChange={(e) => {
                         formik.setFieldValue("chainId", e.target.value);
-                        const selectedChain = pharmacyChains.find(c => c.id === e.target.value);
-                        if (selectedChain) {
-                          formik.setFieldValue("nombreServicio", selectedChain.name);
-                        }
+                        const selectedChain = pharmacyChains.find(
+                          (c) => c.id === e.target.value,
+                        );
+                        if (selectedChain)
+                          formik.setFieldValue(
+                            "nombreServicio",
+                            selectedChain.name,
+                          );
                       }}
                       onBlur={formik.handleBlur}
-                      error={formik.touched.chainId && Boolean((formik.errors as any).chainId)}
+                      error={
+                        formik.touched.chainId &&
+                        Boolean((formik.errors as any).chainId)
+                      }
                     >
                       {pharmacyChains.map((chain) => (
                         <MenuItem key={chain.id} value={chain.id}>
-                          <Stack direction="row" spacing={2} alignItems="center">
+                          <Stack
+                            direction="row"
+                            spacing={2}
+                            alignItems="center"
+                          >
                             {chain.logoUrl ? (
                               <Box
                                 component="img"
                                 src={chain.logoUrl}
                                 alt={chain.name}
-                                sx={{ width: 32, height: 32, objectFit: "contain" }}
+                                sx={{
+                                  width: 32,
+                                  height: 32,
+                                  objectFit: "contain",
+                                }}
                               />
                             ) : (
                               <Avatar sx={{ width: 24, height: 24 }}>
@@ -676,425 +812,311 @@ export const RegisterPage = () => {
                         </MenuItem>
                       ))}
                     </Select>
-                    {(formik.touched.chainId && (formik.errors as any).chainId) && (
-                      <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
-                        {(formik.errors as any).chainId}
-                      </Typography>
-                    )}
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, ml: 1.75 }}>
-                      Si tu cadena no aparece, contacta al administrador
-                    </Typography>
                   </FormControl>
                 ) : (
                   <TextField
-                    label={selectedType === "clinic" ? "Nombre de la clínica *" : "Nombre del servicio *"}
-                    name="nombreServicio"
-                    placeholder={
-                      selectedType === "doctor"
-                        ? "Consultorio Dr. Pérez"
-                        : selectedType === "clinic"
-                        ? "Clínica Central"
-                        : "Nombre del establecimiento"
-                    }
-                    value={formik.values.nombreServicio}
-                    onChange={(e) => {
-                      handleBothInput(e, (value) => {
-                        formik.setFieldValue("nombreServicio", value);
-                      });
-                    }}
-                    onBlur={formik.handleBlur}
-                    error={formik.touched.nombreServicio && Boolean(formik.errors.nombreServicio)}
-                    helperText={formik.touched.nombreServicio ? formik.errors.nombreServicio : "Letras, números y caracteres especiales"}
-                    required
                     fullWidth
+                    required
+                    label="Nombre del servicio"
+                    name="nombreServicio"
+                    value={formik.values.nombreServicio}
+                    onChange={(e) =>
+                      handleBothInput(e, (val) =>
+                        formik.setFieldValue("nombreServicio", val),
+                      )
+                    }
+                    onBlur={formik.handleBlur}
+                    error={
+                      formik.touched.nombreServicio &&
+                      Boolean(formik.errors.nombreServicio)
+                    }
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <BusinessIcon sx={{ color: "#9ca3af" }} />
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
                   />
                 )}
+
                 {selectedType === "doctor" && (
                   <FormControl fullWidth required>
-                    <InputLabel>Especialidad *</InputLabel>
+                    <InputLabel>Especialidad</InputLabel>
                     <Select
                       name="especialidad"
                       value={formik.values.especialidad}
-                      label="Especialidad *"
-                      onChange={(e) => {
-                        formik.setFieldValue("especialidad", e.target.value);
-                      }}
+                      label="Especialidad"
+                      onChange={(e) =>
+                        formik.setFieldValue("especialidad", e.target.value)
+                      }
                       onBlur={formik.handleBlur}
-                      error={formik.touched.especialidad && Boolean(formik.errors.especialidad)}
+                      error={
+                        formik.touched.especialidad &&
+                        Boolean(formik.errors.especialidad)
+                      }
                     >
-                      {medicalSpecialties.map((specialty) => (
-                        <MenuItem key={specialty} value={specialty}>
-                          {specialty}
+                      {medicalSpecialties.map((s) => (
+                        <MenuItem key={s} value={s}>
+                          {s}
                         </MenuItem>
                       ))}
                     </Select>
-                    {formik.touched.especialidad && formik.errors.especialidad && (
-                      <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
-                        {formik.errors.especialidad}
-                      </Typography>
-                    )}
                   </FormControl>
                 )}
+
                 <TextField
-                  label="Dirección *"
-                  name="direccion"
-                  placeholder="Calle Principal #123"
-                  value={formik.values.direccion}
-                  onChange={(e) => {
-                    handleBothInput(e, (value) => {
-                      formik.setFieldValue("direccion", value);
-                    });
-                  }}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.direccion && Boolean(formik.errors.direccion)}
-                  helperText={formik.touched.direccion ? formik.errors.direccion : "Letras, números y caracteres especiales"}
-                  required
                   fullWidth
+                  required
+                  label="Dirección"
+                  name="direccion"
+                  value={formik.values.direccion}
+                  onChange={(e) =>
+                    handleBothInput(e, (val) =>
+                      formik.setFieldValue("direccion", val),
+                    )
+                  }
+                  onBlur={formik.handleBlur}
+                  error={
+                    formik.touched.direccion && Boolean(formik.errors.direccion)
+                  }
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LocationIcon sx={{ color: "#9ca3af" }} />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
                 />
                 <TextField
-                  label="Ciudad *"
+                  fullWidth
+                  required
+                  label="Ciudad"
                   name="ciudad"
-                  placeholder="Tu ciudad"
                   value={formik.values.ciudad}
-                  onChange={(e) => {
-                    handleLetterInput(e, (value) => {
-                      formik.setFieldValue("ciudad", value);
-                    });
-                  }}
+                  onChange={(e) =>
+                    handleLetterInput(e, (val) =>
+                      formik.setFieldValue("ciudad", val),
+                    )
+                  }
                   onBlur={formik.handleBlur}
                   error={formik.touched.ciudad && Boolean(formik.errors.ciudad)}
-                  helperText={formik.touched.ciudad ? formik.errors.ciudad : "Solo letras y espacios"}
-                  required
-                  fullWidth
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <MapIcon sx={{ color: "#9ca3af" }} />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
                 />
                 {selectedType === "doctor" && (
                   <TextField
-                    label="Tarifa de consulta"
-                    name="tarifaConsulta"
-                    placeholder="$50.00"
-                    value={formik.values.tarifaConsulta}
-                    onChange={(e) => {
-                      handleNumberInput(e, (value) => {
-                        formik.setFieldValue("tarifaConsulta", value);
-                      });
-                    }}
-                    onBlur={formik.handleBlur}
-                    helperText="Solo números y punto decimal"
                     fullWidth
+                    label="Tarifa de consulta ($)"
+                    name="tarifaConsulta"
+                    value={formik.values.tarifaConsulta}
+                    onChange={(e) =>
+                      handleNumberInput(e, (val) =>
+                        formik.setFieldValue("tarifaConsulta", val),
+                      )
+                    }
+                    onBlur={formik.handleBlur}
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <AttachMoneyIcon sx={{ color: "#9ca3af" }} />
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
                   />
                 )}
               </Box>
 
               <TextField
-                label="Descripción del servicio *"
-                name="descripcion"
-                placeholder="Describe brevemente los servicios que ofreces..."
-                value={formik.values.descripcion}
-                onChange={(e) => {
-                  handleBothInput(e, (value) => {
-                    formik.setFieldValue("descripcion", value);
-                  });
-                }}
-                onBlur={formik.handleBlur}
-                error={formik.touched.descripcion && Boolean(formik.errors.descripcion)}
-                helperText={formik.touched.descripcion ? formik.errors.descripcion : "Letras, números y caracteres especiales"}
+                fullWidth
                 required
                 multiline
                 rows={4}
-                fullWidth
+                label="Descripción"
+                name="descripcion"
+                value={formik.values.descripcion}
+                onChange={(e) =>
+                  handleBothInput(e, (val) =>
+                    formik.setFieldValue("descripcion", val),
+                  )
+                }
+                onBlur={formik.handleBlur}
+                error={
+                  formik.touched.descripcion &&
+                  Boolean(formik.errors.descripcion)
+                }
                 sx={{ mb: 3 }}
               />
 
-              {/* Documents Upload (solo para médicos) */}
+              {/* SECTION: ARCHIVOS (Solo Médicos) */}
               {selectedType === "doctor" && (
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 3 }}>
-                  Documentos de respaldo
-                </Typography>
-
-                {/* Licencias */}
                 <Box sx={{ mb: 3 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1.5, color: "text.secondary" }}>
-                    Licencias
-                  </Typography>
-                  <input
-                    type="file"
-                    ref={licenseInputRef}
-                    multiple
-                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                    style={{ display: "none" }}
-                    onChange={(e) => {
-                      const files = Array.from(e.target.files || []);
-                      setLicenses((prev) => [...prev, ...files]);
-                    }}
-                  />
-                  <Box
-                    onClick={() => licenseInputRef.current?.click()}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      const files = Array.from(e.dataTransfer.files);
-                      setLicenses((prev) => [...prev, ...files]);
-                    }}
-                    sx={{
-                      border: "2px dashed #d1fae5",
-                      borderRadius: 3,
-                      p: 3,
-                      textAlign: "center",
-                      backgroundColor: "#f8fffd",
-                      cursor: "pointer",
-                      transition: "all 0.3s ease",
-                      "&:hover": {
-                        borderColor: "#14b8a6",
-                        backgroundColor: "#f0fdfa",
-                      },
-                    }}
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ fontWeight: 600, mb: 3 }}
                   >
-                    <CloudUpload sx={{ fontSize: 32, color: "#94a3b8", mb: 1 }} />
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>
-                      Arrastra archivos aquí o haz clic para subir
-                    </Typography>
-                  </Box>
-                  {licenses.length > 0 && (
-                    <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 1 }}>
-                      {licenses.map((file, index) => (
-                        <Box
-                          key={index}
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            p: 1.5,
-                            backgroundColor: "#f0fdfa",
-                            borderRadius: 2,
-                            border: "1px solid #d1fae5",
-                          }}
-                        >
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1 }}>
-                            <Description sx={{ color: "#14b8a6", fontSize: 20 }} />
-                            <Typography variant="body2" sx={{ flex: 1, textAlign: "left" }}>
-                              {file.name}
-                            </Typography>
-                            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                              {(file.size / 1024).toFixed(2)} KB
-                            </Typography>
-                          </Box>
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setLicenses((prev) => prev.filter((_, i) => i !== index));
-                            }}
-                            sx={{
-                              minWidth: "auto",
-                              p: 0.5,
-                              color: "#ef4444",
-                              "&:hover": {
-                                backgroundColor: "#fee2e2",
-                              },
-                            }}
-                          >
-                            <Close />
-                          </Button>
-                        </Box>
-                      ))}
-                    </Box>
-                  )}
-                </Box>
+                    Documentos de respaldo
+                  </Typography>
 
-                {/* Certificados */}
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1.5, color: "text.secondary" }}>
-                    Certificados
-                  </Typography>
-                  <input
-                    type="file"
-                    ref={certificateInputRef}
-                    multiple
-                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                    style={{ display: "none" }}
-                    onChange={(e) => {
-                      const files = Array.from(e.target.files || []);
-                      setCertificates((prev) => [...prev, ...files]);
-                    }}
-                  />
-                  <Box
-                    onClick={() => certificateInputRef.current?.click()}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      const files = Array.from(e.dataTransfer.files);
-                      setCertificates((prev) => [...prev, ...files]);
-                    }}
-                    sx={{
-                      border: "2px dashed #d1fae5",
-                      borderRadius: 3,
-                      p: 3,
-                      textAlign: "center",
-                      backgroundColor: "#f8fffd",
-                      cursor: "pointer",
-                      transition: "all 0.3s ease",
-                      "&:hover": {
-                        borderColor: "#14b8a6",
-                        backgroundColor: "#f0fdfa",
-                      },
-                    }}
-                  >
-                    <CloudUpload sx={{ fontSize: 32, color: "#94a3b8", mb: 1 }} />
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>
-                      Arrastra archivos aquí o haz clic para subir
+                  {/* Licencias */}
+                  <Box sx={{ mb: 3 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 600, mb: 1.5, color: "text.secondary" }}
+                    >
+                      Licencias
                     </Typography>
-                  </Box>
-                  {certificates.length > 0 && (
-                    <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 1 }}>
-                      {certificates.map((file, index) => (
-                        <Box
-                          key={index}
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            p: 1.5,
-                            backgroundColor: "#f0fdfa",
-                            borderRadius: 2,
-                            border: "1px solid #d1fae5",
-                          }}
-                        >
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1 }}>
-                            <Description sx={{ color: "#14b8a6", fontSize: 20 }} />
-                            <Typography variant="body2" sx={{ flex: 1, textAlign: "left" }}>
-                              {file.name}
-                            </Typography>
-                            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                              {(file.size / 1024).toFixed(2)} KB
-                            </Typography>
-                          </Box>
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCertificates((prev) => prev.filter((_, i) => i !== index));
-                            }}
-                            sx={{
-                              minWidth: "auto",
-                              p: 0.5,
-                              color: "#ef4444",
-                              "&:hover": {
-                                backgroundColor: "#fee2e2",
-                              },
-                            }}
-                          >
-                            <Close />
-                          </Button>
-                        </Box>
-                      ))}
+                    <input
+                      type="file"
+                      ref={licenseInputRef}
+                      multiple
+                      accept=".pdf,.jpg,.png"
+                      style={{ display: "none" }}
+                      onChange={(e) =>
+                        setLicenses((p) => [
+                          ...p,
+                          ...Array.from(e.target.files || []),
+                        ])
+                      }
+                    />
+                    <Box
+                      onClick={() => licenseInputRef.current?.click()}
+                      sx={{
+                        border: "2px dashed #d1fae5",
+                        borderRadius: 3,
+                        p: 3,
+                        textAlign: "center",
+                        bgcolor: "#f8fffd",
+                        cursor: "pointer",
+                        "&:hover": {
+                          borderColor: "#14b8a6",
+                          bgcolor: "#f0fdfa",
+                        },
+                      }}
+                    >
+                      <CloudUpload
+                        sx={{ fontSize: 32, color: "#94a3b8", mb: 1 }}
+                      />
+                      <Typography variant="body2">
+                        Click para subir licencias
+                      </Typography>
                     </Box>
-                  )}
-                </Box>
+                    {licenses.length > 0 &&
+                      renderFileList(licenses, setLicenses)}
+                  </Box>
 
-                {/* Títulos Profesionales */}
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1.5, color: "text.secondary" }}>
-                    Títulos Profesionales
-                  </Typography>
-                  <input
-                    type="file"
-                    ref={professionalTitleInputRef}
-                    multiple
-                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                    style={{ display: "none" }}
-                    onChange={(e) => {
-                      const files = Array.from(e.target.files || []);
-                      setProfessionalTitles((prev) => [...prev, ...files]);
-                    }}
-                  />
-                  <Box
-                    onClick={() => professionalTitleInputRef.current?.click()}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      const files = Array.from(e.dataTransfer.files);
-                      setProfessionalTitles((prev) => [...prev, ...files]);
-                    }}
-                    sx={{
-                      border: "2px dashed #d1fae5",
-                      borderRadius: 3,
-                      p: 3,
-                      textAlign: "center",
-                      backgroundColor: "#f8fffd",
-                      cursor: "pointer",
-                      transition: "all 0.3s ease",
-                      "&:hover": {
-                        borderColor: "#14b8a6",
-                        backgroundColor: "#f0fdfa",
-                      },
-                    }}
-                  >
-                    <CloudUpload sx={{ fontSize: 32, color: "#94a3b8", mb: 1 }} />
-                    <Typography variant="body2" sx={{ mb: 0.5 }}>
-                      Arrastra archivos aquí o haz clic para subir
+                  {/* Certificados */}
+                  <Box sx={{ mb: 3 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 600, mb: 1.5, color: "text.secondary" }}
+                    >
+                      Certificados
                     </Typography>
-                  </Box>
-                  {professionalTitles.length > 0 && (
-                    <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 1 }}>
-                      {professionalTitles.map((file, index) => (
-                        <Box
-                          key={index}
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            p: 1.5,
-                            backgroundColor: "#f0fdfa",
-                            borderRadius: 2,
-                            border: "1px solid #d1fae5",
-                          }}
-                        >
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1 }}>
-                            <Description sx={{ color: "#14b8a6", fontSize: 20 }} />
-                            <Typography variant="body2" sx={{ flex: 1, textAlign: "left" }}>
-                              {file.name}
-                            </Typography>
-                            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                              {(file.size / 1024).toFixed(2)} KB
-                            </Typography>
-                          </Box>
-                          <Button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setProfessionalTitles((prev) => prev.filter((_, i) => i !== index));
-                            }}
-                            sx={{
-                              minWidth: "auto",
-                              p: 0.5,
-                              color: "#ef4444",
-                              "&:hover": {
-                                backgroundColor: "#fee2e2",
-                              },
-                            }}
-                          >
-                            <Close />
-                          </Button>
-                        </Box>
-                      ))}
+                    <input
+                      type="file"
+                      ref={certificateInputRef}
+                      multiple
+                      accept=".pdf,.jpg,.png"
+                      style={{ display: "none" }}
+                      onChange={(e) =>
+                        setCertificates((p) => [
+                          ...p,
+                          ...Array.from(e.target.files || []),
+                        ])
+                      }
+                    />
+                    <Box
+                      onClick={() => certificateInputRef.current?.click()}
+                      sx={{
+                        border: "2px dashed #d1fae5",
+                        borderRadius: 3,
+                        p: 3,
+                        textAlign: "center",
+                        bgcolor: "#f8fffd",
+                        cursor: "pointer",
+                        "&:hover": {
+                          borderColor: "#14b8a6",
+                          bgcolor: "#f0fdfa",
+                        },
+                      }}
+                    >
+                      <CloudUpload
+                        sx={{ fontSize: 32, color: "#94a3b8", mb: 1 }}
+                      />
+                      <Typography variant="body2">
+                        Click para subir certificados
+                      </Typography>
                     </Box>
-                  )}
+                    {certificates.length > 0 &&
+                      renderFileList(certificates, setCertificates)}
+                  </Box>
+
+                  {/* Títulos */}
+                  <Box sx={{ mb: 3 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 600, mb: 1.5, color: "text.secondary" }}
+                    >
+                      Títulos Profesionales
+                    </Typography>
+                    <input
+                      type="file"
+                      ref={professionalTitleInputRef}
+                      multiple
+                      accept=".pdf,.jpg,.png"
+                      style={{ display: "none" }}
+                      onChange={(e) =>
+                        setProfessionalTitles((p) => [
+                          ...p,
+                          ...Array.from(e.target.files || []),
+                        ])
+                      }
+                    />
+                    <Box
+                      onClick={() => professionalTitleInputRef.current?.click()}
+                      sx={{
+                        border: "2px dashed #d1fae5",
+                        borderRadius: 3,
+                        p: 3,
+                        textAlign: "center",
+                        bgcolor: "#f8fffd",
+                        cursor: "pointer",
+                        "&:hover": {
+                          borderColor: "#14b8a6",
+                          bgcolor: "#f0fdfa",
+                        },
+                      }}
+                    >
+                      <CloudUpload
+                        sx={{ fontSize: 32, color: "#94a3b8", mb: 1 }}
+                      />
+                      <Typography variant="body2">
+                        Click para subir títulos
+                      </Typography>
+                    </Box>
+                    {professionalTitles.length > 0 &&
+                      renderFileList(professionalTitles, setProfessionalTitles)}
+                  </Box>
                 </Box>
-              </Box>
               )}
 
-
-              <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
+              <Box
+                sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}
+              >
                 <Button
                   variant="outlined"
                   onClick={() => setStep(1)}
@@ -1103,7 +1125,7 @@ export const RegisterPage = () => {
                     color: "#14b8a6",
                     "&:hover": {
                       borderColor: "#0d9488",
-                      backgroundColor: "rgba(20, 184, 166, 0.1)",
+                      bgcolor: "rgba(20, 184, 166, 0.1)",
                     },
                   }}
                 >
@@ -1115,15 +1137,16 @@ export const RegisterPage = () => {
                   disabled={isSubmitting || loading}
                   sx={{
                     px: 5,
-                    backgroundColor: "#14b8a6",
-                    "&:hover": {
-                      backgroundColor: "#0d9488",
-                    },
+                    bgcolor: "#14b8a6",
+                    "&:hover": { bgcolor: "#0d9488" },
                   }}
                 >
                   {isSubmitting || loading ? (
                     <>
-                      <CircularProgress size={20} sx={{ mr: 1, color: "white" }} />
+                      <CircularProgress
+                        size={20}
+                        sx={{ mr: 1, color: "white" }}
+                      />{" "}
                       Enviando...
                     </>
                   ) : (
@@ -1135,30 +1158,15 @@ export const RegisterPage = () => {
           </Card>
         )}
 
-        {/* Step 3: Success */}
+        {/* STEP 3: SUCCESS */}
         {step === 3 && (
-          <Box
-            sx={{
-              textAlign: "center",
-              animation: "scaleIn 0.5s ease-in",
-              "@keyframes scaleIn": {
-                from: {
-                  opacity: 0,
-                  transform: "scale(0.9)",
-                },
-                to: {
-                  opacity: 1,
-                  transform: "scale(1)",
-                },
-              },
-            }}
-          >
+          <Box sx={{ textAlign: "center", animation: "scaleIn 0.5s ease-in" }}>
             <Box
               sx={{
                 width: 96,
                 height: 96,
                 borderRadius: "50%",
-                backgroundColor: "rgba(34, 197, 94, 0.1)",
+                bgcolor: "rgba(34, 197, 94, 0.1)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -1185,10 +1193,10 @@ export const RegisterPage = () => {
                 mb: 4,
                 maxWidth: "500px",
                 mx: "auto",
-                fontSize: { xs: "1rem", md: "1.125rem" },
               }}
             >
-              Tu solicitud será revisada por el administrador. Recibirás una notificación por correo cuando sea aprobada.
+              Tu solicitud será revisada por el administrador. Recibirás una
+              notificación por correo cuando sea aprobada.
             </Typography>
             <Button
               variant="contained"
@@ -1197,10 +1205,8 @@ export const RegisterPage = () => {
               sx={{
                 px: 5,
                 py: 1.5,
-                backgroundColor: "#14b8a6",
-                "&:hover": {
-                  backgroundColor: "#0d9488",
-                },
+                bgcolor: "#14b8a6",
+                "&:hover": { bgcolor: "#0d9488" },
               }}
             >
               Volver al inicio

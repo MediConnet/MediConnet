@@ -17,87 +17,75 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { useFormik } from "formik";
 import { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { useFormik } from "formik";
 import * as Yup from "yup";
 import { ROUTES } from "../../../../app/config/constants";
+import { env } from "../../../../app/config/env";
 import { useAuthStore } from "../../../../app/store/auth.store";
 import { loginAPI } from "../../infrastructure/auth.api";
-import { env } from "../../../../app/config/env";
 
-// Mock users para cuentas de prueba
+// Mock users para cuentas de prueba (Solo para UI, la auth es real)
 const mockUsers = [
   {
     id: "1",
     email: "admin@medicones.com",
     password: "admin123",
-    nombre: "Administrador",
-    role: "admin" as const,
-    tipo: null as string | null,
+    role: "admin",
+    tipo: null,
+    label: "Administrador",
   },
   {
     id: "2",
     email: "doctor@medicones.com",
     password: "doctor123",
-    nombre: "Dr. Juan Pérez",
-    role: "profesional" as const,
-    tipo: "doctor" as string,
+    role: "profesional",
+    tipo: "doctor",
+    label: "Médico",
   },
   {
     id: "3",
     email: "farmacia@medicones.com",
     password: "farmacia123",
-    nombre: "Farmacia Central",
-    role: "profesional" as const,
-    tipo: "pharmacy" as string,
+    role: "profesional",
+    tipo: "pharmacy",
+    label: "Farmacia",
   },
   {
     id: "4",
     email: "lab@medicones.com",
     password: "lab123",
-    nombre: "Laboratorio Clínico",
-    role: "profesional" as const,
-    tipo: "lab" as string,
+    role: "profesional",
+    tipo: "laboratory",
+    label: "Laboratorio",
   },
   {
     id: "5",
     email: "ambulancia@medicones.com",
     password: "ambulancia123",
-    nombre: "Servicio de Ambulancias",
-    role: "profesional" as const,
-    tipo: "ambulance" as string,
+    role: "profesional",
+    tipo: "ambulance",
+    label: "Ambulancia",
   },
   {
     id: "6",
     email: "insumos@medicones.com",
     password: "insumos123",
-    nombre: "Insumos Médicos",
-    role: "profesional" as const,
-    tipo: "supplies" as string,
+    role: "profesional",
+    tipo: "supplies",
+    label: "Insumos Médicos",
   },
   {
     id: "7",
     email: "clinic@medicones.com",
     password: "clinic123",
-    nombre: "Clínica Central",
-    role: "profesional" as const,
-    tipo: "clinic" as string,
+    role: "profesional",
+    tipo: "clinic",
+    label: "Clínica",
   },
 ];
 
-const serviceLabels: Record<string, string> = {
-  doctor: "Médico",
-  pharmacy: "Farmacia",
-  lab: "Laboratorio",
-  ambulance: "Ambulancia",
-  supplies: "Insumos Médicos",
-  clinic: "Clínica",
-};
-
-// NOTE: authenticateUser y mockUsers ya no se usan porque ahora usamos la API real del backend
-
-// Esquema de validación
 const loginValidationSchema = Yup.object({
   email: Yup.string()
     .email("Correo electrónico inválido")
@@ -109,7 +97,7 @@ const loginValidationSchema = Yup.object({
 
 export const LoginPage = () => {
   const navigate = useNavigate();
-  const authStore = useAuthStore();
+  const login = useAuthStore((state) => state.login);
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -123,141 +111,91 @@ export const LoginPage = () => {
     onSubmit: async (values) => {
       setIsLoading(true);
       try {
-        // Llamar a la API real de login
+        // 1. Llamada a la API
         const response = await loginAPI({
           email: values.email,
           password: values.password,
         });
 
-        // Leer datos del usuario desde response.user
-        const user = response.user;
-        // Priorizar accessToken (recomendado por el backend), luego token
-        const token = response.accessToken || response.token || '';
+        // 2. Extracción de datos
+        const { user, token } = response;
 
-        // DEBUG: Verificar datos recibidos del backend
-        console.log('📥 Respuesta completa del login:', response);
-        console.log('👤 Usuario recibido:', user);
-        console.log('🔑 Token recibido del backend:', token ? 'SÍ' : 'NO');
-        if (token) {
-          console.log('🔑 Token (primeros 20 chars):', token.substring(0, 20) + '...');
-        }
-        console.log('📋 Role recibido:', user.role);
-        console.log('📋 ServiceType recibido:', user.serviceType);
-        console.log('📋 Tipo recibido:', user.tipo);
+        // 3. Normalización para el Store y Redirección
+        const roleForStore = user.role.toLowerCase();
+        // Prioridad: tipo (backend) > serviceType (backend)
+        const tipoForStore = (
+          user.tipo ||
+          user.serviceType ||
+          ""
+        ).toLowerCase();
 
-        // Determinar el role para el store (normalizar a minúsculas)
-        const roleForStore = user.role?.toLowerCase() || "patient";
-        console.log('🔀 Role normalizado para store:', roleForStore);
+        console.log("✅ Login Exitoso:", {
+          role: roleForStore,
+          tipo: tipoForStore,
+        });
 
-        // ⚠️ CRÍTICO: Priorizar 'tipo' del backend (para guards), luego 'serviceType' (para redirección)
-        // Ambos deben estar normalizados a minúsculas
-        const tipoFromBackend = user.tipo?.toLowerCase() || null;
-        const serviceTypeNormalized = user.serviceType?.toLowerCase() || null;
-        // Usar 'tipo' si viene del backend, sino usar 'serviceType' normalizado
-        const tipoForStore = tipoFromBackend || serviceTypeNormalized;
-        
-        console.log('🔀 Tipo para store (priorizado):', tipoForStore);
-        
-        // Guardar usuario y TOKEN REAL del backend
-        authStore.login(
+        // 4. Guardar en Zustand (Persistencia automática)
+        login(
           {
             id: user.userId,
             email: user.email,
-            name: user.name,
+            name: user.name || user.email.split("@")[0],
             role: roleForStore,
-            tipo: tipoForStore, // ⚠️ CRÍTICO: Priorizar 'tipo' del backend, luego 'serviceType'
+            tipo: tipoForStore || null,
           },
-          token // <-- TOKEN REAL del backend (prioriza accessToken)
+          token,
         );
 
-        // DEBUG: Verificar que el token se guardó correctamente
-        console.log('🔑 Token guardado en store:', authStore.getState().token ? 'SÍ' : 'NO');
-        console.log('🔑 Token guardado en localStorage (accessToken):', localStorage.getItem('accessToken') ? 'SÍ' : 'NO');
-        console.log('🔑 Token guardado en localStorage (auth-token):', localStorage.getItem('auth-token') ? 'SÍ' : 'NO');
-
-        // Lógica de Redirección según especificación del backend
-        console.log('🚀 Iniciando lógica de redirección...');
-        console.log('🔀 roleForStore:', roleForStore);
-        console.log('🔀 serviceType:', user.serviceType);
-        
+        // 5. Lógica de Redirección (Router Guards)
         if (roleForStore === "admin") {
-          console.log('✅ Redirigiendo a admin dashboard');
           navigate("/admin/dashboard", { replace: true });
-        } else if (roleForStore === "provider") {
-          // Usar 'tipo' o 'serviceType' para redirección (ambos tienen el mismo valor)
-          const serviceType = tipoForStore || serviceTypeNormalized;
-          console.log('✅ Redirigiendo provider con serviceType/tipo:', serviceType);
-          
-          switch (serviceType) {
+        } else if (
+          roleForStore === "provider" ||
+          roleForStore === "profesional"
+        ) {
+          switch (tipoForStore) {
             case "doctor":
-              console.log('✅ Redirigiendo a /doctor/dashboard');
               navigate("/doctor/dashboard", { replace: true });
               break;
-
             case "pharmacy":
-              console.log('✅ Redirigiendo a /provider/pharmacy/dashboard');
               navigate("/provider/pharmacy/dashboard", { replace: true });
               break;
-
-            // CASO LABORATORIO (Ruta raíz)
             case "laboratory":
             case "lab":
-              console.log('✅ Redirigiendo a /laboratory/dashboard');
-              // Usar replace: true para evitar que el usuario pueda volver atrás al login
-              navigate("/laboratory/dashboard?tab=profile", { replace: true });
+              navigate("/laboratory/dashboard", { replace: true });
               break;
-
-            // CASO AMBULANCIA (Ruta provider)
             case "ambulance":
-              console.log('✅ Redirigiendo a /provider/ambulance/dashboard');
               navigate("/provider/ambulance/dashboard", { replace: true });
               break;
-
-            // CASO INSUMOS MÉDICOS
             case "supplies":
-              console.log('✅ Redirigiendo a /supply/dashboard');
-              navigate("/supply/dashboard?tab=profile", { replace: true });
+              navigate("/supply/dashboard", { replace: true });
               break;
-
-            // CASO CLÍNICA
             case "clinic":
-              console.log('✅ Redirigiendo a /clinic/dashboard');
               navigate("/clinic/dashboard", { replace: true });
               break;
-
             default:
-              console.warn('⚠️ serviceType no reconocido:', serviceType);
-              console.warn('⚠️ Redirigiendo a HOME porque serviceType no coincide');
-              console.warn('⚠️ Valores recibidos - role:', roleForStore, 'serviceType:', serviceType);
+              console.warn(`⚠️ Tipo de proveedor desconocido: ${tipoForStore}`);
               navigate(ROUTES.HOME);
           }
         } else if (roleForStore === "patient") {
-          console.log('✅ Redirigiendo a /patients/dashboard');
-          navigate("/patients/dashboard", { replace: true });
+          navigate(ROUTES.HOME, { replace: true });
         } else {
-          console.warn('⚠️ role no reconocido:', roleForStore);
-          console.warn('⚠️ Redirigiendo a HOME porque role no coincide');
-          console.warn('⚠️ Valores recibidos - role:', roleForStore, 'serviceType:', user.serviceType);
-          navigate(ROUTES.HOME);
+          navigate(ROUTES.HOME, { replace: true });
         }
       } catch (error: any) {
-        console.error("Error al iniciar sesión:", error);
-        
-        // Detectar errores de conexión
-        let errorMessage = "Error al iniciar sesión. Verifica tus credenciales.";
-        
-        if (error?.code === 'ERR_NETWORK' || error?.code === 'ECONNREFUSED' || error?.message?.includes('Network Error')) {
-          errorMessage = `No se pudo conectar al servidor. Verifica que el backend esté corriendo en ${env.API_URL}`;
+        console.error("❌ Error al iniciar sesión:", error);
+
+        let errorMessage =
+          "Error al iniciar sesión. Verifica tus credenciales.";
+
+        if (error?.code === "ERR_NETWORK") {
+          errorMessage = `No se pudo conectar al servidor (${env.API_URL})`;
         } else if (error?.response?.status === 401) {
-          errorMessage = "Credenciales incorrectas. Verifica tu email y contraseña.";
-        } else if (error?.response?.status === 404) {
-          errorMessage = "Endpoint no encontrado. Verifica la configuración del backend.";
-        } else if (error?.response?.data?.message) {
-          errorMessage = error.response.data.message;
+          errorMessage = "Credenciales incorrectas.";
         } else if (error?.message) {
           errorMessage = error.message;
         }
-        
+
         formik.setFieldError("password", errorMessage);
       } finally {
         setIsLoading(false);
@@ -326,17 +264,6 @@ export const LoginPage = () => {
           zIndex: 1,
           width: "100%",
           maxWidth: "500px",
-          animation: "scaleIn 0.5s ease-out",
-          "@keyframes scaleIn": {
-            from: {
-              opacity: 0,
-              transform: "scale(0.95)",
-            },
-            to: {
-              opacity: 1,
-              transform: "scale(1)",
-            },
-          },
         }}
       >
         {/* Back Button */}
@@ -344,15 +271,7 @@ export const LoginPage = () => {
           variant="text"
           startIcon={<ArrowBack />}
           onClick={() => navigate(ROUTES.HOME)}
-          sx={{
-            mb: 3,
-            color: "#14b8a6",
-            fontWeight: 500,
-            textTransform: "none",
-            "&:hover": {
-              backgroundColor: "rgba(20, 184, 166, 0.1)",
-            },
-          }}
+          sx={{ mb: 3, color: "#14b8a6", fontWeight: 500 }}
         >
           Volver al inicio
         </Button>
@@ -381,11 +300,7 @@ export const LoginPage = () => {
                 }}
               >
                 <Typography
-                  sx={{
-                    color: "white",
-                    fontWeight: 700,
-                    fontSize: "2rem",
-                  }}
+                  sx={{ color: "white", fontWeight: 700, fontSize: "2rem" }}
                 >
                   M
                 </Typography>
@@ -395,95 +310,73 @@ export const LoginPage = () => {
             {/* Title */}
             <Typography
               variant="h4"
-              sx={{
-                fontWeight: 700,
-                mb: 1,
-                color: "#1f2937",
-                fontSize: "1.75rem",
-              }}
+              sx={{ fontWeight: 700, mb: 1, color: "#1f2937" }}
             >
               Iniciar Sesión
             </Typography>
-            <Typography
-              variant="body2"
-              sx={{
-                color: "#6b7280",
-                mb: 4,
-                fontSize: "0.9375rem",
-              }}
-            >
+            <Typography variant="body2" sx={{ color: "#6b7280", mb: 4 }}>
               Accede a tu panel de gestión de servicios
             </Typography>
 
             {/* Form */}
             <Box component="form" onSubmit={formik.handleSubmit} sx={{ mb: 3 }}>
+              {/* Campo Email */}
               <Box sx={{ mb: 2 }}>
                 <TextField
                   fullWidth
                   label="Correo electrónico"
                   type="email"
-                  placeholder="tu@email.com"
                   name="email"
                   value={formik.values.email}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   error={formik.touched.email && Boolean(formik.errors.email)}
                   helperText={formik.touched.email && formik.errors.email}
-                  required
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
+                  // ✅ FIX: Reemplazo de InputProps por slotProps
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <EmailIcon sx={{ color: "#9ca3af" }} />
+                        </InputAdornment>
+                      ),
                     },
-                  }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <EmailIcon sx={{ color: "#9ca3af", fontSize: 20 }} />
-                      </InputAdornment>
-                    ),
                   }}
                 />
               </Box>
 
+              {/* Campo Contraseña */}
               <Box sx={{ mb: 2 }}>
                 <TextField
                   fullWidth
                   label="Contraseña"
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
                   name="password"
                   value={formik.values.password}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  error={formik.touched.password && Boolean(formik.errors.password)}
+                  error={
+                    formik.touched.password && Boolean(formik.errors.password)
+                  }
                   helperText={formik.touched.password && formik.errors.password}
-                  required
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LockIcon sx={{ color: "#9ca3af" }} />
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={() => setShowPassword(!showPassword)}
+                            edge="end"
+                          >
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
                     },
-                  }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LockIcon sx={{ color: "#9ca3af", fontSize: 20 }} />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() => setShowPassword(!showPassword)}
-                          edge="end"
-                          sx={{ color: "#9ca3af" }}
-                        >
-                          {showPassword ? (
-                            <VisibilityOff sx={{ fontSize: 20 }} />
-                          ) : (
-                            <Visibility sx={{ fontSize: 20 }} />
-                          )}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
                   }}
                 />
               </Box>
@@ -492,15 +385,7 @@ export const LoginPage = () => {
                 <Link
                   component={RouterLink}
                   to={ROUTES.FORGOT_PASSWORD}
-                  sx={{
-                    color: "#14b8a6",
-                    fontSize: "0.875rem",
-                    textDecoration: "none",
-                    fontWeight: 500,
-                    "&:hover": {
-                      textDecoration: "underline",
-                    },
-                  }}
+                  sx={{ color: "#14b8a6", textDecoration: "none" }}
                 >
                   ¿Olvidaste tu contraseña?
                 </Link>
@@ -514,27 +399,11 @@ export const LoginPage = () => {
                 sx={{
                   py: 1.5,
                   backgroundColor: "#14b8a6",
-                  color: "white",
-                  textTransform: "none",
-                  fontSize: "1rem",
-                  fontWeight: 600,
-                  borderRadius: 2,
-                  "&:hover": {
-                    backgroundColor: "#0d9488",
-                  },
-                  "&:disabled": {
-                    backgroundColor: "#cbd5e1",
-                  },
+                  "&:hover": { backgroundColor: "#0d9488" },
                 }}
               >
                 {isLoading ? (
-                  <>
-                    <CircularProgress
-                      size={20}
-                      sx={{ mr: 1, color: "white" }}
-                    />
-                    Iniciando sesión...
-                  </>
+                  <CircularProgress size={20} sx={{ color: "white", mr: 1 }} />
                 ) : (
                   "Iniciar sesión"
                 )}
@@ -543,13 +412,7 @@ export const LoginPage = () => {
 
             {/* Register Link */}
             <Box sx={{ textAlign: "center", mb: 3 }}>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "#6b7280",
-                  fontSize: "0.875rem",
-                }}
-              >
+              <Typography variant="body2" sx={{ color: "#6b7280" }}>
                 ¿No tienes cuenta?{" "}
                 <Link
                   component={RouterLink}
@@ -558,9 +421,6 @@ export const LoginPage = () => {
                     color: "#14b8a6",
                     fontWeight: 600,
                     textDecoration: "none",
-                    "&:hover": {
-                      textDecoration: "underline",
-                    },
                   }}
                 >
                   Solicitar registro
@@ -568,11 +428,11 @@ export const LoginPage = () => {
               </Typography>
             </Box>
 
-            {/* Demo Accounts */}
+            {/* Cuentas de Prueba */}
             <Box
               sx={{
                 mt: 3,
-                p: 3,
+                p: 2,
                 borderRadius: 2,
                 backgroundColor: "rgba(236, 253, 245, 0.5)",
                 border: "1px solid rgba(6, 182, 212, 0.2)",
@@ -580,85 +440,31 @@ export const LoginPage = () => {
             >
               <Typography
                 variant="body2"
-                sx={{
-                  fontWeight: 600,
-                  textAlign: "center",
-                  mb: 2,
-                  color: "#1f2937",
-                  fontSize: "0.875rem",
-                }}
+                sx={{ fontWeight: 600, mb: 1, color: "#1f2937" }}
               >
                 Cuentas de prueba (clic para usar):
               </Typography>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                {/* Admin */}
-                <Button
-                  type="button"
-                  onClick={() =>
-                    handleQuickLogin("admin@medicones.com", "admin123")
-                  }
-                  sx={{
-                    width: "100%",
-                    textAlign: "left",
-                    p: 1.5,
-                    borderRadius: 1.5,
-                    backgroundColor: "transparent",
-                    color: "#1f2937",
-                    textTransform: "none",
-                    justifyContent: "flex-start",
-                    fontSize: "0.875rem",
-                    "&:hover": {
-                      backgroundColor: "rgba(6, 182, 212, 0.1)",
-                    },
-                  }}
-                >
-                  <Typography
-                    component="span"
-                    sx={{ fontWeight: 600, color: "#14b8a6", mr: 1 }}
+                {mockUsers.map((user) => (
+                  <Button
+                    key={user.id}
+                    onClick={() => handleQuickLogin(user.email, user.password)}
+                    sx={{
+                      justifyContent: "flex-start",
+                      textTransform: "none",
+                      color: "#1f2937",
+                      "&:hover": { backgroundColor: "rgba(6, 182, 212, 0.1)" },
+                    }}
                   >
-                    Administrador:
-                  </Typography>
-                  <Typography component="span" sx={{ color: "#6b7280" }}>
-                    admin@medicones.com
-                  </Typography>
-                </Button>
-
-                {/* Service types */}
-                {mockUsers
-                  .filter((u) => u.role === "profesional")
-                  .map((user) => (
-                    <Button
-                      key={user.id}
-                      type="button"
-                      onClick={() =>
-                        handleQuickLogin(user.email, user.password)
-                      }
-                      sx={{
-                        width: "100%",
-                        textAlign: "left",
-                        p: 1.5,
-                        borderRadius: 1.5,
-                        backgroundColor: "transparent",
-                        color: "#1f2937",
-                        textTransform: "none",
-                        justifyContent: "flex-start",
-                        fontSize: "0.875rem",
-                        "&:hover": {
-                          backgroundColor: "rgba(6, 182, 212, 0.1)",
-                        },
-                      }}
+                    <Typography
+                      component="span"
+                      sx={{ fontWeight: 600, color: "#14b8a6", mr: 1 }}
                     >
-                      <Typography
-                        component="span"
-                        sx={{ fontWeight: 600, color: "#14b8a6", mr: 1 }}
-                      >
-                        {user.tipo ? serviceLabels[user.tipo] : "Profesional"}:
-                      </Typography>
-                      <Typography component="span" sx={{ color: "#6b7280" }}>
-                        {user.email}
-                      </Typography>
-                    </Button>
-                  ))}
+                      {user.label}:
+                    </Typography>
+                    <span style={{ opacity: 0.7 }}>{user.email}</span>
+                  </Button>
+                ))}
               </Box>
             </Box>
           </CardContent>

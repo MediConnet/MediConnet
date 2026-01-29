@@ -14,9 +14,9 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { useFormik } from "formik";
 import { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { useFormik } from "formik";
 import * as Yup from "yup";
 import { ROUTES } from "../../../../app/config/constants";
 import { useSendResetPassword } from "../hooks/useSendResetPassword";
@@ -32,7 +32,7 @@ export const ForgotPasswordPage = () => {
   const navigate = useNavigate();
   const [success, setSuccess] = useState(false);
 
-  // Hook de Clean Architecture
+  // Hook de Clean Architecture (TanStack Query)
   const sendResetPassword = useSendResetPassword();
 
   const formik = useFormik({
@@ -42,14 +42,14 @@ export const ForgotPasswordPage = () => {
     validationSchema: forgotPasswordValidationSchema,
     onSubmit: async (values) => {
       try {
-        const response = await sendResetPassword.mutateAsync({ email: values.email });
-        if (response.success) {
-          setSuccess(true);
-        } else {
-          formik.setFieldError("email", response.message || "Error al enviar el enlace");
-        }
-      } catch (err) {
-        formik.setFieldError("email", "Ocurrió un error al enviar el enlace. Intenta nuevamente.");
+        await sendResetPassword.mutateAsync({ email: values.email });
+        setSuccess(true);
+      } catch (err: any) {
+        console.error("Error sending reset link:", err);
+        formik.setFieldError(
+          "email",
+          "Ocurrió un error. Verifica tu conexión o intenta más tarde.",
+        );
       }
     },
   });
@@ -67,7 +67,7 @@ export const ForgotPasswordPage = () => {
         backgroundColor: "#f9fafb",
       }}
     >
-      {/* --- EFECTOS DE FONDO (Igual que Login) --- */}
+      {/* --- EFECTOS DE FONDO --- */}
       <Box
         sx={{
           position: "absolute",
@@ -118,7 +118,7 @@ export const ForgotPasswordPage = () => {
           },
         }}
       >
-        {/* Botón Volver (Estilo link superior) */}
+        {/* Botón Volver */}
         <Button
           component={RouterLink}
           to={ROUTES.LOGIN}
@@ -146,7 +146,7 @@ export const ForgotPasswordPage = () => {
           }}
         >
           <CardContent sx={{ textAlign: "center", p: { xs: 3, sm: 4 } }}>
-            {/* LOGO (Igual que Login) */}
+            {/* LOGO */}
             <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
               <Box
                 sx={{
@@ -249,21 +249,25 @@ export const ForgotPasswordPage = () => {
                       onBlur={formik.handleBlur}
                       required
                       disabled={sendResetPassword.isPending}
-                      error={formik.touched.email && Boolean(formik.errors.email)}
+                      error={
+                        formik.touched.email && Boolean(formik.errors.email)
+                      }
                       helperText={formik.touched.email && formik.errors.email}
                       sx={{
                         "& .MuiOutlinedInput-root": {
                           borderRadius: 2,
                         },
                       }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <EmailIcon
-                              sx={{ color: "#9ca3af", fontSize: 20 }}
-                            />
-                          </InputAdornment>
-                        ),
+                      slotProps={{
+                        input: {
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <EmailIcon
+                                sx={{ color: "#9ca3af", fontSize: 20 }}
+                              />
+                            </InputAdornment>
+                          ),
+                        },
                       }}
                     />
                   </Box>

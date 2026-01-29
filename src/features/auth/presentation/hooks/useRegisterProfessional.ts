@@ -1,18 +1,21 @@
-import { useState } from "react";
-import { registerProfessionalUseCase } from "../../application/register-professional.usecase";
-import type { ProfessionalRequest } from "../../domain/ProfessionalRequest.entity";
+import { useMutation } from '@tanstack/react-query';
+import { registerProfessionalUseCase } from '../../application/register-professional.usecase';
+import type { ProfessionalRequest } from '../../domain/ProfessionalRequest.entity';
 
 export const useRegisterProfessional = () => {
-  const [loading, setLoading] = useState(false);
-
-  const submit = async (data: ProfessionalRequest) => {
-    setLoading(true);
-    try {
+  const mutation = useMutation<void, Error, ProfessionalRequest>({
+    mutationFn: async (data) => {
       await registerProfessionalUseCase(data);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    onError: (error) => {
+      console.error("Error en el hook de registro:", error);
+    },
+  });
 
-  return { submit, loading };
+  return {
+    submit: mutation.mutateAsync, 
+    loading: mutation.isPending, 
+    error: mutation.error,
+    isSuccess: mutation.isSuccess
+  };
 };

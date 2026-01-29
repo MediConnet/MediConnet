@@ -1,32 +1,30 @@
 // NOTE: Cliente HTTP configurado con Axios e interceptors
 // Configurado para trabajar con el backend serverless de AWS
 
-import axios, { type AxiosInstance, AxiosError, type AxiosResponse } from 'axios';
+import axios, { AxiosError, type AxiosInstance, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import { env } from '../../app/config/env';
 import { useAuthStore } from '../../app/store/auth.store';
 
 /**
- * Cliente HTTP configurado con interceptors para:
- * - Agregar token de autenticación automáticamente (JWT de Cognito)
- * - Manejar errores de autenticación (401, 403)
- * - Extraer datos de respuestas del backend (formato: { success, data, message })
+ * Cliente HTTP configurado con interceptors.
  */
 export const httpClient: AxiosInstance = axios.create({
   baseURL: env.API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // 30 segundos
+  timeout: 30000, 
 });
 
-// Interceptor de request - Agrega el token de autenticación a cada petición
+// ---------------------------------------------------------------------------
+// 1. INTERCEPTOR DE REQUEST (Agrega el Token)
+// ---------------------------------------------------------------------------
 httpClient.interceptors.request.use(
-  (config) => {
-    // Buscar token en múltiples lugares (prioridad: store > accessToken > auth-token > token)
-    const authStore = useAuthStore();
-    let token = authStore.getState().token;
+  (config: InternalAxiosRequestConfig) => {
+    let token = useAuthStore.getState().token;
     
-    // Si no hay token en el store, intentar leer de localStorage directamente
+    // Fallback: Si no hay token en el store (raro), intentar leer de localStorage
+    // (Esto es solo por compatibilidad si el store no se ha hidratado aún)
     if (!token) {
       token = 
         localStorage.getItem('accessToken') || 
@@ -34,50 +32,52 @@ httpClient.interceptors.request.use(
         localStorage.getItem('token');
     }
     
-    if (token) {
+    if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
+  (error: AxiosError) => {
     return Promise.reject(error);
   }
 );
 
-// Interceptor de response - Maneja errores y extrae datos de respuestas
+// ---------------------------------------------------------------------------
+// 2. INTERCEPTOR DE RESPONSE (Manejo de Errores)
+// ---------------------------------------------------------------------------
 httpClient.interceptors.response.use(
   (response: AxiosResponse) => {
-    // El backend retorna { success: true, data: ... } o { success: false, message: ... }
-    // Extraemos directamente la respuesta para mantener compatibilidad
     return response;
   },
   (error: AxiosError<{ success?: boolean; message?: string; errors?: any }>) => {
     const status = error.response?.status;
     const data = error.response?.data;
 
-    // Manejo de errores de autenticación
+    // A. Manejo de Sesión Expirada (401)
     if (status === 401) {
-      const authStore = useAuthStore();
-      authStore.logout();
-      // Limpiar todos los tokens de localStorage
-      localStorage.removeItem('auth-token');
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('token');
-      // No redirigir automáticamente, dejar que cada componente maneje el logout
-      console.warn('Sesión expirada o no autorizado');
+      console.warn('⚠️ Sesión expirada o token inválido. Cerrando sesión...');
+      
+      useAuthStore.getState().logout();
+      
+      // Nota: El store ya se encarga de limpiar el localStorage, 
+      // así que no necesitamos repetir los removeItem aquí.
     }
 
-    // Manejo de errores de autorización
+    // B. Manejo de Acceso Denegado (403)
     if (status === 403) {
-      console.warn('Acceso denegado');
+      console.warn('⛔ Acceso denegado: No tienes permisos para esta acción');
     }
 
-    // Retornar error con mensaje del backend si está disponible
+    // C. Retornar el mensaje de error del backend si existe
     if (data?.message) {
-      return Promise.reject(new Error(data.message));
+      // Creamos un error limpio con el mensaje del backend
+      const customError = new Error(data.message);
+      // @ts-ignore: Adjuntamos el código para que la UI pueda leerlo
+      customError.code = data.errors?.code || 'API_ERROR';
+      return Promise.reject(customError);
     }
 
-    // Error genérico
+    // Error genérico de red o servidor
     return Promise.reject(error);
   }
 );
@@ -86,9 +86,20 @@ httpClient.interceptors.response.use(
  * Helper para extraer datos de respuestas del backend
  * El backend retorna: { success: true, data: ... }
  */
-export const extractData = <T>(response: AxiosResponse<{ success: boolean; data: T }>): T => {
-  if (response.data.success && response.data.data) {
+export const extractData = <T>(response: AxiosResponse<{ success: boolean; data: T; message?: string }>): T => {
+  // Caso ideal: Backend responde con success: true y data
+  if (response.data?.success && response.data?.data !== undefined) {
     return response.data.data;
   }
-  throw new Error('Invalid response format from backend');
+  
+  // Caso borde: Backend responde directo la data (a veces pasa en proxies)
+  // o el campo data es null pero success es true
+  if (response.data?.success) {
+      // @ts-ignore: Manejo flexible
+      return response.data.data ?? (response.data as unknown as T);
+  }
+
+  // Si llegamos aquí, la respuesta no tiene el formato esperado
+  // Retornamos la data completa como fallback para evitar pantallas blancas
+  return response.data as unknown as T;
 };

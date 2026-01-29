@@ -10,4 +10,3 @@ export const useSendResetPassword = () => {
     mutationFn: sendResetPasswordUseCase,
   });
 };
-

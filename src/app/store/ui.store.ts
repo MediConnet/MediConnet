@@ -1,45 +1,47 @@
-// TODO: Implementar store de UI con Zustand
-// NOTE: Por ahora es una implementación temporal simple
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 
 interface UIState {
+  // Estado
   theme: 'light' | 'dark';
   sidebarOpen: boolean;
   loading: boolean;
+
+  // Acciones
   setTheme: (theme: 'light' | 'dark') => void;
   toggleSidebar: () => void;
+  openSidebar: () => void;
+  closeSidebar: () => void;
   setLoading: (loading: boolean) => void;
 }
 
-// NOTE: Implementación temporal sin Zustand
-// TODO: Reemplazar con Zustand cuando se configure
-let uiState: UIState = {
-  theme: 'light',
-  sidebarOpen: false,
-  loading: false,
-  setTheme: (theme) => {
-    uiState.theme = theme;
-    localStorage.setItem('ui-theme', theme);
-  },
-  toggleSidebar: () => {
-    uiState.sidebarOpen = !uiState.sidebarOpen;
-  },
-  setLoading: (loading) => {
-    uiState.loading = loading;
-  },
-};
+export const useUIStore = create<UIState>()(
+  persist(
+    (set) => ({
+      // --- Estado Inicial ---
+      theme: 'light',
+      sidebarOpen: true, 
+      loading: false,
 
-// NOTE: Cargar tema desde localStorage al iniciar
-const savedTheme = localStorage.getItem('ui-theme') as 'light' | 'dark' | null;
-if (savedTheme) {
-  uiState.theme = savedTheme;
-}
-
-// Hook temporal que simula el comportamiento de Zustand
-export const useUIStore = () => {
-  return uiState;
-};
-
-
-
-
-
+      // --- Acciones ---
+      setTheme: (theme) => set({ theme }),
+      
+      toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+      
+      openSidebar: () => set({ sidebarOpen: true }),
+      
+      closeSidebar: () => set({ sidebarOpen: false }),
+      
+      setLoading: (loading) => set({ loading }),
+    }),
+    {
+      name: 'ui-storage', // Nombre en localStorage
+      storage: createJSONStorage(() => localStorage),
+      
+      partialize: (state) => ({ 
+        theme: state.theme, 
+        sidebarOpen: state.sidebarOpen 
+      }),
+    }
+  )
+);
