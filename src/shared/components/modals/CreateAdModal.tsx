@@ -39,11 +39,30 @@ const validationSchema = Yup.object({
     .required("El descuento es requerido"),
   description: Yup.string()
     .min(10, "La descripción debe tener al menos 10 caracteres")
+    .max(50, "La descripción es muy larga (máximo 50 caracteres)")
     .required("La descripción es requerida"),
   buttonText: Yup.string()
     .min(2, "El texto del botón debe tener al menos 2 caracteres")
     .required("El texto del botón es requerido"),
-  startDate: Yup.string().required("La fecha de inicio es requerida"),
+  startDate: Yup.string()
+    .required("La fecha de inicio es requerida")
+    .test(
+      "is-today-or-future",
+      "La fecha de inicio no puede ser anterior a hoy",
+      (value) => {
+        if (!value) return true;
+
+        // Creamos la fecha de "hoy" reseteando las horas a 00:00:00 para la validación visual
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Parseamos el input (YYYY-MM-DD) manualmente
+        const [year, month, day] = value.split("-").map(Number);
+        const inputDate = new Date(year, month - 1, day);
+
+        return inputDate >= today;
+      },
+    ),
   endDate: Yup.string()
     .nullable()
     .test(
@@ -83,8 +102,6 @@ export const CreateAdModal = ({
       setIsSubmitting(true);
       setError("");
       try {
-        // En el futuro, aquí subiremos el 'selectedImage' a S3 y obtendremos la URL real.
-
         let imageUrl: string | undefined;
 
         if (selectedImage) {
@@ -92,14 +109,29 @@ export const CreateAdModal = ({
             "https://placehold.co/600x400/0d9488/ffffff?text=Banner+Promocional";
         }
 
+        // --- LÓGICA DE TIEMPO EXACTO ---
+        const now = new Date();
+
+        const combineDateWithCurrentTime = (dateString: string) => {
+          const [year, month, day] = dateString.split("-").map(Number);
+          const date = new Date(year, month - 1, day);
+          date.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+          return date.toISOString();
+        };
+
+        const finalStartDate = combineDateWithCurrentTime(values.startDate);
+        const finalEndDate = values.endDate
+          ? combineDateWithCurrentTime(values.endDate)
+          : undefined;
+
         await onCreateAd({
           label: values.label,
           discount: values.discount,
           description: values.description,
           buttonText: values.buttonText,
           imageUrl,
-          startDate: values.startDate,
-          endDate: values.endDate || undefined,
+          startDate: finalStartDate,
+          endDate: finalEndDate,
         });
 
         // Limpiar formulario
@@ -115,7 +147,6 @@ export const CreateAdModal = ({
     },
   });
 
-  // Manejo visual de la imagen
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -177,7 +208,7 @@ export const CreateAdModal = ({
             </Alert>
           )}
 
-          {/* Label (ej: "PRIMERA CITA") */}
+          {/* Label */}
           <TextField
             fullWidth
             label="Label del anuncio"
@@ -195,7 +226,7 @@ export const CreateAdModal = ({
             sx={{ mb: 3 }}
           />
 
-          {/* Descuento (ej: "20% OFF") */}
+          {/* Descuento */}
           <TextField
             fullWidth
             label="Descuento"
@@ -218,7 +249,7 @@ export const CreateAdModal = ({
             fullWidth
             multiline
             rows={3}
-            label="Descripción del anuncio"
+            label="Descripción breve"
             name="description"
             placeholder="Ej: En tu primera consulta general con profesionales verificados."
             value={formik.values.description}
@@ -227,7 +258,10 @@ export const CreateAdModal = ({
             error={
               formik.touched.description && Boolean(formik.errors.description)
             }
-            helperText={formik.touched.description && formik.errors.description}
+            helperText={
+              (formik.touched.description && formik.errors.description) ||
+              `${formik.values.description.length}/50 caracteres`
+            }
             required
             sx={{ mb: 3 }}
           />

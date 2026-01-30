@@ -1,25 +1,27 @@
-import { Add, ContactPhone, Star, Visibility, CheckCircle, HourglassEmpty, Send, Campaign } from "@mui/icons-material";
+import { Add, Campaign, HourglassEmpty, Send } from "@mui/icons-material";
 import {
+  Alert,
   Box,
   Button,
-  Skeleton,
+  CircularProgress,
   Stack,
   Typography,
   useTheme,
-  Alert,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
 import { useState } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 
-// Componentes y Hooks locales
-import { AdsEmptyState } from "../components/AdsEmptyState";
-import { KPICard } from "../components/KPICard";
-import { useAmbulanceAds } from "../hooks/useAmbulanceAds";
-import { useAmbulanceProfile } from "../hooks/useAmbulanceProfile";
-import { useAdRequest } from "../hooks/useAdRequest";
-import { CreateAdModal } from "../components/CreateAdModal";
+// Componentes Compartidos
+import { AdsEmptyState } from "../../../../shared/components/AdsEmptyState";
+import { CreateAdModal } from "../../../../shared/components/modals/CreateAdModal";
+import { PromotionalBanner } from "../../../../shared/components/PromotionalBanner";
 
+// Hooks
+import type { CreateAdParams } from "../../../../shared/api/ads.api";
+import { useAdRequest } from "../../../../shared/hooks/useAdRequest";
+
+// Mock del usuario
 const AMBULANCE_USER = {
   name: "Ambulancias Vida",
   roleLabel: "Proveedor",
@@ -29,28 +31,48 @@ const AMBULANCE_USER = {
 
 export const AmbulanceAdsPage = () => {
   const theme = useTheme();
-  const { pendingRequest, hasActiveAd, hasApprovedRequest, isLoading: isLoadingAdRequest, createRequest } = useAdRequest();
+
+  const {
+    activeAd,
+    pendingRequest,
+    hasActiveAd,
+    hasApprovedRequest,
+    isLoading: isLoadingAds,
+    createRequest,
+  } = useAdRequest();
+
   const [isCreating, setIsCreating] = useState(false);
   const [isCreateAdModalOpen, setIsCreateAdModalOpen] = useState(false);
-  const { profile, isLoading: isLoadingProfile } = useAmbulanceProfile();
-  const { ads, isLoading: isLoadingAds } = useAmbulanceAds();
 
-  const isLoading = isLoadingProfile || isLoadingAds || isLoadingAdRequest;
+  const isLoading = isLoadingAds;
+
+  const adsList = activeAd ? [activeAd] : [];
 
   const handleRequestPermission = async (adData: {
-    title: string;
+    label: string;
+    discount: string;
     description: string;
+    buttonText: string;
     imageUrl?: string;
     startDate: string;
     endDate?: string;
   }) => {
     setIsCreating(true);
     try {
-      await createRequest(adData);
+      const apiPayload: CreateAdParams = {
+        label: adData.label,
+        discount: adData.discount,
+        description: adData.description,
+        buttonText: adData.buttonText,
+        imageUrl: adData.imageUrl,
+        startDate: adData.startDate,
+        endDate: adData.endDate,
+      };
+
+      await createRequest(apiPayload);
       setIsCreateAdModalOpen(false);
     } catch (error) {
       console.error("Error creating request:", error);
-      throw error;
     } finally {
       setIsCreating(false);
     }
@@ -58,71 +80,33 @@ export const AmbulanceAdsPage = () => {
 
   const handleCreateAdClick = () => {
     if (hasActiveAd || pendingRequest) {
-      return; // Ya tiene anuncio o solicitud pendiente
+      return;
     }
     setIsCreateAdModalOpen(true);
   };
 
-  if (isLoading || !profile) {
+  if (isLoading) {
     return (
       <DashboardLayout role="PROVIDER" userProfile={AMBULANCE_USER}>
-        <Box p={3}>
-          <Skeleton
-            variant="rectangular"
-            height={150}
-            sx={{ mb: 3, borderRadius: 3 }}
-          />
-          <Skeleton
-            variant="rectangular"
-            height={300}
-            sx={{ borderRadius: 3 }}
-          />
-        </Box>
+        <div className="p-3 max-w-[1400px] mx-auto">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex items-center justify-center min-h-[400px]">
+            <CircularProgress
+              size={50}
+              thickness={4}
+              sx={{ color: theme.palette.primary.main }}
+            />
+          </div>
+        </div>
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout role="PROVIDER" userProfile={AMBULANCE_USER}>
-      <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
-        {/* KPIs (Contenido principal subido) */}
-        <Grid2 container spacing={3} mb={4}>
-          <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
-            <KPICard
-              title="Visitas al perfil"
-              value={profile.stats.profileViews}
-              icon={<Visibility sx={{ color: theme.palette.primary.main }} />}
-              iconColor={theme.palette.primary.light + "20"}
-            />
-          </Grid2>
-          <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
-            <KPICard
-              title="Contactos"
-              value={profile.stats.contactClicks}
-              icon={<ContactPhone sx={{ color: theme.palette.info.main }} />}
-              iconColor={theme.palette.info.light + "20"}
-            />
-          </Grid2>
-          <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
-            <KPICard
-              title="Reseñas"
-              value={profile.stats.totalReviews}
-              icon={<Star sx={{ color: theme.palette.warning.main }} />}
-              iconColor={theme.palette.warning.light + "20"}
-            />
-          </Grid2>
-          <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
-            <KPICard
-              title="Rating"
-              value={profile.stats.averageRating}
-              icon={<Star sx={{ color: "#FFC107" }} />}
-              iconColor="#FFF8E1"
-            />
-          </Grid2>
-        </Grid2>
-
-        {/* SECCIÓN ANUNCIOS */}
-        <Box mb={3}>
+      {/* Contenedor principal de la página */}
+      <div className="p-3 max-w-[1400px] mx-auto">
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          {/* HEADER DEL CARD */}
           <Stack
             direction="row"
             justifyContent="space-between"
@@ -137,6 +121,7 @@ export const AmbulanceAdsPage = () => {
                 Gestiona los anuncios que aparecerán en la app móvil
               </Typography>
             </Box>
+
             <Button
               variant="contained"
               startIcon={
@@ -163,14 +148,14 @@ export const AmbulanceAdsPage = () => {
               {hasActiveAd
                 ? "Anuncio Activo"
                 : pendingRequest
-                ? "Solicitud Pendiente"
-                : isCreating
-                ? "Enviando..."
-                : "Crear y solicitar permiso"}
+                  ? "Solicitud Pendiente"
+                  : isCreating
+                    ? "Enviando..."
+                    : "Crear y solicitar permiso"}
             </Button>
           </Stack>
 
-          {/* Mensajes de estado */}
+          {/* --- MENSAJES DE ESTADO (Alertas) --- */}
           {pendingRequest && (
             <Alert severity="warning" sx={{ mb: 3 }}>
               <Stack direction="row" spacing={1} alignItems="center">
@@ -180,7 +165,8 @@ export const AmbulanceAdsPage = () => {
                     Solicitud pendiente de aprobación
                   </Typography>
                   <Typography variant="caption">
-                    Tu solicitud para crear un anuncio está siendo revisada por el administrador. Te notificaremos cuando sea aprobada.
+                    Tu solicitud para crear un anuncio está siendo revisada por
+                    el administrador.
                   </Typography>
                 </Box>
               </Stack>
@@ -190,41 +176,48 @@ export const AmbulanceAdsPage = () => {
           {hasActiveAd && (
             <Alert severity="success" sx={{ mb: 3 }}>
               <Stack direction="row" spacing={1} alignItems="center">
-                <CheckCircle />
                 <Box>
                   <Typography variant="body2" fontWeight={600}>
                     Tienes un anuncio activo
                   </Typography>
                   <Typography variant="caption">
-                    Ya tienes un anuncio publicado. Si deseas crear otro, debes solicitar permiso nuevamente al administrador.
+                    Ya tienes un anuncio publicado visible para los usuarios.
                   </Typography>
                 </Box>
               </Stack>
             </Alert>
           )}
 
-
-          {ads.length === 0 && !hasActiveAd ? (
+          {/* --- LISTADO DE ANUNCIOS / EMPTY STATE --- */}
+          {adsList.length === 0 && !hasActiveAd && !pendingRequest ? (
             <AdsEmptyState />
-          ) : hasActiveAd ? (
-            <Box sx={{ bgcolor: "grey.50", p: 3, borderRadius: 2, border: "1px solid", borderColor: "grey.200" }}>
-              <Typography variant="body2" color="text.secondary">
-                Tu anuncio activo se mostrará aquí
-              </Typography>
-            </Box>
           ) : (
-            <Typography>Listado de anuncios de ambulancia...</Typography>
+            <Grid2 container spacing={3}>
+              {adsList.map((ad) => (
+                <Grid2 size={{ xs: 12, md: 12, lg: 6 }} key={ad.id}>
+                  <PromotionalBanner
+                    label={ad.label || ad.badge_text || ""}
+                    discount={ad.discount || ad.title || ""}
+                    description={ad.description || ad.subtitle || ""}
+                    buttonText={ad.buttonText || ad.action_text || ""}
+                    imageUrl={ad.imageUrl || ad.image_url || undefined}
+                    endDate={ad.endDate || ad.end_date || undefined}
+                  />
+                </Grid2>
+              ))}
+            </Grid2>
           )}
-        </Box>
+        </div>
+        {/* Fin del Card Blanco */}
 
-        {/* Modal para crear anuncio */}
+        {/* Modal de Creación */}
         <CreateAdModal
           open={isCreateAdModalOpen}
           onClose={() => setIsCreateAdModalOpen(false)}
           onCreateAd={handleRequestPermission}
           submitButtonText="Enviar solicitud"
         />
-      </Box>
+      </div>
     </DashboardLayout>
   );
 };

@@ -3,20 +3,30 @@ import {
   Campaign,
   CheckCircle,
   HourglassEmpty,
+  Send,
 } from "@mui/icons-material";
 import { Alert, Snackbar } from "@mui/material";
 import { useEffect, useState } from "react";
+
+// --- RECURSOS COMPARTIDOS ---
 import {
   createAdAPI,
   type CreateAdParams,
 } from "../../../../shared/api/ads.api";
+import { AdsEmptyState } from "../../../../shared/components/AdsEmptyState";
 import { CreateAdModal } from "../../../../shared/components/modals/CreateAdModal";
 import { PromotionalBanner } from "../../../../shared/components/PromotionalBanner";
 import { useAdRequest } from "../../../../shared/hooks/useAdRequest";
 
 export const AdsSection = () => {
-  const { pendingRequest, hasActiveAd, activeAd, isLoading, refetch } =
-    useAdRequest();
+  const {
+    pendingRequest,
+    hasActiveAd,
+    hasApprovedRequest,
+    activeAd,
+    isLoading,
+    refetch,
+  } = useAdRequest();
 
   const [isCreating, setIsCreating] = useState(false);
   const [isCreateAdModalOpen, setIsCreateAdModalOpen] = useState(false);
@@ -32,32 +42,44 @@ export const AdsSection = () => {
     const checkExpiration = () => {
       const now = new Date().getTime();
       const endDate = new Date(activeAd.endDate!).getTime();
-
-      if (endDate < now) {
-        refetch();
-      }
+      if (endDate < now) refetch();
     };
 
     const interval = setInterval(checkExpiration, 60000);
     checkExpiration();
-
     return () => clearInterval(interval);
   }, [activeAd?.endDate, refetch]);
 
-  // --- NUEVA LÓGICA DE INTEGRACIÓN ---
-  const handleRequestPermission = async (adData: CreateAdParams) => {
+  // --- MANEJADOR DE CREACIÓN (Adaptado a Props del Modal) ---
+  const handleRequestPermission = async (adData: {
+    label: string;
+    discount: string;
+    description: string;
+    buttonText: string;
+    imageUrl?: string;
+    startDate: string;
+    endDate?: string;
+  }) => {
     setIsCreating(true);
     try {
-      await createAdAPI(adData);
+      // Mapeo de datos
+      const apiPayload: CreateAdParams = {
+        label: adData.label,
+        discount: adData.discount,
+        description: adData.description,
+        buttonText: adData.buttonText,
+        imageUrl: adData.imageUrl,
+        startDate: adData.startDate,
+        endDate: adData.endDate,
+      };
 
+      await createAdAPI(apiPayload);
       setIsCreateAdModalOpen(false);
-
       setFeedback({
         type: "success",
         message:
           "¡Solicitud enviada correctamente! El administrador la revisará pronto.",
       });
-
       await refetch();
     } catch (error) {
       console.error("Error creating request:", error);
@@ -72,6 +94,8 @@ export const AdsSection = () => {
 
   const handleCloseFeedback = () => setFeedback(null);
 
+  const adsList = activeAd ? [activeAd] : [];
+
   if (isLoading) {
     return (
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
@@ -82,134 +106,111 @@ export const AdsSection = () => {
     );
   }
 
-  // --- RENDERIZADO CONDICIONAL ---
-
-  if (hasActiveAd) {
-    return (
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-xl font-bold text-gray-800">
-              Anuncios Promocionales
-            </h3>
-            <p className="text-sm text-gray-500 mt-1">
-              Gestiona tu anuncio activo
-            </p>
-          </div>
-          <button
-            disabled
-            className="bg-gray-400 text-white px-4 py-2 rounded-lg flex items-center gap-2 cursor-not-allowed"
-          >
-            <Campaign className="text-sm" />
-            <span className="text-sm font-medium">Crear anuncio</span>
-          </button>
-        </div>
-
-        <div className="bg-teal-50 border border-teal-200 rounded-lg p-4 mb-4">
-          <div className="flex items-center gap-2 text-teal-700">
-            <CheckCircle />
-            <span className="font-medium">Tienes un anuncio activo</span>
-          </div>
-          <p className="text-sm text-gray-600 mt-2">
-            Ya tienes un anuncio publicado. Si deseas crear otro, debes esperar
-            a que este expire o contactar al administrador.
-          </p>
-        </div>
-
-        {/* Mostrar el banner promocional del anuncio activo */}
-        {activeAd && (
-          <div className="mt-4">
-            <PromotionalBanner
-              label={activeAd.label || activeAd.badge_text || ""}
-              discount={activeAd.discount || activeAd.title || ""}
-              description={activeAd.description || activeAd.subtitle || ""}
-              buttonText={activeAd.buttonText || activeAd.action_text || ""}
-              imageUrl={activeAd.imageUrl || activeAd.image_url || undefined}
-              endDate={activeAd.endDate || activeAd.end_date || undefined}
-            />
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // Si tiene solicitud pendiente (backend status: PENDING)
-  if (pendingRequest) {
-    return (
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-xl font-bold text-gray-800">
-              Anuncios Promocionales
-            </h3>
-            <p className="text-sm text-gray-500 mt-1">
-              Solicitud de permiso para crear anuncio
-            </p>
-          </div>
-          <button
-            disabled
-            className="bg-gray-400 text-white px-4 py-2 rounded-lg flex items-center gap-2 cursor-not-allowed"
-          >
-            <Campaign className="text-sm" />
-            <span className="text-sm font-medium">Crear anuncio</span>
-          </button>
-        </div>
-
-        <div className="flex flex-col items-center justify-center py-16">
-          <div className="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
-            <HourglassEmpty className="text-yellow-600 text-4xl" />
-          </div>
-          <p className="text-lg font-medium text-gray-800 mb-2">
-            Solicitud pendiente de aprobación
-          </p>
-          <p className="text-sm text-gray-500 text-center max-w-md">
-            Tu solicitud para crear un anuncio está siendo revisada por el
-            administrador. Te notificaremos cuando sea aprobada.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Estado inicial: Crear nueva solicitud
   return (
     <>
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-4">
+        {/* HEADER: Siempre visible */}
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="text-xl font-bold text-gray-800">
               Anuncios Promocionales
             </h3>
             <p className="text-sm text-gray-500 mt-1">
-              Crea y solicita permiso para publicar tu anuncio
+              Gestiona los anuncios que aparecerán en la app móvil
             </p>
           </div>
+
+          {/* BOTÓN: Lógica unificada */}
           <button
             onClick={() => setIsCreateAdModalOpen(true)}
-            disabled={isCreating}
-            className="bg-teal-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!!hasActiveAd || !!pendingRequest || isCreating}
+            className={`
+              px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium text-sm
+              ${
+                hasActiveAd || pendingRequest || isCreating
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-teal-600 text-white hover:bg-teal-700 shadow-sm"
+              }
+            `}
           >
-            <Add className="text-sm" />
-            <span className="text-sm font-medium">
-              {isCreating ? "Enviando..." : "Crear y solicitar permiso"}
+            {hasActiveAd || pendingRequest ? (
+              <Campaign className="text-sm" />
+            ) : hasApprovedRequest ? (
+              <Add className="text-sm" />
+            ) : (
+              <Send className="text-sm" />
+            )}
+
+            <span>
+              {hasActiveAd
+                ? "Anuncio Activo"
+                : pendingRequest
+                  ? "Solicitud Pendiente"
+                  : isCreating
+                    ? "Enviando..."
+                    : "Crear anuncio"}
             </span>
           </button>
         </div>
 
-        <div className="flex flex-col items-center justify-center py-16">
-          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-            <Campaign className="text-gray-400 text-4xl" />
+        {/* --- ALERTAS DE ESTADO --- */}
+
+        {/* Alerta: Solicitud Pendiente */}
+        {pendingRequest && (
+          <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+            <HourglassEmpty className="text-amber-600 mt-0.5" />
+            <div>
+              <h4 className="font-semibold text-amber-800 text-sm">
+                Solicitud pendiente de aprobación
+              </h4>
+              <p className="text-sm text-amber-700 mt-1">
+                Tu solicitud para crear un anuncio está siendo revisada por el
+                administrador.
+              </p>
+            </div>
           </div>
-          <p className="text-lg font-medium text-gray-800 mb-2">
-            Crea tu anuncio promocional
-          </p>
-          <p className="text-sm text-gray-500 text-center max-w-md">
-            Completa el formulario con la información de tu anuncio. Una vez
-            enviado, el administrador revisará y aprobará tu solicitud.
-          </p>
-        </div>
+        )}
+
+        {/* Alerta: Anuncio Activo */}
+        {hasActiveAd && (
+          <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex items-start gap-3">
+            <CheckCircle className="text-emerald-600 mt-0.5" />
+            <div>
+              <h4 className="font-semibold text-emerald-800 text-sm">
+                Tienes un anuncio activo
+              </h4>
+              <p className="text-sm text-emerald-700 mt-1">
+                Ya tienes un anuncio publicado visible para los pacientes.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* --- CONTENIDO PRINCIPAL (Lista o Empty State) --- */}
+
+        {adsList.length === 0 && !hasActiveAd && !pendingRequest ? (
+          <div className="mt-2">
+            <AdsEmptyState />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {adsList.map((ad) => (
+              <div key={ad.id} className="w-full">
+                <PromotionalBanner
+                  label={ad.label || ad.badge_text || ""}
+                  discount={ad.discount || ad.title || ""}
+                  description={ad.description || ad.subtitle || ""}
+                  buttonText={ad.buttonText || ad.action_text || ""}
+                  imageUrl={ad.imageUrl || ad.image_url || undefined}
+                  endDate={ad.endDate || ad.end_date || undefined}
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
+      {/* Modal */}
       <CreateAdModal
         open={isCreateAdModalOpen}
         onClose={() => setIsCreateAdModalOpen(false)}
@@ -217,7 +218,7 @@ export const AdsSection = () => {
         submitButtonText="Enviar solicitud"
       />
 
-      {/* Feedback Visual (Snackbar) */}
+      {/* Feedback Snackbar */}
       <Snackbar
         open={!!feedback}
         autoHideDuration={6000}
