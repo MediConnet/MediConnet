@@ -6,12 +6,25 @@
 import { MUIThemeProviderWrapper } from "./providers/MUIThemeProvider";
 import { QueryProvider } from "./providers/QueryProvider";
 import { AppRouter } from "./router/AppRouter";
+import { LoadingSpinner } from "../shared/components/LoadingSpinner";
+import { useGlobalLoading } from "../shared/hooks/useGlobalLoading";
+
+const AppContent = () => {
+  const { isLoading } = useGlobalLoading();
+
+  return (
+    <>
+      <AppRouter />
+      {isLoading && <LoadingSpinner />}
+    </>
+  );
+};
 
 export const App = () => {
   return (
     <MUIThemeProviderWrapper>
       <QueryProvider>
-        <AppRouter />
+        <AppContent />
       </QueryProvider>
     </MUIThemeProviderWrapper>
   );

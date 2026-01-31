@@ -19,6 +19,7 @@ import { useState } from "react";
 import { useClinicAppointments } from "../hooks/useClinicAppointments";
 import { useClinicDoctors } from "../hooks/useClinicDoctors";
 import type { AppointmentStatus } from "../../domain/appointment.entity";
+import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner";
 
 interface AppointmentsSectionProps {
   clinicId: string;
@@ -47,7 +48,7 @@ export const AppointmentsSection = ({ clinicId }: AppointmentsSectionProps) => {
   const { doctors } = useClinicDoctors(clinicId);
 
   if (loading) {
-    return <Typography>Cargando citas...</Typography>;
+    return <LoadingSpinner text="Cargando citas..." />;
   }
 
   return (

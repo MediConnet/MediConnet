@@ -6,6 +6,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { uploadClinicLogoAPI } from "../../infrastructure/clinic.api";
 import { Map } from "../../../../shared/ui/Map";
+import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner";
 
 interface ProfileSectionProps {
   clinicId: string;
@@ -80,7 +81,7 @@ export const ProfileSection = ({ clinicId }: ProfileSectionProps) => {
   });
 
   if (loading || !profile) {
-    return <Typography>Cargando perfil...</Typography>;
+    return <LoadingSpinner text="Cargando perfil..." />;
   }
 
   return (

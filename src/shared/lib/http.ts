@@ -5,6 +5,32 @@ import axios, { AxiosError, type AxiosInstance, type AxiosResponse, type Interna
 import { env } from '../../app/config/env';
 import { useAuthStore } from '../../app/store/auth.store';
 
+// ⭐ Sistema de loading global (singleton)
+let globalLoadingCount = 0;
+const loadingListeners = new Set<() => void>();
+
+const notifyLoadingListeners = () => {
+  loadingListeners.forEach((listener) => listener());
+};
+
+export const loadingManager = {
+  start: () => {
+    globalLoadingCount++;
+    notifyLoadingListeners();
+  },
+  stop: () => {
+    globalLoadingCount = Math.max(0, globalLoadingCount - 1);
+    notifyLoadingListeners();
+  },
+  subscribe: (listener: () => void) => {
+    loadingListeners.add(listener);
+    return () => {
+      loadingListeners.delete(listener);
+    };
+  },
+  getCount: () => globalLoadingCount,
+};
+
 /**
  * Cliente HTTP configurado con interceptors.
  */
@@ -17,7 +43,7 @@ export const httpClient: AxiosInstance = axios.create({
 });
 
 // ---------------------------------------------------------------------------
-// 1. INTERCEPTOR DE REQUEST (Agrega el Token)
+// 1. INTERCEPTOR DE REQUEST (Agrega el Token y activa Loading)
 // ---------------------------------------------------------------------------
 httpClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -35,21 +61,41 @@ httpClient.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // ⭐ Activar loading para requests que toman tiempo (excluir requests rápidos como /auth/me)
+    const isQuickRequest = config.url?.includes('/auth/me') || config.url?.includes('/health');
+    if (!isQuickRequest) {
+      loadingManager.start();
+    }
+    
     return config;
   },
   (error: AxiosError) => {
+    // ⭐ Desactivar loading en caso de error en el request
+    loadingManager.stop();
     return Promise.reject(error);
   }
 );
 
 // ---------------------------------------------------------------------------
-// 2. INTERCEPTOR DE RESPONSE (Manejo de Errores)
+// 2. INTERCEPTOR DE RESPONSE (Manejo de Errores y desactivar Loading)
 // ---------------------------------------------------------------------------
 httpClient.interceptors.response.use(
   (response: AxiosResponse) => {
+    // ⭐ Desactivar loading en respuesta exitosa
+    const isQuickRequest = response.config.url?.includes('/auth/me') || response.config.url?.includes('/health');
+    if (!isQuickRequest) {
+      loadingManager.stop();
+    }
     return response;
   },
   (error: AxiosError<{ success?: boolean; message?: string; errors?: any }>) => {
+    // ⭐ Desactivar loading en caso de error
+    const isQuickRequest = error.config?.url?.includes('/auth/me') || error.config?.url?.includes('/health');
+    if (!isQuickRequest) {
+      loadingManager.stop();
+    }
+    
     const status = error.response?.status;
     const data = error.response?.data;
 

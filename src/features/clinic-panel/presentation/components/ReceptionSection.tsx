@@ -20,12 +20,17 @@ import {
   Select,
   FormControl,
   InputLabel,
+  Divider,
+  Tabs,
+  Tab,
 } from "@mui/material";
-import { CheckCircle, Cancel, Person } from "@mui/icons-material";
+import { CheckCircle, Cancel, Person, Message } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import { useClinicAppointments } from "../hooks/useClinicAppointments";
 import { getTodayReceptionAppointmentsAPI } from "../../infrastructure/clinic-appointments.api";
 import type { ClinicAppointment } from "../../domain/appointment.entity";
+import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner";
+import { ReceptionMessagesSection } from "./ReceptionMessagesSection";
 
 interface ReceptionSectionProps {
   clinicId: string;
@@ -38,6 +43,7 @@ export const ReceptionSection = ({ clinicId }: ReceptionSectionProps) => {
   const [selectedAppointment, setSelectedAppointment] = useState<string | null>(null);
   const [receptionStatus, setReceptionStatus] = useState<"arrived" | "not_arrived" | "attended">("arrived");
   const [notes, setNotes] = useState("");
+  const [activeTab, setActiveTab] = useState<"appointments" | "messages">("appointments");
   
   // Para recepción, usar el endpoint específico si está disponible
   const [receptionAppointments, setReceptionAppointments] = useState<ClinicAppointment[]>([]);
@@ -104,7 +110,7 @@ export const ReceptionSection = ({ clinicId }: ReceptionSectionProps) => {
   };
 
   if (loading || receptionLoading) {
-    return <Typography>Cargando citas del día...</Typography>;
+    return <LoadingSpinner text="Cargando citas del día..." />;
   }
 
   // Usar citas de recepción si están disponibles, sino usar las citas normales
@@ -117,9 +123,32 @@ export const ReceptionSection = ({ clinicId }: ReceptionSectionProps) => {
       <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>
         Recepción / Control Diario
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Citas del día: {today}
-      </Typography>
+
+      {/* Tabs para cambiar entre Citas y Mensajería */}
+      <Tabs
+        value={activeTab}
+        onChange={(_, newValue) => setActiveTab(newValue)}
+        sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}
+      >
+        <Tab
+          icon={<CheckCircle />}
+          iconPosition="start"
+          label="Citas del Día"
+          value="appointments"
+        />
+        <Tab
+          icon={<Message />}
+          iconPosition="start"
+          label="Mensajería con Médicos"
+          value="messages"
+        />
+      </Tabs>
+
+      {activeTab === "appointments" && (
+        <>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Citas del día: {today}
+          </Typography>
 
       <TableContainer component={Paper}>
         <Table>
@@ -200,8 +229,14 @@ export const ReceptionSection = ({ clinicId }: ReceptionSectionProps) => {
           <Button onClick={handleSave} variant="contained" sx={{ backgroundColor: "#14b8a6" }}>
             Guardar
           </Button>
-        </DialogActions>
-      </Dialog>
+          </DialogActions>
+        </Dialog>
+        </>
+      )}
+
+      {activeTab === "messages" && (
+        <ReceptionMessagesSection clinicId={clinicId} />
+      )}
     </Box>
   );
 };

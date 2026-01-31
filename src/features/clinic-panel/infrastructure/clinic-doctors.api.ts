@@ -18,6 +18,7 @@ export const getClinicDoctorsAPI = async (status?: 'active' | 'inactive' | 'all'
 /**
  * API: Invitar médico por email
  * Endpoint: POST /api/clinics/doctors/invite
+ * El médico completará su nombre y especialidad al aceptar la invitación
  */
 export const inviteDoctorByEmailAPI = async (email: string): Promise<DoctorInvitation> => {
   const response = await httpClient.post<{ success: boolean; data: DoctorInvitation }>(
@@ -129,4 +130,14 @@ export const updateDoctorScheduleAPI = async (
     schedule
   );
   return extractData(response);
+};
+
+/**
+ * API: Eliminar médico de la clínica
+ * Endpoint: DELETE /api/clinics/doctors/:doctorId
+ */
+export const deleteDoctorAPI = async (doctorId: string): Promise<void> => {
+  await httpClient.delete<{ success: boolean }>(
+    `/clinics/doctors/${doctorId}`
+  );
 };

@@ -4,6 +4,7 @@ import { useAuthStore } from "../../../../app/store/auth.store";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { useClinicDashboard } from "../hooks/useClinicDashboard";
 import { StatsCards } from "../components/StatsCards";
+import { DashboardCharts } from "../components/DashboardCharts";
 import { ProfileSection } from "../components/ProfileSection";
 import { DoctorsSection } from "../components/DoctorsSection";
 import { AppointmentsSection } from "../components/AppointmentsSection";
@@ -107,6 +108,9 @@ export const ClinicDashboardPage = () => {
               Dashboard - {clinic.name}
             </Typography>
             <StatsCards data={displayData} />
+            <Box sx={{ mt: 4 }}>
+              <DashboardCharts data={displayData} clinicId={clinic.id} />
+            </Box>
           </>
         )}
 
