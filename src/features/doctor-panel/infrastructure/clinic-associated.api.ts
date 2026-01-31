@@ -10,12 +10,26 @@ import type {
 /**
  * API: Obtener información de la clínica asociada
  * Endpoint: GET /api/doctors/clinic-info
+ * ⚠️ NOTA: Si el médico no está asociado, el backend retorna objeto con campos null (no 404)
  */
-export const getClinicInfoAPI = async (): Promise<ClinicInfo> => {
-  const response = await httpClient.get<{ success: boolean; data: ClinicInfo }>(
-    '/doctors/clinic-info'
-  );
-  return extractData(response);
+export const getClinicInfoAPI = async (): Promise<ClinicInfo | null> => {
+  try {
+    const response = await httpClient.get<{ success: boolean; data: ClinicInfo | null }>(
+      '/doctors/clinic-info'
+    );
+    const data = extractData(response);
+    // ⭐ Verificar si todos los campos son null (médico no asociado)
+    if (data && data.id) {
+      return data;
+    }
+    return null;
+  } catch (error: any) {
+    // Si es 404, retornar null (médico no asociado)
+    if (error?.response?.status === 404) {
+      return null;
+    }
+    throw error;
+  }
 };
 
 /**

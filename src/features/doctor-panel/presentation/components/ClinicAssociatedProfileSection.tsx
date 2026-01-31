@@ -10,6 +10,10 @@ import {
   Typography,
   Alert,
   Stack,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { Save, CloudUpload, LocalHospital } from "@mui/icons-material";
 import { useState, useEffect } from "react";
@@ -18,7 +22,6 @@ import * as Yup from "yup";
 import type { ClinicAssociatedDoctorProfile } from "../../domain/ClinicAssociatedDoctor.entity";
 import { useClinicAssociatedDoctor } from "../hooks/useClinicAssociatedDoctor";
 import { updateClinicAssociatedProfileAPI } from "../../infrastructure/clinic-associated.api";
-import { saveClinicAssociatedProfileMock } from "../../infrastructure/clinic-associated.mock";
 
 interface ClinicAssociatedProfileSectionProps {
   clinicId: string;
@@ -58,7 +61,7 @@ export const ClinicAssociatedProfileSection = ({
   clinicId,
   clinicName,
 }: ClinicAssociatedProfileSectionProps) => {
-  const { profile, loading } = useClinicAssociatedDoctor();
+  const { profile, loading, clinicInfo } = useClinicAssociatedDoctor();
   const [saving, setSaving] = useState(false);
   const [educationItems, setEducationItems] = useState<string[]>([]);
   const [certificationItems, setCertificationItems] = useState<string[]>([]);
@@ -97,13 +100,7 @@ export const ClinicAssociatedProfileSection = ({
           certifications: certificationItems,
         };
 
-        try {
-          await updateClinicAssociatedProfileAPI(updatedProfile);
-        } catch (error) {
-          // Fallback a mocks
-          console.warn("Usando mocks para actualizar perfil");
-          await saveClinicAssociatedProfileMock(updatedProfile);
-        }
+        await updateClinicAssociatedProfileAPI(updatedProfile);
         alert("Perfil actualizado correctamente");
       } catch (error) {
         console.error("Error actualizando perfil:", error);
@@ -156,7 +153,7 @@ export const ClinicAssociatedProfileSection = ({
           Atiendes en: {clinicName}
         </Typography>
         <Typography variant="body2">
-          {profile.clinicInfo.address}
+          {clinicInfo?.address || profile.clinicInfo?.address || "Dirección no disponible"}
         </Typography>
         <Typography variant="caption" sx={{ display: "block", mt: 1 }}>
           La gestión financiera, horarios oficiales y precios son responsabilidad de la clínica.
@@ -169,26 +166,34 @@ export const ClinicAssociatedProfileSection = ({
             <Grid2 container spacing={3}>
               {/* Especialidad */}
               <Grid2 size={{ xs: 12, md: 6 }}>
-                <TextField
+                <FormControl
                   fullWidth
-                  select
-                  label="Especialidad *"
-                  name="specialty"
-                  value={formik.values.specialty}
-                  onChange={formik.handleChange}
                   error={formik.touched.specialty && Boolean(formik.errors.specialty)}
-                  helperText={formik.touched.specialty && formik.errors.specialty}
-                  SelectProps={{
-                    native: true,
-                  }}
                 >
-                  <option value="">Selecciona una especialidad</option>
-                  {medicalSpecialties.map((spec) => (
-                    <option key={spec} value={spec}>
-                      {spec}
-                    </option>
-                  ))}
-                </TextField>
+                  <InputLabel id="specialty-label">Especialidad *</InputLabel>
+                  <Select
+                    labelId="specialty-label"
+                    label="Especialidad *"
+                    name="specialty"
+                    value={formik.values.specialty}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                  >
+                    <MenuItem value="">
+                      <em>Selecciona una especialidad</em>
+                    </MenuItem>
+                    {medicalSpecialties.map((spec) => (
+                      <MenuItem key={spec} value={spec}>
+                        {spec}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {formik.touched.specialty && formik.errors.specialty && (
+                    <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                      {formik.errors.specialty}
+                    </Typography>
+                  )}
+                </FormControl>
               </Grid2>
 
               {/* Años de experiencia */}

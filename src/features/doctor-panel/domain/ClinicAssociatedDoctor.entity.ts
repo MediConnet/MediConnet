@@ -13,8 +13,8 @@ export interface ClinicInfo {
 
 export interface ClinicAssociatedDoctorProfile {
   id: string;
-  clinicId: string;
-  clinicInfo: ClinicInfo;
+  clinicId: string | null; // ⭐ Puede ser null si no está asociado
+  clinicInfo: ClinicInfo | null; // ⭐ Puede ser null si no está asociado
   // Información profesional del médico (editable)
   specialty: string;
   experience?: number; // Años de experiencia

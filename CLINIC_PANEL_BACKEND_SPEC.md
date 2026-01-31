@@ -380,6 +380,8 @@ Authorization: Bearer <token>
 #### POST `/api/clinics/doctors/invite`
 Invitar médico por email
 
+**⚠️ IMPORTANTE:** Solo se envía el email. El médico completará su nombre y especialidad cuando acepte la invitación.
+
 **Headers:**
 ```
 Authorization: Bearer <token>
@@ -413,7 +415,11 @@ Authorization: Bearer <token>
 1. Validar que el email no esté ya registrado en esta clínica
 2. Generar token único y seguro (256 bits, URL-safe)
 3. Crear registro en `doctor_invitations` con `status = 'pending'`
-4. Crear registro en `clinic_doctors` con `is_invited = true`, `user_id = NULL`
+4. Crear registro en `clinic_doctors` con:
+   - `is_invited = true`
+   - `user_id = NULL`
+   - `name = NULL` (se completará al aceptar)
+   - `specialty = NULL` (se completará al aceptar)
 5. Enviar email con el link de invitación
 6. El token expira en 7 días
 
@@ -470,16 +476,25 @@ Validar token de invitación (público, para página de aceptación)
 #### POST `/api/clinics/invite/:token/accept`
 Aceptar invitación y crear cuenta de médico
 
+**⚠️ IMPORTANTE:** Aquí es donde el médico completa su nombre y especialidad. Estos campos son requeridos.
+
 **Request:**
 ```json
 {
-  "name": "Dr. Nuevo Médico",
-  "specialty": "Medicina General",
+  "name": "Dr. Nuevo Médico",           // ⭐ REQUERIDO - El médico lo completa aquí
+  "specialty": "Medicina General",      // ⭐ REQUERIDO - El médico lo completa aquí
   "password": "SecurePass123!",
   "phone": "0991234567",
   "whatsapp": "0991234567"
 }
 ```
+
+**Validaciones:**
+- `name`: String, requerido, mínimo 3 caracteres
+- `specialty`: String, requerido, debe ser una de las 20 especialidades válidas (ver sección 8)
+- `password`: String, requerido, mínimo 6 caracteres
+- `phone`: String, requerido, exactamente 10 dígitos (Ecuador)
+- `whatsapp`: String, requerido, exactamente 10 dígitos (Ecuador)
 
 **Response:**
 ```json
@@ -505,11 +520,18 @@ Aceptar invitación y crear cuenta de médico
 
 **Lógica del Backend:**
 1. Validar token (debe existir, no expirado, status = 'pending')
-2. Crear usuario en `users` con `role = 'provider'`, `serviceType = 'doctor'`
-3. Actualizar `clinic_doctors` con `user_id`, `name`, `specialty`, `is_invited = false`
-4. Actualizar `doctor_invitations` con `status = 'accepted'`
-5. Generar JWT token
-6. Enviar notificación de bienvenida
+2. Validar que `name` y `specialty` estén presentes y sean válidos
+3. Crear usuario en `users` con `role = 'provider'`, `serviceType = 'doctor'`
+4. Actualizar `clinic_doctors` con:
+   - `user_id` (el nuevo usuario creado)
+   - `name` (del request)
+   - `specialty` (del request)
+   - `phone` (del request)
+   - `whatsapp` (del request)
+   - `is_invited = false`
+5. Actualizar `doctor_invitations` con `status = 'accepted'`
+6. Generar JWT token
+7. Enviar notificación de bienvenida
 
 #### PATCH `/api/clinics/doctors/:doctorId/status`
 Activar/desactivar médico
@@ -564,6 +586,65 @@ Authorization: Bearer <token>
   }
 }
 ```
+
+#### DELETE `/api/clinics/doctors/:doctorId`
+Eliminar médico de la clínica
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**URL Parameters:**
+- `doctorId`: UUID del médico a eliminar
+
+**Response (éxito):**
+```json
+{
+  "success": true,
+  "message": "Médico eliminado correctamente"
+}
+```
+
+**Response (error 404):**
+```json
+{
+  "success": false,
+  "message": "Médico no encontrado"
+}
+```
+
+**Response (error 403):**
+```json
+{
+  "success": false,
+  "message": "No tienes permisos para eliminar este médico"
+}
+```
+
+**Lógica del Backend:**
+1. Validar que el usuario autenticado sea administrador de la clínica
+2. Validar que el `doctorId` pertenezca a la clínica del usuario autenticado
+3. Verificar que el médico exista en `clinic_doctors`
+4. Si el médico tiene `user_id` (ya aceptó la invitación):
+   - Opción A (Soft Delete): Marcar como eliminado (`is_active = false`, `deleted_at = NOW()`)
+   - Opción B (Hard Delete): Eliminar registro de `clinic_doctors` y relacionar `user_id` con otra clínica si es necesario
+5. Si el médico solo está invitado (`is_invited = true`, `user_id = NULL`):
+   - Eliminar registro de `clinic_doctors`
+   - Actualizar `doctor_invitations` con `status = 'expired'` o eliminarlo
+6. Retornar respuesta exitosa
+
+**Validaciones de Seguridad:**
+- Solo el administrador de la clínica puede eliminar médicos
+- No se puede eliminar a sí mismo (si el médico es el administrador)
+- Validar que `clinic_id` del médico coincida con la clínica del usuario autenticado
+
+**Códigos de Estado HTTP:**
+- `200 OK`: Médico eliminado correctamente
+- `401 Unauthorized`: No autenticado
+- `403 Forbidden`: Sin permisos (no es administrador de la clínica)
+- `404 Not Found`: Médico no encontrado o no pertenece a esta clínica
+- `500 Internal Server Error`: Error del servidor
 
 ---
 
@@ -697,6 +778,136 @@ Authorization: Bearer <token>
   }
 }
 ```
+
+### 3.6. Mensajería con Médicos
+
+#### GET `/api/clinics/reception/messages`
+Obtener mensajes con médicos (de la recepción de la clínica)
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Query Parameters:**
+- `doctorId` (opcional): `uuid` - Filtrar mensajes con un médico específico. Si no se envía, retornar todos los mensajes de todos los médicos.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "clinicId": "uuid",
+      "doctorId": "uuid",
+      "doctorName": "Dr. Juan Pérez",
+      "from": "reception",
+      "message": "Hola, necesitamos coordinar el horario de mañana",
+      "timestamp": "2025-01-15T10:30:00Z",
+      "isRead": true,
+      "senderName": "Recepción Clínica Central"
+    },
+    {
+      "id": "uuid",
+      "clinicId": "uuid",
+      "doctorId": "uuid",
+      "doctorName": "Dr. Juan Pérez",
+      "from": "doctor",
+      "message": "Perfecto, estaré disponible",
+      "timestamp": "2025-01-15T10:35:00Z",
+      "isRead": true,
+      "senderName": "Dr. Juan Pérez"
+    }
+  ]
+}
+```
+
+**Lógica del Backend:**
+- Si `doctorId` está presente: retornar solo mensajes con ese médico
+- Si `doctorId` no está presente: retornar todos los mensajes de todos los médicos de la clínica
+- Ordenar por `timestamp` ascendente (más antiguos primero)
+- Incluir `doctorName` en cada mensaje para facilitar el display
+
+#### POST `/api/clinics/reception/messages`
+Enviar mensaje a un médico (desde la recepción)
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Request:**
+```json
+{
+  "doctorId": "uuid",
+  "message": "Hola, necesitamos coordinar el horario de mañana"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "clinicId": "uuid",
+    "doctorId": "uuid",
+    "doctorName": "Dr. Juan Pérez",
+    "from": "reception",
+    "message": "Hola, necesitamos coordinar el horario de mañana",
+    "timestamp": "2025-01-15T10:30:00Z",
+    "isRead": false,
+    "senderName": "Recepción Clínica Central"
+  }
+}
+```
+
+**Lógica del Backend:**
+1. Validar que el `doctorId` pertenezca a la clínica del usuario autenticado
+2. Crear registro en tabla `reception_messages` con:
+   - `clinic_id` (del usuario autenticado)
+   - `doctor_id` (del request)
+   - `from = 'reception'`
+   - `message` (del request)
+   - `timestamp = NOW()`
+   - `is_read = false`
+   - `sender_name` (nombre de la clínica o "Recepción")
+3. Obtener `doctorName` desde la tabla `clinic_doctors` o `users`
+4. Enviar notificación al médico (opcional)
+5. Retornar el mensaje creado
+
+#### PATCH `/api/clinics/reception/messages/read`
+Marcar mensajes como leídos (desde la recepción)
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Request:**
+```json
+{
+  "messageIds": ["uuid1", "uuid2", "uuid3"]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Mensajes marcados como leídos"
+}
+```
+
+**Lógica del Backend:**
+1. Validar que todos los `messageIds` pertenezcan a mensajes de la clínica del usuario autenticado
+2. Actualizar `is_read = true` para todos los mensajes especificados
+3. Actualizar `read_at = NOW()` (si existe el campo)
+
+**Validaciones:**
+- Solo la recepción de la clínica puede marcar mensajes como leídos
+- Validar que todos los mensajes pertenezcan a la clínica del usuario autenticado
 
 ---
 

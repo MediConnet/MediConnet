@@ -3,6 +3,7 @@ import { getClinicDoctorsUseCase } from '../../application/get-clinic-doctors.us
 import { inviteDoctorUseCase } from '../../application/invite-doctor.usecase';
 import { toggleDoctorStatusUseCase } from '../../application/toggle-doctor-status.usecase';
 import { assignOfficeUseCase } from '../../application/assign-office.usecase';
+import { deleteDoctorUseCase } from '../../application/delete-doctor.usecase';
 import type { ClinicDoctor, DoctorInvitation } from '../../domain/doctor.entity';
 
 export const useClinicDoctors = (clinicId: string) => {
@@ -60,6 +61,18 @@ export const useClinicDoctors = (clinicId: string) => {
     }
   };
 
+  const deleteDoctor = async (doctorId: string) => {
+    setError(null);
+    try {
+      await deleteDoctorUseCase(clinicId, doctorId);
+      await loadDoctors(); // Recargar lista
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Error al eliminar médico');
+      setError(error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     if (clinicId) {
       loadDoctors();
@@ -73,6 +86,7 @@ export const useClinicDoctors = (clinicId: string) => {
     inviteDoctor,
     toggleStatus,
     assignOffice,
+    deleteDoctor,
     refetch: loadDoctors,
   };
 };

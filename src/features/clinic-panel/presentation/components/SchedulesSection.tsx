@@ -18,6 +18,7 @@ import { useClinicDoctors } from "../hooks/useClinicDoctors";
 import { useDoctorSchedule } from "../hooks/useDoctorSchedule";
 import type { ClinicDoctor } from "../../domain/doctor.entity";
 import type { DoctorSchedule } from "../../domain/doctor-schedule.entity";
+import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner";
 
 interface SchedulesSectionProps {
   clinicId: string;
@@ -118,7 +119,7 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
   };
 
   if (!profile) {
-    return <Typography>Cargando horarios...</Typography>;
+    return <LoadingSpinner text="Cargando horarios..." />;
   }
 
   return (
@@ -229,7 +230,7 @@ const DoctorSchedulesList = ({ clinicId }: { clinicId: string }) => {
   const [expandedDoctor, setExpandedDoctor] = useState<string | null>(null);
 
   if (loading) {
-    return <Typography>Cargando médicos...</Typography>;
+    return <LoadingSpinner text="Cargando médicos..." />;
   }
 
   if (doctors.length === 0) {
@@ -286,9 +287,74 @@ const DoctorScheduleCard = ({
   const [localSchedule, setLocalSchedule] = useState<DoctorSchedule | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // ⭐ Función para normalizar el schedule del doctor
+  const normalizeDoctorSchedule = (schedule: any): DoctorSchedule => {
+    const defaultSchedule: DoctorSchedule = {
+      id: schedule?.id || '',
+      doctorId: schedule?.doctorId || doctor.id,
+      clinicId: schedule?.clinicId || '',
+      monday: { enabled: false, startTime: '09:00', endTime: '18:00' },
+      tuesday: { enabled: false, startTime: '09:00', endTime: '18:00' },
+      wednesday: { enabled: false, startTime: '09:00', endTime: '18:00' },
+      thursday: { enabled: false, startTime: '09:00', endTime: '18:00' },
+      friday: { enabled: false, startTime: '09:00', endTime: '18:00' },
+      saturday: { enabled: false, startTime: '09:00', endTime: '18:00' },
+      sunday: { enabled: false, startTime: '09:00', endTime: '18:00' },
+      createdAt: schedule?.createdAt || new Date().toISOString(),
+      updatedAt: schedule?.updatedAt,
+    };
+
+    if (!schedule || typeof schedule !== 'object') {
+      return defaultSchedule;
+    }
+
+    // Si viene como array, convertir a objeto
+    if (Array.isArray(schedule)) {
+      const normalized: DoctorSchedule = { ...defaultSchedule };
+      schedule.forEach((item: any) => {
+        const dayKey = item.day?.toLowerCase() || item.dayOfWeek?.toLowerCase();
+        if (dayKey && normalized[dayKey as keyof DoctorSchedule]) {
+          normalized[dayKey as keyof DoctorSchedule] = {
+            enabled: item.enabled ?? item.is_active ?? false,
+            startTime: item.startTime || item.start_time || '09:00',
+            endTime: item.endTime || item.end_time || '18:00',
+            breakStart: item.breakStart || item.break_start,
+            breakEnd: item.breakEnd || item.break_end,
+          };
+        }
+      });
+      return normalized;
+    }
+
+    // Si viene como objeto, asegurar que todos los días existan
+    const normalized: DoctorSchedule = { ...defaultSchedule };
+    const dayKeys: (keyof DoctorSchedule)[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    
+    dayKeys.forEach((dayKey) => {
+      const dayData = schedule[dayKey] || schedule.schedule?.[dayKey];
+      if (dayData && typeof dayData === 'object') {
+        normalized[dayKey] = {
+          enabled: dayData.enabled ?? dayData.is_active ?? false,
+          startTime: dayData.startTime || dayData.start_time || '09:00',
+          endTime: dayData.endTime || dayData.end_time || '18:00',
+          breakStart: dayData.breakStart || dayData.break_start,
+          breakEnd: dayData.breakEnd || dayData.break_end,
+        };
+      }
+    });
+
+    return normalized;
+  };
+
   useEffect(() => {
     if (schedule) {
-      setLocalSchedule(schedule);
+      // ⭐ Normalizar el schedule antes de guardarlo en el estado local
+      const normalized = normalizeDoctorSchedule(schedule);
+      setLocalSchedule(normalized);
+    } else {
+      // Si no hay schedule, crear uno por defecto normalizado
+      const defaultSchedule = normalizeDoctorSchedule(null);
+      setLocalSchedule(defaultSchedule);
     }
   }, [schedule]);
 
@@ -326,7 +392,7 @@ const DoctorScheduleCard = ({
     return (
       <Card sx={{ mb: 2 }}>
         <CardContent>
-          <Typography>Cargando horarios de {doctor.name}...</Typography>
+          <LoadingSpinner text={`Cargando horarios de ${doctor.name}...`} />
         </CardContent>
       </Card>
     );
@@ -362,7 +428,14 @@ const DoctorScheduleCard = ({
           <Box sx={{ mt: 2 }}>
             <Grid2 container spacing={2}>
               {daysOfWeek.map((day) => {
-                const daySchedule = localSchedule[day.key];
+                // ⭐ Validación segura: asegurar que daySchedule siempre existe
+                const daySchedule = localSchedule?.[day.key];
+                const safeDaySchedule: DaySchedule = daySchedule || {
+                  enabled: false,
+                  startTime: '09:00',
+                  endTime: '18:00',
+                };
+                
                 return (
                   <Grid2 key={day.key} size={{ xs: 12 }}>
                     <Box
@@ -378,7 +451,7 @@ const DoctorScheduleCard = ({
                       <FormControlLabel
                         control={
                           <Switch
-                            checked={daySchedule.enabled}
+                            checked={safeDaySchedule.enabled}
                             onChange={(e) =>
                               handleDayChange(day.key, 'enabled', e.target.checked)
                             }
@@ -387,12 +460,12 @@ const DoctorScheduleCard = ({
                         label={day.label}
                         sx={{ minWidth: 100 }}
                       />
-                      {daySchedule.enabled && (
+                      {safeDaySchedule.enabled && (
                         <>
                           <TextField
                             type="time"
                             label="Inicio"
-                            value={daySchedule.startTime}
+                            value={safeDaySchedule.startTime}
                             onChange={(e) =>
                               handleDayChange(day.key, 'startTime', e.target.value)
                             }
@@ -402,7 +475,7 @@ const DoctorScheduleCard = ({
                           <TextField
                             type="time"
                             label="Fin"
-                            value={daySchedule.endTime}
+                            value={safeDaySchedule.endTime}
                             onChange={(e) =>
                               handleDayChange(day.key, 'endTime', e.target.value)
                             }

@@ -2,16 +2,20 @@
 // TODO: Agregar navegación completa y menú de usuario
 
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Box, Button, Typography } from '@mui/material';
-import { ArrowForward, Download, Favorite } from '@mui/icons-material';
+import { Box, Button, Typography, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, useMediaQuery, useTheme } from '@mui/material';
+import { ArrowForward, Download, Favorite, Menu, Close } from '@mui/icons-material';
 import { ROUTES } from '../../app/config/constants';
 import { useAuthStore } from '../../app/store/auth.store';
+import { useState } from 'react';
 
 export const AppLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const authStore = useAuthStore();
   const { user, logout } = authStore;
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -19,6 +23,7 @@ export const AppLayout = () => {
   };
 
   const scrollToSection = (id: string) => {
+    setMobileMenuOpen(false); // Cerrar menú móvil al hacer clic
     if (location.pathname === ROUTES.HOME) {
       const section = document.getElementById(id);
       if (section) {
@@ -34,6 +39,14 @@ export const AppLayout = () => {
       }, 100);
     }
   };
+
+  const navItems = [
+    { label: 'Inicio', action: () => navigate(ROUTES.HOME), isActive: location.pathname === ROUTES.HOME },
+    { label: 'Cómo funciona', action: () => scrollToSection('como-funciona'), isActive: false },
+    { label: 'Servicios', action: () => scrollToSection('servicios'), isActive: false },
+    { label: 'Para profesionales', action: () => navigate(ROUTES.REGISTER), isActive: false },
+    { label: 'Destacados', action: () => scrollToSection('destacados'), isActive: false },
+  ];
 
   return (
     <Box
@@ -63,8 +76,8 @@ export const AppLayout = () => {
           sx={{
             maxWidth: '1400px',
             mx: 'auto',
-            px: { xs: 2, sm: 4, md: 6 },
-            py: 2,
+            px: { xs: 1.5, sm: 3, md: 4, lg: 6 },
+            py: { xs: 1.5, sm: 2 },
           }}
         >
           <Box
@@ -81,15 +94,16 @@ export const AppLayout = () => {
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 1.5,
+                gap: { xs: 1, sm: 1.5 },
                 cursor: 'pointer',
                 flexShrink: 0,
+                zIndex: 1001,
               }}
             >
               <Box
                 sx={{
-                  width: 40,
-                  height: 40,
+                  width: { xs: 32, sm: 40 },
+                  height: { xs: 32, sm: 40 },
                   borderRadius: 1.5,
                   backgroundColor: '#06b6d4',
                   display: 'flex',
@@ -97,11 +111,11 @@ export const AppLayout = () => {
                   justifyContent: 'center',
                 }}
               >
-                <Favorite sx={{ fontSize: 24, color: 'white' }} />
+                <Favorite sx={{ fontSize: { xs: 20, sm: 24 }, color: 'white' }} />
               </Box>
               <Typography
                 sx={{
-                  fontSize: '1.5rem',
+                  fontSize: { xs: '1.25rem', sm: '1.5rem' },
                   fontWeight: 700,
                   color: '#1f2937',
                   display: { xs: 'none', sm: 'block' },
@@ -111,101 +125,111 @@ export const AppLayout = () => {
               </Typography>
             </Box>
 
-            {/* NOTE: Navegación centrada - siempre visible */}
+            {/* NOTE: Navegación centrada - Desktop */}
             <Box
               sx={{
                 display: { xs: 'none', md: 'flex' },
                 alignItems: 'center',
-                gap: 3,
+                gap: { md: 2, lg: 3 },
                 position: 'absolute',
                 left: '50%',
                 transform: 'translateX(-50%)',
+                marginRight: { md: 2, lg: 3 }, // ⭐ Separación moderada de los botones
               }}
             >
-              <Button
-                onClick={() => navigate(ROUTES.HOME)}
-                sx={{
-                  textTransform: 'none',
-                  color: location.pathname === ROUTES.HOME ? '#06b6d4' : '#1f2937',
-                  fontSize: '0.9375rem',
-                  fontWeight: location.pathname === ROUTES.HOME ? 600 : 400,
-                  '&:hover': {
-                    backgroundColor: 'transparent',
-                    color: '#06b6d4',
-                  },
-                }}
-              >
-                Inicio
-              </Button>
-              <Button
-                onClick={() => scrollToSection('como-funciona')}
-                sx={{
-                  textTransform: 'none',
-                  color: '#1f2937',
-                  fontSize: '0.9375rem',
-                  fontWeight: 400,
-                  '&:hover': {
-                    backgroundColor: 'transparent',
-                    color: '#06b6d4',
-                  },
-                }}
-              >
-                Cómo funciona
-              </Button>
-              <Button
-                onClick={() => scrollToSection('servicios')}
-                sx={{
-                  textTransform: 'none',
-                  color: '#1f2937',
-                  fontSize: '0.9375rem',
-                  fontWeight: 400,
-                  '&:hover': {
-                    backgroundColor: 'transparent',
-                    color: '#06b6d4',
-                  },
-                }}
-              >
-                Servicios
-              </Button>
-              <Button
-                onClick={() => navigate(ROUTES.REGISTER)}
-                sx={{
-                  textTransform: 'none',
-                  color: '#1f2937',
-                  fontSize: '0.9375rem',
-                  fontWeight: 400,
-                  '&:hover': {
-                    backgroundColor: 'transparent',
-                    color: '#06b6d4',
-                  },
-                }}
-              >
-                Para profesionales
-              </Button>
-              <Button
-                onClick={() => scrollToSection('destacados')}
-                sx={{
-                  textTransform: 'none',
-                  color: '#1f2937',
-                  fontSize: '0.9375rem',
-                  fontWeight: 400,
-                  '&:hover': {
-                    backgroundColor: 'transparent',
-                    color: '#06b6d4',
-                  },
-                }}
-              >
-                Destacados
-              </Button>
+              {navItems.map((item) => (
+                <Button
+                  key={item.label}
+                  onClick={item.action}
+                  sx={{
+                    textTransform: 'none',
+                    color: item.isActive ? '#06b6d4' : '#1f2937',
+                    fontSize: { md: '0.875rem', lg: '0.9375rem' },
+                    fontWeight: item.isActive ? 600 : 400,
+                    px: { md: 1, lg: 1.5 },
+                    '&:hover': {
+                      backgroundColor: 'transparent',
+                      color: '#06b6d4',
+                    },
+                  }}
+                >
+                  {item.label}
+                </Button>
+              ))}
             </Box>
+
+            {/* NOTE: Botón menú hamburguesa - Mobile */}
+            {isMobile && (
+              <IconButton
+                onClick={() => setMobileMenuOpen(true)}
+                sx={{
+                  display: { xs: 'flex', md: 'none' },
+                  color: '#1f2937',
+                  zIndex: 1001,
+                }}
+              >
+                <Menu />
+              </IconButton>
+            )}
+
+            {/* NOTE: Drawer/Menú móvil */}
+            <Drawer
+              anchor="right"
+              open={mobileMenuOpen}
+              onClose={() => setMobileMenuOpen(false)}
+              sx={{
+                display: { xs: 'block', md: 'none' },
+                '& .MuiDrawer-paper': {
+                  width: '280px',
+                  pt: 8,
+                },
+              }}
+            >
+              <Box sx={{ position: 'relative' }}>
+                <IconButton
+                  onClick={() => setMobileMenuOpen(false)}
+                  sx={{
+                    position: 'absolute',
+                    top: 16,
+                    right: 16,
+                    color: '#1f2937',
+                  }}
+                >
+                  <Close />
+                </IconButton>
+                <List>
+                  {navItems.map((item) => (
+                    <ListItem key={item.label} disablePadding>
+                      <ListItemButton
+                        onClick={item.action}
+                        sx={{
+                          py: 1.5,
+                          px: 3,
+                          color: item.isActive ? '#06b6d4' : '#1f2937',
+                          fontWeight: item.isActive ? 600 : 400,
+                          '&:hover': {
+                            backgroundColor: 'rgba(6, 182, 212, 0.08)',
+                            color: '#06b6d4',
+                          },
+                        }}
+                      >
+                        <ListItemText primary={item.label} />
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            </Drawer>
 
             {/* NOTE: Botones de acción a la derecha */}
             <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 1.5,
+                gap: { xs: 1, sm: 1.5 },
                 flexShrink: 0,
+                marginLeft: { xs: 'auto', md: 3, lg: 4 }, // ⭐ Separación moderada de la navegación
+                zIndex: 1001,
               }}
             >
               {!user ? (
@@ -213,16 +237,17 @@ export const AppLayout = () => {
                 <>
                   <Button
                     onClick={() => navigate(ROUTES.LOGIN)}
-                    endIcon={<ArrowForward sx={{ fontSize: 18 }} />}
+                    endIcon={<ArrowForward sx={{ fontSize: { xs: 16, sm: 18 } }} />}
                     sx={{
                       textTransform: 'none',
                       color: '#1f2937',
-                      fontSize: '0.9375rem',
+                      fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '0.9375rem' },
                       fontWeight: 500,
-                      px: 2,
-                      py: 0.75,
+                      px: { xs: 1.5, sm: 2 },
+                      py: { xs: 0.5, sm: 0.75 },
                       border: '1px solid #06b6d4',
                       borderRadius: 1,
+                      display: { xs: 'none', sm: 'flex' }, // Ocultar en móvil muy pequeño
                       '&:hover': {
                         backgroundColor: 'rgba(6, 182, 212, 0.04)',
                         borderColor: '#0891b2',
@@ -233,23 +258,24 @@ export const AppLayout = () => {
                   </Button>
                   <Button
                     variant="contained"
-                    startIcon={<Download sx={{ fontSize: 18 }} />}
+                    startIcon={<Download sx={{ fontSize: { xs: 16, sm: 18 } }} />}
                     onClick={() => navigate(ROUTES.HOME)}
                     sx={{
                       textTransform: 'none',
                       backgroundColor: '#06b6d4',
                       color: 'white',
-                      fontSize: '0.9375rem',
+                      fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '0.9375rem' },
                       fontWeight: 500,
-                      px: 2.5,
-                      py: 0.75,
+                      px: { xs: 1.5, sm: 2, md: 2.5 },
+                      py: { xs: 0.5, sm: 0.75 },
                       borderRadius: 1,
+                      whiteSpace: 'nowrap',
                       '&:hover': {
                         backgroundColor: '#0891b2',
                       },
                     }}
                   >
-                    Descargar App
+                    App
                   </Button>
                 </>
               ) : (
@@ -259,10 +285,10 @@ export const AppLayout = () => {
                   sx={{
                     textTransform: 'none',
                     color: '#1f2937',
-                    fontSize: '0.9375rem',
+                    fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '0.9375rem' },
                     fontWeight: 500,
-                    px: 2,
-                    py: 0.75,
+                    px: { xs: 1.5, sm: 2 },
+                    py: { xs: 0.5, sm: 0.75 },
                     '&:hover': {
                       backgroundColor: 'rgba(0, 0, 0, 0.04)',
                     },
