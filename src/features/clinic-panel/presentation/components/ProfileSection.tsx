@@ -1,10 +1,10 @@
-import { Box, Typography, Button, TextField, Grid2, Card, CardContent, Stack, Chip, Divider } from "@mui/material";
-import { Save, CloudUpload, LocationOn } from "@mui/icons-material";
-import { useState, useEffect } from "react";
+import { Box, Typography, Button, TextField, Grid2, Card, CardContent, Stack, Chip, Divider, Avatar } from "@mui/material";
+import { Save, CloudUpload, LocationOn, CameraAlt, LocalHospital } from "@mui/icons-material";
+import { useState, useEffect, useRef } from "react";
 import { useClinicProfile } from "../hooks/useClinicProfile";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { uploadClinicLogoAPI } from "../../infrastructure/clinic.api";
+// ⭐ Ya no necesitamos uploadClinicLogoAPI - enviamos Base64 directamente en updateProfile
 import { Map } from "../../../../shared/ui/Map";
 import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner";
 
@@ -48,13 +48,114 @@ const validationSchema = Yup.object({
 export const ProfileSection = ({ clinicId }: ProfileSectionProps) => {
   const { profile, loading, updateProfile } = useClinicProfile();
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Actualizar especialidades cuando el perfil se carga
   useEffect(() => {
     if (profile?.specialties) {
       setSelectedSpecialties(profile.specialties);
     }
+    if (profile?.logoUrl) {
+      setLogoPreview(profile.logoUrl);
+    }
   }, [profile]);
+
+  const handleLogoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // ⭐ Función para comprimir y redimensionar imagen
+  const compressAndResizeImage = (
+    file: File,
+    maxWidth: number = 800,
+    maxHeight: number = 800,
+    quality: number = 0.8
+  ): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          // Calcular nuevas dimensiones manteniendo la proporción
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxWidth) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = (width * maxHeight) / height;
+              height = maxHeight;
+            }
+          }
+
+          // Crear canvas para redimensionar
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+
+          if (!ctx) {
+            reject(new Error("No se pudo obtener el contexto del canvas"));
+            return;
+          }
+
+          // Dibujar imagen redimensionada
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convertir a Base64 con compresión
+          const base64String = canvas.toDataURL("image/jpeg", quality);
+          resolve(base64String);
+        };
+        img.onerror = () => reject(new Error("Error al cargar la imagen"));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error("Error al leer el archivo"));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validar tamaño del archivo (máximo 10MB antes de comprimir)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        alert("La imagen es demasiado grande. Por favor, selecciona una imagen menor a 10MB.");
+        return;
+      }
+
+      // Validar tipo de archivo
+      if (!file.type.startsWith("image/")) {
+        alert("Por favor, selecciona un archivo de imagen válido.");
+        return;
+      }
+
+      try {
+        // ⭐ Comprimir y redimensionar antes de convertir a Base64
+        // Máximo 800x800px, calidad 80%
+        const base64String = await compressAndResizeImage(file, 800, 800, 0.8);
+
+        // Mostrar preview inmediatamente
+        setLogoPreview(base64String);
+
+        // ⭐ Enviar directamente en el perfil con Base64 comprimido
+        // El backend acepta: { "logoUrl": "data:image/jpeg;base64,..." }
+        await updateProfile({
+          ...profile,
+          logoUrl: base64String,
+        });
+      } catch (error) {
+        console.error("Error procesando logo:", error);
+        alert("Error al procesar el logo. Por favor, intenta con otra imagen.");
+        setLogoPreview(profile?.logoUrl || null);
+      }
+    }
+  };
 
   const formik = useFormik({
     initialValues: {
@@ -94,6 +195,81 @@ export const ProfileSection = ({ clinicId }: ProfileSectionProps) => {
         <CardContent>
           <form onSubmit={formik.handleSubmit}>
             <Grid2 container spacing={3}>
+              {/* Logo en círculo */}
+              <Grid2 size={{ xs: 12, md: 6 }}>
+                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                  <Box
+                    sx={{
+                      position: "relative",
+                      cursor: "pointer",
+                      "&:hover .overlay": {
+                        opacity: 1,
+                      },
+                    }}
+                    onClick={handleLogoClick}
+                  >
+                    <Avatar
+                      src={logoPreview || undefined}
+                      sx={{
+                        width: { xs: 120, sm: 150, md: 180 },
+                        height: { xs: 120, sm: 150, md: 180 },
+                        bgcolor: "#e0f2f1",
+                        border: "3px solid #14b8a6",
+                      }}
+                    >
+                      {!logoPreview && <LocalHospital sx={{ fontSize: { xs: 60, sm: 75, md: 90 }, color: "#14b8a6" }} />}
+                    </Avatar>
+                    {/* Overlay con icono de cámara */}
+                    <Box
+                      className="overlay"
+                      sx={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        borderRadius: "50%",
+                        bgcolor: "rgba(0, 0, 0, 0.5)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        opacity: 0,
+                        transition: "opacity 0.3s",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <CameraAlt sx={{ fontSize: { xs: 30, sm: 40, md: 40 }, color: "white" }} />
+                    </Box>
+                  </Box>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={handleLogoChange}
+                  />
+                  <Button
+                    variant="outlined"
+                    startIcon={<CloudUpload />}
+                    onClick={handleLogoClick}
+                    sx={{
+                      textTransform: "none",
+                      borderColor: "#14b8a6",
+                      color: "#14b8a6",
+                      "&:hover": {
+                        borderColor: "#0d9488",
+                        backgroundColor: "rgba(20, 184, 166, 0.04)",
+                      },
+                    }}
+                  >
+                    {logoPreview ? "Cambiar Logo" : "Subir Logo"}
+                  </Button>
+                  <Typography variant="caption" color="text.secondary" textAlign="center">
+                    Haz clic en el círculo o en el botón para subir el logo de la clínica
+                  </Typography>
+                </Box>
+              </Grid2>
+
               <Grid2 size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
@@ -104,44 +280,6 @@ export const ProfileSection = ({ clinicId }: ProfileSectionProps) => {
                   error={formik.touched.name && Boolean(formik.errors.name)}
                   helperText={formik.touched.name && formik.errors.name}
                 />
-              </Grid2>
-
-              <Grid2 size={{ xs: 12, md: 6 }}>
-                <Box sx={{ mb: 2 }}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<CloudUpload />}
-                    component="label"
-                    fullWidth
-                  >
-                    Subir Logo
-                    <input 
-                      type="file" 
-                      hidden 
-                      accept="image/*" 
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          try {
-                            const result = await uploadClinicLogoAPI(file);
-                            await updateProfile({ ...profile, logoUrl: result.logoUrl });
-                          } catch (error) {
-                            console.error("Error subiendo logo:", error);
-                            alert("Error al subir el logo");
-                          }
-                        }
-                      }}
-                    />
-                  </Button>
-                  {profile.logoUrl && (
-                    <Box
-                      component="img"
-                      src={profile.logoUrl}
-                      alt="Logo"
-                      sx={{ width: 100, height: 100, mt: 2, borderRadius: 2 }}
-                    />
-                  )}
-                </Box>
               </Grid2>
 
               <Grid2 size={{ xs: 12 }}>

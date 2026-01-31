@@ -35,23 +35,33 @@ export const ProfileSection = ({ profile, onUpdate }: ProfileSectionProps) => {
 
   // Cargar logo y nombre de la cadena si hay chainId
   useEffect(() => {
-    if (profile.chainId) {
-      const chains = getPharmacyChains();
-      const chain = chains.find((c) => c.id === profile.chainId);
-      if (chain) {
-        // Usar logo y nombre de la cadena
-        setDisplayLogo(chain.logoUrl || profile.logoUrl || null);
-        setDisplayName(chain.name);
+    const loadChainData = async () => {
+      if (profile.chainId) {
+        try {
+          const chains = await getPharmacyChains();
+          const chain = chains.find((c) => c.id === profile.chainId);
+          if (chain) {
+            // Usar logo y nombre de la cadena
+            setDisplayLogo(chain.logoUrl || profile.logoUrl || null);
+            setDisplayName(chain.name);
+          } else {
+            // Si no se encuentra la cadena, usar los del perfil
+            setDisplayLogo(profile.logoUrl || null);
+            setDisplayName(profile.commercialName);
+          }
+        } catch (error) {
+          console.error('Error loading pharmacy chain:', error);
+          // En caso de error, usar los del perfil
+          setDisplayLogo(profile.logoUrl || null);
+          setDisplayName(profile.commercialName);
+        }
       } else {
-        // Si no se encuentra la cadena, usar los del perfil
+        // Si no hay cadena, usar los del perfil
         setDisplayLogo(profile.logoUrl || null);
         setDisplayName(profile.commercialName);
       }
-    } else {
-      // Si no hay cadena, usar los del perfil
-      setDisplayLogo(profile.logoUrl || null);
-      setDisplayName(profile.commercialName);
-    }
+    };
+    loadChainData();
   }, [profile.chainId, profile.logoUrl, profile.commercialName]);
 
   const getStatusLabel = (status: PharmacyProfile["status"]) => {

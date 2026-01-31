@@ -73,24 +73,31 @@ export const EditPharmacyModal = ({
   const [selectedChain, setSelectedChain] = useState<PharmacyChain | null>(null);
 
   useEffect(() => {
-    const loadedChains = getPharmacyChains();
-    const activeChains = loadedChains.filter((c) => c.isActive);
-    setChains(activeChains);
-    
-    // Si hay initialData, buscar la cadena correspondiente y configurar logo/nombre
-    if (initialData && initialData.chainId) {
-      const chain = activeChains.find((c) => c.id === initialData.chainId);
-      if (chain) {
-        setSelectedChain(chain);
-        // Actualizar logo y nombre inmediatamente desde la cadena
-        setFormData((prev) => ({
-          ...prev,
-          logoUrl: chain.logoUrl || prev.logoUrl || "",
-          commercialName: chain.name,
-          chainId: chain.id,
-        }));
+    const loadChains = async () => {
+      try {
+        const loadedChains = await getPharmacyChains();
+        const activeChains = loadedChains.filter((c) => c.isActive);
+        setChains(activeChains);
+        
+        // Si hay initialData, buscar la cadena correspondiente y configurar logo/nombre
+        if (initialData && initialData.chainId) {
+          const chain = activeChains.find((c) => c.id === initialData.chainId);
+          if (chain) {
+            setSelectedChain(chain);
+            // Actualizar logo y nombre inmediatamente desde la cadena
+            setFormData((prev) => ({
+              ...prev,
+              logoUrl: chain.logoUrl || prev.logoUrl || "",
+              commercialName: chain.name,
+              chainId: chain.id,
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading pharmacy chains:', error);
       }
-    }
+    };
+    loadChains();
   }, []);
 
   useEffect(() => {

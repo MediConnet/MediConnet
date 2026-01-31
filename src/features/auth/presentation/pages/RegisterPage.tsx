@@ -146,8 +146,15 @@ export const RegisterPage = () => {
 
   useEffect(() => {
     if (selectedType === "pharmacy") {
-      const chains = getPharmacyChains();
-      setPharmacyChains(chains.filter((c) => c.isActive));
+      const loadChains = async () => {
+        try {
+          const chains = await getPharmacyChains();
+          setPharmacyChains(chains.filter((c) => c.isActive));
+        } catch (error) {
+          console.error('Error loading pharmacy chains:', error);
+        }
+      };
+      loadChains();
     }
   }, [selectedType]);
 

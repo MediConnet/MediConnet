@@ -29,11 +29,12 @@ import {
   Typography,
   Switch,
   FormControlLabel,
+  Alert,
 } from "@mui/material";
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
-import { getPharmacyChains } from "../../../../shared/lib/pharmacy-chains";
-import { savePharmacyChains } from "../../infrastructure/pharmacy-chains.mock";
+import { usePharmacyChains } from "../hooks/usePharmacyChains";
+import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner";
 import type { PharmacyChain } from "../../domain/pharmacy-chain.entity";
 
 const CURRENT_ADMIN = {
@@ -44,24 +45,16 @@ const CURRENT_ADMIN = {
 };
 
 export const PharmacyChainsPage = () => {
-  const [chains, setChains] = useState<PharmacyChain[]>([]);
+  const { chains, loading, error, createChain, updateChain, deleteChain, clearError } = usePharmacyChains();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingChain, setEditingChain] = useState<PharmacyChain | null>(null);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     logoUrl: "",
     isActive: true,
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    loadChains();
-  }, []);
-
-  const loadChains = () => {
-    const loadedChains = getPharmacyChains();
-    setChains(loadedChains);
-  };
 
   const handleCreate = () => {
     setEditingChain(null);
@@ -79,64 +72,53 @@ export const PharmacyChainsPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm("¿Estás seguro de eliminar esta cadena?")) {
-      const updatedChains = chains.filter((c) => c.id !== id);
-      savePharmacyChains(updatedChains);
-      loadChains();
+      try {
+        await deleteChain(id);
+      } catch (err) {
+        alert("Error al eliminar la cadena. Por favor, intenta nuevamente.");
+      }
     }
   };
 
-  const handleToggleActive = (chain: PharmacyChain) => {
-    const updatedChains = chains.map((c) =>
-      c.id === chain.id
-        ? {
-            ...c,
-            isActive: !c.isActive,
-            updatedAt: new Date().toISOString(),
-          }
-        : c
-    );
-    savePharmacyChains(updatedChains);
-    loadChains();
+  const handleToggleActive = async (chain: PharmacyChain) => {
+    try {
+      await updateChain(chain.id, { isActive: !chain.isActive });
+    } catch (err) {
+      alert("Error al cambiar el estado. Por favor, intenta nuevamente.");
+    }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name.trim()) {
       alert("El nombre es requerido");
       return;
     }
 
-    if (editingChain) {
-      // Editar
-      const updatedChains = chains.map((c) =>
-        c.id === editingChain.id
-          ? {
-              ...c,
-              name: formData.name,
-              logoUrl: formData.logoUrl,
-              isActive: formData.isActive,
-              updatedAt: new Date().toISOString(),
-            }
-          : c
-      );
-      savePharmacyChains(updatedChains);
-    } else {
-      // Crear
-      const newChain: PharmacyChain = {
-        id: Date.now().toString(),
-        name: formData.name,
-        logoUrl: formData.logoUrl,
-        isActive: formData.isActive,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      const updatedChains = [...chains, newChain];
-      savePharmacyChains(updatedChains);
+    try {
+      setSaving(true);
+      if (editingChain) {
+        // Editar
+        await updateChain(editingChain.id, {
+          name: formData.name,
+          logoUrl: formData.logoUrl,
+          isActive: formData.isActive,
+        });
+      } else {
+        // Crear
+        await createChain({
+          name: formData.name,
+          logoUrl: formData.logoUrl,
+          isActive: formData.isActive,
+        });
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      // El error ya se maneja en el hook
+    } finally {
+      setSaving(false);
     }
-
-    setIsModalOpen(false);
-    loadChains();
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -154,9 +136,22 @@ export const PharmacyChainsPage = () => {
     fileInputRef.current?.click();
   };
 
+  if (loading) {
+    return (
+      <DashboardLayout role="ADMIN" userProfile={CURRENT_ADMIN}>
+        <LoadingSpinner text="Cargando cadenas de farmacias..." />
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout role="ADMIN" userProfile={CURRENT_ADMIN}>
       <Box>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={clearError}>
+            {error}
+          </Alert>
+        )}
         <Box mb={3} display="flex" justifyContent="space-between" alignItems="center">
           <Box>
             <Typography variant="h4" fontWeight={700} mb={1}>
@@ -369,9 +364,11 @@ export const PharmacyChainsPage = () => {
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-            <Button variant="contained" onClick={handleSave}>
-              {editingChain ? "Guardar Cambios" : "Crear Cadena"}
+            <Button onClick={() => setIsModalOpen(false)} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button variant="contained" onClick={handleSave} disabled={saving}>
+              {saving ? "Guardando..." : editingChain ? "Guardar Cambios" : "Crear Cadena"}
             </Button>
           </DialogActions>
         </Dialog>
