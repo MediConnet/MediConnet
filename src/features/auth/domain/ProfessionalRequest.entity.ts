@@ -5,7 +5,7 @@ export interface ProfessionalRequest {
   password: string;
   phone: string;
   whatsapp: string;
-  serviceName: string;
+  serviceName?: string; // Opcional: no requerido si hay chainId (para farmacias)
   address: string;
   city: string;
   price: string;

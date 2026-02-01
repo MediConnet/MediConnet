@@ -6,24 +6,37 @@ import { KPICard } from "../components/KPICard";
 import { PharmacyReviewItem } from "../components/PharmacyReviewItem";
 import { usePharmacyProfile } from "../hooks/usePharmacyProfile";
 import { usePharmacyReviews } from "../hooks/usePharmacyReviews";
-
-const PHARMACY_USER = {
-  name: "Fybeca Admin",
-  roleLabel: "Farmacia",
-  initials: "FA",
-  isActive: true,
-};
+import { useAuthStore } from "../../../../app/store/auth.store";
 
 export const PharmacyReviewsPage = () => {
   const theme = useTheme();
   const { profile, isLoading: isLoadingProfile } = usePharmacyProfile();
   const { reviews, isLoading: isLoadingReviews } = usePharmacyReviews();
+  const authStore = useAuthStore();
+  const { user } = authStore;
+
+  // Obtener iniciales del usuario
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const userProfile = {
+    name: user?.name || "Farmacia",
+    roleLabel: "Farmacia",
+    initials: getInitials(user?.name || "FA"),
+    isActive: true,
+  };
 
   const isLoading = isLoadingProfile || isLoadingReviews;
 
   if (isLoading || !profile) {
     return (
-      <DashboardLayout role="PROVIDER" userProfile={PHARMACY_USER}>
+      <DashboardLayout role="PROVIDER" userProfile={userProfile}>
         <Box p={3}>
           <Skeleton
             variant="rectangular"
@@ -38,7 +51,7 @@ export const PharmacyReviewsPage = () => {
   }
 
   return (
-    <DashboardLayout role="PROVIDER" userProfile={PHARMACY_USER}>
+    <DashboardLayout role="PROVIDER" userProfile={userProfile}>
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
         {/* SECTION 1: KPIS (Resumen) */}
         <Grid2 container spacing={3} mb={4}>

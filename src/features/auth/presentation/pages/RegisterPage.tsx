@@ -190,6 +190,12 @@ export const RegisterPage = () => {
 
     if (selectedType === "pharmacy") {
       baseSchema.chainId = Yup.string().required("Selecciona una cadena");
+      // nombreServicio solo es requerido si NO hay cadena seleccionada
+      baseSchema.nombreServicio = Yup.string().when("chainId", {
+        is: (chainId: string) => !chainId || chainId === "",
+        then: (schema) => schema.min(3, "Mínimo 3 caracteres").required("El nombre del servicio es requerido"),
+        otherwise: (schema) => schema.notRequired(),
+      });
     } else {
       baseSchema.nombreServicio = Yup.string()
         .min(3, "Mínimo 3 caracteres")
@@ -240,10 +246,10 @@ export const RegisterPage = () => {
             password: values.password,
             phone: values.telefono,
             whatsapp: values.whatsapp,
+            // ⭐ Solo enviar serviceName si NO hay chainId (si hay cadena, el backend obtiene el nombre de la cadena)
             serviceName:
-              selectedType === "pharmacy"
-                ? pharmacyChains.find((c) => c.id === values.chainId)?.name ||
-                  values.nombreServicio
+              selectedType === "pharmacy" && values.chainId
+                ? undefined // No enviar si hay cadena seleccionada
                 : values.nombreServicio,
             address: values.direccion,
             city: values.ciudad,
@@ -768,58 +774,124 @@ export const RegisterPage = () => {
                 }}
               >
                 {selectedType === "pharmacy" ? (
-                  <FormControl fullWidth required>
-                    <InputLabel>Cadena de Farmacias</InputLabel>
-                    <Select
-                      name="chainId"
-                      value={formik.values.chainId}
-                      label="Cadena de Farmacias"
-                      onChange={(e) => {
-                        formik.setFieldValue("chainId", e.target.value);
-                        const selectedChain = pharmacyChains.find(
-                          (c) => c.id === e.target.value,
-                        );
-                        if (selectedChain)
-                          formik.setFieldValue(
-                            "nombreServicio",
-                            selectedChain.name,
-                          );
-                      }}
-                      onBlur={formik.handleBlur}
-                      error={
-                        formik.touched.chainId &&
-                        Boolean((formik.errors as any).chainId)
-                      }
-                    >
-                      {pharmacyChains.map((chain) => (
-                        <MenuItem key={chain.id} value={chain.id}>
-                          <Stack
-                            direction="row"
-                            spacing={2}
-                            alignItems="center"
-                          >
-                            {chain.logoUrl ? (
+                  <>
+                    <FormControl fullWidth required>
+                      <InputLabel>Cadena de Farmacias</InputLabel>
+                      <Select
+                        name="chainId"
+                        value={formik.values.chainId}
+                        label="Cadena de Farmacias"
+                        onChange={(e) => {
+                          formik.setFieldValue("chainId", e.target.value);
+                          // Limpiar nombreServicio cuando se selecciona una cadena
+                          if (e.target.value) {
+                            formik.setFieldValue("nombreServicio", "");
+                          }
+                        }}
+                        onBlur={formik.handleBlur}
+                        error={
+                          formik.touched.chainId &&
+                          Boolean((formik.errors as any).chainId)
+                        }
+                      >
+                        <MenuItem value="">No pertenezco a ninguna cadena</MenuItem>
+                        {pharmacyChains.map((chain) => (
+                          <MenuItem key={chain.id} value={chain.id}>
+                            <Stack
+                              direction="row"
+                              spacing={2}
+                              alignItems="center"
+                            >
+                              {chain.logoUrl ? (
+                                <Box
+                                  component="img"
+                                  src={chain.logoUrl}
+                                  alt={chain.name}
+                                  sx={{
+                                    width: 32,
+                                    height: 32,
+                                    objectFit: "contain",
+                                  }}
+                                />
+                              ) : (
+                                <Avatar sx={{ width: 24, height: 24 }}>
+                                  <Medication fontSize="small" />
+                                </Avatar>
+                              )}
+                              <Typography>{chain.name}</Typography>
+                            </Stack>
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    {formik.values.chainId ? (
+                      // Si hay cadena seleccionada, mostrar nombre y logo de la cadena (solo lectura)
+                      <Box>
+                        <Typography variant="subtitle2" fontWeight={600} mb={1}>
+                          Nombre de la Cadena
+                        </Typography>
+                        <Box
+                          sx={{
+                            p: 2,
+                            border: "2px solid",
+                            borderColor: "primary.main",
+                            borderRadius: 2,
+                            bgcolor: "rgba(20, 184, 166, 0.05)",
+                            cursor: "not-allowed",
+                          }}
+                        >
+                          <Stack direction="row" spacing={2} alignItems="center">
+                            {pharmacyChains.find((c) => c.id === formik.values.chainId)?.logoUrl && (
                               <Box
                                 component="img"
-                                src={chain.logoUrl}
-                                alt={chain.name}
-                                sx={{
-                                  width: 32,
-                                  height: 32,
-                                  objectFit: "contain",
-                                }}
+                                src={pharmacyChains.find((c) => c.id === formik.values.chainId)?.logoUrl}
+                                alt="Logo"
+                                sx={{ width: 40, height: 40, objectFit: "contain" }}
                               />
-                            ) : (
-                              <Avatar sx={{ width: 24, height: 24 }}>
-                                <Medication fontSize="small" />
-                              </Avatar>
                             )}
-                            <Typography>{chain.name}</Typography>
+                            <Typography variant="body1" fontWeight={600}>
+                              {pharmacyChains.find((c) => c.id === formik.values.chainId)?.name}
+                            </Typography>
                           </Stack>
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                        </Box>
+                        <Typography variant="caption" color="text.secondary" mt={1} display="block">
+                          El nombre y logo vienen de la cadena seleccionada y no se pueden modificar
+                        </Typography>
+                      </Box>
+                    ) : (
+                      // Si NO hay cadena, mostrar campo de nombre del servicio
+                      <TextField
+                        fullWidth
+                        required
+                        label="Nombre del servicio"
+                        name="nombreServicio"
+                        value={formik.values.nombreServicio}
+                        onChange={(e) =>
+                          handleBothInput(e, (val) =>
+                            formik.setFieldValue("nombreServicio", val),
+                          )
+                        }
+                        onBlur={formik.handleBlur}
+                        error={
+                          formik.touched.nombreServicio &&
+                          Boolean(formik.errors.nombreServicio)
+                        }
+                        helperText={
+                          formik.touched.nombreServicio &&
+                          formik.errors.nombreServicio
+                        }
+                        slotProps={{
+                          input: {
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <BusinessIcon sx={{ color: "#9ca3af" }} />
+                              </InputAdornment>
+                            ),
+                          },
+                        }}
+                      />
+                    )}
+                  </>
                 ) : (
                   <TextField
                     fullWidth

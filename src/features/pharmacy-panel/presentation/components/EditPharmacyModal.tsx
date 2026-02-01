@@ -71,6 +71,9 @@ export const EditPharmacyModal = ({
   const [hasNewImage, setHasNewImage] = useState(false);
   const [chains, setChains] = useState<PharmacyChain[]>([]);
   const [selectedChain, setSelectedChain] = useState<PharmacyChain | null>(null);
+  
+  // ⭐ Usar isChainMember del backend - SOLO true si el backend lo confirma explícitamente
+  const isChainMember = initialData?.isChainMember === true;
 
   useEffect(() => {
     const loadChains = async () => {
@@ -102,47 +105,60 @@ export const EditPharmacyModal = ({
 
   useEffect(() => {
     if (initialData && open) {
-      const chainId = initialData.chainId || "";
-      const chain = chains.find((c) => c.id === chainId);
+      // ⭐ Usar isChainMember del backend - SOLO true si el backend lo confirma explícitamente
+      const isMember = initialData.isChainMember === true;
       
-      // Si hay cadena, SIEMPRE usar el nombre y logo de la cadena (no del initialData)
-      if (chain) {
-        setSelectedChain(chain);
+      if (isMember) {
+        // ⭐ Si es miembro de cadena, usar datos de la cadena del backend
         setFormData({
-          commercialName: chain.name, // SIEMPRE usar nombre de la cadena
+          commercialName: initialData.chainName || initialData.commercialName || "",
           ruc: initialData.ruc || "",
-          description: initialData.description || "",
+          description: initialData.chainDescription || initialData.description || "",
           websiteUrl: initialData.websiteUrl || "",
-          logoUrl: chain.logoUrl || "", // SIEMPRE usar logo de la cadena
+          logoUrl: initialData.chainLogo || initialData.logoUrl || "",
           address: initialData.address || "",
           status: initialData.status || "draft",
           isActive: initialData.isActive !== false,
-          chainId: chainId,
+          chainId: initialData.chainId || "",
         });
+        
+        // Si hay chainId, buscar la cadena para mostrar en el selector (solo lectura)
+        if (initialData.chainId) {
+          const chain = chains.find((c) => c.id === initialData.chainId);
+          if (chain) {
+            setSelectedChain(chain);
+          }
+        }
       } else {
-        // Si no hay cadena, usar los datos iniciales normalmente
-        setFormData({
-          commercialName: initialData.commercialName,
-          ruc: initialData.ruc || "",
-          description: initialData.description || "",
-          websiteUrl: initialData.websiteUrl || "",
-          logoUrl: initialData.logoUrl || "",
-          address: initialData.address || "",
-          status: initialData.status || "draft",
-          isActive: initialData.isActive !== false,
-          chainId: chainId,
-        });
-      }
-      
-      if (chain) {
-        setSelectedChain(chain);
-        // Si hay una cadena seleccionada, usar su nombre y logo
-        if (!initialData.logoUrl && chain.logoUrl) {
-          setFormData((prev) => ({
-            ...prev,
-            logoUrl: chain.logoUrl,
-            commercialName: chain.name,
-          }));
+        // Si no es miembro, usar los datos iniciales normalmente
+        const chainId = initialData.chainId || "";
+        const chain = chains.find((c) => c.id === chainId);
+        
+        if (chain) {
+          setSelectedChain(chain);
+          setFormData({
+            commercialName: initialData.commercialName || "",
+            ruc: initialData.ruc || "",
+            description: initialData.description || "",
+            websiteUrl: initialData.websiteUrl || "",
+            logoUrl: initialData.logoUrl || "",
+            address: initialData.address || "",
+            status: initialData.status || "draft",
+            isActive: initialData.isActive !== false,
+            chainId: chainId,
+          });
+        } else {
+          setFormData({
+            commercialName: initialData.commercialName || "",
+            ruc: initialData.ruc || "",
+            description: initialData.description || "",
+            websiteUrl: initialData.websiteUrl || "",
+            logoUrl: initialData.logoUrl || "",
+            address: initialData.address || "",
+            status: initialData.status || "draft",
+            isActive: initialData.isActive !== false,
+            chainId: chainId,
+          });
         }
       }
       
@@ -166,10 +182,19 @@ export const EditPharmacyModal = ({
   }, [initialData, open, chains]);
 
   const handleChange = (field: string, value: string) => {
-    // Si hay cadena seleccionada, NO permitir cambiar el nombre comercial ni el logo
+    // ⭐ Verificar isChainMember del backend - SOLO true si el backend lo confirma explícitamente
+    const isMember = initialData?.isChainMember === true;
+    
+    // Si es miembro de cadena, NO permitir cambiar nombre, logo ni descripción
+    if (isMember && (field === "commercialName" || field === "logoUrl" || field === "description")) {
+      return; // Ignorar cambios a estos campos
+    }
+    
+    // Si hay cadena seleccionada (pero no es miembro del backend), también bloquear
     if (selectedChain && (field === "commercialName" || field === "logoUrl")) {
       return; // Ignorar cambios a estos campos
     }
+    
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -191,10 +216,18 @@ export const EditPharmacyModal = ({
   const handleUploadClick = () => fileInputRef.current?.click();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    // ⭐ Verificar isChainMember del backend - SOLO true si el backend lo confirma explícitamente
+    const isMember = initialData?.isChainMember === true;
+    
+    if (isMember) {
+      return; // No permitir cambiar logo si es miembro de cadena
+    }
+    
     // Si hay cadena seleccionada, NO permitir cambiar el logo
     if (selectedChain) {
       return;
     }
+    
     const file = event.target.files?.[0];
     if (file) {
       const objectUrl = URL.createObjectURL(file);
@@ -204,18 +237,33 @@ export const EditPharmacyModal = ({
   };
 
   const handleSave = () => {
-    // Si hay cadena seleccionada, FORZAR el logo y nombre de la cadena (NO se pueden editar)
-    if (selectedChain) {
-      const savedData = {
+    // ⭐ Usar isChainMember del backend - SOLO true si el backend lo confirma explícitamente
+    const isMember = initialData?.isChainMember === true;
+    
+    if (isMember) {
+      // ⭐ Si es miembro de cadena, NO enviar commercialName, logoUrl NI description
+      // El backend los obtiene de la cadena automáticamente
+      const savedData: Partial<PharmacyProfile> = {
         ...formData,
-        commercialName: selectedChain.name, // SIEMPRE usar el nombre de la cadena
-        logoUrl: selectedChain.logoUrl || "", // SIEMPRE usar el logo de la cadena
-        chainId: selectedChain.id, // Asegurar que el chainId esté correcto
+        chainId: initialData?.chainId || formData.chainId,
       };
+      // Remover campos bloqueados cuando hay cadena
+      delete savedData.commercialName; // No enviar como full_name
+      delete savedData.logoUrl; // No enviar como profile_picture_url
+      delete savedData.description; // ⭐ También remover description
+      delete savedData.isChainMember; // No enviar (solo lectura)
+      delete savedData.chainName; // No enviar (solo lectura)
+      delete savedData.chainLogo; // No enviar (solo lectura)
+      delete savedData.chainDescription; // No enviar (solo lectura)
       onSave(savedData as PharmacyProfile);
     } else {
       // Si no hay cadena, usar los datos del formulario normalmente
-      onSave(formData as PharmacyProfile);
+      const savedData: Partial<PharmacyProfile> = { ...formData };
+      delete savedData.isChainMember; // No enviar (solo lectura)
+      delete savedData.chainName; // No enviar (solo lectura)
+      delete savedData.chainLogo; // No enviar (solo lectura)
+      delete savedData.chainDescription; // No enviar (solo lectura)
+      onSave(savedData as PharmacyProfile);
     }
     onClose();
   };
@@ -250,7 +298,7 @@ export const EditPharmacyModal = ({
       <DialogContent dividers>
         <Stack spacing={3} sx={{ mt: 1 }}>
           {/* --- 0. CADENA ASIGNADA (Solo lectura si hay cadena) --- */}
-          {selectedChain && (
+          {isChainMember && initialData?.chainName && (
             <Box>
               <Typography variant="subtitle2" fontWeight={600} mb={1}>
                 Cadena de Farmacias
@@ -265,11 +313,11 @@ export const EditPharmacyModal = ({
                 }}
               >
                 <Stack direction="row" spacing={2} alignItems="center">
-                  {selectedChain.logoUrl ? (
+                  {(initialData?.chainLogo || selectedChain?.logoUrl) ? (
                     <Box
                       component="img"
-                      src={selectedChain.logoUrl}
-                      alt={selectedChain.name}
+                      src={initialData?.chainLogo || selectedChain?.logoUrl}
+                      alt={initialData?.chainName || selectedChain?.name}
                       sx={{ width: 60, height: 60, objectFit: "contain" }}
                     />
                   ) : (
@@ -279,22 +327,22 @@ export const EditPharmacyModal = ({
                   )}
                   <Box>
                     <Typography variant="h6" fontWeight={700}>
-                      {selectedChain.name}
+                      {initialData?.chainName || selectedChain?.name}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Esta cadena está asignada a tu farmacia y no se puede cambiar
+                      Esta farmacia pertenece a esta cadena. El nombre, logo y descripción son controlados por el administrador.
                     </Typography>
                   </Box>
                 </Stack>
               </Box>
               <Typography variant="caption" color="error.main" mt={1} display="block" fontWeight={600}>
-                ⚠️ El nombre y logo de la cadena son controlados únicamente por el administrador. No puedes editarlos ni cambiarlos.
+                ⚠️ El nombre, logo y descripción de la cadena son controlados únicamente por el administrador. No puedes editarlos ni cambiarlos.
               </Typography>
             </Box>
           )}
 
           {/* --- 1. LOGO DE LA MARCA (SI hay cadena, SOLO mostrar, NO editar) --- */}
-          {selectedChain ? (
+          {isChainMember ? (
             <Box>
               <Typography variant="subtitle2" fontWeight={600} mb={1}>
                 Logo de la Cadena (Solo lectura)
@@ -315,11 +363,11 @@ export const EditPharmacyModal = ({
                   pointerEvents: "none",
                 }}
               >
-                {(selectedChain?.logoUrl || formData.logoUrl) ? (
+                {initialData?.chainLogo ? (
                   <Box
                     component="img"
-                    src={selectedChain?.logoUrl || formData.logoUrl || ""}
-                    alt={`Logo de ${selectedChain?.name || "Cadena"}`}
+                    src={initialData.chainLogo}
+                    alt={`Logo de ${initialData.chainName || "Cadena"}`}
                     onError={(e) => {
                       // Si la imagen falla, mostrar icono
                       const target = e.target as HTMLImageElement;
@@ -334,8 +382,7 @@ export const EditPharmacyModal = ({
                       borderRadius: 1,
                     }}
                   />
-                ) : null}
-                {(!selectedChain?.logoUrl && !formData.logoUrl) && (
+                ) : (
                   <Business
                     sx={{
                       fontSize: 60,
@@ -345,7 +392,7 @@ export const EditPharmacyModal = ({
                   />
                 )}
                 <Typography variant="body2" fontWeight={600} color="text.secondary">
-                  Logo de {selectedChain.name}
+                  Logo de {initialData?.chainName || "Cadena"}
                 </Typography>
                 <Typography variant="caption" color="error.main" mt={1} fontWeight={600}>
                   ⚠️ Este logo NO se puede editar. Solo el administrador puede modificarlo.
@@ -363,21 +410,24 @@ export const EditPharmacyModal = ({
                 ref={fileInputRef}
                 style={{ display: "none" }}
                 onChange={handleFileChange}
+                disabled={isChainMember} // ⭐ Deshabilitar input si es miembro
               />
               <Box
-                onClick={handleUploadClick}
+                onClick={isChainMember ? undefined : handleUploadClick} // ⭐ No permitir click si es miembro
                 sx={{
                   border: `2px dashed ${alpha(theme.palette.primary.main, 0.4)}`,
                   borderRadius: 3,
                   p: 2,
                   textAlign: "center",
-                  cursor: "pointer",
+                  cursor: isChainMember ? "not-allowed" : "pointer", // ⭐ Cambiar cursor
                   transition: "all 0.2s",
                   bgcolor: alpha(theme.palette.primary.main, 0.04),
+                  opacity: isChainMember ? 0.6 : 1, // ⭐ Reducir opacidad si está deshabilitado
                   "&:hover": {
                     borderColor: theme.palette.primary.main,
                     bgcolor: alpha(theme.palette.primary.main, 0.08),
                   },
+                  pointerEvents: isChainMember ? "none" : "auto", // ⭐ Deshabilitar interacción
                   minHeight: 160,
                   display: "flex",
                   flexDirection: "column",
@@ -435,7 +485,7 @@ export const EditPharmacyModal = ({
           {/* --- 2. DATOS DE IDENTIDAD --- */}
           <Grid2 container spacing={2}>
             <Grid2 size={{ xs: 12 }}>
-              {selectedChain ? (
+              {isChainMember && initialData?.chainName ? (
                 <Box>
                   <Typography variant="subtitle2" fontWeight={600} mb={1}>
                     Nombre Comercial (Solo lectura - Controlado por Administrador)
@@ -453,7 +503,7 @@ export const EditPharmacyModal = ({
                     <Stack direction="row" spacing={1} alignItems="center">
                       <Business color="disabled" />
                       <Typography variant="body1" fontWeight={600} color="text.primary">
-                        {selectedChain.name}
+                        {initialData.chainName}
                       </Typography>
                     </Stack>
                   </Box>
@@ -468,6 +518,7 @@ export const EditPharmacyModal = ({
                   placeholder="Solo si no perteneces a ninguna cadena"
                   value={formData.commercialName}
                   onChange={(e) => handleChange("commercialName", e.target.value)}
+                  disabled={isChainMember} // ⭐ Deshabilitar si es miembro
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -493,22 +544,47 @@ export const EditPharmacyModal = ({
             </Grid2>
 
             <Grid2 size={{ xs: 12 }}>
-              <TextField
-                fullWidth
-                label="Slogan o Descripción Corta"
-                placeholder="Ej: Cuidamos tu salud las 24 horas"
-                value={formData.description}
-                onChange={(e) => handleChange("description", e.target.value)}
-                multiline
-                rows={2}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start" sx={{ mt: 1.5 }}>
-                      <Description color="action" fontSize="small" />
-                    </InputAdornment>
-                  ),
-                }}
-              />
+              {isChainMember ? (
+                <Box>
+                  <Typography variant="subtitle2" fontWeight={600} mb={1}>
+                    Descripción (Solo lectura - Controlada por Administrador)
+                  </Typography>
+                  <Box
+                    sx={{
+                      p: 2,
+                      border: "2px solid",
+                      borderColor: "error.main",
+                      borderRadius: 2,
+                      bgcolor: "rgba(211, 47, 47, 0.05)",
+                      cursor: "not-allowed",
+                    }}
+                  >
+                    <Typography variant="body2" color="text.primary">
+                      {initialData.chainDescription || initialData.description || "Sin descripción"}
+                    </Typography>
+                  </Box>
+                  <Typography variant="caption" color="error.main" mt={1} display="block" fontWeight={600}>
+                    ⚠️ Esta descripción NO se puede editar. Solo el administrador puede modificarla desde el panel de administración.
+                  </Typography>
+                </Box>
+              ) : (
+                <TextField
+                  fullWidth
+                  label="Slogan o Descripción Corta"
+                  placeholder="Ej: Cuidamos tu salud las 24 horas"
+                  value={formData.description}
+                  onChange={(e) => handleChange("description", e.target.value)}
+                  multiline
+                  rows={2}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start" sx={{ mt: 1.5 }}>
+                        <Description color="action" fontSize="small" />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              )}
             </Grid2>
           </Grid2>
 
@@ -563,7 +639,7 @@ export const EditPharmacyModal = ({
           variant="contained"
           onClick={handleSave}
           startIcon={<Save />}
-          disabled={selectedChain ? false : (!formData.commercialName && !formData.chainId)}
+          disabled={isChainMember ? false : (!formData.commercialName && !formData.chainId)}
           sx={{
             borderRadius: 2,
             px: 3,

@@ -19,13 +19,7 @@ import { ProfileSection } from "../components/ProfileSection";
 import { ScheduleSection } from "../components/ScheduleSection";
 import { ContactLocationSection } from "../components/ContactLocationSection";
 import { DashboardContent } from "../components/DashboardContent";
-
-const PHARMACY_USER = {
-  name: "Fybeca Admin",
-  roleLabel: "Administrador de Marca",
-  initials: "FA",
-  isActive: true,
-};
+import { useAuthStore } from "../../../../app/store/auth.store";
 
 type TabType = "dashboard" | "profile";
 
@@ -33,12 +27,31 @@ export const PharmacyDashboardPage = () => {
   const [searchParams] = useSearchParams();
   const theme = useTheme();
   const { profile, isLoading, setProfile } = usePharmacyProfile();
+  const authStore = useAuthStore();
+  const { user } = authStore;
 
   const currentTab = (searchParams.get("tab") || "dashboard") as TabType;
 
+  // Obtener iniciales del usuario
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const userProfile = {
+    name: user?.name || "Farmacia",
+    roleLabel: "Administrador de Marca",
+    initials: getInitials(user?.name || "FA"),
+    isActive: true,
+  };
+
   if (isLoading || !profile) {
     return (
-      <DashboardLayout role="PROVIDER" userProfile={PHARMACY_USER}>
+      <DashboardLayout role="PROVIDER" userProfile={userProfile}>
         <Box p={3}>
           <Skeleton
             variant="rectangular"
@@ -56,7 +69,7 @@ export const PharmacyDashboardPage = () => {
   }
 
   return (
-    <DashboardLayout role="PROVIDER" userProfile={PHARMACY_USER}>
+    <DashboardLayout role="PROVIDER" userProfile={userProfile}>
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
         {/* Cards de Estadísticas - Solo mostrar en la pestaña de dashboard */}
         {currentTab === "dashboard" && (

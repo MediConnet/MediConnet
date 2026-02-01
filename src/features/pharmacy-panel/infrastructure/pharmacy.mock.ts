@@ -7,8 +7,8 @@ export const MOCK_PHARMACY_PROFILE: PharmacyProfile = {
   chainId: "1", // ID de la cadena Fybeca
   
   // Logo y nombre vienen de la cadena (no se pueden editar)
-  logoUrl: "https://scalashopping.com/wp-content/uploads/2018/08/logo-Fybeca-01-1024x683.png",
-  commercialName: "Fybeca",
+  logoUrl: "",
+  commercialName: "",
   
   // RUC Corporativo (Corporación GPF)
   ruc: "1790710319001", 
@@ -40,10 +40,10 @@ export const MOCK_PHARMACY_PROFILE: PharmacyProfile = {
   ],
   
   stats: {
-    profileViews: 1240,
-    contactClicks: 350,
-    averageRating: 4.8,
-    totalReviews: 128,
+    profileViews: 0,
+    contactClicks: 0,
+    averageRating: 0,
+    totalReviews: 0,
   },
 };
 

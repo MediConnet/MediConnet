@@ -16,12 +16,12 @@ import {
   Paper,
   Stack,
   Typography,
+  Alert,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { PharmacyProfile } from "../../domain/pharmacy-profile.entity";
 import { EditPharmacyModal } from "./EditPharmacyModal";
-import { getPharmacyChains } from "../../../../shared/lib/pharmacy-chains";
 
 interface ProfileSectionProps {
   profile: PharmacyProfile;
@@ -30,39 +30,19 @@ interface ProfileSectionProps {
 
 export const ProfileSection = ({ profile, onUpdate }: ProfileSectionProps) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [displayLogo, setDisplayLogo] = useState<string | null>(profile.logoUrl || null);
-  const [displayName, setDisplayName] = useState<string>(profile.commercialName);
-
-  // Cargar logo y nombre de la cadena si hay chainId
-  useEffect(() => {
-    const loadChainData = async () => {
-      if (profile.chainId) {
-        try {
-          const chains = await getPharmacyChains();
-          const chain = chains.find((c) => c.id === profile.chainId);
-          if (chain) {
-            // Usar logo y nombre de la cadena
-            setDisplayLogo(chain.logoUrl || profile.logoUrl || null);
-            setDisplayName(chain.name);
-          } else {
-            // Si no se encuentra la cadena, usar los del perfil
-            setDisplayLogo(profile.logoUrl || null);
-            setDisplayName(profile.commercialName);
-          }
-        } catch (error) {
-          console.error('Error loading pharmacy chain:', error);
-          // En caso de error, usar los del perfil
-          setDisplayLogo(profile.logoUrl || null);
-          setDisplayName(profile.commercialName);
-        }
-      } else {
-        // Si no hay cadena, usar los del perfil
-        setDisplayLogo(profile.logoUrl || null);
-        setDisplayName(profile.commercialName);
-      }
-    };
-    loadChainData();
-  }, [profile.chainId, profile.logoUrl, profile.commercialName]);
+  
+  // ⭐ Usar datos directamente del backend (ya vienen mapeados)
+  const displayName = profile.isChainMember && profile.chainName 
+    ? profile.chainName 
+    : profile.commercialName || "Nombre de la Farmacia";
+    
+  const displayLogo = profile.isChainMember && profile.chainLogo
+    ? profile.chainLogo
+    : profile.logoUrl || null;
+    
+  const displayDescription = profile.isChainMember && profile.chainDescription
+    ? profile.chainDescription
+    : profile.description || "";
 
   const getStatusLabel = (status: PharmacyProfile["status"]) => {
     switch (status) {
@@ -127,6 +107,18 @@ export const ProfileSection = ({ profile, onUpdate }: ProfileSectionProps) => {
                 Editar Perfil
               </Button>
             </Box>
+
+            {/* ⭐ Badge de cadena si es miembro */}
+            {profile.isChainMember && profile.chainName && (
+              <Box sx={{ mb: 2 }}>
+                <Chip
+                  label={`Perteneces a: ${profile.chainName}`}
+                  color="primary"
+                  icon={<Business />}
+                  sx={{ fontWeight: 600 }}
+                />
+              </Box>
+            )}
 
             <Stack spacing={3}>
           {/* Logo grande y Nombre como Título */}
@@ -204,10 +196,23 @@ export const ProfileSection = ({ profile, onUpdate }: ProfileSectionProps) => {
                 Descripción Corta
               </Typography>
               <Typography variant="body1" color="text.primary" mt={0.5}>
-                {profile.description || "Sin descripción definida."}
+                {displayDescription || "Sin descripción definida."}
               </Typography>
             </Box>
           </Box>
+
+          {/* ⭐ Mensaje informativo si es miembro de cadena */}
+          {profile.isChainMember && profile.chainName && (
+            <Alert severity="info" sx={{ mt: 2 }}>
+              <Typography variant="body2" fontWeight={600} mb={0.5}>
+                Información gestionada por la cadena
+              </Typography>
+              <Typography variant="caption">
+                El nombre, logo y descripción son gestionados por la cadena "{profile.chainName}". 
+                No puedes editarlos desde aquí.
+              </Typography>
+            </Alert>
+          )}
 
           <Divider />
 

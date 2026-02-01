@@ -1,7 +1,6 @@
 import type { PharmacyProfile } from "../domain/pharmacy-profile.entity";
-import { getPharmacyProfileMock } from "../infrastructure/pharmacy.mock";
+import { getPharmacyProfileAPI } from "../infrastructure/pharmacy.api";
 
 export const getPharmacyProfileUseCase = async (): Promise<PharmacyProfile> => {
-  // En el futuro, aquí iría la lógica real para obtener el perfil de la farmacia
-  return await getPharmacyProfileMock();
+  return await getPharmacyProfileAPI();
 };

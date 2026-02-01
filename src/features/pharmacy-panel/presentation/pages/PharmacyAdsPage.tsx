@@ -18,17 +18,29 @@ import { PromotionalBanner } from "../../../../shared/components/PromotionalBann
 
 import type { CreateAdParams } from "../../../../shared/api/ads.api";
 import { useAdRequest } from "../../../../shared/hooks/useAdRequest";
-
-// Mock del usuario Farmacia
-const PHARMACY_USER = {
-  name: "Fybeca Admin",
-  roleLabel: "Farmacia",
-  initials: "FA",
-  isActive: true,
-};
+import { useAuthStore } from "../../../../app/store/auth.store";
 
 export const PharmacyAdsPage = () => {
   const theme = useTheme();
+  const authStore = useAuthStore();
+  const { user } = authStore;
+
+  // Obtener iniciales del usuario
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const userProfile = {
+    name: user?.name || "Farmacia",
+    roleLabel: "Farmacia",
+    initials: getInitials(user?.name || "FA"),
+    isActive: true,
+  };
 
   const {
     activeAd,
@@ -85,7 +97,7 @@ export const PharmacyAdsPage = () => {
   };
   if (isLoading) {
     return (
-      <DashboardLayout role="PROVIDER" userProfile={PHARMACY_USER}>
+      <DashboardLayout role="PROVIDER" userProfile={userProfile}>
         <div className="p-3 max-w-[1400px] mx-auto">
           {/* Tarjeta de carga con estilo Tailwind */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex items-center justify-center min-h-[400px]">
@@ -101,7 +113,7 @@ export const PharmacyAdsPage = () => {
   }
 
   return (
-    <DashboardLayout role="PROVIDER" userProfile={PHARMACY_USER}>
+    <DashboardLayout role="PROVIDER" userProfile={userProfile}>
       <div className="p-3 max-w-[1400px] mx-auto">
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
           {/* HEADER DEL CARD */}

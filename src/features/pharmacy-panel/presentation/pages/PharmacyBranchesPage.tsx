@@ -6,15 +6,28 @@ import type { PharmacyBranch } from "../../domain/pharmacy-branch.entity";
 import { PharmacyBranchModal } from "../components/PharmacyBranchModal";
 import { PharmacyBranchesTable } from "../components/PharmacyBranchesTable";
 import { usePharmacyBranches } from "../hooks/usePharmacyBranches";
-
-const PHARMACY_USER = {
-  name: "Fybeca Admin",
-  roleLabel: "Farmacia",
-  initials: "FA",
-  isActive: true,
-};
+import { useAuthStore } from "../../../../app/store/auth.store";
 
 export const PharmacyBranchesPage = () => {
+  const authStore = useAuthStore();
+  const { user } = authStore;
+
+  // Obtener iniciales del usuario
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const userProfile = {
+    name: user?.name || "Farmacia",
+    roleLabel: "Farmacia",
+    initials: getInitials(user?.name || "FA"),
+    isActive: true,
+  };
   // 1. Hook con lógica de negocio (CRUD local)
   const { branches, isLoading, addBranch, updateBranch, deleteBranch } =
     usePharmacyBranches();
@@ -56,7 +69,7 @@ export const PharmacyBranchesPage = () => {
   };
 
   return (
-    <DashboardLayout role="PROVIDER" userProfile={PHARMACY_USER}>
+    <DashboardLayout role="PROVIDER" userProfile={userProfile}>
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
         {/* HEADER */}
         <Stack
