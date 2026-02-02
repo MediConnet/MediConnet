@@ -16,17 +16,15 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Switch,
-  FormControlLabel,
 } from "@mui/material";
-import { Add, Email, Link, Edit, ToggleOn, ToggleOff, Delete } from "@mui/icons-material";
+import { Email, Link, Edit, ToggleOn, ToggleOff, Delete } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import { useClinicDoctors } from "../hooks/useClinicDoctors";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { generateInvitationLinkAPI } from "../../infrastructure/clinic-doctors.api";
 import { clearClinicMocks } from "../../infrastructure/clear-clinic-mocks";
-import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner";
+
 
 interface DoctorsSectionProps {
   clinicId: string;

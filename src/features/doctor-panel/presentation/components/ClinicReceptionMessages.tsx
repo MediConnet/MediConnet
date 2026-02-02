@@ -9,7 +9,6 @@ import {
   Paper,
   Avatar,
   Chip,
-  Divider,
 } from "@mui/material";
 import { Send, Message as MessageIcon, Person } from "@mui/icons-material";
 import { useState, useEffect, useRef } from "react";

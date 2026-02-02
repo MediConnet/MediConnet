@@ -20,11 +20,10 @@ import {
   Select,
   FormControl,
   InputLabel,
-  Divider,
   Tabs,
   Tab,
 } from "@mui/material";
-import { CheckCircle, Cancel, Person, Message } from "@mui/icons-material";
+import { CheckCircle, Person, Message } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import { useClinicAppointments } from "../hooks/useClinicAppointments";
 import { getTodayReceptionAppointmentsAPI } from "../../infrastructure/clinic-appointments.api";

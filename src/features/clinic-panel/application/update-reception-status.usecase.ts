@@ -1,7 +1,7 @@
 import { updateReceptionStatusAPI } from '../infrastructure/clinic-appointments.api';
 
 export const updateReceptionStatusUseCase = async (
-  clinicId: string,
+  _clinicId: string,
   appointmentId: string,
   receptionStatus: 'arrived' | 'not_arrived' | 'attended',
   notes?: string

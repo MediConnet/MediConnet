@@ -32,8 +32,8 @@ import type { Payment } from "../../domain/Payment.entity";
 import { formatMoney } from "../../../../shared/lib/formatMoney";
 import { useDoctorDashboard } from "../hooks/useDoctorDashboard";
 import { useUpdateDoctorProfile } from "../hooks/useUpdateDoctorProfile";
-import { useAuthStore } from "../../../../app/store/auth.store";
-import { handleLetterInput, handleNumberInput, handleBothInput } from "../../../../shared/lib/inputValidation";
+
+import { handleLetterInput, handleNumberInput } from "../../../../shared/lib/inputValidation";
 
 // Lista de bancos de Ecuador
 const ECUADOR_BANKS = [
@@ -62,7 +62,7 @@ const ECUADOR_BANKS = [
 export const PaymentsSection = () => {
   const { data, refetch } = useDoctorDashboard();
   const { updateProfile, loading: savingBank } = useUpdateDoctorProfile();
-  const { user } = useAuthStore();
+  // not using auth user here for bank updates
   const doctorName = data?.doctor?.name || "Dr. Juan Pérez";
   
   // Obtener pagos del doctor actual (solo Dr. Juan Pérez)
@@ -79,14 +79,13 @@ export const PaymentsSection = () => {
   });
 
   useEffect(() => {
-    if (data?.doctor?.bankAccount) {
-      setBankData(data.doctor.bankAccount);
+    if ((data as any)?.doctor?.bankAccount) {
+      setBankData((data as any).doctor.bankAccount);
     }
   }, [data]);
 
   const handleSaveBankData = async () => {
-    if (!user?.id) return;
-    await updateProfile(user.id, { bankAccount: bankData });
+    await updateProfile({ bankAccount: bankData } as any);
     setBankDialogOpen(false);
     refetch();
   };
@@ -208,24 +207,24 @@ export const PaymentsSection = () => {
                 </Typography>
               </div>
             </div>
-            <Button
-              variant="outlined"
-              startIcon={<Edit />}
-              onClick={() => setBankDialogOpen(true)}
-              sx={{ textTransform: "none" }}
-            >
-              {data?.doctor?.bankAccount ? "Editar" : "Agregar"}
-            </Button>
+              <Button
+                variant="outlined"
+                startIcon={<Edit />}
+                onClick={() => setBankDialogOpen(true)}
+                sx={{ textTransform: "none" }}
+              >
+                {(data as any)?.doctor?.bankAccount ? "Editar" : "Agregar"}
+              </Button>
           </div>
 
-          {data?.doctor?.bankAccount ? (
+          {(data as any)?.doctor?.bankAccount ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Typography variant="caption" color="text.secondary">
                   Banco
                 </Typography>
                 <Typography variant="body1" fontWeight={600}>
-                  {data.doctor.bankAccount.bankName}
+                  {(data as any).doctor.bankAccount.bankName}
                 </Typography>
               </div>
               <div>
@@ -233,7 +232,7 @@ export const PaymentsSection = () => {
                   Número de Cuenta
                 </Typography>
                 <Typography variant="body1" fontWeight={600}>
-                  {data.doctor.bankAccount.accountNumber}
+                  {(data as any).doctor.bankAccount.accountNumber}
                 </Typography>
               </div>
               <div>
@@ -241,7 +240,7 @@ export const PaymentsSection = () => {
                   Tipo de Cuenta
                 </Typography>
                 <Typography variant="body1" fontWeight={600}>
-                  {data.doctor.bankAccount.accountType === "checking" ? "Corriente" : "Ahorros"}
+                  {(data as any).doctor.bankAccount.accountType === "checking" ? "Corriente" : "Ahorros"}
                 </Typography>
               </div>
               <div>
@@ -249,7 +248,7 @@ export const PaymentsSection = () => {
                   Titular
                 </Typography>
                 <Typography variant="body1" fontWeight={600}>
-                  {data.doctor.bankAccount.accountHolder}
+                  {(data as any).doctor.bankAccount.accountHolder}
                 </Typography>
               </div>
             </div>

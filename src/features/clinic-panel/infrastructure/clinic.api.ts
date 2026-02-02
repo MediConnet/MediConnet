@@ -1,5 +1,5 @@
 import { httpClient, extractData } from '../../../shared/lib/http';
-import type { ClinicProfile, ClinicDashboard, ClinicSchedule, DaySchedule } from '../domain/clinic.entity';
+import type { ClinicProfile, ClinicDashboard, ClinicSchedule } from '../domain/clinic.entity';
 
 /**
  * Normaliza el schedule que viene del backend

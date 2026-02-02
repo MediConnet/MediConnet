@@ -2,7 +2,7 @@ import { toggleDoctorStatusAPI } from '../infrastructure/clinic-doctors.api';
 import { getClinicDoctorsAPI } from '../infrastructure/clinic-doctors.api';
 
 export const toggleDoctorStatusUseCase = async (
-  clinicId: string,
+  _clinicId: string,
   doctorId: string
 ): Promise<void> => {
   // Primero obtener el estado actual del médico

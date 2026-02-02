@@ -62,7 +62,7 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
             enabled: item.enabled ?? item.is_active ?? false,
             startTime: item.startTime || item.start_time || "09:00",
             endTime: item.endTime || item.end_time || "18:00",
-          };
+          } as any;
         }
       });
       return normalized;
@@ -72,14 +72,14 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
     const normalized: ClinicSchedule = { ...defaultSchedule };
     const dayKeys: (keyof ClinicSchedule)[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     
-    dayKeys.forEach((dayKey) => {
+      dayKeys.forEach((dayKey) => {
       const dayData = schedule[dayKey];
       if (dayData && typeof dayData === 'object') {
         normalized[dayKey] = {
           enabled: dayData.enabled ?? dayData.is_active ?? false,
           startTime: dayData.startTime || dayData.start_time || "09:00",
           endTime: dayData.endTime || dayData.end_time || "18:00",
-        };
+        } as any;
       }
     });
 
@@ -320,7 +320,7 @@ const DoctorScheduleCard = ({
             endTime: item.endTime || item.end_time || '18:00',
             breakStart: item.breakStart || item.break_start,
             breakEnd: item.breakEnd || item.break_end,
-          };
+          } as any;
         }
       });
       return normalized;
@@ -339,7 +339,7 @@ const DoctorScheduleCard = ({
           endTime: dayData.endTime || dayData.end_time || '18:00',
           breakStart: dayData.breakStart || dayData.break_start,
           breakEnd: dayData.breakEnd || dayData.break_end,
-        };
+        } as any;
       }
     });
 

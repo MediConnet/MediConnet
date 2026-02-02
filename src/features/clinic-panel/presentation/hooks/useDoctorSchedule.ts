@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getDoctorScheduleUseCase } from '../../application/get-doctor-schedule.usecase';
 import { updateDoctorScheduleUseCase } from '../../application/update-doctor-schedule.usecase';
-import type { DoctorSchedule, DaySchedule } from '../../domain/doctor-schedule.entity';
+import type { DoctorSchedule } from '../../domain/doctor-schedule.entity';
 
 // ⭐ Función para normalizar el schedule del doctor
 const normalizeDoctorSchedule = (schedule: any, doctorId: string): DoctorSchedule => {
@@ -29,14 +29,14 @@ const normalizeDoctorSchedule = (schedule: any, doctorId: string): DoctorSchedul
     const normalized: DoctorSchedule = { ...defaultSchedule };
     schedule.forEach((item: any) => {
       const dayKey = item.day?.toLowerCase() || item.dayOfWeek?.toLowerCase();
-      if (dayKey && normalized[dayKey as keyof DoctorSchedule]) {
+        if (dayKey && normalized[dayKey as keyof DoctorSchedule]) {
         normalized[dayKey as keyof DoctorSchedule] = {
           enabled: item.enabled ?? item.is_active ?? false,
           startTime: item.startTime || item.start_time || '09:00',
           endTime: item.endTime || item.end_time || '18:00',
           breakStart: item.breakStart || item.break_start,
           breakEnd: item.breakEnd || item.break_end,
-        };
+        } as any;
       }
     });
     return normalized;
@@ -48,14 +48,14 @@ const normalizeDoctorSchedule = (schedule: any, doctorId: string): DoctorSchedul
   
   dayKeys.forEach((dayKey) => {
     const dayData = schedule[dayKey] || schedule.schedule?.[dayKey];
-    if (dayData && typeof dayData === 'object') {
+      if (dayData && typeof dayData === 'object') {
       normalized[dayKey] = {
         enabled: dayData.enabled ?? dayData.is_active ?? false,
         startTime: dayData.startTime || dayData.start_time || '09:00',
         endTime: dayData.endTime || dayData.end_time || '18:00',
         breakStart: dayData.breakStart || dayData.break_start,
         breakEnd: dayData.breakEnd || dayData.break_end,
-      };
+      } as any;
     }
   });
 
