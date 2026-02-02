@@ -1,3 +1,3 @@
-# Removed ignoredBuiltDependencies so CI will run native build scripts
-# Previously ignored: '@swc/core', 'esbuild'
-
+onlyBuiltDependencies:
+  - '@swc/core'
+  - esbuild
