@@ -1,4 +1,4 @@
-import { AttachMoney, CreditCard, Visibility, CheckCircle, Payment, AccountBalance } from "@mui/icons-material";
+import { AttachMoney, CreditCard, Visibility, CheckCircle, Payment as PaymentIcon, AccountBalance } from "@mui/icons-material";
 import {
   Avatar,
   Box,
@@ -390,7 +390,7 @@ export const PaymentsPage = () => {
                               variant="contained"
                               size="small"
                               color="success"
-                              startIcon={<Payment />}
+                              startIcon={<PaymentIcon />}
                               onClick={() => handleMarkAsPaid(doctorName)}
                             >
                               Marcar como Pagado

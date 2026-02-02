@@ -3,16 +3,16 @@ import { TrendingUp, CalendarToday, People, CheckCircle, Schedule, Cancel } from
 import { useMemo } from "react";
 import type { ClinicDashboard } from "../../domain/clinic.entity";
 import { useClinicAppointments } from "../hooks/useClinicAppointments";
-import { useClinicDoctors } from "../hooks/useClinicDoctors";
+// useClinicDoctors removed because not used in this component
+// import { useClinicDoctors } from "../hooks/useClinicDoctors";
 
 interface DashboardChartsProps {
   data: ClinicDashboard;
   clinicId: string;
 }
 
-export const DashboardCharts = ({ data, clinicId }: DashboardChartsProps) => {
+export const DashboardCharts = ({ data: _data, clinicId }: DashboardChartsProps) => {
   const { appointments } = useClinicAppointments(clinicId);
-  const { doctors } = useClinicDoctors(clinicId);
 
   // Datos para gráfico de citas por semana (últimas 4 semanas)
   const appointmentsByWeek = useMemo(() => {

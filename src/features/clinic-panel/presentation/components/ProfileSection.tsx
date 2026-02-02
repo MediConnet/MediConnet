@@ -1,6 +1,7 @@
-import { Box, Typography, Button, TextField, Grid2, Card, CardContent, Stack, Chip, Divider, Avatar } from "@mui/material";
+import { Box, Typography, Button, TextField, Grid2, Card, CardContent, Chip, Avatar } from "@mui/material";
 import { Save, CloudUpload, LocationOn, CameraAlt, LocalHospital } from "@mui/icons-material";
 import { useState, useEffect, useRef } from "react";
+import type { ClinicProfile } from "../../domain/clinic.entity";
 import { useClinicProfile } from "../hooks/useClinicProfile";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -45,7 +46,7 @@ const validationSchema = Yup.object({
   description: Yup.string().min(10, "La descripción debe tener al menos 10 caracteres").required("La descripción es requerida"),
 });
 
-export const ProfileSection = ({ clinicId }: ProfileSectionProps) => {
+export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => {
   const { profile, loading, updateProfile } = useClinicProfile();
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -146,9 +147,9 @@ export const ProfileSection = ({ clinicId }: ProfileSectionProps) => {
         // ⭐ Enviar directamente en el perfil con Base64 comprimido
         // El backend acepta: { "logoUrl": "data:image/jpeg;base64,..." }
         await updateProfile({
-          ...profile,
+          ...(profile as ClinicProfile),
           logoUrl: base64String,
-        });
+        } as ClinicProfile);
       } catch (error) {
         console.error("Error procesando logo:", error);
         alert("Error al procesar el logo. Por favor, intenta con otra imagen.");
@@ -172,12 +173,12 @@ export const ProfileSection = ({ clinicId }: ProfileSectionProps) => {
     onSubmit: async (values) => {
       if (!profile) return;
       await updateProfile({
-        ...profile,
+        ...(profile as ClinicProfile),
         ...values,
         latitude: values.latitude && values.latitude !== "" ? Number(values.latitude) : undefined,
         longitude: values.longitude && values.longitude !== "" ? Number(values.longitude) : undefined,
         specialties: selectedSpecialties.length > 0 ? selectedSpecialties : profile.specialties,
-      });
+      } as ClinicProfile);
     },
   });
 

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { getClinicAppointmentsUseCase } from '../../application/get-clinic-appointments.usecase';
-import { getTodayReceptionAppointmentsAPI } from '../../infrastructure/clinic-appointments.api';
 import { updateAppointmentStatusUseCase } from '../../application/update-appointment-status.usecase';
 import { updateReceptionStatusUseCase } from '../../application/update-reception-status.usecase';
 import type { ClinicAppointment, AppointmentStatus } from '../../domain/appointment.entity';

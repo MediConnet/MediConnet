@@ -19,7 +19,7 @@ import { useState, useEffect, useRef } from "react";
 import { useClinicReceptionMessages } from "../hooks/useClinicReceptionMessages";
 import { useClinicDoctors } from "../hooks/useClinicDoctors";
 import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner";
-import type { ClinicDoctor } from "../../domain/doctor.entity";
+ 
 
 interface ReceptionMessagesSectionProps {
   clinicId: string;

@@ -3,7 +3,6 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
   Divider,
   Grid2,
   TextField,
@@ -15,7 +14,7 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
-import { Save, CloudUpload, LocalHospital } from "@mui/icons-material";
+import { Save, LocalHospital } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -58,10 +57,10 @@ const medicalSpecialties = [
 ];
 
 export const ClinicAssociatedProfileSection = ({
-  clinicId,
+  clinicId: _clinicId,
   clinicName,
 }: ClinicAssociatedProfileSectionProps) => {
-  const { profile, loading, clinicInfo } = useClinicAssociatedDoctor();
+  const { profile, loading, clinicInfo: _clinicInfo } = useClinicAssociatedDoctor();
   const [saving, setSaving] = useState(false);
   const [educationItems, setEducationItems] = useState<string[]>([]);
   const [certificationItems, setCertificationItems] = useState<string[]>([]);
@@ -153,7 +152,7 @@ export const ClinicAssociatedProfileSection = ({
           Atiendes en: {clinicName}
         </Typography>
         <Typography variant="body2">
-          {clinicInfo?.address || profile.clinicInfo?.address || "Dirección no disponible"}
+          {_clinicInfo?.address || profile.clinicInfo?.address || "Dirección no disponible"}
         </Typography>
         <Typography variant="caption" sx={{ display: "block", mt: 1 }}>
           La gestión financiera, horarios oficiales y precios son responsabilidad de la clínica.

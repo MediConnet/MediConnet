@@ -20,7 +20,7 @@ import {
   Paper,
   Alert,
 } from "@mui/material";
-import { CalendarToday, CheckCircle, Cancel, Person, Phone } from "@mui/icons-material";
+import { CheckCircle, Cancel } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import type { ClinicAssociatedAppointment } from "../../domain/ClinicAssociatedDoctor.entity";
 import {
@@ -35,7 +35,7 @@ import { useClinicAssociatedDoctor } from "../hooks/useClinicAssociatedDoctor";
 import { CreateDiagnosisModal } from "./modals/CreateDiagnosisModal";
 
 export const ClinicAssociatedAppointmentsSection = () => {
-  const { clinicInfo } = useClinicAssociatedDoctor();
+  const { clinicInfo: _clinicInfo } = useClinicAssociatedDoctor();
   const [appointments, setAppointments] = useState<ClinicAssociatedAppointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAppointment, setSelectedAppointment] = useState<ClinicAssociatedAppointment | null>(null);
