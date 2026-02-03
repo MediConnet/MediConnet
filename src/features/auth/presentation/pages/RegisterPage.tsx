@@ -19,13 +19,16 @@ import {
   Phone as PhoneIcon,
   Science,
   WhatsApp as WhatsAppIcon,
+  WorkHistory as WorkHistoryIcon,
 } from "@mui/icons-material";
 import {
+  Autocomplete,
   Avatar,
   Box,
   Button,
   Card,
   CardContent,
+  Chip,
   CircularProgress,
   FormControl,
   InputAdornment,
@@ -50,6 +53,12 @@ import {
   handleNumberInput,
 } from "../../../../shared/lib/inputValidation";
 import { getPharmacyChains } from "../../../../shared/lib/pharmacy-chains";
+import {
+  getCitiesAPI,
+  getSpecialtiesAPI,
+  type City,
+  type Specialty,
+} from "../../infrastructure/auth.api";
 import { useRegisterProfessional } from "../hooks/useRegisterProfessional";
 
 // Tipos
@@ -97,29 +106,6 @@ const serviceIcons: Record<ServiceType, React.ReactNode> = {
   supplies: <Inventory sx={{ fontSize: 40 }} />,
 };
 
-const medicalSpecialties = [
-  "Medicina General",
-  "Cardiología",
-  "Dermatología",
-  "Ginecología",
-  "Pediatría",
-  "Oftalmología",
-  "Traumatología",
-  "Neurología",
-  "Psiquiatría",
-  "Urología",
-  "Endocrinología",
-  "Gastroenterología",
-  "Neumología",
-  "Otorrinolaringología",
-  "Oncología",
-  "Reumatología",
-  "Nefrología",
-  "Cirugía General",
-  "Anestesiología",
-  "Odontología",
-];
-
 export const RegisterPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -143,7 +129,11 @@ export const RegisterPage = () => {
   const professionalTitleInputRef = useRef<HTMLInputElement>(null);
 
   const [pharmacyChains, setPharmacyChains] = useState<PharmacyChain[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
 
+  const [specialtiesList, setSpecialtiesList] = useState<Specialty[]>([]);
+
+  // Carga de cadenas de farmacia
   useEffect(() => {
     if (selectedType === "pharmacy") {
       const loadChains = async () => {
@@ -151,10 +141,37 @@ export const RegisterPage = () => {
           const chains = await getPharmacyChains();
           setPharmacyChains(chains.filter((c) => c.isActive));
         } catch (error) {
-          console.error('Error loading pharmacy chains:', error);
+          console.error("Error loading pharmacy chains:", error);
         }
       };
       loadChains();
+    }
+  }, [selectedType]);
+
+  // Carga de ciudades
+  useEffect(() => {
+    const loadCities = async () => {
+      try {
+        const data = await getCitiesAPI();
+        setCities(data);
+      } catch (error) {
+        console.error("Error loading cities", error);
+      }
+    };
+    loadCities();
+  }, []);
+
+  useEffect(() => {
+    if (selectedType === "doctor") {
+      const loadSpecialties = async () => {
+        try {
+          const data = await getSpecialtiesAPI();
+          setSpecialtiesList(data);
+        } catch (error) {
+          console.error("Error loading specialties:", error);
+        }
+      };
+      loadSpecialties();
     }
   }, [selectedType]);
 
@@ -184,26 +201,41 @@ export const RegisterPage = () => {
       direccion: Yup.string()
         .min(5, "Mínimo 5 caracteres")
         .required("Requerido"),
-      ciudad: Yup.string().min(2, "Mínimo 2 caracteres").required("Requerido"),
+      cityId: Yup.string().required("Selecciona una ciudad"),
       tarifaConsulta: Yup.string(),
     };
 
-    if (selectedType === "pharmacy") {
-      baseSchema.chainId = Yup.string().required("Selecciona una cadena");
-      // nombreServicio solo es requerido si NO hay cadena seleccionada
-      baseSchema.nombreServicio = Yup.string().when("chainId", {
-        is: (chainId: string) => !chainId || chainId === "",
-        then: (schema) => schema.min(3, "Mínimo 3 caracteres").required("El nombre del servicio es requerido"),
-        otherwise: (schema) => schema.notRequired(),
-      });
-    } else {
-      baseSchema.nombreServicio = Yup.string()
-        .min(3, "Mínimo 3 caracteres")
+    if (selectedType === "doctor") {
+      baseSchema.yearsOfExperience = Yup.string()
+        .matches(/^\d+$/, "Solo números")
+        .required("Requerido");
+
+      baseSchema.nombreServicio = Yup.string().notRequired();
+
+      baseSchema.especialidad = Yup.array()
+        .min(1, "Selecciona al menos una especialidad")
         .required("Requerido");
     }
+    // Lógica para otros proveedores
+    else {
+      baseSchema.yearsOfExperience = Yup.string().notRequired();
 
-    if (selectedType === "doctor") {
-      baseSchema.especialidad = Yup.string().required("Requerido");
+      if (selectedType === "pharmacy") {
+        baseSchema.chainId = Yup.string().required("Selecciona una cadena");
+        baseSchema.nombreServicio = Yup.string().when("chainId", {
+          is: (chainId: string) => !chainId || chainId === "",
+          then: (schema) =>
+            schema
+              .min(3, "Mínimo 3 caracteres")
+              .required("El nombre del servicio es requerido"),
+          otherwise: (schema) => schema.notRequired(),
+        });
+      } else {
+        // Para Clínicas, Labs, Ambulancias, etc.
+        baseSchema.nombreServicio = Yup.string()
+          .min(3, "Mínimo 3 caracteres")
+          .required("Requerido");
+      }
     }
 
     return Yup.object(baseSchema);
@@ -218,12 +250,13 @@ export const RegisterPage = () => {
       password: "",
       confirmPassword: "",
       nombreServicio: "",
-      especialidad: "",
+      especialidad: [] as string[],
       descripcion: "",
       direccion: "",
-      ciudad: "",
+      cityId: "",
       tarifaConsulta: "",
       chainId: "",
+      yearsOfExperience: "",
     },
     validationSchema:
       step === 1
@@ -238,26 +271,57 @@ export const RegisterPage = () => {
       } else if (step === 2) {
         setIsSubmitting(true);
         try {
-          // Construcción del Payload para el Backend
+          // 1. Separar nombres
+          const nameParts = values.nombreCompleto.trim().split(" ");
+          const firstName = nameParts[0];
+          const lastName = nameParts.slice(1).join(" ") || "";
+
+          // 2. Rol
+          const roleMap: Record<string, string> = {
+            doctor: "DOCTOR",
+            pharmacy: "PHARMACY",
+            lab: "LABORATORY",
+            ambulance: "AMBULANCE",
+            clinic: "PROVIDER",
+            supplies: "PROVIDER",
+          };
+          const role = selectedType
+            ? roleMap[selectedType] || "PROVIDER"
+            : "PATIENT";
+
+          // 3. Lógica de Nombre del Servicio
+          let finalServiceName: string | undefined = values.nombreServicio;
+
+          if (selectedType === "doctor") {
+            finalServiceName = values.nombreCompleto;
+          } else if (selectedType === "pharmacy" && values.chainId) {
+            finalServiceName = undefined;
+          }
+
+          // 4. Payload
           const professionalData = {
-            type: selectedType!,
-            name: values.nombreCompleto,
             email: values.email,
             password: values.password,
+            firstName: firstName,
+            lastName: lastName,
+            name: values.nombreCompleto,
             phone: values.telefono,
             whatsapp: values.whatsapp,
-            // ⭐ Solo enviar serviceName si NO hay chainId (si hay cadena, el backend obtiene el nombre de la cadena)
-            serviceName:
-              selectedType === "pharmacy" && values.chainId
-                ? undefined // No enviar si hay cadena seleccionada
-                : values.nombreServicio,
+            role: role,
+            type: selectedType!,
+            serviceName: finalServiceName,
             address: values.direccion,
-            city: values.ciudad,
-            price: selectedType === "doctor" ? values.tarifaConsulta : "",
+            cityId: values.cityId,
             description: values.descripcion,
+            price: selectedType === "doctor" ? values.tarifaConsulta : "",
+
+            yearsOfExperience:
+              selectedType === "doctor" ? values.yearsOfExperience : "",
+
             chainId: selectedType === "pharmacy" ? values.chainId : undefined,
-            specialty:
-              selectedType === "doctor" ? values.especialidad : undefined,
+
+            specialties: selectedType === "doctor" ? values.especialidad : [],
+
             files: {
               licenses: selectedType === "doctor" ? licenses : [],
               certificates: selectedType === "doctor" ? certificates : [],
@@ -265,9 +329,9 @@ export const RegisterPage = () => {
             },
           };
 
-          // Llamada al hook (que a su vez llama al backend)
+          // @ts-ignore
           await submit(professionalData);
-          setStep(3); // Éxito
+          setStep(3);
         } catch (error) {
           console.error("Error al enviar solicitud:", error);
         } finally {
@@ -282,7 +346,6 @@ export const RegisterPage = () => {
     setStep(1);
   };
 
-  // Helper para renderizar lista de archivos
   const renderFileList = (
     files: File[],
     setFiles: React.Dispatch<React.SetStateAction<File[]>>,
@@ -351,7 +414,7 @@ export const RegisterPage = () => {
         px: 2,
       }}
     >
-      {/* Background Decor */}
+      {/* Background Decors */}
       <Box
         sx={{
           position: "absolute",
@@ -402,7 +465,6 @@ export const RegisterPage = () => {
           >
             {step > 0 && step < 3 ? "Atrás" : "Volver al inicio"}
           </Button>
-          {/* Steps Indicator */}
           {step < 3 && (
             <Box sx={{ display: "flex", gap: 1 }}>
               {[0, 1, 2].map((s) => (
@@ -553,7 +615,11 @@ export const RegisterPage = () => {
                 <TextField
                   fullWidth
                   required
-                  label="Nombre completo"
+                  label={
+                    selectedType === "doctor"
+                      ? "Nombre completo"
+                      : "Nombre del Representante"
+                  }
                   name="nombreCompleto"
                   value={formik.values.nombreCompleto}
                   onChange={(e) =>
@@ -773,7 +839,7 @@ export const RegisterPage = () => {
                   mb: 3,
                 }}
               >
-                {selectedType === "pharmacy" ? (
+                {selectedType === "pharmacy" && (
                   <>
                     <FormControl fullWidth required>
                       <InputLabel>Cadena de Farmacias</InputLabel>
@@ -783,10 +849,6 @@ export const RegisterPage = () => {
                         label="Cadena de Farmacias"
                         onChange={(e) => {
                           formik.setFieldValue("chainId", e.target.value);
-                          // Limpiar nombreServicio cuando se selecciona una cadena
-                          if (e.target.value) {
-                            formik.setFieldValue("nombreServicio", "");
-                          }
                         }}
                         onBlur={formik.handleBlur}
                         error={
@@ -794,7 +856,9 @@ export const RegisterPage = () => {
                           Boolean((formik.errors as any).chainId)
                         }
                       >
-                        <MenuItem value="">No pertenezco a ninguna cadena</MenuItem>
+                        <MenuItem value="">
+                          No pertenezco a ninguna cadena
+                        </MenuItem>
                         {pharmacyChains.map((chain) => (
                           <MenuItem key={chain.id} value={chain.id}>
                             <Stack
@@ -824,8 +888,7 @@ export const RegisterPage = () => {
                         ))}
                       </Select>
                     </FormControl>
-                    {formik.values.chainId ? (
-                      // Si hay cadena seleccionada, mostrar nombre y logo de la cadena (solo lectura)
+                    {formik.values.chainId && (
                       <Box>
                         <Typography variant="subtitle2" fontWeight={600} mb={1}>
                           Nombre de la Cadena
@@ -840,110 +903,136 @@ export const RegisterPage = () => {
                             cursor: "not-allowed",
                           }}
                         >
-                          <Stack direction="row" spacing={2} alignItems="center">
-                            {pharmacyChains.find((c) => c.id === formik.values.chainId)?.logoUrl && (
+                          <Stack
+                            direction="row"
+                            spacing={2}
+                            alignItems="center"
+                          >
+                            {pharmacyChains.find(
+                              (c) => c.id === formik.values.chainId,
+                            )?.logoUrl && (
                               <Box
                                 component="img"
-                                src={pharmacyChains.find((c) => c.id === formik.values.chainId)?.logoUrl}
+                                src={
+                                  pharmacyChains.find(
+                                    (c) => c.id === formik.values.chainId,
+                                  )?.logoUrl
+                                }
                                 alt="Logo"
-                                sx={{ width: 40, height: 40, objectFit: "contain" }}
+                                sx={{
+                                  width: 40,
+                                  height: 40,
+                                  objectFit: "contain",
+                                }}
                               />
                             )}
                             <Typography variant="body1" fontWeight={600}>
-                              {pharmacyChains.find((c) => c.id === formik.values.chainId)?.name}
+                              {
+                                pharmacyChains.find(
+                                  (c) => c.id === formik.values.chainId,
+                                )?.name
+                              }
                             </Typography>
                           </Stack>
                         </Box>
-                        <Typography variant="caption" color="text.secondary" mt={1} display="block">
-                          El nombre y logo vienen de la cadena seleccionada y no se pueden modificar
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          mt={1}
+                          display="block"
+                        >
+                          El nombre y logo vienen de la cadena seleccionada y no
+                          se pueden modificar
                         </Typography>
                       </Box>
-                    ) : (
-                      // Si NO hay cadena, mostrar campo de nombre del servicio
-                      <TextField
-                        fullWidth
-                        required
-                        label="Nombre del servicio"
-                        name="nombreServicio"
-                        value={formik.values.nombreServicio}
-                        onChange={(e) =>
-                          handleBothInput(e, (val) =>
-                            formik.setFieldValue("nombreServicio", val),
-                          )
-                        }
-                        onBlur={formik.handleBlur}
-                        error={
-                          formik.touched.nombreServicio &&
-                          Boolean(formik.errors.nombreServicio)
-                        }
-                        helperText={
-                          formik.touched.nombreServicio &&
-                          formik.errors.nombreServicio
-                        }
-                        slotProps={{
-                          input: {
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <BusinessIcon sx={{ color: "#9ca3af" }} />
-                              </InputAdornment>
-                            ),
-                          },
-                        }}
-                      />
                     )}
                   </>
-                ) : (
-                  <TextField
-                    fullWidth
-                    required
-                    label="Nombre del servicio"
-                    name="nombreServicio"
-                    value={formik.values.nombreServicio}
-                    onChange={(e) =>
-                      handleBothInput(e, (val) =>
-                        formik.setFieldValue("nombreServicio", val),
-                      )
-                    }
-                    onBlur={formik.handleBlur}
-                    error={
-                      formik.touched.nombreServicio &&
-                      Boolean(formik.errors.nombreServicio)
-                    }
-                    slotProps={{
-                      input: {
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <BusinessIcon sx={{ color: "#9ca3af" }} />
-                          </InputAdornment>
-                        ),
-                      },
-                    }}
-                  />
                 )}
 
-                {selectedType === "doctor" && (
-                  <FormControl fullWidth required>
-                    <InputLabel>Especialidad</InputLabel>
-                    <Select
-                      name="especialidad"
-                      value={formik.values.especialidad}
-                      label="Especialidad"
+                {selectedType !== "doctor" &&
+                  !(selectedType === "pharmacy" && formik.values.chainId) && (
+                    <TextField
+                      fullWidth
+                      required
+                      label="Nombre del servicio"
+                      name="nombreServicio"
+                      value={formik.values.nombreServicio}
                       onChange={(e) =>
-                        formik.setFieldValue("especialidad", e.target.value)
+                        handleBothInput(e, (val) =>
+                          formik.setFieldValue("nombreServicio", val),
+                        )
                       }
                       onBlur={formik.handleBlur}
                       error={
-                        formik.touched.especialidad &&
-                        Boolean(formik.errors.especialidad)
+                        formik.touched.nombreServicio &&
+                        Boolean(formik.errors.nombreServicio)
                       }
-                    >
-                      {medicalSpecialties.map((s) => (
-                        <MenuItem key={s} value={s}>
-                          {s}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                      helperText={
+                        formik.touched.nombreServicio &&
+                        formik.errors.nombreServicio
+                      }
+                      slotProps={{
+                        input: {
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <BusinessIcon sx={{ color: "#9ca3af" }} />
+                            </InputAdornment>
+                          ),
+                        },
+                      }}
+                    />
+                  )}
+
+                {/* SECCIÓN ESPECIALIDADES*/}
+                {selectedType === "doctor" && (
+                  <Autocomplete
+                    multiple
+                    id="especialidades-autocomplete"
+                    options={specialtiesList}
+                    disableCloseOnSelect
+                    getOptionLabel={(option) => option.name}
+                    value={specialtiesList.filter((s) =>
+                      (formik.values.especialidad as string[]).includes(s.id),
+                    )}
+                    onChange={(_, newValue) => {
+                      const selectedIds = newValue.map((item) => item.id);
+                      formik.setFieldValue("especialidad", selectedIds);
+                    }}
+                    onBlur={() => formik.setFieldTouched("especialidad", true)}
+                    renderTags={(value: readonly Specialty[], getTagProps) =>
+                      value.map((option: Specialty, index: number) => {
+                        const { key, ...tagProps } = getTagProps({ index });
+                        return (
+                          <Chip
+                            key={key}
+                            label={option.name}
+                            size="small"
+                            {...tagProps}
+                          />
+                        );
+                      })
+                    }
+                    // Renderizado del Input
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Especialidades"
+                        placeholder={
+                          (formik.values.especialidad as string[]).length === 0
+                            ? "Selecciona..."
+                            : ""
+                        }
+                        error={
+                          formik.touched.especialidad &&
+                          Boolean(formik.errors.especialidad)
+                        }
+                        helperText={
+                          formik.touched.especialidad &&
+                          (formik.errors.especialidad as string)
+                        }
+                      />
+                    )}
+                  />
                 )}
 
                 <TextField
@@ -971,29 +1060,77 @@ export const RegisterPage = () => {
                     },
                   }}
                 />
-                <TextField
+
+                <FormControl
                   fullWidth
                   required
-                  label="Ciudad"
-                  name="ciudad"
-                  value={formik.values.ciudad}
-                  onChange={(e) =>
-                    handleLetterInput(e, (val) =>
-                      formik.setFieldValue("ciudad", val),
-                    )
-                  }
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.ciudad && Boolean(formik.errors.ciudad)}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <MapIcon sx={{ color: "#9ca3af" }} />
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                />
+                  error={formik.touched.cityId && Boolean(formik.errors.cityId)}
+                >
+                  <TextField
+                    select
+                    fullWidth
+                    required
+                    label="Ciudad"
+                    name="cityId"
+                    value={formik.values.cityId}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={
+                      formik.touched.cityId && Boolean(formik.errors.cityId)
+                    }
+                    helperText={formik.touched.cityId && formik.errors.cityId}
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <MapIcon sx={{ color: "#9ca3af" }} />
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  >
+                    {cities.map((city) => (
+                      <MenuItem key={city.id} value={city.id}>
+                        {city.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </FormControl>
+
+                {/* CAMPO EXPERIENCIA: Solo para Médicos */}
+                {selectedType === "doctor" && (
+                  <TextField
+                    fullWidth
+                    required
+                    label="Años de experiencia"
+                    name="yearsOfExperience"
+                    value={formik.values.yearsOfExperience}
+                    onChange={(e) =>
+                      handleNumberInput(e, (val) =>
+                        formik.setFieldValue("yearsOfExperience", val),
+                      )
+                    }
+                    onBlur={formik.handleBlur}
+                    error={
+                      formik.touched.yearsOfExperience &&
+                      Boolean(formik.errors.yearsOfExperience)
+                    }
+                    helperText={
+                      formik.touched.yearsOfExperience &&
+                      formik.errors.yearsOfExperience
+                    }
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <WorkHistoryIcon sx={{ color: "#9ca3af" }} />
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                )}
+
                 {selectedType === "doctor" && (
                   <TextField
                     fullWidth
@@ -1049,8 +1186,6 @@ export const RegisterPage = () => {
                   >
                     Documentos de respaldo
                   </Typography>
-
-                  {/* Licencias */}
                   <Box sx={{ mb: 3 }}>
                     <Typography
                       variant="body2"
@@ -1096,8 +1231,7 @@ export const RegisterPage = () => {
                     {licenses.length > 0 &&
                       renderFileList(licenses, setLicenses)}
                   </Box>
-
-                  {/* Certificados */}
+                  {/* ... Certificados y Títulos (igual) ... */}
                   <Box sx={{ mb: 3 }}>
                     <Typography
                       variant="body2"
@@ -1143,8 +1277,6 @@ export const RegisterPage = () => {
                     {certificates.length > 0 &&
                       renderFileList(certificates, setCertificates)}
                   </Box>
-
-                  {/* Títulos */}
                   <Box sx={{ mb: 3 }}>
                     <Typography
                       variant="body2"
