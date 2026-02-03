@@ -21,6 +21,12 @@ export interface User {
     logoUrl?: string | null;
   };
 }
+// Interfaz para Especialidad
+export interface Specialty {
+  id: string;
+  name: string;
+  description?: string;
+}
 
 /**
  * Tipos para autenticación
@@ -64,6 +70,13 @@ export interface RefreshTokenResponse {
   accessToken: string;
   refreshToken: string;
   user?: User; 
+}
+
+// ✅ NUEVO: Interfaz para Ciudad
+export interface City {
+  id: string;
+  name: string;
+  state?: string;
 }
 
 /**
@@ -167,5 +180,27 @@ export const resetPasswordAPI = async (
     }
   );
 
+  return extractData(response);
+};
+
+/**
+ * API: Obtener lista de ciudades (Público)
+ * Endpoint: GET /api/public/cities
+ */
+export const getCitiesAPI = async (): Promise<City[]> => {
+  const response = await httpClient.get<{ success: boolean; data: City[] }>(
+    '/public/cities' 
+  );
+  return extractData(response);
+};
+
+/**
+ * API: Obtener lista de especialidades 
+ * Endpoint: GET /api/specialties
+ */
+export const getSpecialtiesAPI = async (): Promise<Specialty[]> => {
+  const response = await httpClient.get<{ success: boolean; data: Specialty[] }>(
+    '/specialties' 
+  );
   return extractData(response);
 };

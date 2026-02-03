@@ -5,14 +5,18 @@ export interface ProfessionalRequest {
   password: string;
   phone: string;
   whatsapp: string;
+  
   serviceName?: string; // Opcional: no requerido si hay chainId (para farmacias)
+  
   address: string;
-  city: string;
+  
+  cityId: string; 
+  
   price: string;
   description: string;
   
   // Opcionales según el tipo
-  chainId?: string; // Solo para farmacias
+  chainId?: string;   // Solo para farmacias
   specialty?: string; // Solo para doctores
   
   // Archivos (Se envían al backend para subir a S3/Local)
