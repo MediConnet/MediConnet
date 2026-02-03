@@ -7,7 +7,6 @@ import {
 } from "@mui/icons-material";
 import {
   Box,
-  Button,
   Card,
   CardContent,
   CircularProgress,
@@ -25,66 +24,6 @@ import { ROUTES } from "../../../../app/config/constants";
 import { env } from "../../../../app/config/env";
 import { useAuthStore } from "../../../../app/store/auth.store";
 import { loginAPI } from "../../infrastructure/auth.api";
-
-// Mock users para cuentas de prueba (Solo para UI, la auth es real)
-const mockUsers = [
-  {
-    id: "1",
-    email: "admin@medicones.com",
-    password: "admin123",
-    role: "admin",
-    tipo: null,
-    label: "Administrador",
-  },
-  {
-    id: "2",
-    email: "doctor@medicones.com",
-    password: "doctor123",
-    role: "profesional",
-    tipo: "doctor",
-    label: "Médico",
-  },
-  {
-    id: "3",
-    email: "farmacia@medicones.com",
-    password: "farmacia123",
-    role: "profesional",
-    tipo: "pharmacy",
-    label: "Farmacia",
-  },
-  {
-    id: "4",
-    email: "lab@medicones.com",
-    password: "lab123",
-    role: "profesional",
-    tipo: "laboratory",
-    label: "Laboratorio",
-  },
-  {
-    id: "5",
-    email: "ambulancia@medicones.com",
-    password: "ambulancia123",
-    role: "profesional",
-    tipo: "ambulance",
-    label: "Ambulancia",
-  },
-  {
-    id: "6",
-    email: "insumos@medicones.com",
-    password: "insumos123",
-    role: "profesional",
-    tipo: "supplies",
-    label: "Insumos Médicos",
-  },
-  {
-    id: "7",
-    email: "clinic@medicones.com",
-    password: "clinic123",
-    role: "profesional",
-    tipo: "clinic",
-    label: "Clínica",
-  },
-];
 
 const loginValidationSchema = Yup.object({
   email: Yup.string()
@@ -202,10 +141,6 @@ export const LoginPage = () => {
       }
     },
   });
-
-  const handleQuickLogin = (email: string, password: string) => {
-    formik.setValues({ email, password });
-  };
 
   return (
     <Box
@@ -426,46 +361,6 @@ export const LoginPage = () => {
                   Solicitar registro
                 </Link>
               </Typography>
-            </Box>
-
-            {/* Cuentas de Prueba */}
-            <Box
-              sx={{
-                mt: 3,
-                p: 2,
-                borderRadius: 2,
-                backgroundColor: "rgba(236, 253, 245, 0.5)",
-                border: "1px solid rgba(6, 182, 212, 0.2)",
-              }}
-            >
-              <Typography
-                variant="body2"
-                sx={{ fontWeight: 600, mb: 1, color: "#1f2937" }}
-              >
-                Cuentas de prueba (clic para usar):
-              </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                {mockUsers.map((user) => (
-                  <Button
-                    key={user.id}
-                    onClick={() => handleQuickLogin(user.email, user.password)}
-                    sx={{
-                      justifyContent: "flex-start",
-                      textTransform: "none",
-                      color: "#1f2937",
-                      "&:hover": { backgroundColor: "rgba(6, 182, 212, 0.1)" },
-                    }}
-                  >
-                    <Typography
-                      component="span"
-                      sx={{ fontWeight: 600, color: "#14b8a6", mr: 1 }}
-                    >
-                      {user.label}:
-                    </Typography>
-                    <span style={{ opacity: 0.7 }}>{user.email}</span>
-                  </Button>
-                ))}
-              </Box>
             </Box>
           </CardContent>
         </Card>
