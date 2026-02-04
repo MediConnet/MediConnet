@@ -205,6 +205,8 @@ export const AdsSection = () => {
                   buttonText={ad.buttonText || ad.action_text || ""}
                   imageUrl={ad.imageUrl || ad.image_url || undefined}
                   endDate={ad.endDate || ad.end_date || undefined}
+                  backgroundColor={ad.bg_color_hex}
+                  accentColor={ad.accent_color_hex}
                 />
               </div>
             ))}

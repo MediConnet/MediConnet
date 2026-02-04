@@ -16,9 +16,9 @@ import { AdsEmptyState } from "../../../../shared/components/AdsEmptyState";
 import { CreateAdModal } from "../../../../shared/components/modals/CreateAdModal";
 import { PromotionalBanner } from "../../../../shared/components/PromotionalBanner";
 
+import { useAuthStore } from "../../../../app/store/auth.store";
 import type { CreateAdParams } from "../../../../shared/api/ads.api";
 import { useAdRequest } from "../../../../shared/hooks/useAdRequest";
-import { useAuthStore } from "../../../../app/store/auth.store";
 
 export const PharmacyAdsPage = () => {
   const theme = useTheme();
@@ -214,6 +214,8 @@ export const PharmacyAdsPage = () => {
                     buttonText={ad.buttonText || ad.action_text || ""}
                     imageUrl={ad.imageUrl || ad.image_url || undefined}
                     endDate={ad.endDate || ad.end_date || undefined}
+                    backgroundColor={ad.bg_color_hex}
+                    accentColor={ad.accent_color_hex}
                   />
                 </Grid2>
               ))}
