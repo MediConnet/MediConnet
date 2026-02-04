@@ -9,6 +9,9 @@ interface PromotionalBannerProps {
   buttonText: string;
   imageUrl?: string;
   endDate?: string | Date;
+
+  backgroundColor?: string;
+  accentColor?: string;
 }
 
 export const PromotionalBanner = ({
@@ -18,6 +21,9 @@ export const PromotionalBanner = ({
   buttonText,
   imageUrl,
   endDate,
+  // Valores por defecto (Fallback Teal) si no vienen de la DB
+  backgroundColor = "#E0F2F1",
+  accentColor = "#009688",
 }: PromotionalBannerProps) => {
   const [timeRemaining, setTimeRemaining] = useState<string>("");
   const [isExpired, setIsExpired] = useState(false);
@@ -69,7 +75,8 @@ export const PromotionalBanner = ({
         display: "flex",
         borderRadius: 3,
         overflow: "hidden",
-        border: "1px solid #e5e7eb",
+        border: "1px solid",
+        borderColor: "rgba(0,0,0,0.08)",
         boxShadow: 2,
         bgcolor: "white",
         minHeight: 200,
@@ -84,23 +91,35 @@ export const PromotionalBanner = ({
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          background: "linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)",
+          background: backgroundColor,
           position: "relative",
           overflow: "hidden",
           minHeight: 200,
         }}
       >
-        {/* Patrón de ondas en el fondo */}
+        {/* Patrón de ondas decorativo (Sutil) */}
         <Box
           sx={{
             position: "absolute",
-            top: -20,
-            left: -20,
-            width: 150,
-            height: 150,
+            top: -30,
+            left: -30,
+            width: 180,
+            height: 180,
             borderRadius: "50%",
-            bgcolor: "rgba(255, 255, 255, 0.3)",
-            opacity: 0.5,
+            bgcolor: "white",
+            opacity: 0.15,
+          }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: -40,
+            right: -20,
+            width: 140,
+            height: 140,
+            borderRadius: "50%",
+            bgcolor: accentColor,
+            opacity: 0.05,
           }}
         />
 
@@ -109,12 +128,13 @@ export const PromotionalBanner = ({
           <Chip
             label={label}
             sx={{
-              bgcolor: "rgba(255, 255, 255, 0.9)",
-              color: "#0e7490",
+              bgcolor: "white",
+              color: accentColor,
               fontWeight: 700,
               fontSize: "0.75rem",
               mb: 2,
               textTransform: "uppercase",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
             }}
           />
 
@@ -123,9 +143,10 @@ export const PromotionalBanner = ({
             variant="h3"
             sx={{
               fontWeight: 800,
-              color: "#0e7490",
+              color: accentColor,
               mb: 1,
               lineHeight: 1.2,
+              filter: "brightness(0.9)",
             }}
           >
             {discount}
@@ -138,6 +159,7 @@ export const PromotionalBanner = ({
               color: "#374151",
               mb: 3,
               lineHeight: 1.6,
+              fontWeight: 500,
             }}
           >
             {description}
@@ -148,15 +170,18 @@ export const PromotionalBanner = ({
             variant="contained"
             endIcon={<ArrowForward />}
             sx={{
-              bgcolor: "#0e7490",
+              bgcolor: accentColor,
               color: "white",
               px: 3,
               py: 1.5,
               borderRadius: 2,
               textTransform: "none",
-              fontWeight: 600,
+              fontWeight: 700,
+              boxShadow: "none",
               "&:hover": {
-                bgcolor: "#0c5d73",
+                bgcolor: accentColor,
+                filter: "brightness(0.85)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
               },
             }}
           >
@@ -164,15 +189,18 @@ export const PromotionalBanner = ({
           </Button>
         </Box>
 
-        {/* Contador regresivo - Solo mostrar si no ha expirado */}
+        {/* Contador regresivo */}
         {endDate && timeRemaining && !isExpired && (
           <Box sx={{ position: "relative", zIndex: 1, mt: 2 }}>
             <Typography
               variant="caption"
               sx={{
-                color: "#0e7490",
+                color: accentColor,
                 fontWeight: 600,
                 fontSize: "0.875rem",
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
               }}
             >
               ⏱️ Expira en: {timeRemaining}
@@ -187,7 +215,7 @@ export const PromotionalBanner = ({
           width: { xs: "40%", md: "45%" },
           minWidth: 200,
           position: "relative",
-          bgcolor: "#f0f9ff",
+          bgcolor: "#f8fafc", // Gris muy suave de fondo para la imagen
           display: { xs: "none", sm: "flex" },
           alignItems: "stretch",
           minHeight: 200,
@@ -201,7 +229,7 @@ export const PromotionalBanner = ({
             sx={{
               width: "100%",
               height: "100%",
-              objectFit: "contain",
+              objectFit: "cover",
               objectPosition: "center",
               display: "block",
             }}
@@ -214,11 +242,11 @@ export const PromotionalBanner = ({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              bgcolor: "#e0f2fe",
-              minHeight: 200,
+              bgcolor: backgroundColor,
+              opacity: 0.5,
             }}
           >
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" fontWeight={500}>
               Sin imagen
             </Typography>
           </Box>

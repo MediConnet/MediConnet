@@ -51,15 +51,10 @@ const validationSchema = Yup.object({
       "La fecha de inicio no puede ser anterior a hoy",
       (value) => {
         if (!value) return true;
-
-        // Creamos la fecha de "hoy" reseteando las horas a 00:00:00 para la validación visual
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-
-        // Parseamos el input (YYYY-MM-DD) manualmente
         const [year, month, day] = value.split("-").map(Number);
         const inputDate = new Date(year, month - 1, day);
-
         return inputDate >= today;
       },
     ),
@@ -102,11 +97,16 @@ export const CreateAdModal = ({
       setIsSubmitting(true);
       setError("");
       try {
-        let imageUrl: string | undefined;
+        // Imagen por defecto
+        const DEFAULT_DOCTOR_IMG =
+          "https://img.freepik.com/free-photo/doctor-nurses-special-equipment_23-2148980721.jpg";
 
+        let imageUrl = DEFAULT_DOCTOR_IMG;
+
+        // Aquí iría la lógica de subida a S3
         if (selectedImage) {
-          imageUrl =
-            "https://placehold.co/600x400/0d9488/ffffff?text=Banner+Promocional";
+          // imageUrl = "URL_DE_S3_TRAS_SUBIDA";
+          imageUrl = DEFAULT_DOCTOR_IMG;
         }
 
         // --- LÓGICA DE TIEMPO EXACTO ---
@@ -129,12 +129,12 @@ export const CreateAdModal = ({
           discount: values.discount,
           description: values.description,
           buttonText: values.buttonText,
-          imageUrl,
+          imageUrl, // Siempre tendrá un valor válido
           startDate: finalStartDate,
           endDate: finalEndDate,
         });
 
-        // Limpiar formulario
+        // Limpiar formulario y cerrar
         formik.resetForm();
         setSelectedImage(null);
         setImagePreview(null);
@@ -296,7 +296,8 @@ export const CreateAdModal = ({
               color="text.secondary"
               sx={{ mb: 1, display: "block" }}
             >
-              Imagen que aparecerá en el lado derecho del banner
+              Imagen que aparecerá en el lado derecho del banner. Si no subes
+              una, se usará una por defecto.
             </Typography>
             <input
               type="file"
