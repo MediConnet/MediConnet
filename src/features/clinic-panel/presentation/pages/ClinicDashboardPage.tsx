@@ -10,6 +10,7 @@ import { DoctorsSection } from "../components/DoctorsSection";
 import { AppointmentsSection } from "../components/AppointmentsSection";
 import { ReceptionSection } from "../components/ReceptionSection";
 import { SchedulesSection } from "../components/SchedulesSection";
+import { ClinicPaymentsSection } from "../components/ClinicPaymentsSection";
 
 type TabType =
   | "dashboard"
@@ -17,7 +18,8 @@ type TabType =
   | "doctors"
   | "appointments"
   | "reception"
-  | "schedules";
+  | "schedules"
+  | "payments";
 
 export const ClinicDashboardPage = () => {
   const [searchParams] = useSearchParams();
@@ -123,6 +125,8 @@ export const ClinicDashboardPage = () => {
         {currentTab === "reception" && <ReceptionSection clinicId={clinic.id} />}
 
         {currentTab === "schedules" && <SchedulesSection clinicId={clinic.id} />}
+
+        {currentTab === "payments" && <ClinicPaymentsSection clinicId={clinic.id} />}
       </Box>
     </DashboardLayout>
   );

@@ -303,6 +303,11 @@ export const CLINIC_MENU: MenuItem[] = [
     path: "/clinic/dashboard?tab=reception",
   },
   {
+    icon: <AttachMoney />,
+    label: "Pagos",
+    path: "/clinic/dashboard?tab=payments",
+  },
+  {
     icon: <Settings />,
     label: "Configuración de Horarios",
     path: "/clinic/dashboard?tab=schedules",

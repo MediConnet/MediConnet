@@ -22,10 +22,12 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
-import { getUsersMock } from "../../infrastructure/users.mock";
+import { getUsersAPI, toggleUserStatusAPI, updateUserAPI } from "../../infrastructure/users.api";
 import type { User } from "../../domain/user.entity";
 
 const CURRENT_ADMIN = {
@@ -35,22 +37,45 @@ const CURRENT_ADMIN = {
 };
 
 export const UsersPage = () => {
-  const [users, setUsers] = useState<User[]>(getUsersMock());
-  const [roleFilter, setRoleFilter] = useState<"all" | "admin" | "provider">("all");
+  const [users, setUsers] = useState<User[]>([]);
+  const [roleFilter, setRoleFilter] = useState<"all" | "admin" | "provider" | "clinic">("all");
   const [searchText, setSearchText] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Cargar usuarios desde la API
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getUsersAPI();
+        setUsers(data);
+      } catch (err: any) {
+        setError(err.message || 'Error al cargar usuarios');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadUsers();
+  }, []);
 
   const filteredUsers = useMemo(() => {
     let filtered = users;
 
     if (roleFilter !== "all") {
       filtered = filtered.filter((u) => {
+        const userRole = u.role.toLowerCase();
         if (roleFilter === "admin") {
-          return u.role === "ADMIN";
-        } else {
-          return u.role === "PROVIDER" || u.role === "PROFESIONAL";
+          return userRole === "admin";
+        } else if (roleFilter === "provider") {
+          return userRole === "provider" || u.provider !== undefined;
+        } else if (roleFilter === "clinic") {
+          return userRole === "clinic" || u.clinic !== undefined;
         }
+        return true;
       });
     }
 
@@ -58,18 +83,28 @@ export const UsersPage = () => {
       const searchLower = searchText.toLowerCase();
       filtered = filtered.filter(
         (u) =>
-          u.name.toLowerCase().includes(searchLower) ||
-          u.email.toLowerCase().includes(searchLower)
+          (u.name || u.displayName || '').toLowerCase().includes(searchLower) ||
+          u.email.toLowerCase().includes(searchLower) ||
+          (u.clinic?.name || '').toLowerCase().includes(searchLower) ||
+          (u.provider?.commercialName || '').toLowerCase().includes(searchLower)
       );
     }
 
     return filtered;
   }, [users, roleFilter, searchText]);
 
-  const handleToggleStatus = (userId: string) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, isActive: !u.isActive } : u))
-    );
+  const handleToggleStatus = async (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+
+    try {
+      await toggleUserStatusAPI(userId, !user.isActive);
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, isActive: !u.isActive } : u))
+      );
+    } catch (err: any) {
+      alert(err.message || 'Error al cambiar estado del usuario');
+    }
   };
 
   const handleEdit = (user: User) => {
@@ -77,24 +112,40 @@ export const UsersPage = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleSaveEdit = () => {
-    if (selectedUser) {
+  const handleSaveEdit = async () => {
+    if (!selectedUser) return;
+
+    try {
+      await updateUserAPI(selectedUser.id, {
+        name: selectedUser.name,
+        email: selectedUser.email,
+        role: selectedUser.role,
+        tipo: selectedUser.tipo,
+      });
       setUsers((prev) =>
         prev.map((u) => (u.id === selectedUser.id ? selectedUser : u))
       );
       setIsEditModalOpen(false);
       setSelectedUser(null);
+    } catch (err: any) {
+      alert(err.message || 'Error al actualizar usuario');
     }
   };
 
   const getRoleLabel = (role: string, tipo?: string) => {
-    if (role === "ADMIN") return "Administrador";
+    const roleLower = role.toLowerCase();
+    if (roleLower === "admin") return "Administrador";
+    if (roleLower === "clinic") return "Clínica";
     if (tipo === "doctor") return "Médico";
     if (tipo === "pharmacy") return "Farmacia";
     if (tipo === "lab") return "Laboratorio";
     if (tipo === "ambulance") return "Ambulancia";
     if (tipo === "supplies") return "Insumos Médicos";
     return "Proveedor";
+  };
+
+  const getUserDisplayName = (user: User) => {
+    return user.displayName || user.name || user.clinic?.name || user.provider?.commercialName || 'Sin nombre';
   };
 
   return (
@@ -112,6 +163,13 @@ export const UsersPage = () => {
           </Box>
         </Stack>
 
+        {/* Error */}
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
+
         {/* Filtros */}
         <Box mb={4}>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
@@ -121,6 +179,7 @@ export const UsersPage = () => {
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               sx={{ flex: 1 }}
+              disabled={loading}
             />
             <FormControl sx={{ minWidth: 200 }}>
               <InputLabel>Tipo de Usuario</InputLabel>
@@ -128,10 +187,12 @@ export const UsersPage = () => {
                 value={roleFilter}
                 label="Tipo de Usuario"
                 onChange={(e) => setRoleFilter(e.target.value as any)}
+                disabled={loading}
               >
                 <MenuItem value="all">Todos</MenuItem>
                 <MenuItem value="admin">Administradores</MenuItem>
                 <MenuItem value="provider">Proveedores</MenuItem>
+                <MenuItem value="clinic">Clínicas</MenuItem>
               </Select>
             </FormControl>
           </Stack>
@@ -152,7 +213,13 @@ export const UsersPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredUsers.length === 0 ? (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                    <CircularProgress />
+                  </TableCell>
+                </TableRow>
+              ) : filteredUsers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
                     <Typography color="text.secondary">
@@ -166,13 +233,13 @@ export const UsersPage = () => {
                     <TableCell>
                       <Stack direction="row" spacing={2} alignItems="center">
                         <Avatar sx={{ bgcolor: "primary.light", width: 40, height: 40 }}>
-                          {user.name.charAt(0)}
+                          {getUserDisplayName(user).charAt(0)}
                         </Avatar>
                         <Box>
-                          <Typography fontWeight={600}>{user.name}</Typography>
-                          {user.tipo && (
+                          <Typography fontWeight={600}>{getUserDisplayName(user)}</Typography>
+                          {(user.tipo || user.additionalInfo) && (
                             <Typography variant="caption" color="text.secondary">
-                              {getRoleLabel(user.role, user.tipo)}
+                              {user.additionalInfo || getRoleLabel(user.role, user.tipo)}
                             </Typography>
                           )}
                         </Box>
@@ -181,7 +248,7 @@ export const UsersPage = () => {
                     <TableCell>
                       <Chip
                         label={getRoleLabel(user.role, user.tipo)}
-                        color={user.role === "ADMIN" ? "primary" : "default"}
+                        color={user.role.toLowerCase() === "admin" ? "primary" : "default"}
                         size="small"
                       />
                     </TableCell>
@@ -237,7 +304,7 @@ export const UsersPage = () => {
                 <TextField
                   fullWidth
                   label="Nombre"
-                  value={selectedUser.name}
+                  value={selectedUser.name || selectedUser.displayName || ''}
                   onChange={(e) =>
                     setSelectedUser({ ...selectedUser, name: e.target.value })
                   }
@@ -256,14 +323,16 @@ export const UsersPage = () => {
                     value={selectedUser.role}
                     label="Rol"
                     onChange={(e) =>
-                      setSelectedUser({ ...selectedUser, role: e.target.value as "ADMIN" | "PROVIDER" })
+                      setSelectedUser({ ...selectedUser, role: e.target.value as any })
                     }
                   >
-                    <MenuItem value="ADMIN">Administrador</MenuItem>
-                    <MenuItem value="PROVIDER">Proveedor</MenuItem>
+                    <MenuItem value="admin">Administrador</MenuItem>
+                    <MenuItem value="provider">Proveedor</MenuItem>
+                    <MenuItem value="clinic">Clínica</MenuItem>
+                    <MenuItem value="patient">Paciente</MenuItem>
                   </Select>
                 </FormControl>
-                {selectedUser.role === "PROVIDER" && (
+                {selectedUser.role.toLowerCase() === "provider" && (
                   <FormControl fullWidth>
                     <InputLabel>Tipo de Servicio</InputLabel>
                     <Select

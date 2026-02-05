@@ -273,25 +273,32 @@ export const updateDoctorProfileAPI = async (
   params: UpdateDoctorProfileParams
 ): Promise<DoctorDashboard> => {
   
-  const backendPayload = {
-    full_name: params.name,
-    bio: params.description,
-    address: params.address,
-    phone: params.whatsapp,
-    whatsapp: params.whatsapp,
-    years_of_experience: params.experience,
-    consultation_fee: params.price,
-    
-    is_published: params.profileStatus === 'published',
-    
-    specialties: params.specialties,
-    
-    payment_methods: params.paymentMethods 
-      ? mapFrontendPaymentsToBackend(params.paymentMethods) 
-      : undefined,
+  // Filtrar campos undefined para evitar enviar datos innecesarios
+  const backendPayload: any = {};
+  
+  if (params.name !== undefined) backendPayload.full_name = params.name;
+  if (params.description !== undefined) backendPayload.description = params.description;
+  if (params.address !== undefined) backendPayload.address = params.address;
+  if (params.whatsapp !== undefined) {
+    backendPayload.phone = params.whatsapp;
+    backendPayload.whatsapp = params.whatsapp;
+  }
+  if (params.experience !== undefined) backendPayload.years_of_experience = params.experience;
+  if (params.price !== undefined) backendPayload.consultation_fee = params.price;
+  if (params.profileStatus !== undefined) backendPayload.is_published = params.profileStatus === 'published';
+  if (params.specialties !== undefined && params.specialties.length > 0) {
+    backendPayload.specialties = params.specialties;
+  }
+  if (params.paymentMethods !== undefined) {
+    backendPayload.payment_methods = mapFrontendPaymentsToBackend(params.paymentMethods);
+  }
+  
+  // NO enviar workSchedule en el PUT de perfil, se actualiza por separado
+  // if (params.workSchedule !== undefined) {
+  //   backendPayload.workSchedule = params.workSchedule;
+  // }
 
-    workSchedule: params.workSchedule,
-  };
+  console.log('🔧 Payload transformado para backend:', JSON.stringify(backendPayload, null, 2));
 
   const response = await httpClient.put<{ success: boolean; data: BackendProfileResponse }>(
     '/doctors/profile',

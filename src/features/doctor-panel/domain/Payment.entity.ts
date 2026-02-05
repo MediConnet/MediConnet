@@ -1,3 +1,5 @@
+export type PaymentSource = 'admin' | 'clinic';
+
 export interface Payment {
   id: string;
   appointmentId: string;
@@ -9,5 +11,10 @@ export interface Payment {
   status: "pending" | "paid";
   paymentMethod: "card" | "cash";
   createdAt: string;
+  
+  // Fuente del pago
+  source: PaymentSource; // 'admin' = médico independiente, 'clinic' = médico de clínica
+  clinicId?: string; // ID de la clínica (si source = 'clinic')
+  clinicName?: string; // Nombre de la clínica (si source = 'clinic')
 }
 
