@@ -1,4 +1,4 @@
-import { AttachMoney, CreditCard, CheckCircle, HourglassEmpty, AccountBalance, Edit, Search } from "@mui/icons-material";
+import { AttachMoney, CreditCard, CheckCircle, HourglassEmpty, AccountBalance, Edit, Search, Info } from "@mui/icons-material";
 import {
   Box,
   Card,
@@ -24,6 +24,7 @@ import {
   FormControl,
   InputLabel,
   InputAdornment,
+  Alert,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
 import { useState, useMemo, useEffect } from "react";
@@ -64,6 +65,11 @@ export const PaymentsSection = () => {
   const { updateProfile, loading: savingBank } = useUpdateDoctorProfile();
   // not using auth user here for bank updates
   const doctorName = data?.doctor?.name || "Dr. Juan Pérez";
+  
+  // Detectar si el médico es independiente o está asociado a una clínica
+  const isClinicAssociated = (data as any)?.doctor?.clinicId ? true : false;
+  const clinicName = (data as any)?.doctor?.clinicName || '';
+  const paymentSource = isClinicAssociated ? 'clinic' : 'admin';
   
   // Obtener pagos del doctor actual (solo Dr. Juan Pérez)
   const [payments] = useState<Payment[]>(() => getPaymentsMock(doctorName));
@@ -136,6 +142,35 @@ export const PaymentsSection = () => {
           </p>
         </div>
       </div>
+
+      {/* Banner Informativo según Fuente de Pago */}
+      {paymentSource === 'admin' ? (
+        <Alert 
+          severity="info" 
+          icon={<Info />}
+          sx={{ mb: 3, bgcolor: '#eff6ff', border: '1px solid #bfdbfe' }}
+        >
+          <Typography variant="body2" fontWeight={600}>
+            Médico Independiente
+          </Typography>
+          <Typography variant="caption">
+            Recibes pagos directamente del administrador de la plataforma
+          </Typography>
+        </Alert>
+      ) : (
+        <Alert 
+          severity="info" 
+          icon={<Info />}
+          sx={{ mb: 3, bgcolor: '#fef3c7', border: '1px solid #fde68a' }}
+        >
+          <Typography variant="body2" fontWeight={600}>
+            Médico Asociado a Clínica
+          </Typography>
+          <Typography variant="caption">
+            Tus pagos son gestionados por <strong>{clinicName}</strong>. Los montos que ves aquí son asignados por la clínica.
+          </Typography>
+        </Alert>
+      )}
 
       {/* Resumen de totales */}
       <Grid2 container spacing={3} mb={4}>

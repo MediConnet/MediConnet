@@ -262,7 +262,8 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const handleSave = async () => {
     if (!user?.id) return;
 
-    const updatedData = await updateProfile({
+    // 🔍 DEBUG: Ver qué datos se están enviando
+    const payload = {
       name: formData.name,
       specialties: formData.specialty,
       email: formData.email,
@@ -274,7 +275,11 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
       workSchedule: formData.workSchedule,
       profileStatus: formData.profileStatus,
       paymentMethods: formData.paymentMethods,
-    });
+    };
+    
+    console.log('📤 Datos que se enviarán al backend:', payload);
+
+    const updatedData = await updateProfile(payload);
 
     if (updatedData) {
       setIsEditing(false);
