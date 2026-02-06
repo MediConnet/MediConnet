@@ -1,0 +1,79 @@
+Hola equipo! 👋
+
+Los médicos asociados a clínicas ahora pueden registrar su cuenta bancaria para recibir pagos.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📍 ENDPOINTS NUEVOS:
+
+1. GET /api/doctors/bank-account
+   - Obtener datos bancarios del médico autenticado
+   - Si no tiene datos: retornar { success: true, data: null }
+
+2. PUT /api/doctors/bank-account
+   - Crear o actualizar datos bancarios del médico
+   - Upsert (crear si no existe, actualizar si existe)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 ESTRUCTURA DE DATOS:
+
+{
+  "bankName": "Banco Pichincha",
+  "accountNumber": "2100123456",
+  "accountType": "checking",  // "checking" o "savings"
+  "accountHolder": "Dr. Juan Pérez",
+  "identificationNumber": "1234567890"  // Opcional
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🗄️ BASE DE DATOS (sugerencia):
+
+CREATE TABLE doctor_bank_accounts (
+  id SERIAL PRIMARY KEY,
+  doctor_id INTEGER REFERENCES doctors(id) UNIQUE,
+  bank_name VARCHAR(100) NOT NULL,
+  account_number VARCHAR(50) NOT NULL,
+  account_type VARCHAR(20) NOT NULL CHECK (account_type IN ('checking', 'savings')),
+  account_holder VARCHAR(200) NOT NULL,
+  identification_number VARCHAR(13),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ VALIDACIONES:
+
+- bankName: requerido
+- accountNumber: requerido, mínimo 10 dígitos, solo números
+- accountType: requerido, solo "checking" o "savings"
+- accountHolder: requerido
+- identificationNumber: opcional, 10-13 dígitos si se envía
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🧪 PROBAR CON:
+
+Email: dr.juan.perez@clinicacentral.com
+Password: doctor123
+
+1. Login → Obtener token
+2. GET /api/doctors/bank-account (debe retornar null)
+3. PUT /api/doctors/bank-account (crear datos)
+4. GET /api/doctors/bank-account (debe retornar los datos)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔐 SEGURIDAD:
+
+- Solo el médico autenticado puede ver/editar SUS PROPIOS datos
+- Validar token JWT
+- Validar que el usuario es un médico
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📄 Documentación completa en: MENSAJE_BACKEND_CUENTA_BANCARIA_MEDICO.md
+
+¿Dudas? Avisen! 🚀

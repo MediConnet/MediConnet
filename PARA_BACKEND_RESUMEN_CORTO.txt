@@ -1,0 +1,288 @@
+RESUMEN PARA BACKEND - LO QUE NECESITO
+======================================
+
+Hola! He implementado 2 nuevas funcionalidades en el frontend que necesitan soporte del backend:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. MÉDICOS PUEDEN SUBIR PDFs EN SU PERFIL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Los médicos asociados a clínicas pueden adjuntar PDFs a su educación y certificaciones.
+
+ENDPOINTS NECESARIOS:
+---------------------
+
+A) Subir PDF
+POST /api/doctors/{doctorId}/documents/upload
+
+Request (multipart/form-data):
+- file: [archivo PDF]
+- type: "education" | "certification"
+- text: "Universidad Central del Ecuador - Medicina"
+
+Validaciones:
+- Solo PDF, máximo 5MB
+- Usuario autenticado es el médico
+
+Response:
+{
+  "text": "Universidad Central del Ecuador - Medicina",
+  "fileUrl": "https://s3.../titulo.pdf",
+  "fileName": "titulo_medicina.pdf"
+}
+
+B) Actualizar perfil completo
+PUT /api/doctors/{doctorId}/profile
+
+Request:
+{
+  "bio": "Cardiólogo con más de 15 años...",
+  "experience": 15,
+  "specialty": "Cardiología",
+  "phone": "0991234567",
+  "whatsapp": "0991234567",
+  "education": [
+    {
+      "text": "Universidad Central del Ecuador",
+      "fileUrl": "https://s3.../titulo.pdf",
+      "fileName": "titulo_medicina.pdf"
+    },
+    {
+      "text": "Especialización en Cardiología"
+    }
+  ],
+  "certifications": [
+    {
+      "text": "Certificación en Ecocardiografía",
+      "fileUrl": "https://s3.../certificado.pdf",
+      "fileName": "certificado_eco.pdf"
+    }
+  ]
+}
+
+NOTA: Los ítems pueden ser strings simples O objetos con PDF (fileUrl y fileName opcionales)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2. CLÍNICA PUEDE VER PERFIL COMPLETO DEL MÉDICO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+La clínica puede ver toda la información del médico incluyendo los PDFs que subió.
+
+ENDPOINT NECESARIO:
+-------------------
+
+GET /api/clinics/{clinicId}/doctors/{doctorId}/profile
+
+Headers:
+Authorization: Bearer {token_de_clinica}
+
+Validaciones:
+- Usuario es clínica
+- Médico pertenece a esa clínica
+
+Response:
+{
+  "id": "doctor-1",
+  "clinicId": "clinic-1",
+  "email": "dr.juan.perez@clinicacentral.com",
+  "name": "Dr. Juan Pérez",
+  "specialty": "Cardiología",
+  "isActive": true,
+  "officeNumber": "101",
+  "consultationFee": 50.00,
+  "profileImageUrl": "https://s3.../profile.jpg",
+  "phone": "0991234567",
+  "whatsapp": "0991234567",
+  "professionalProfile": {
+    "bio": "Cardiólogo con más de 15 años...",
+    "experience": 15,
+    "education": [
+      {
+        "text": "Universidad Central del Ecuador",
+        "fileUrl": "https://s3.../titulo.pdf",
+        "fileName": "titulo_medicina.pdf"
+      }
+    ],
+    "certifications": [
+      {
+        "text": "Certificación en Ecocardiografía",
+        "fileUrl": "https://s3.../certificado.pdf",
+        "fileName": "certificado_eco.pdf"
+      }
+    ]
+  }
+}
+
+IMPORTANTE: Las URLs de los PDFs deben ser URLs firmadas de S3 con expiración de 1 hora
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ESTRUCTURA DE BASE DE DATOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Opción 1 (Recomendada): JSONB en PostgreSQL
+--------------------------------------------
+
+ALTER TABLE doctor_profiles
+ADD COLUMN education JSONB,
+ADD COLUMN certifications JSONB;
+
+Ejemplo de datos:
+{
+  "education": [
+    {
+      "text": "Universidad Central",
+      "fileUrl": "https://s3.../titulo.pdf",
+      "fileName": "titulo_medicina.pdf"
+    },
+    {
+      "text": "Especialización en Cardiología"
+    }
+  ]
+}
+
+Opción 2: Tablas separadas
+---------------------------
+
+CREATE TABLE doctor_education (
+  id SERIAL PRIMARY KEY,
+  doctor_id INTEGER REFERENCES doctors(id) ON DELETE CASCADE,
+  text VARCHAR(500) NOT NULL,
+  file_url TEXT,
+  file_name VARCHAR(255),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE doctor_certifications (
+  id SERIAL PRIMARY KEY,
+  doctor_id INTEGER REFERENCES doctors(id) ON DELETE CASCADE,
+  text VARCHAR(500) NOT NULL,
+  file_url TEXT,
+  file_name VARCHAR(255),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ALMACENAMIENTO DE PDFs (AWS S3)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Bucket: mediconnect-documents
+
+Estructura:
+documents/
+  doctors/
+    doctor-123/
+      1707234567_titulo_medicina.pdf
+      1707234568_certificado_eco.pdf
+
+Configuración:
+- Privado por defecto
+- Acceso solo con URLs firmadas
+- Expiración: 1 hora
+
+Código ejemplo (Node.js):
+--------------------------
+
+const AWS = require('aws-sdk');
+const s3 = new AWS.S3();
+
+// Subir archivo
+async function uploadDocument(file, doctorId) {
+  const timestamp = Date.now();
+  const key = `documents/doctors/${doctorId}/${timestamp}_${file.originalname}`;
+  
+  await s3.upload({
+    Bucket: 'mediconnect-documents',
+    Key: key,
+    Body: file.buffer,
+    ContentType: 'application/pdf',
+    ACL: 'private'
+  }).promise();
+  
+  return `https://mediconnect-documents.s3.amazonaws.com/${key}`;
+}
+
+// Generar URL firmada
+function generateSignedUrl(s3Url) {
+  const key = s3Url.replace('https://mediconnect-documents.s3.amazonaws.com/', '');
+  
+  return s3.getSignedUrl('getObject', {
+    Bucket: 'mediconnect-documents',
+    Key: key,
+    Expires: 3600 // 1 hora
+  });
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VALIDACIONES IMPORTANTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Archivos:
+✅ Tipo MIME: application/pdf
+✅ Tamaño máximo: 5MB
+✅ Extensión: .pdf
+
+Permisos:
+✅ Solo el médico puede subir/editar su perfil
+✅ Solo la clínica dueña puede ver perfiles de sus médicos
+✅ URLs de S3 firmadas con expiración
+✅ Tokens JWT válidos
+
+Datos:
+✅ text no vacío (mínimo 3 caracteres)
+✅ experience >= 0
+✅ bio máximo 500 caracteres
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DATOS DE PRUEBA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Clínica:
+Email: clinic@medicones.com
+Password: clinic123
+ID: clinic-1
+
+Médicos:
+1. Dr. Juan Pérez
+   Email: dr.juan.perez@clinicacentral.com
+   Password: doctor123
+   ID: doctor-clinic-central-1
+   Specialty: Cardiología
+   Clinic: clinic-1
+
+2. Dra. María García
+   Email: dra.maria.garcia@clinicacentral.com
+   Password: doctor123
+   ID: doctor-clinic-central-2
+   Specialty: Pediatría
+   Clinic: clinic-1
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+RESUMEN DE ENDPOINTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Para el Médico:
+1. POST /api/doctors/{doctorId}/documents/upload - Subir PDF
+2. PUT /api/doctors/{doctorId}/profile - Actualizar perfil completo
+
+Para la Clínica:
+1. GET /api/clinics/{clinicId}/doctors/{doctorId}/profile - Ver perfil del médico
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PRIORIDAD: ALTA
+TIEMPO ESTIMADO: 6-8 horas
+DEPENDENCIAS: AWS S3, JWT Auth
+
+DOCUMENTACIÓN COMPLETA EN:
+- RESUMEN_BACKEND_SESION_COMPLETA.md (detalles técnicos)
+- MENSAJE_BACKEND_VER_PERFIL_MEDICO.md (endpoint ver perfil)
+- ADJUNTAR_PDF_EDUCACION_CERTIFICACIONES.md (funcionalidad PDFs)
+
+¿Dudas? Revisa los documentos o pregúntame.

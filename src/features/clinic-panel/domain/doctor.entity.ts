@@ -20,8 +20,8 @@ export interface ClinicDoctor {
   professionalProfile?: {
     bio?: string;
     experience?: number;
-    education?: string[];
-    certifications?: string[];
+    education?: Array<string | { text: string; fileUrl?: string; fileName?: string }>;
+    certifications?: Array<string | { text: string; fileUrl?: string; fileName?: string }>;
   };
 }
 

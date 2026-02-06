@@ -26,6 +26,7 @@ import { ClinicAssociatedProfileSection } from "../components/ClinicAssociatedPr
 import { ClinicAssociatedAppointmentsSection } from "../components/ClinicAssociatedAppointmentsSection";
 import { ClinicReceptionMessages } from "../components/ClinicReceptionMessages";
 import { ClinicScheduleView } from "../components/ClinicScheduleView";
+import { DoctorBankAccountSection } from "../components/DoctorBankAccountSection";
 import { DateBlockRequest } from "../components/DateBlockRequest";
 
 // Configuración de menú
@@ -52,6 +53,7 @@ type TabType =
   | "reception"
   | "clinic-schedule"
   | "date-blocks"
+  | "bank-account"
   | "notifications";
 
 export const DoctorDashboardPage = () => {
@@ -248,6 +250,7 @@ export const DoctorDashboardPage = () => {
             {currentTab === "reception" && finalClinicInfo && <ClinicReceptionMessages />}
             {currentTab === "clinic-schedule" && <ClinicScheduleView />}
             {currentTab === "date-blocks" && finalClinicInfo && <DateBlockRequest />}
+            {currentTab === "bank-account" && <DoctorBankAccountSection />}
             {currentTab === "notifications" && (
               <Box>
                 <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>

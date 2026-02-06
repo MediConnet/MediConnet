@@ -2,7 +2,7 @@
  * Entidades para médico asociado a una clínica
  */
 
-import type { ClinicSchedule } from '../../clinic-panel/domain/clinic.entity';
+import type { ClinicSchedule, BankAccount } from '../../clinic-panel/domain/clinic.entity';
 
 export interface ClinicInfo {
   id: string;
@@ -12,6 +12,7 @@ export interface ClinicInfo {
   whatsapp: string;
   logoUrl?: string;
   generalSchedule?: ClinicSchedule; // Horario general de la clínica
+  bankAccount?: BankAccount; // Datos bancarios de la clínica
 }
 
 export interface ClinicAssociatedDoctorProfile {

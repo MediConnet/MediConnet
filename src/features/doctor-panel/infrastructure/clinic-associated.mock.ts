@@ -5,7 +5,7 @@ import type {
   DateBlockRequest,
   ClinicAssociatedAppointment
 } from '../domain/ClinicAssociatedDoctor.entity';
-import type { ClinicSchedule } from '../../clinic-panel/domain/clinic.entity';
+import type { ClinicSchedule, BankAccount } from '../../clinic-panel/domain/clinic.entity';
 
 // Mock data para desarrollo
 const MOCK_CLINIC_SCHEDULE: ClinicSchedule = {
@@ -18,6 +18,14 @@ const MOCK_CLINIC_SCHEDULE: ClinicSchedule = {
   sunday: { enabled: false, startTime: '09:00', endTime: '13:00' },
 };
 
+const MOCK_BANK_ACCOUNT: BankAccount = {
+  bankName: 'Banco Pichincha',
+  accountNumber: '2100123456',
+  accountType: 'checking',
+  accountHolder: 'Clínica San José S.A.',
+  identificationNumber: '1792345678001',
+};
+
 const MOCK_CLINIC_INFO: ClinicInfo = {
   id: 'clinic-1',
   name: 'Clínica San José',
@@ -26,6 +34,7 @@ const MOCK_CLINIC_INFO: ClinicInfo = {
   whatsapp: '0991234567',
   logoUrl: 'https://via.placeholder.com/150',
   generalSchedule: MOCK_CLINIC_SCHEDULE,
+  bankAccount: MOCK_BANK_ACCOUNT,
 };
 
 const MOCK_CLINIC_ASSOCIATED_PROFILE: ClinicAssociatedDoctorProfile = {
