@@ -5,8 +5,19 @@ import type {
   DateBlockRequest,
   ClinicAssociatedAppointment
 } from '../domain/ClinicAssociatedDoctor.entity';
+import type { ClinicSchedule } from '../../clinic-panel/domain/clinic.entity';
 
 // Mock data para desarrollo
+const MOCK_CLINIC_SCHEDULE: ClinicSchedule = {
+  monday: { enabled: true, startTime: '08:00', endTime: '18:00' },
+  tuesday: { enabled: true, startTime: '08:00', endTime: '18:00' },
+  wednesday: { enabled: true, startTime: '08:00', endTime: '18:00' },
+  thursday: { enabled: true, startTime: '08:00', endTime: '18:00' },
+  friday: { enabled: true, startTime: '08:00', endTime: '18:00' },
+  saturday: { enabled: true, startTime: '09:00', endTime: '13:00' },
+  sunday: { enabled: false, startTime: '09:00', endTime: '13:00' },
+};
+
 const MOCK_CLINIC_INFO: ClinicInfo = {
   id: 'clinic-1',
   name: 'Clínica San José',
@@ -14,6 +25,7 @@ const MOCK_CLINIC_INFO: ClinicInfo = {
   phone: '0991234567',
   whatsapp: '0991234567',
   logoUrl: 'https://via.placeholder.com/150',
+  generalSchedule: MOCK_CLINIC_SCHEDULE,
 };
 
 const MOCK_CLINIC_ASSOCIATED_PROFILE: ClinicAssociatedDoctorProfile = {

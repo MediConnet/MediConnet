@@ -2,6 +2,8 @@
  * Entidades para médico asociado a una clínica
  */
 
+import type { ClinicSchedule } from '../../clinic-panel/domain/clinic.entity';
+
 export interface ClinicInfo {
   id: string;
   name: string;
@@ -9,6 +11,7 @@ export interface ClinicInfo {
   phone: string;
   whatsapp: string;
   logoUrl?: string;
+  generalSchedule?: ClinicSchedule; // Horario general de la clínica
 }
 
 export interface ClinicAssociatedDoctorProfile {

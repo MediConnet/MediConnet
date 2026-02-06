@@ -25,10 +25,13 @@ export const useClinicProfile = () => {
     setLoading(true);
     setError(null);
     try {
+      console.log('🔄 Actualizando perfil...', updatedProfile);
       const data = await updateClinicProfileUseCase(updatedProfile);
+      console.log('✅ Perfil actualizado:', data);
       setProfile(data);
       return data;
     } catch (err) {
+      console.error('❌ Error al actualizar perfil:', err);
       setError(err instanceof Error ? err : new Error('Error al actualizar perfil'));
       throw err;
     } finally {

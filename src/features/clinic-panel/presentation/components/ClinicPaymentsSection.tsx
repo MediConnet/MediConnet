@@ -18,10 +18,8 @@ import {
 } from '@mui/material';
 import {
   AttachMoney,
-  CreditCard,
   CheckCircle,
   HourglassEmpty,
-  AccountBalance,
 } from '@mui/icons-material';
 import Grid2 from '@mui/material/Grid2';
 import { useState, useMemo } from 'react';
@@ -37,7 +35,7 @@ interface ClinicPaymentsSectionProps {
 }
 
 export const ClinicPaymentsSection = ({ clinicId }: ClinicPaymentsSectionProps) => {
-  const { clinicPayments, doctorPayments, loading, error, distributePayment, payDoctor, refetch } =
+  const { clinicPayments, doctorPayments, loading, error, distributePayment, payDoctor } =
     useClinicPayments(clinicId);
   const { doctors } = useClinicDoctors(clinicId);
 

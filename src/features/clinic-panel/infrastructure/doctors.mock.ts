@@ -1,49 +1,66 @@
 import type { ClinicDoctor, DoctorInvitation } from '../domain/doctor.entity';
 
 export const MOCK_CLINIC_DOCTORS: ClinicDoctor[] = [
+  // Médicos de Clínica Central (clinic-1)
   {
-    id: 'doctor-1',
+    id: 'doctor-clinic-central-1',
     clinicId: 'clinic-1',
-    userId: 'user-1',
-    email: 'dr.perez@clinic.com',
+    userId: 'user-doctor-cc-1',
+    email: 'dr.juan.perez@clinicacentral.com',
     name: 'Dr. Juan Pérez',
     specialty: 'Cardiología',
     isActive: true,
     isInvited: false,
     officeNumber: '101',
+    consultationFee: 50.00, // Precio establecido por la clínica
     profileImageUrl: 'https://via.placeholder.com/100',
-    phone: '0991111111',
-    whatsapp: '0991111111',
-    createdAt: new Date().toISOString(),
+    phone: '0991234567',
+    whatsapp: '0991234567',
+    createdAt: new Date('2024-01-15').toISOString(),
     updatedAt: new Date().toISOString(),
+    professionalProfile: {
+      bio: 'Cardiólogo con más de 15 años de experiencia en el diagnóstico y tratamiento de enfermedades cardiovasculares.',
+      experience: 15,
+      education: ['Universidad Central del Ecuador', 'Especialización en Cardiología - Hospital Metropolitano'],
+      certifications: ['Certificación en Ecocardiografía', 'Certificación en Cardiología Intervencionista'],
+    },
   },
   {
-    id: 'doctor-2',
+    id: 'doctor-clinic-central-2',
     clinicId: 'clinic-1',
-    userId: 'user-2',
-    email: 'dra.garcia@clinic.com',
+    userId: 'user-doctor-cc-2',
+    email: 'dra.maria.garcia@clinicacentral.com',
     name: 'Dra. María García',
     specialty: 'Pediatría',
     isActive: true,
     isInvited: false,
     officeNumber: '102',
+    consultationFee: 45.00, // Precio establecido por la clínica
     profileImageUrl: 'https://via.placeholder.com/100',
-    phone: '0992222222',
-    whatsapp: '0992222222',
-    createdAt: new Date().toISOString(),
+    phone: '0992345678',
+    whatsapp: '0992345678',
+    createdAt: new Date('2024-02-01').toISOString(),
     updatedAt: new Date().toISOString(),
+    professionalProfile: {
+      bio: 'Pediatra especializada en el cuidado integral de niños desde recién nacidos hasta adolescentes.',
+      experience: 10,
+      education: ['Universidad San Francisco de Quito', 'Especialización en Pediatría - Hospital de Niños Baca Ortiz'],
+      certifications: ['Certificación en Neonatología', 'Certificación en Lactancia Materna'],
+    },
   },
+  // Médico invitado pendiente
   {
-    id: 'doctor-3',
+    id: 'doctor-clinic-central-3',
     clinicId: 'clinic-1',
-    userId: 'user-3',
-    email: 'dr.rodriguez@clinic.com',
+    userId: 'user-doctor-cc-3',
+    email: 'dr.carlos.rodriguez@gmail.com',
     name: 'Dr. Carlos Rodríguez',
     specialty: 'Medicina General',
     isActive: false,
     isInvited: true,
-    invitationToken: 'token-123',
+    invitationToken: 'token-clinic-central-123',
     invitationExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    consultationFee: 40.00, // Precio pre-establecido por la clínica
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -103,6 +120,22 @@ export const assignOfficeMock = (clinicId: string, doctorId: string, officeNumbe
     const doctor = doctors.find(d => d.id === doctorId);
     if (doctor) {
       doctor.officeNumber = officeNumber;
+      doctor.updatedAt = new Date().toISOString();
+      return saveClinicDoctorsMock(clinicId, doctors);
+    }
+    return Promise.resolve();
+  });
+};
+
+export const updateDoctorConsultationFeeMock = (
+  clinicId: string, 
+  doctorId: string, 
+  consultationFee: number
+): Promise<void> => {
+  return getClinicDoctorsMock(clinicId).then((doctors) => {
+    const doctor = doctors.find(d => d.id === doctorId);
+    if (doctor) {
+      doctor.consultationFee = consultationFee;
       doctor.updatedAt = new Date().toISOString();
       return saveClinicDoctorsMock(clinicId, doctors);
     }

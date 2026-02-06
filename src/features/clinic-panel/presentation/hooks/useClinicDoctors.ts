@@ -73,6 +73,20 @@ export const useClinicDoctors = (clinicId: string) => {
     }
   };
 
+  const updateConsultationFee = async (doctorId: string, consultationFee: number) => {
+    setError(null);
+    try {
+      // Por ahora usamos el mock directamente
+      const { updateDoctorConsultationFeeMock } = await import('../../infrastructure/doctors.mock');
+      await updateDoctorConsultationFeeMock(clinicId, doctorId, consultationFee);
+      await loadDoctors(); // Recargar lista
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Error al actualizar precio');
+      setError(error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     if (clinicId) {
       loadDoctors();
@@ -87,6 +101,7 @@ export const useClinicDoctors = (clinicId: string) => {
     toggleStatus,
     assignOffice,
     deleteDoctor,
+    updateConsultationFee,
     refetch: loadDoctors,
   };
 };

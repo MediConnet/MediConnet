@@ -10,6 +10,7 @@ export interface ClinicDoctor {
   invitationToken?: string;
   invitationExpiresAt?: string;
   officeNumber?: string; // Consultorio asignado (opcional)
+  consultationFee?: number; // Precio de consulta establecido por la clínica
   profileImageUrl?: string;
   phone?: string;
   whatsapp?: string;

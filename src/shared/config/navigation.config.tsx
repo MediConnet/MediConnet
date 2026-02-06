@@ -138,6 +138,11 @@ export const CLINIC_ASSOCIATED_DOCTOR_MENU: MenuItem[] = [
     path: "/doctor/dashboard?tab=reception",
   },
   {
+    icon: <Settings />,
+    label: "Horario Laboral",
+    path: "/doctor/dashboard?tab=clinic-schedule",
+  },
+  {
     icon: <Block />,
     label: "Solicitar Bloqueos",
     path: "/doctor/dashboard?tab=date-blocks",
@@ -293,6 +298,11 @@ export const CLINIC_MENU: MenuItem[] = [
     path: "/clinic/dashboard?tab=doctors",
   },
   {
+    icon: <AttachMoney />,
+    label: "Precios por Consulta",
+    path: "/clinic/dashboard?tab=consultationPrices",
+  },
+  {
     icon: <CalendarToday />,
     label: "Agenda Centralizada",
     path: "/clinic/dashboard?tab=appointments",
@@ -306,6 +316,11 @@ export const CLINIC_MENU: MenuItem[] = [
     icon: <AttachMoney />,
     label: "Pagos",
     path: "/clinic/dashboard?tab=payments",
+  },
+  {
+    icon: <Business />,
+    label: "Datos Bancarios",
+    path: "/clinic/dashboard?tab=bankAccount",
   },
   {
     icon: <Settings />,

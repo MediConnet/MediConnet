@@ -40,7 +40,9 @@ export const getClinicProfileMock = (): Promise<ClinicProfile> => {
 };
 
 export const saveClinicProfileMock = (profile: ClinicProfile): Promise<void> => {
+  console.log('💾 Guardando perfil en localStorage:', profile);
   localStorage.setItem('clinic_profile', JSON.stringify(profile));
+  console.log('✅ Perfil guardado exitosamente');
   return Promise.resolve();
 };
 

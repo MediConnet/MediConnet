@@ -3,6 +3,7 @@ export interface ClinicProfile {
   name: string;
   logoUrl?: string;
   specialties: string[]; // Especialidades que ofrece la clínica
+  consultationPrices?: ConsultationPrice[]; // Precios por especialidad
   address: string;
   latitude?: number; // Coordenada de latitud para el mapa
   longitude?: number; // Coordenada de longitud para el mapa
@@ -11,8 +12,23 @@ export interface ClinicProfile {
   generalSchedule: ClinicSchedule; // Horarios generales de la clínica
   description: string;
   isActive: boolean;
+  bankAccount?: BankAccount; // Cuenta bancaria para recibir pagos del admin
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface ConsultationPrice {
+  specialty: string; // Nombre de la especialidad
+  price: number; // Precio de la consulta
+  isActive: boolean; // Si está activa o no
+}
+
+export interface BankAccount {
+  bankName: string; // Nombre del banco
+  accountNumber: string; // Número de cuenta
+  accountType: 'checking' | 'savings'; // Tipo de cuenta: corriente o ahorros
+  accountHolder: string; // Titular de la cuenta
+  identificationNumber?: string; // RUC o cédula del titular
 }
 
 export interface ClinicSchedule {

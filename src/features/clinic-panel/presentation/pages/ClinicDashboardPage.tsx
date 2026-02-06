@@ -11,15 +11,19 @@ import { AppointmentsSection } from "../components/AppointmentsSection";
 import { ReceptionSection } from "../components/ReceptionSection";
 import { SchedulesSection } from "../components/SchedulesSection";
 import { ClinicPaymentsSection } from "../components/ClinicPaymentsSection";
+import { BankAccountPage } from "./BankAccountPage";
+import { ConsultationPricesPage } from "./ConsultationPricesPage";
 
 type TabType =
   | "dashboard"
   | "profile"
   | "doctors"
+  | "consultationPrices"
   | "appointments"
   | "reception"
   | "schedules"
-  | "payments";
+  | "payments"
+  | "bankAccount";
 
 export const ClinicDashboardPage = () => {
   const [searchParams] = useSearchParams();
@@ -120,6 +124,8 @@ export const ClinicDashboardPage = () => {
 
         {currentTab === "doctors" && <DoctorsSection clinicId={clinic.id} />}
 
+        {currentTab === "consultationPrices" && <ConsultationPricesPage clinicId={clinic.id} />}
+
         {currentTab === "appointments" && <AppointmentsSection clinicId={clinic.id} />}
 
         {currentTab === "reception" && <ReceptionSection clinicId={clinic.id} />}
@@ -127,6 +133,8 @@ export const ClinicDashboardPage = () => {
         {currentTab === "schedules" && <SchedulesSection clinicId={clinic.id} />}
 
         {currentTab === "payments" && <ClinicPaymentsSection clinicId={clinic.id} />}
+
+        {currentTab === "bankAccount" && <BankAccountPage clinicId={clinic.id} />}
       </Box>
     </DashboardLayout>
   );

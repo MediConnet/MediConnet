@@ -35,10 +35,11 @@ const inviteValidationSchema = Yup.object({
 });
 
 export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
-  const { doctors, loading, inviteDoctor, toggleStatus, assignOffice, deleteDoctor } = useClinicDoctors(clinicId);
+  const { doctors, loading, inviteDoctor, toggleStatus, assignOffice, deleteDoctor, updateConsultationFee } = useClinicDoctors(clinicId);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [assignOfficeDialogOpen, setAssignOfficeDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [priceDialogOpen, setPriceDialogOpen] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<string | null>(null);
   const [doctorToDelete, setDoctorToDelete] = useState<{ id: string; name?: string; email: string } | null>(null);
 
@@ -81,6 +82,31 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
     },
   });
 
+  const priceFormik = useFormik({
+    initialValues: { consultationFee: "" },
+    onSubmit: async (values) => {
+      if (selectedDoctor) {
+        try {
+          const fee = parseFloat(values.consultationFee);
+          if (isNaN(fee) || fee < 0) {
+            alert("Por favor ingresa un precio válido");
+            return;
+          }
+          
+          await updateConsultationFee(selectedDoctor, fee);
+          
+          setPriceDialogOpen(false);
+          priceFormik.resetForm();
+          setSelectedDoctor(null);
+          alert("Precio actualizado correctamente");
+        } catch (error) {
+          console.error("Error al actualizar precio:", error);
+          alert("Error al actualizar el precio. Intenta nuevamente.");
+        }
+      }
+    },
+  });
+
   const handleInviteByEmail = () => {
     setInviteDialogOpen(true);
   };
@@ -103,6 +129,12 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
   const handleAssignOffice = (doctorId: string) => {
     setSelectedDoctor(doctorId);
     setAssignOfficeDialogOpen(true);
+  };
+
+  const handleUpdatePrice = (doctorId: string, currentPrice?: number) => {
+    setSelectedDoctor(doctorId);
+    priceFormik.setFieldValue('consultationFee', currentPrice?.toString() || '');
+    setPriceDialogOpen(true);
   };
 
   const handleDeleteDoctor = (doctor: { id: string; name?: string; email: string }) => {
@@ -293,6 +325,34 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
             Eliminar
           </Button>
         </DialogActions>
+      </Dialog>
+
+      {/* Dialog Actualizar Precio de Consulta */}
+      <Dialog open={priceDialogOpen} onClose={() => setPriceDialogOpen(false)}>
+        <form onSubmit={priceFormik.handleSubmit}>
+          <DialogTitle>Establecer Precio de Consulta</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Este precio será el que los pacientes pagarán por las consultas con este médico en tu clínica.
+            </Typography>
+            <TextField
+              fullWidth
+              label="Precio de Consulta ($)"
+              name="consultationFee"
+              type="number"
+              inputProps={{ min: 0, step: 0.01 }}
+              value={priceFormik.values.consultationFee}
+              onChange={priceFormik.handleChange}
+              sx={{ mt: 2 }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setPriceDialogOpen(false)}>Cancelar</Button>
+            <Button type="submit" variant="contained" sx={{ backgroundColor: "#14b8a6" }}>
+              Guardar Precio
+            </Button>
+          </DialogActions>
+        </form>
       </Dialog>
     </Box>
   );
