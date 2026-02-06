@@ -148,6 +148,11 @@ export const CLINIC_ASSOCIATED_DOCTOR_MENU: MenuItem[] = [
     path: "/doctor/dashboard?tab=date-blocks",
   },
   {
+    icon: <Business />,
+    label: "Cuenta Bancaria",
+    path: "/doctor/dashboard?tab=bank-account",
+  },
+  {
     icon: <Notifications />,
     label: "Notificaciones",
     path: "/doctor/dashboard?tab=notifications",

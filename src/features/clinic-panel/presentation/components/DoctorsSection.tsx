@@ -17,13 +17,15 @@ import {
   DialogActions,
   TextField,
 } from "@mui/material";
-import { Email, Link, Edit, ToggleOn, ToggleOff, Delete } from "@mui/icons-material";
+import { Email, Link, Edit, ToggleOn, ToggleOff, Delete, Visibility } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import { useClinicDoctors } from "../hooks/useClinicDoctors";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { generateInvitationLinkAPI } from "../../infrastructure/clinic-doctors.api";
 import { clearClinicMocks } from "../../infrastructure/clear-clinic-mocks";
+import { DoctorProfileViewModal } from "./DoctorProfileViewModal";
+import type { ClinicDoctor } from "../../domain/doctor.entity";
 
 
 interface DoctorsSectionProps {
@@ -42,6 +44,8 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
   const [priceDialogOpen, setPriceDialogOpen] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<string | null>(null);
   const [doctorToDelete, setDoctorToDelete] = useState<{ id: string; name?: string; email: string } | null>(null);
+  const [profileViewOpen, setProfileViewOpen] = useState(false);
+  const [selectedDoctorForView, setSelectedDoctorForView] = useState<ClinicDoctor | null>(null);
 
   // ⭐ Limpiar mocks al cargar el componente (solo una vez)
   useEffect(() => {
@@ -156,6 +160,11 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
     }
   };
 
+  const handleViewProfile = (doctor: ClinicDoctor) => {
+    setSelectedDoctorForView(doctor);
+    setProfileViewOpen(true);
+  };
+
   if (loading) {
     return <Typography>Cargando médicos...</Typography>;
   }
@@ -223,6 +232,14 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: "flex", gap: 1 }}>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleViewProfile(doctor)}
+                        title="Ver perfil completo"
+                        color="primary"
+                      >
+                        <Visibility />
+                      </IconButton>
                       <IconButton
                         size="small"
                         onClick={() => toggleStatus(doctor.id)}
@@ -354,6 +371,16 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
           </DialogActions>
         </form>
       </Dialog>
+
+      {/* Modal Ver Perfil del Médico */}
+      <DoctorProfileViewModal
+        open={profileViewOpen}
+        onClose={() => {
+          setProfileViewOpen(false);
+          setSelectedDoctorForView(null);
+        }}
+        doctor={selectedDoctorForView}
+      />
     </Box>
   );
 };

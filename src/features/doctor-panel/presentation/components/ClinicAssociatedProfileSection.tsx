@@ -13,9 +13,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  IconButton,
+  Chip,
 } from "@mui/material";
-import { Save, LocalHospital } from "@mui/icons-material";
-import { useState, useEffect } from "react";
+import { Save, LocalHospital, AttachFile, Delete, PictureAsPdf } from "@mui/icons-material";
+import { useState, useEffect, useRef } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import type { ClinicAssociatedDoctorProfile } from "../../domain/ClinicAssociatedDoctor.entity";
@@ -62,15 +64,24 @@ export const ClinicAssociatedProfileSection = ({
 }: ClinicAssociatedProfileSectionProps) => {
   const { profile, loading, clinicInfo: _clinicInfo } = useClinicAssociatedDoctor();
   const [saving, setSaving] = useState(false);
-  const [educationItems, setEducationItems] = useState<string[]>([]);
-  const [certificationItems, setCertificationItems] = useState<string[]>([]);
+  const [educationItems, setEducationItems] = useState<Array<{ text: string; fileUrl?: string; fileName?: string }>>([]);
+  const [certificationItems, setCertificationItems] = useState<Array<{ text: string; fileUrl?: string; fileName?: string }>>([]);
   const [newEducation, setNewEducation] = useState("");
   const [newCertification, setNewCertification] = useState("");
+  const educationFileInputRef = useRef<HTMLInputElement>(null);
+  const certificationFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (profile) {
-      setEducationItems(profile.education || []);
-      setCertificationItems(profile.certifications || []);
+      // Convertir arrays de strings a objetos con text y fileUrl
+      const education = (profile.education || []).map(edu => 
+        typeof edu === 'string' ? { text: edu } : edu
+      );
+      const certifications = (profile.certifications || []).map(cert => 
+        typeof cert === 'string' ? { text: cert } : cert
+      );
+      setEducationItems(education);
+      setCertificationItems(certifications);
     }
   }, [profile]);
 
@@ -112,7 +123,7 @@ export const ClinicAssociatedProfileSection = ({
 
   const handleAddEducation = () => {
     if (newEducation.trim()) {
-      setEducationItems([...educationItems, newEducation.trim()]);
+      setEducationItems([...educationItems, { text: newEducation.trim() }]);
       setNewEducation("");
     }
   };
@@ -121,15 +132,101 @@ export const ClinicAssociatedProfileSection = ({
     setEducationItems(educationItems.filter((_, i) => i !== index));
   };
 
+  const handleEducationFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validar que sea PDF
+      if (file.type !== 'application/pdf') {
+        alert('Solo se permiten archivos PDF');
+        return;
+      }
+      // Validar tamaño (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('El archivo es demasiado grande. Máximo 5MB');
+        return;
+      }
+
+      // Agregar automáticamente con el nombre del archivo como texto
+      try {
+        const base64 = await fileToBase64(file);
+        const fileName = file.name;
+        const text = newEducation.trim() || fileName.replace('.pdf', '');
+        
+        setEducationItems([...educationItems, { text, fileUrl: base64, fileName }]);
+        setNewEducation("");
+        
+        // Limpiar el input file
+        if (educationFileInputRef.current) {
+          educationFileInputRef.current.value = '';
+        }
+      } catch (error) {
+        console.error('Error al procesar archivo:', error);
+        alert('Error al procesar el archivo PDF');
+      }
+    }
+  };
+
   const handleAddCertification = () => {
     if (newCertification.trim()) {
-      setCertificationItems([...certificationItems, newCertification.trim()]);
+      setCertificationItems([...certificationItems, { text: newCertification.trim() }]);
       setNewCertification("");
     }
   };
 
   const handleRemoveCertification = (index: number) => {
     setCertificationItems(certificationItems.filter((_, i) => i !== index));
+  };
+
+  const handleCertificationFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validar que sea PDF
+      if (file.type !== 'application/pdf') {
+        alert('Solo se permiten archivos PDF');
+        return;
+      }
+      // Validar tamaño (máximo 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('El archivo es demasiado grande. Máximo 5MB');
+        return;
+      }
+
+      // Agregar automáticamente con el nombre del archivo como texto
+      try {
+        const base64 = await fileToBase64(file);
+        const fileName = file.name;
+        const text = newCertification.trim() || fileName.replace('.pdf', '');
+        
+        setCertificationItems([...certificationItems, { text, fileUrl: base64, fileName }]);
+        setNewCertification("");
+        
+        // Limpiar el input file
+        if (certificationFileInputRef.current) {
+          certificationFileInputRef.current.value = '';
+        }
+      } catch (error) {
+        console.error('Error al procesar archivo:', error);
+        alert('Error al procesar el archivo PDF');
+      }
+    }
+  };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleViewDocument = (fileUrl: string, fileName: string) => {
+    // Abrir el PDF en una nueva pestaña
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.target = '_blank';
+    link.download = fileName;
+    link.click();
   };
 
   if (loading || !profile) {
@@ -242,19 +339,32 @@ export const ClinicAssociatedProfileSection = ({
                         display: "flex",
                         alignItems: "center",
                         gap: 1,
-                        p: 1,
+                        p: 2,
                         bgcolor: "grey.100",
                         borderRadius: 1,
                       }}
                     >
-                      <Typography flex={1}>{edu}</Typography>
-                      <Button
+                      <Box flex={1}>
+                        <Typography fontWeight={500}>{edu.text}</Typography>
+                        {edu.fileName && (
+                          <Chip
+                            icon={<PictureAsPdf />}
+                            label={edu.fileName}
+                            size="small"
+                            onClick={() => handleViewDocument(edu.fileUrl!, edu.fileName!)}
+                            sx={{ mt: 1, cursor: 'pointer' }}
+                            color="primary"
+                            variant="outlined"
+                          />
+                        )}
+                      </Box>
+                      <IconButton
                         size="small"
                         color="error"
                         onClick={() => handleRemoveEducation(index)}
                       >
-                        Eliminar
-                      </Button>
+                        <Delete />
+                      </IconButton>
                     </Box>
                   ))}
                   <Box sx={{ display: "flex", gap: 1 }}>
@@ -271,8 +381,24 @@ export const ClinicAssociatedProfileSection = ({
                         }
                       }}
                     />
-                    <Button variant="outlined" onClick={handleAddEducation}>
-                      Agregar
+                    <input
+                      ref={educationFileInputRef}
+                      type="file"
+                      accept="application/pdf"
+                      hidden
+                      onChange={handleEducationFileSelect}
+                    />
+                    <Button
+                      variant="contained"
+                      startIcon={<AttachFile />}
+                      onClick={() => educationFileInputRef.current?.click()}
+                      sx={{ 
+                        minWidth: '140px',
+                        backgroundColor: "#14b8a6", 
+                        "&:hover": { backgroundColor: "#0d9488" } 
+                      }}
+                    >
+                      Adjuntar PDF
                     </Button>
                   </Box>
                 </Stack>
@@ -291,19 +417,32 @@ export const ClinicAssociatedProfileSection = ({
                         display: "flex",
                         alignItems: "center",
                         gap: 1,
-                        p: 1,
+                        p: 2,
                         bgcolor: "grey.100",
                         borderRadius: 1,
                       }}
                     >
-                      <Typography flex={1}>{cert}</Typography>
-                      <Button
+                      <Box flex={1}>
+                        <Typography fontWeight={500}>{cert.text}</Typography>
+                        {cert.fileName && (
+                          <Chip
+                            icon={<PictureAsPdf />}
+                            label={cert.fileName}
+                            size="small"
+                            onClick={() => handleViewDocument(cert.fileUrl!, cert.fileName!)}
+                            sx={{ mt: 1, cursor: 'pointer' }}
+                            color="primary"
+                            variant="outlined"
+                          />
+                        )}
+                      </Box>
+                      <IconButton
                         size="small"
                         color="error"
                         onClick={() => handleRemoveCertification(index)}
                       >
-                        Eliminar
-                      </Button>
+                        <Delete />
+                      </IconButton>
                     </Box>
                   ))}
                   <Box sx={{ display: "flex", gap: 1 }}>
@@ -320,8 +459,24 @@ export const ClinicAssociatedProfileSection = ({
                         }
                       }}
                     />
-                    <Button variant="outlined" onClick={handleAddCertification}>
-                      Agregar
+                    <input
+                      ref={certificationFileInputRef}
+                      type="file"
+                      accept="application/pdf"
+                      hidden
+                      onChange={handleCertificationFileSelect}
+                    />
+                    <Button
+                      variant="contained"
+                      startIcon={<AttachFile />}
+                      onClick={() => certificationFileInputRef.current?.click()}
+                      sx={{ 
+                        minWidth: '140px',
+                        backgroundColor: "#14b8a6", 
+                        "&:hover": { backgroundColor: "#0d9488" } 
+                      }}
+                    >
+                      Adjuntar PDF
                     </Button>
                   </Box>
                 </Stack>
