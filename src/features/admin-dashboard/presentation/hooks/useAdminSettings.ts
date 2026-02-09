@@ -31,5 +31,14 @@ export const useAdminSettings = () => {
     });
   };
 
-  return { settings, isLoading, toggleSetting };
+  const updateCommission = (key: keyof AdminSettings, value: number) => {
+    if (!settings) return;
+    
+    setSettings({
+      ...settings,
+      [key]: value,
+    } as AdminSettings);
+  };
+
+  return { settings, isLoading, toggleSetting, updateCommission };
 };

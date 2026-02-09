@@ -104,6 +104,21 @@ export const getClinicProfileAPI = async (): Promise<ClinicProfile> => {
 };
 
 /**
+ * API: Actualizar horario general de la clínica
+ * Endpoint: PUT /api/clinics/schedule
+ */
+export const updateClinicScheduleAPI = async (schedule: ClinicSchedule): Promise<ClinicSchedule> => {
+  const response = await httpClient.put<{ success: boolean; data: any }>(
+    '/clinics/schedule',
+    { schedule }
+  );
+  const data = extractData(response);
+  
+  // Retornar el schedule que viene del backend
+  return data.schedule || data;
+};
+
+/**
  * API: Actualizar perfil de la clínica
  * Endpoint: PUT /api/clinics/profile
  */

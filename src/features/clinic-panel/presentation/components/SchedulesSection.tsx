@@ -8,16 +8,14 @@ import {
   Switch,
   TextField,
   Button,
-  Divider,
+  Alert,
+  Snackbar,
 } from "@mui/material";
-import { Save, Edit } from "@mui/icons-material";
+import { Save } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import type { ClinicSchedule, DaySchedule } from "../../domain/clinic.entity";
 import { useClinicProfile } from "../hooks/useClinicProfile";
-import { useClinicDoctors } from "../hooks/useClinicDoctors";
-import { useDoctorSchedule } from "../hooks/useDoctorSchedule";
-import type { ClinicDoctor } from "../../domain/doctor.entity";
-import type { DoctorSchedule } from "../../domain/doctor-schedule.entity";
+import { updateClinicScheduleAPI } from "../../infrastructure/clinic.api";
 import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner";
 
 interface SchedulesSectionProps {
@@ -35,7 +33,12 @@ const daysOfWeek = [
 ] as const;
 
 export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
-  const { profile, updateProfile } = useClinicProfile();
+  const { profile, loading: profileLoading } = useClinicProfile();
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
   const defaultSchedule: ClinicSchedule = {
     monday: { enabled: false, startTime: "09:00", endTime: "18:00" },
     tuesday: { enabled: false, startTime: "09:00", endTime: "18:00" },
@@ -86,9 +89,7 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
     return normalized;
   };
 
-  const [schedule, setSchedule] = useState<ClinicSchedule>(
-    profile?.generalSchedule ? normalizeSchedule(profile.generalSchedule) : defaultSchedule
-  );
+  const [schedule, setSchedule] = useState<ClinicSchedule>(defaultSchedule);
   
   useEffect(() => {
     if (profile?.generalSchedule) {
@@ -97,6 +98,8 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
     } else {
       setSchedule(defaultSchedule);
     }
+    // Cuando carga nuevo perfil, salir del modo edición
+    setIsEditing(false);
   }, [profile]);
 
   const handleDayChange = (day: keyof ClinicSchedule, field: keyof DaySchedule, value: any) => {
@@ -109,16 +112,45 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
     });
   };
 
+  const handleEdit = () => {
+    setIsEditing(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+  };
+
+  const handleCancel = () => {
+    // Restaurar valores originales del perfil
+    if (profile?.generalSchedule) {
+      const normalized = normalizeSchedule(profile.generalSchedule);
+      setSchedule(normalized);
+    } else {
+      setSchedule(defaultSchedule);
+    }
+    setIsEditing(false);
+    setErrorMessage(null);
+  };
+
   const handleSave = async () => {
-    if (profile) {
-      await updateProfile({
-        ...profile,
-        generalSchedule: schedule,
-      });
+    setSaving(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    
+    try {
+      // Llamar al endpoint específico de horarios
+      const updatedSchedule = await updateClinicScheduleAPI(schedule);
+      
+      // Actualizar el estado local con la respuesta del servidor
+      setSchedule(updatedSchedule);
+      setIsEditing(false);
+      setSuccessMessage('Horarios guardados correctamente');
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Error al guardar horarios');
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (!profile) {
+  if (profileLoading) {
     return <LoadingSpinner text="Cargando horarios..." />;
   }
 
@@ -133,6 +165,12 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
 
       <Card>
         <CardContent>
+          {errorMessage && (
+            <Alert severity="error" sx={{ mb: 3 }} onClose={() => setErrorMessage(null)}>
+              {errorMessage}
+            </Alert>
+          )}
+          
           <Grid2 container spacing={3}>
             {daysOfWeek.map((day) => {
               // ⭐ Validación segura: asegurar que daySchedule siempre existe
@@ -166,6 +204,7 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
                         <Switch
                           checked={safeDaySchedule.enabled}
                           onChange={(e) => handleDayChange(day.key, "enabled", e.target.checked)}
+                          disabled={!isEditing}
                         />
                       }
                       label={day.label}
@@ -180,6 +219,7 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
                           onChange={(e) => handleDayChange(day.key, "startTime", e.target.value)}
                           InputLabelProps={{ shrink: true }}
                           size="small"
+                          disabled={!isEditing}
                         />
                         <TextField
                           type="time"
@@ -188,6 +228,7 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
                           onChange={(e) => handleDayChange(day.key, "endTime", e.target.value)}
                           InputLabelProps={{ shrink: true }}
                           size="small"
+                          disabled={!isEditing}
                         />
                       </>
                     )}
@@ -197,313 +238,53 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
             })}
           </Grid2>
 
-          <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
-            <Button
-              variant="contained"
-              startIcon={<Save />}
-              onClick={handleSave}
-              sx={{ backgroundColor: "#14b8a6", "&:hover": { backgroundColor: "#0d9488" } }}
-            >
-              Guardar Horarios
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
-
-      <Divider sx={{ my: 4 }} />
-
-      <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-        Horarios de Médicos
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Configura los horarios específicos de cada médico en esta clínica
-      </Typography>
-
-      <DoctorSchedulesList clinicId={clinicId} />
-    </Box>
-  );
-};
-
-// Componente para listar y editar horarios de médicos
-const DoctorSchedulesList = ({ clinicId }: { clinicId: string }) => {
-  const { doctors, loading } = useClinicDoctors(clinicId);
-  const [expandedDoctor, setExpandedDoctor] = useState<string | null>(null);
-
-  if (loading) {
-    return <LoadingSpinner text="Cargando médicos..." />;
-  }
-
-  if (doctors.length === 0) {
-    return (
-      <Card>
-        <CardContent>
-          <Typography variant="body2" color="text.secondary" textAlign="center" py={3}>
-            No hay médicos registrados. Invita médicos desde la sección "Gestión de Médicos".
-          </Typography>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const activeDoctors = doctors.filter((doctor) => doctor.isActive);
-
-  if (activeDoctors.length === 0) {
-    return (
-      <Card>
-        <CardContent>
-          <Typography variant="body2" color="text.secondary" textAlign="center" py={3}>
-            No hay médicos activos. Activa médicos desde la sección "Gestión de Médicos".
-          </Typography>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Box>
-      {activeDoctors.map((doctor) => (
-        <DoctorScheduleCard
-          key={doctor.id}
-          doctor={doctor}
-          isExpanded={expandedDoctor === doctor.id}
-          onToggleExpand={() => setExpandedDoctor(expandedDoctor === doctor.id ? null : doctor.id)}
-        />
-      ))}
-    </Box>
-  );
-};
-
-// Componente para editar horarios de un médico
-const DoctorScheduleCard = ({
-  doctor,
-  isExpanded,
-  onToggleExpand,
-}: {
-  doctor: ClinicDoctor;
-  isExpanded: boolean;
-  onToggleExpand: () => void;
-}) => {
-  const { schedule, loading, updateSchedule } = useDoctorSchedule(doctor.id);
-  const [localSchedule, setLocalSchedule] = useState<DoctorSchedule | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  // ⭐ Función para normalizar el schedule del doctor
-  const normalizeDoctorSchedule = (schedule: any): DoctorSchedule => {
-    const defaultSchedule: DoctorSchedule = {
-      id: schedule?.id || '',
-      doctorId: schedule?.doctorId || doctor.id,
-      clinicId: schedule?.clinicId || '',
-      monday: { enabled: false, startTime: '09:00', endTime: '18:00' },
-      tuesday: { enabled: false, startTime: '09:00', endTime: '18:00' },
-      wednesday: { enabled: false, startTime: '09:00', endTime: '18:00' },
-      thursday: { enabled: false, startTime: '09:00', endTime: '18:00' },
-      friday: { enabled: false, startTime: '09:00', endTime: '18:00' },
-      saturday: { enabled: false, startTime: '09:00', endTime: '18:00' },
-      sunday: { enabled: false, startTime: '09:00', endTime: '18:00' },
-      createdAt: schedule?.createdAt || new Date().toISOString(),
-      updatedAt: schedule?.updatedAt,
-    };
-
-    if (!schedule || typeof schedule !== 'object') {
-      return defaultSchedule;
-    }
-
-    // Si viene como array, convertir a objeto
-    if (Array.isArray(schedule)) {
-      const normalized: DoctorSchedule = { ...defaultSchedule };
-      schedule.forEach((item: any) => {
-        const dayKey = item.day?.toLowerCase() || item.dayOfWeek?.toLowerCase();
-        if (dayKey && normalized[dayKey as keyof DoctorSchedule]) {
-          normalized[dayKey as keyof DoctorSchedule] = {
-            enabled: item.enabled ?? item.is_active ?? false,
-            startTime: item.startTime || item.start_time || '09:00',
-            endTime: item.endTime || item.end_time || '18:00',
-            breakStart: item.breakStart || item.break_start,
-            breakEnd: item.breakEnd || item.break_end,
-          } as any;
-        }
-      });
-      return normalized;
-    }
-
-    // Si viene como objeto, asegurar que todos los días existan
-    const normalized: DoctorSchedule = { ...defaultSchedule };
-    const dayKeys: (keyof DoctorSchedule)[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-    
-    dayKeys.forEach((dayKey) => {
-      const dayData = schedule[dayKey] || schedule.schedule?.[dayKey];
-      if (dayData && typeof dayData === 'object') {
-        normalized[dayKey] = {
-          enabled: dayData.enabled ?? dayData.is_active ?? false,
-          startTime: dayData.startTime || dayData.start_time || '09:00',
-          endTime: dayData.endTime || dayData.end_time || '18:00',
-          breakStart: dayData.breakStart || dayData.break_start,
-          breakEnd: dayData.breakEnd || dayData.break_end,
-        } as any;
-      }
-    });
-
-    return normalized;
-  };
-
-  useEffect(() => {
-    if (schedule) {
-      // ⭐ Normalizar el schedule antes de guardarlo en el estado local
-      const normalized = normalizeDoctorSchedule(schedule);
-      setLocalSchedule(normalized);
-    } else {
-      // Si no hay schedule, crear uno por defecto normalizado
-      const defaultSchedule = normalizeDoctorSchedule(null);
-      setLocalSchedule(defaultSchedule);
-    }
-  }, [schedule]);
-
-  const handleDayChange = (
-    day: keyof Omit<DoctorSchedule, 'id' | 'doctorId' | 'clinicId' | 'createdAt' | 'updatedAt'>,
-    field: keyof DaySchedule,
-    value: any
-  ) => {
-    if (!localSchedule) return;
-    
-    setLocalSchedule({
-      ...localSchedule,
-      [day]: {
-        ...localSchedule[day],
-        [field]: value,
-      },
-    });
-  };
-
-  const handleSave = async () => {
-    if (!localSchedule) return;
-    
-    setSaving(true);
-    try {
-      await updateSchedule(localSchedule);
-    } catch (error) {
-      console.error('Error al guardar horarios:', error);
-      alert('Error al guardar horarios. Intenta nuevamente.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading || !localSchedule) {
-    return (
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <LoadingSpinner text={`Cargando horarios de ${doctor.name}...`} />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card sx={{ mb: 2 }}>
-      <CardContent>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            cursor: 'pointer',
-            mb: isExpanded ? 2 : 0,
-          }}
-          onClick={onToggleExpand}
-        >
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              {doctor.name}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {doctor.specialty} {doctor.officeNumber && `• Consultorio ${doctor.officeNumber}`}
-            </Typography>
-          </Box>
-          <Button variant="outlined" size="small" startIcon={<Edit />}>
-            {isExpanded ? 'Ocultar' : 'Editar Horarios'}
-          </Button>
-        </Box>
-
-        {isExpanded && (
-          <Box sx={{ mt: 2 }}>
-            <Grid2 container spacing={2}>
-              {daysOfWeek.map((day) => {
-                // ⭐ Validación segura: asegurar que daySchedule siempre existe
-                const daySchedule = localSchedule?.[day.key];
-                const safeDaySchedule: DaySchedule = daySchedule || {
-                  enabled: false,
-                  startTime: '09:00',
-                  endTime: '18:00',
-                };
-                
-                return (
-                  <Grid2 key={day.key} size={{ xs: 12 }}>
-                    <Box
-                      sx={{
-                        p: 2,
-                        border: '1px solid #e0e0e0',
-                        borderRadius: 2,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 2,
-                      }}
-                    >
-                      <FormControlLabel
-                        control={
-                          <Switch
-                            checked={safeDaySchedule.enabled}
-                            onChange={(e) =>
-                              handleDayChange(day.key, 'enabled', e.target.checked)
-                            }
-                          />
-                        }
-                        label={day.label}
-                        sx={{ minWidth: 100 }}
-                      />
-                      {safeDaySchedule.enabled && (
-                        <>
-                          <TextField
-                            type="time"
-                            label="Inicio"
-                            value={safeDaySchedule.startTime}
-                            onChange={(e) =>
-                              handleDayChange(day.key, 'startTime', e.target.value)
-                            }
-                            InputLabelProps={{ shrink: true }}
-                            size="small"
-                          />
-                          <TextField
-                            type="time"
-                            label="Fin"
-                            value={safeDaySchedule.endTime}
-                            onChange={(e) =>
-                              handleDayChange(day.key, 'endTime', e.target.value)
-                            }
-                            InputLabelProps={{ shrink: true }}
-                            size="small"
-                          />
-                        </>
-                      )}
-                    </Box>
-                  </Grid2>
-                );
-              })}
-            </Grid2>
-
-            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+          <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: 2 }}>
+            {!isEditing ? (
               <Button
                 variant="contained"
-                startIcon={<Save />}
-                onClick={handleSave}
-                disabled={saving}
-                sx={{ backgroundColor: '#14b8a6', '&:hover': { backgroundColor: '#0d9488' } }}
+                onClick={handleEdit}
+                sx={{ backgroundColor: "#14b8a6", "&:hover": { backgroundColor: "#0d9488" } }}
               >
-                {saving ? 'Guardando...' : 'Guardar Horarios'}
+                Editar Horarios
               </Button>
-            </Box>
+            ) : (
+              <>
+                <Button
+                  variant="outlined"
+                  onClick={handleCancel}
+                  disabled={saving}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<Save />}
+                  onClick={handleSave}
+                  disabled={saving}
+                  sx={{ backgroundColor: "#14b8a6", "&:hover": { backgroundColor: "#0d9488" } }}
+                >
+                  {saving ? "Guardando..." : "Guardar Cambios"}
+                </Button>
+              </>
+            )}
           </Box>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <Typography variant="body2" color="info.main" sx={{ mt: 3, p: 2, bgcolor: '#eff6ff', borderRadius: 1 }}>
+        ℹ️ Los médicos asociados a esta clínica trabajarán según estos horarios generales.
+      </Typography>
+
+      <Snackbar
+        open={!!successMessage}
+        autoHideDuration={3000}
+        onClose={() => setSuccessMessage(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert severity="success" onClose={() => setSuccessMessage(null)}>
+          {successMessage}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 };

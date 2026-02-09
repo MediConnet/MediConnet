@@ -19,4 +19,12 @@ export interface AdminSettings {
   // Sección Estados
   allowServiceSelfActivation: boolean; // Permitir auto-activación de servicios
   allowAdSelfPublishing: boolean; // Permitir auto-publicación de anuncios
+
+  // Sección Comisiones (porcentajes)
+  commissionDoctor: number; // Comisión para doctores (%)
+  commissionClinic: number; // Comisión para clínicas (%)
+  commissionLaboratory: number; // Comisión para laboratorios (%)
+  commissionPharmacy: number; // Comisión para farmacias (%)
+  commissionSupplies: number; // Comisión para insumos médicos (%)
+  commissionAmbulance: number; // Comisión para ambulancias (%)
 }

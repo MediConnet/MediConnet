@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   Box,
   Card,
@@ -6,6 +6,8 @@ import {
   Typography,
   Stack,
   Paper,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
 import {
@@ -14,7 +16,8 @@ import {
   TrendingUp,
   Inventory,
 } from "@mui/icons-material";
-import { mockOrders } from "../../infrastructure/orders.mock";
+import { getOrdersAPI } from "../../infrastructure/orders.api";
+import type { SupplyOrder } from "../../domain/Order.entity";
 import { formatMoney } from "../../../../shared/lib/formatMoney";
 
 interface DashboardContentProps {
@@ -25,7 +28,25 @@ interface DashboardContentProps {
 }
 
 export const DashboardContent = ({}: DashboardContentProps) => {
-  const orders = useMemo(() => mockOrders, []);
+  const [orders, setOrders] = useState<SupplyOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        setLoading(true);
+        const data = await getOrdersAPI();
+        setOrders(data);
+      } catch (err: any) {
+        console.error('Error loading orders:', err);
+        setError(err.message || 'Error al cargar pedidos');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadOrders();
+  }, []);
 
   // Datos para gráfico de pedidos por semana
   const ordersByWeek = useMemo(() => {
@@ -87,6 +108,22 @@ export const DashboardContent = ({}: DashboardContentProps) => {
       .sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime())
       .slice(0, 5);
   }, [orders]);
+
+  if (loading) {
+    return (
+      <Box sx={{ mt: 4, display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px" }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ mt: 4 }}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ mt: 4 }}>
