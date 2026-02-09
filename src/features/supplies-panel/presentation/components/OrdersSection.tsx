@@ -17,24 +17,38 @@ import {
   IconButton,
   Box,
   Typography,
+  Alert,
+  CircularProgress,
 } from "@mui/material";
 import { useState, useEffect } from "react";
-import { getOrdersMock } from "../../infrastructure/orders.mock";
+import { getOrdersAPI, updateOrderStatusAPI } from "../../infrastructure/orders.api";
 import type { SupplyOrder } from "../../domain/Order.entity";
-
 
 export const OrdersSection = () => {
   const [orders, setOrders] = useState<SupplyOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
   // Cargar pedidos al montar el componente
   useEffect(() => {
-    getOrdersMock().then((data) => {
-      setOrders(data);
-      setLoading(false);
-    });
+    loadOrders();
   }, []);
+
+  const loadOrders = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getOrdersAPI();
+      setOrders(data);
+    } catch (err: any) {
+      console.error('Error loading orders:', err);
+      setError(err.message || 'Error al cargar pedidos');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -52,13 +66,26 @@ export const OrdersSection = () => {
     }).format(amount);
   };
 
-  const handleStatusChange = (orderId: string, newStatus: SupplyOrder["status"]) => {
-    setOrders((prevOrders) =>
-      prevOrders.map((order) =>
-        order.id === orderId ? { ...order, status: newStatus } : order
-      )
-    );
-    // Aquí se podría hacer una llamada a la API para actualizar el estado
+  const handleStatusChange = async (orderId: string, newStatus: SupplyOrder["status"]) => {
+    try {
+      setUpdatingStatus(orderId);
+      setError(null);
+      
+      // Actualizar en el backend
+      const updated = await updateOrderStatusAPI(orderId, newStatus);
+      
+      // Actualizar en el estado local
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.id === orderId ? updated : order
+        )
+      );
+    } catch (err: any) {
+      console.error('Error updating order status:', err);
+      setError(err.message || 'Error al actualizar estado');
+    } finally {
+      setUpdatingStatus(null);
+    }
   };
 
   const toggleRowExpansion = (orderId: string) => {
@@ -73,12 +100,24 @@ export const OrdersSection = () => {
     });
   };
 
+  const getStatusColor = (status: SupplyOrder["status"]) => {
+    const colors = {
+      pending: "#fbbf24",
+      confirmed: "#3b82f6",
+      preparing: "#8b5cf6",
+      shipped: "#06b6d4",
+      delivered: "#10b981",
+      cancelled: "#ef4444",
+    };
+    return colors[status] || "#6b7280";
+  };
+
   if (loading) {
     return (
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-gray-500">Cargando pedidos...</div>
-        </div>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+          <CircularProgress />
+        </Box>
       </div>
     );
   }
@@ -91,6 +130,12 @@ export const OrdersSection = () => {
           Gestiona los pedidos de insumos médicos realizados por tus clientes
         </p>
       </div>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
 
       {orders.length > 0 ? (
         <TableContainer component={Paper} elevation={0} className="border border-gray-200">
@@ -111,6 +156,7 @@ export const OrdersSection = () => {
             <TableBody>
               {orders.map((order) => {
                 const isExpanded = expandedRows.has(order.id);
+                const isUpdating = updatingStatus === order.id;
                 return (
                   <>
                     <TableRow key={order.id} hover className="border-b border-gray-200">
@@ -153,13 +199,21 @@ export const OrdersSection = () => {
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <FormControl size="small" className="min-w-[140px]">
+                        <FormControl size="small" className="min-w-[140px]" disabled={isUpdating}>
                           <Select
                             value={order.status}
                             onChange={(e) =>
                               handleStatusChange(order.id, e.target.value as SupplyOrder["status"])
                             }
                             className="text-sm"
+                            sx={{
+                              backgroundColor: getStatusColor(order.status) + "20",
+                              color: getStatusColor(order.status),
+                              fontWeight: 600,
+                              "& .MuiOutlinedInput-notchedOutline": {
+                                borderColor: getStatusColor(order.status),
+                              },
+                            }}
                           >
                             <MenuItem value="pending">Pendiente</MenuItem>
                             <MenuItem value="confirmed">Confirmado</MenuItem>
@@ -169,6 +223,9 @@ export const OrdersSection = () => {
                             <MenuItem value="cancelled">Cancelado</MenuItem>
                           </Select>
                         </FormControl>
+                        {isUpdating && (
+                          <CircularProgress size={16} sx={{ ml: 1 }} />
+                        )}
                       </TableCell>
                       <TableCell>
                         <IconButton
@@ -266,4 +323,3 @@ export const OrdersSection = () => {
     </div>
   );
 };
-

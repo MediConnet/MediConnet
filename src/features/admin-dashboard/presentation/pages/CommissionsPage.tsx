@@ -1,243 +1,332 @@
-import { Percent, TrendingUp, AttachMoney } from "@mui/icons-material";
-import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  Paper,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-  CircularProgress,
-  Alert,
-} from "@mui/material";
-import Grid2 from "@mui/material/Grid2";
-import { useState, useMemo, useEffect } from "react";
+import { useState } from "react";
+import { Box, Paper, Tab, Tabs, Typography, Divider, Button } from "@mui/material";
+import { Save } from "@mui/icons-material";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
-import { getAdminDoctorPaymentsAPI } from "../../infrastructure/admin-payments.api";
-import { formatMoney } from "../../../../shared/lib/formatMoney";
+import { CommissionSettingItem } from "../components/CommissionSettingItem";
+import { useAdminSettings } from "../hooks/useAdminSettings";
+import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner";
 
 const CURRENT_ADMIN = {
-  name: "Admin General",
-  roleLabel: "Super Admin",
+  name: "Administrador General",
+  roleLabel: "Administrator",
   initials: "AG",
 };
 
-const COMMISSION_RATE = 0.15; // 15%
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+const TabPanel = ({ children, value, index }: TabPanelProps) => {
+  return (
+    <div role="tabpanel" hidden={value !== index}>
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+    </div>
+  );
+};
 
 export const CommissionsPage = () => {
-  const [payments, setPayments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { settings, isLoading, updateCommission } = useAdminSettings();
+  const [activeTab, setActiveTab] = useState(0);
+  const [hasChanges, setHasChanges] = useState(false);
 
-  useEffect(() => {
-    const loadPayments = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await getAdminDoctorPaymentsAPI();
-        setPayments(data);
-      } catch (err: any) {
-        setError(err.message || 'Error al cargar pagos');
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadPayments();
-  }, []);
+  console.log("🎬 CommissionsPage renderizado");
+  console.log("📊 Settings:", settings);
+  console.log("⏳ Loading:", isLoading);
 
-  // Calcular comisiones por mes
-  const commissionsByMonth = useMemo(() => {
-    const monthlyData = new Map<string, { amount: number; commission: number; count: number }>();
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
+  };
 
-    payments.forEach((payment) => {
-      const month = new Date(payment.date).toLocaleDateString("es-ES", {
-        year: "numeric",
-        month: "long",
-      });
+  const handleCommissionChange = (key: string, value: number) => {
+    if (!updateCommission) return;
+    updateCommission(key as keyof typeof settings, value);
+    setHasChanges(true);
+  };
 
-      if (!monthlyData.has(month)) {
-        monthlyData.set(month, { amount: 0, commission: 0, count: 0 });
-      }
+  const handleSave = () => {
+    // Aquí iría la llamada al backend para guardar
+    console.log("Guardando comisiones:", settings);
+    setHasChanges(false);
+    // TODO: Implementar guardado en backend
+  };
 
-      const data = monthlyData.get(month)!;
-      data.amount += payment.amount;
-      data.commission += payment.commission;
-      data.count += 1;
-    });
-
-    return Array.from(monthlyData.entries())
-      .map(([month, data]) => ({ month, ...data }))
-      .sort((a, b) => new Date(b.month).getTime() - new Date(a.month).getTime());
-  }, [payments]);
-
-  const totalCommission = useMemo(() => {
-    return payments.reduce((sum, p) => sum + p.commission, 0);
-  }, [payments]);
-
-  const totalAmount = useMemo(() => {
-    return payments.reduce((sum, p) => sum + p.amount, 0);
-  }, [payments]);
+  if (isLoading || !settings) {
+    return (
+      <DashboardLayout role="ADMIN" userProfile={CURRENT_ADMIN}>
+        <Box sx={{ p: 3 }}>
+          <LoadingSpinner text="Cargando configuración..." />
+        </Box>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout role="ADMIN" userProfile={CURRENT_ADMIN}>
-      <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
-        <Stack direction="row" spacing={2} alignItems="center" mb={3}>
-          <Percent sx={{ fontSize: 32, color: "primary.main" }} />
-          <Box>
-            <Typography variant="h4" fontWeight={700}>
-              Comisiones
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Detalle del porcentaje y histórico de comisiones
-            </Typography>
-          </Box>
-        </Stack>
+      <Box sx={{ p: 3, maxWidth: 1200, margin: "0 auto" }}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h5" fontWeight={700} gutterBottom>
+            Configuración de Comisiones
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Define el porcentaje de comisión que la plataforma cobra por cada tipo de servicio
+          </Typography>
+        </Box>
 
-        {/* Loading State */}
-        {loading && (
-          <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-            <CircularProgress />
-          </Box>
-        )}
+        <Paper
+          elevation={0}
+          sx={{
+            borderRadius: 3,
+            border: "1px solid",
+            borderColor: "grey.200",
+            overflow: "hidden",
+          }}
+        >
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            sx={{
+              borderBottom: 1,
+              borderColor: "divider",
+              px: 2,
+              "& .MuiTab-root": {
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: "0.95rem",
+              },
+            }}
+          >
+            <Tab label="Pagos a Médicos" />
+            <Tab label="Pagos a Clínicas" />
+            <Tab label="Pagos a Laboratorios" />
+            <Tab label="Pagos a Farmacias" />
+            <Tab label="Pagos a Insumos" />
+            <Tab label="Pagos a Ambulancias" />
+          </Tabs>
 
-        {/* Error State */}
-        {error && !loading && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        )}
+          {/* Tab 1: Médicos */}
+          <TabPanel value={activeTab} index={0}>
+            <Box sx={{ px: 4 }}>
+              <Typography variant="h6" fontWeight={700} gutterBottom>
+                Comisión para Médicos
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Configura el porcentaje de comisión que se cobra por consultas médicas
+              </Typography>
 
-        {/* Content - Only show when not loading */}
-        {!loading && !error && (
-          <>
-        {/* Información de la comisión */}
-        <Grid2 container spacing={3} mb={4}>
-          <Grid2 size={{ xs: 12, md: 4 }}>
-            <Card elevation={0} sx={{ bgcolor: "#eff6ff", border: "1px solid #bfdbfe" }}>
-              <CardContent>
-                <Stack direction="row" spacing={2} alignItems="center">
-                  <Percent sx={{ color: "#3b82f6", fontSize: 32 }} />
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
-                      Porcentaje de Comisión
-                    </Typography>
-                    <Typography variant="h5" fontWeight={700} color="#3b82f6">
-                      {COMMISSION_RATE * 100}%
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid2>
+              <CommissionSettingItem
+                title="Porcentaje de Comisión"
+                description="Comisión que la plataforma cobra por cada consulta médica realizada"
+                value={settings.commissionDoctor}
+                onChange={(value) => handleCommissionChange("commissionDoctor", value)}
+              />
 
-          <Grid2 size={{ xs: 12, md: 4 }}>
-            <Card elevation={0} sx={{ bgcolor: "#f0fdfa", border: "1px solid #a7f3d0" }}>
-              <CardContent>
-                <Stack direction="row" spacing={2} alignItems="center">
-                  <AttachMoney sx={{ color: "#10b981", fontSize: 32 }} />
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
-                      Total de Comisiones
-                    </Typography>
-                    <Typography variant="h5" fontWeight={700} color="#10b981">
-                      {formatMoney(totalCommission)}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid2>
+              <Box sx={{ mt: 3, p: 3, bgcolor: "#f0f9ff", borderRadius: 2 }}>
+                <Typography variant="body2" fontWeight={600} gutterBottom>
+                  Ejemplo de cálculo:
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Si una consulta cuesta $100 y la comisión es {settings.commissionDoctor}%:
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  • Comisión plataforma: ${(100 * settings.commissionDoctor / 100).toFixed(2)}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  • Pago al médico: ${(100 - (100 * settings.commissionDoctor / 100)).toFixed(2)}
+                </Typography>
+              </Box>
+            </Box>
+          </TabPanel>
 
-          <Grid2 size={{ xs: 12, md: 4 }}>
-            <Card elevation={0} sx={{ bgcolor: "#fef3c7", border: "1px solid #fde68a" }}>
-              <CardContent>
-                <Stack direction="row" spacing={2} alignItems="center">
-                  <TrendingUp sx={{ color: "#f59e0b", fontSize: 32 }} />
-                  <Box>
-                    <Typography variant="caption" color="text.secondary">
-                      Total Procesado
-                    </Typography>
-                    <Typography variant="h5" fontWeight={700} color="#f59e0b">
-                      {formatMoney(totalAmount)}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid2>
-        </Grid2>
+          {/* Tab 2: Clínicas */}
+          <TabPanel value={activeTab} index={1}>
+            <Box sx={{ px: 4 }}>
+              <Typography variant="h6" fontWeight={700} gutterBottom>
+                Comisión para Clínicas
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Configura el porcentaje de comisión que se cobra por servicios de clínicas
+              </Typography>
 
-        {/* Histórico de comisiones */}
-        <Paper elevation={0} sx={{ border: "1px solid #e5e7eb" }}>
-          <Box p={3}>
-            <Typography variant="h6" fontWeight={700} mb={3}>
-              Histórico de Comisiones por Mes
-            </Typography>
+              <CommissionSettingItem
+                title="Porcentaje de Comisión"
+                description="Comisión que la plataforma cobra por cada servicio de clínica"
+                value={settings.commissionClinic}
+                onChange={(value) => handleCommissionChange("commissionClinic", value)}
+              />
 
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ bgcolor: "#f9fafb" }}>
-                    <TableCell sx={{ fontWeight: 600 }}>Mes</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }} align="right">
-                      Total Procesado
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600 }} align="right">
-                      Comisión ({COMMISSION_RATE * 100}%)
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 600 }} align="center">
-                      Transacciones
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {commissionsByMonth.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                        <Typography color="text.secondary">
-                          No hay datos de comisiones
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    commissionsByMonth.map((item, index) => (
-                      <TableRow key={index} hover>
-                        <TableCell>
-                          <Typography fontWeight={600} sx={{ textTransform: "capitalize" }}>
-                            {item.month}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                          <Typography fontWeight={600}>
-                            {formatMoney(item.amount)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                          <Typography fontWeight={600} color="#10b981">
-                            {formatMoney(item.commission)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="center">
-                          <Chip label={item.count} color="primary" size="small" />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+              <Box sx={{ mt: 3, p: 3, bgcolor: "#f0f9ff", borderRadius: 2 }}>
+                <Typography variant="body2" fontWeight={600} gutterBottom>
+                  Ejemplo de cálculo:
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Si un servicio cuesta $200 y la comisión es {settings.commissionClinic}%:
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  • Comisión plataforma: ${(200 * settings.commissionClinic / 100).toFixed(2)}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  • Pago a la clínica: ${(200 - (200 * settings.commissionClinic / 100)).toFixed(2)}
+                </Typography>
+              </Box>
+            </Box>
+          </TabPanel>
+
+          {/* Tab 3: Laboratorios */}
+          <TabPanel value={activeTab} index={2}>
+            <Box sx={{ px: 4 }}>
+              <Typography variant="h6" fontWeight={700} gutterBottom>
+                Comisión para Laboratorios
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Configura el porcentaje de comisión que se cobra por estudios de laboratorio
+              </Typography>
+
+              <CommissionSettingItem
+                title="Porcentaje de Comisión"
+                description="Comisión que la plataforma cobra por cada estudio de laboratorio"
+                value={settings.commissionLaboratory}
+                onChange={(value) => handleCommissionChange("commissionLaboratory", value)}
+              />
+
+              <Box sx={{ mt: 3, p: 3, bgcolor: "#f0f9ff", borderRadius: 2 }}>
+                <Typography variant="body2" fontWeight={600} gutterBottom>
+                  Ejemplo de cálculo:
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Si un estudio cuesta $150 y la comisión es {settings.commissionLaboratory}%:
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  • Comisión plataforma: ${(150 * settings.commissionLaboratory / 100).toFixed(2)}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  • Pago al laboratorio: ${(150 - (150 * settings.commissionLaboratory / 100)).toFixed(2)}
+                </Typography>
+              </Box>
+            </Box>
+          </TabPanel>
+
+          {/* Tab 4: Farmacias */}
+          <TabPanel value={activeTab} index={3}>
+            <Box sx={{ px: 4 }}>
+              <Typography variant="h6" fontWeight={700} gutterBottom>
+                Comisión para Farmacias
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Configura el porcentaje de comisión que se cobra por ventas de medicamentos
+              </Typography>
+
+              <CommissionSettingItem
+                title="Porcentaje de Comisión"
+                description="Comisión que la plataforma cobra por cada venta de medicamentos"
+                value={settings.commissionPharmacy}
+                onChange={(value) => handleCommissionChange("commissionPharmacy", value)}
+              />
+
+              <Box sx={{ mt: 3, p: 3, bgcolor: "#f0f9ff", borderRadius: 2 }}>
+                <Typography variant="body2" fontWeight={600} gutterBottom>
+                  Ejemplo de cálculo:
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Si una venta es de $80 y la comisión es {settings.commissionPharmacy}%:
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  • Comisión plataforma: ${(80 * settings.commissionPharmacy / 100).toFixed(2)}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  • Pago a la farmacia: ${(80 - (80 * settings.commissionPharmacy / 100)).toFixed(2)}
+                </Typography>
+              </Box>
+            </Box>
+          </TabPanel>
+
+          {/* Tab 5: Insumos Médicos */}
+          <TabPanel value={activeTab} index={4}>
+            <Box sx={{ px: 4 }}>
+              <Typography variant="h6" fontWeight={700} gutterBottom>
+                Comisión para Insumos Médicos
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Configura el porcentaje de comisión que se cobra por venta de insumos médicos
+              </Typography>
+
+              <CommissionSettingItem
+                title="Porcentaje de Comisión"
+                description="Comisión que la plataforma cobra por cada venta de insumos médicos"
+                value={settings.commissionSupplies}
+                onChange={(value) => handleCommissionChange("commissionSupplies", value)}
+              />
+
+              <Box sx={{ mt: 3, p: 3, bgcolor: "#f0f9ff", borderRadius: 2 }}>
+                <Typography variant="body2" fontWeight={600} gutterBottom>
+                  Ejemplo de cálculo:
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Si una venta es de $120 y la comisión es {settings.commissionSupplies}%:
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  • Comisión plataforma: ${(120 * settings.commissionSupplies / 100).toFixed(2)}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  • Pago al proveedor: ${(120 - (120 * settings.commissionSupplies / 100)).toFixed(2)}
+                </Typography>
+              </Box>
+            </Box>
+          </TabPanel>
+
+          {/* Tab 6: Ambulancias */}
+          <TabPanel value={activeTab} index={5}>
+            <Box sx={{ px: 4 }}>
+              <Typography variant="h6" fontWeight={700} gutterBottom>
+                Comisión para Ambulancias
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Configura el porcentaje de comisión que se cobra por servicios de ambulancia
+              </Typography>
+
+              <CommissionSettingItem
+                title="Porcentaje de Comisión"
+                description="Comisión que la plataforma cobra por cada servicio de ambulancia"
+                value={settings.commissionAmbulance}
+                onChange={(value) => handleCommissionChange("commissionAmbulance", value)}
+              />
+
+              <Box sx={{ mt: 3, p: 3, bgcolor: "#f0f9ff", borderRadius: 2 }}>
+                <Typography variant="body2" fontWeight={600} gutterBottom>
+                  Ejemplo de cálculo:
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Si un servicio cuesta $300 y la comisión es {settings.commissionAmbulance}%:
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  • Comisión plataforma: ${(300 * settings.commissionAmbulance / 100).toFixed(2)}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  • Pago a la ambulancia: ${(300 - (300 * settings.commissionAmbulance / 100)).toFixed(2)}
+                </Typography>
+              </Box>
+            </Box>
+          </TabPanel>
+
+          <Divider />
+
+          <Box sx={{ p: 3, display: "flex", justifyContent: "flex-end" }}>
+            <Button
+              variant="contained"
+              startIcon={<Save />}
+              onClick={handleSave}
+              disabled={!hasChanges}
+              sx={{
+                backgroundColor: "#14b8a6",
+                "&:hover": { backgroundColor: "#0d9488" },
+              }}
+            >
+              Guardar Cambios
+            </Button>
           </Box>
         </Paper>
-        </>
-        )}
       </Box>
     </DashboardLayout>
   );
 };
-

@@ -28,10 +28,18 @@ import {
   Switch,
   FormControlLabel,
   Avatar,
+  Alert,
+  CircularProgress,
 } from "@mui/material";
 import { useState, useEffect, useRef } from "react";
-import { getProductsMock, saveProductsMock } from "../../infrastructure/products.mock";
+import { 
+  getProductsAPI, 
+  createProductAPI, 
+  updateProductAPI, 
+  deleteProductAPI 
+} from "../../infrastructure/products.api";
 import type { Product } from "../../domain/Product.entity";
+import { useAuthStore } from "../../../../app/store/auth.store";
 
 const categories = [
   "Movilidad",
@@ -42,10 +50,13 @@ const categories = [
 ];
 
 export const ProductsSection = () => {
+  const { user } = useAuthStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [openModal, setOpenModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState<Partial<Product>>({
     name: "",
     description: "",
@@ -61,13 +72,25 @@ export const ProductsSection = () => {
   // Cargar productos al montar el componente
   useEffect(() => {
     loadProducts();
-  }, []);
+  }, [user?.id]);
 
   const loadProducts = async () => {
-    setLoading(true);
-    const data = await getProductsMock();
-    setProducts(data);
-    setLoading(false);
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getProductsAPI(user.id);
+      setProducts(data);
+    } catch (err: any) {
+      console.error('Error loading products:', err);
+      setError(err.message || 'Error al cargar productos');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -119,410 +142,326 @@ export const ProductsSection = () => {
       image: "",
     });
     setImagePreview("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
   };
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validar tipo de archivo
-      if (!file.type.startsWith("image/")) {
-        alert("Por favor selecciona una imagen válida");
-        return;
-      }
-      // Validar tamaño (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert("La imagen no debe superar los 5MB");
-        return;
-      }
-      // Leer imagen como base64
       const reader = new FileReader();
       reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setImagePreview(base64String);
-        setFormData({ ...formData, image: base64String });
+        const result = reader.result as string;
+        setImagePreview(result);
+        setFormData({ ...formData, image: result });
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSave = async () => {
-    if (!formData.name || !formData.category || formData.price === undefined || formData.stock === undefined) {
-      alert("Por favor completa todos los campos requeridos");
+  const handleSaveProduct = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+
+      if (editingProduct) {
+        // Actualizar producto existente
+        const updated = await updateProductAPI(editingProduct.id, formData);
+        setProducts(products.map(p => p.id === updated.id ? updated : p));
+      } else {
+        // Crear nuevo producto
+        const created = await createProductAPI(formData);
+        setProducts([...products, created]);
+      }
+
+      handleCloseModal();
+    } catch (err: any) {
+      console.error('Error saving product:', err);
+      setError(err.message || 'Error al guardar producto');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    if (!window.confirm("¿Estás seguro de eliminar este producto?")) {
       return;
     }
 
-    const now = new Date().toISOString();
-    let updatedProducts: Product[];
-
-    if (editingProduct) {
-      // Editar producto existente
-      updatedProducts = products.map((p) =>
-        p.id === editingProduct.id
-          ? {
-              ...p,
-              ...formData,
-              image: formData.image || p.image,
-              updatedAt: now,
-            } as Product
-          : p
-      );
-    } else {
-      // Crear nuevo producto
-      const newProduct: Product = {
-        id: `product-${Date.now()}`,
-        name: formData.name!,
-        description: formData.description,
-        category: formData.category!,
-        price: formData.price!,
-        stock: formData.stock!,
-        image: formData.image,
-        isActive: formData.isActive ?? true,
-        createdAt: now,
-        updatedAt: now,
-      };
-      updatedProducts = [...products, newProduct];
-    }
-
-    await saveProductsMock(updatedProducts);
-    setProducts(updatedProducts);
-    handleCloseModal();
-  };
-
-  const handleDelete = async (productId: string) => {
-    if (window.confirm("¿Estás seguro de eliminar este producto?")) {
-      const updatedProducts = products.filter((p) => p.id !== productId);
-      await saveProductsMock(updatedProducts);
-      setProducts(updatedProducts);
+    try {
+      setError(null);
+      await deleteProductAPI(productId);
+      setProducts(products.filter(p => p.id !== productId));
+    } catch (err: any) {
+      console.error('Error deleting product:', err);
+      setError(err.message || 'Error al eliminar producto');
     }
   };
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-gray-500">Cargando productos...</div>
-        </div>
-      </div>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress />
+      </Box>
     );
   }
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h3 className="text-xl font-bold text-gray-800">Productos</h3>
-          <p className="text-sm text-gray-500 mt-1">
-            Gestiona tu catálogo de productos de insumos médicos
-          </p>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <Inventory sx={{ fontSize: 32, color: "#06b6d4" }} />
+          <div>
+            <h3 className="text-xl font-bold text-gray-800">
+              Gestión de Productos
+            </h3>
+            <p className="text-sm text-gray-500">
+              {products.length} productos registrados
+            </p>
+          </div>
         </div>
         <Button
           variant="contained"
           startIcon={<Add />}
           onClick={() => handleOpenModal()}
-          className="bg-teal-600 hover:bg-teal-700"
+          sx={{
+            textTransform: "none",
+            backgroundColor: "#06b6d4",
+            "&:hover": { backgroundColor: "#0891b2" },
+          }}
         >
-          Nuevo Producto
+          Agregar Producto
         </Button>
       </div>
 
-      {products.length > 0 ? (
-        <TableContainer component={Paper} elevation={0} className="border border-gray-200">
-          <Table>
-            <TableHead>
-              <TableRow className="bg-gray-50">
-                <TableCell className="font-semibold">Imagen</TableCell>
-                <TableCell className="font-semibold">Nombre</TableCell>
-                <TableCell className="font-semibold">Categoría</TableCell>
-                <TableCell className="font-semibold">Precio</TableCell>
-                <TableCell className="font-semibold">Stock</TableCell>
-                <TableCell className="font-semibold">Estado</TableCell>
-                <TableCell className="font-semibold">Acciones</TableCell>
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #e5e7eb" }}>
+        <Table>
+          <TableHead>
+            <TableRow sx={{ bgcolor: "#f9fafb" }}>
+              <TableCell sx={{ fontWeight: 600 }}>Producto</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Categoría</TableCell>
+              <TableCell sx={{ fontWeight: 600 }} align="right">
+                Precio
+              </TableCell>
+              <TableCell sx={{ fontWeight: 600 }} align="center">
+                Stock
+              </TableCell>
+              <TableCell sx={{ fontWeight: 600 }} align="center">
+                Estado
+              </TableCell>
+              <TableCell sx={{ fontWeight: 600 }} align="center">
+                Acciones
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {products.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                  <Typography color="text.secondary">
+                    No hay productos registrados
+                  </Typography>
+                </TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {products.map((product) => (
-                <TableRow key={product.id} hover className="border-b border-gray-200">
+            ) : (
+              products.map((product) => (
+                <TableRow key={product.id} hover>
                   <TableCell>
-                    <Avatar
-                      src={product.image}
-                      variant="rounded"
-                      sx={{ width: 56, height: 56 }}
-                      className="bg-gray-200"
-                    >
-                      <Inventory />
-                    </Avatar>
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <Typography variant="body2" className="font-medium">
-                        {product.name}
-                      </Typography>
-                      {product.description && (
-                        <Typography variant="caption" className="text-gray-500">
-                          {product.description.length > 50
-                            ? `${product.description.substring(0, 50)}...`
-                            : product.description}
+                    <div className="flex items-center gap-3">
+                      <Avatar
+                        src={product.image}
+                        alt={product.name}
+                        sx={{ width: 48, height: 48 }}
+                      >
+                        <Inventory />
+                      </Avatar>
+                      <div>
+                        <Typography fontWeight={600}>{product.name}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {product.description}
                         </Typography>
-                      )}
+                      </div>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" className="text-gray-600">
-                      {product.category}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" className="font-bold text-gray-800">
+                  <TableCell>{product.category}</TableCell>
+                  <TableCell align="right">
+                    <Typography fontWeight={600}>
                       {formatCurrency(product.price)}
                     </Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell align="center">
                     <Typography
-                      variant="body2"
-                      className={product.stock > 10 ? "text-gray-600" : "text-red-600 font-semibold"}
+                      fontWeight={600}
+                      color={product.stock > 0 ? "success.main" : "error.main"}
                     >
-                      {product.stock} unidades
+                      {product.stock}
                     </Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell align="center">
                     <Typography
-                      variant="body2"
-                      className={product.isActive ? "text-green-600 font-semibold" : "text-gray-400"}
+                      variant="caption"
+                      sx={{
+                        px: 2,
+                        py: 0.5,
+                        borderRadius: 1,
+                        bgcolor: product.isActive ? "#d1fae5" : "#fee2e2",
+                        color: product.isActive ? "#065f46" : "#991b1b",
+                        fontWeight: 600,
+                      }}
                     >
                       {product.isActive ? "Activo" : "Inactivo"}
                     </Typography>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleOpenModal(product)}
-                        className="text-teal-600 hover:bg-teal-50"
-                      >
-                        <Edit fontSize="small" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDelete(product.id)}
-                        className="text-red-600 hover:bg-red-50"
-                      >
-                        <Delete fontSize="small" />
-                      </IconButton>
-                    </div>
+                  <TableCell align="center">
+                    <IconButton
+                      size="small"
+                      onClick={() => handleOpenModal(product)}
+                      sx={{ color: "#06b6d4" }}
+                    >
+                      <Edit />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDeleteProduct(product.id)}
+                      sx={{ color: "#ef4444" }}
+                    >
+                      <Delete />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      ) : (
-        <div className="text-center py-12">
-          <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Inventory className="text-gray-400 text-3xl" />
-          </div>
-          <p className="text-gray-500 text-sm font-medium mb-4">
-            No hay productos registrados
-          </p>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => handleOpenModal()}
-            className="bg-teal-600 hover:bg-teal-700"
-          >
-            Agregar Primer Producto
-          </Button>
-        </div>
-      )}
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-      {/* Modal para crear/editar producto */}
-      <Dialog
-        open={openModal}
-        onClose={handleCloseModal}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            bgcolor: "#f5f5f5",
-          },
-        }}
-      >
-        <DialogContent sx={{ p: 4, bgcolor: "white", borderRadius: 2, m: 2 }}>
-          <Box>
-            <Typography variant="h5" className="font-bold text-gray-800 mb-6">
-              {editingProduct ? "Editar Producto" : "Nuevo Producto"}
-            </Typography>
+      {/* Modal para agregar/editar producto */}
+      <Dialog open={openModal} onClose={handleCloseModal} maxWidth="sm" fullWidth>
+        <DialogContent>
+          <Typography variant="h6" gutterBottom>
+            {editingProduct ? "Editar Producto" : "Nuevo Producto"}
+          </Typography>
 
-            <Box>
-              {/* Campo de imagen */}
-              <Box className="mb-6">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  accept="image/*"
-                  onChange={handleImageSelect}
-                  style={{ display: "none" }}
-                />
-                <Box
-                  onClick={() => fileInputRef.current?.click()}
-                  className="cursor-pointer border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-teal-500 transition-colors"
-                >
-                  {imagePreview ? (
-                    <Box className="flex flex-col items-center">
-                      <Avatar
-                        src={imagePreview}
-                        variant="rounded"
-                        sx={{ width: 120, height: 120, mb: 2 }}
-                        className="bg-gray-200"
-                      />
-                      <Typography variant="body2" className="text-teal-600">
-                        Click para cambiar imagen
-                      </Typography>
-                    </Box>
-                  ) : (
-                    <Box className="flex flex-col items-center">
-                      <PhotoCamera className="text-gray-400 mb-2" sx={{ fontSize: 48 }} />
-                      <Typography variant="body2" className="text-gray-500">
-                        Click para subir imagen del producto
-                      </Typography>
-                    </Box>
-                  )}
-                </Box>
-              </Box>
-
-              <Box className="mb-6">
-                <TextField
-                  fullWidth
-                  label="Nombre del Producto *"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 1,
-                    },
-                  }}
-                />
-              </Box>
-
-              <Box className="mb-6">
-                <TextField
-                  fullWidth
-                  label="Descripción"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  multiline
-                  rows={3}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 1,
-                    },
-                  }}
-                />
-              </Box>
-
-              <Box className="mb-6">
-                <FormControl fullWidth>
-                  <InputLabel>Categoría</InputLabel>
-                  <Select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    label="Categoría"
-                    required
-                    sx={{
-                      borderRadius: 1,
-                    }}
-                  >
-                    {categories.map((cat) => (
-                      <MenuItem key={cat} value={cat}>
-                        {cat}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-
-              <Box className="mb-6 grid grid-cols-2 gap-4">
-                <Box>
-                  <Typography variant="caption" className="text-gray-500 mb-1 block">
-                    Precio (USD) *
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-                    required
-                    inputProps={{ min: 0, step: 0.01 }}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 1,
-                      },
-                    }}
-                  />
-                </Box>
-                <Box>
-                  <Typography variant="caption" className="text-gray-500 mb-1 block">
-                    Stock *
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    type="number"
-                    value={formData.stock}
-                    onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
-                    required
-                    inputProps={{ min: 0 }}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: 1,
-                      },
-                    }}
-                  />
-                </Box>
-              </Box>
-
-              <Box className="mt-4">
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.isActive ?? true}
-                      onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                      color="primary"
-                    />
-                  }
-                  label="Producto activo"
-                />
-              </Box>
+          <Box sx={{ mt: 3, display: "flex", flexDirection: "column", gap: 2 }}>
+            {/* Imagen */}
+            <Box sx={{ textAlign: "center" }}>
+              <Avatar
+                src={imagePreview}
+                sx={{ width: 120, height: 120, mx: "auto", mb: 2 }}
+              >
+                <Inventory sx={{ fontSize: 48 }} />
+              </Avatar>
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                onChange={handleImageChange}
+              />
+              <Button
+                variant="outlined"
+                startIcon={<PhotoCamera />}
+                onClick={() => fileInputRef.current?.click()}
+                sx={{ textTransform: "none" }}
+              >
+                Subir Imagen
+              </Button>
             </Box>
+
+            <TextField
+              label="Nombre del Producto"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              fullWidth
+              required
+            />
+
+            <TextField
+              label="Descripción"
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+              fullWidth
+              multiline
+              rows={3}
+            />
+
+            <FormControl fullWidth>
+              <InputLabel>Categoría</InputLabel>
+              <Select
+                value={formData.category}
+                onChange={(e) =>
+                  setFormData({ ...formData, category: e.target.value })
+                }
+                label="Categoría"
+              >
+                {categories.map((cat) => (
+                  <MenuItem key={cat} value={cat}>
+                    {cat}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <TextField
+              label="Precio"
+              type="number"
+              value={formData.price}
+              onChange={(e) =>
+                setFormData({ ...formData, price: parseFloat(e.target.value) })
+              }
+              fullWidth
+              required
+              InputProps={{ startAdornment: "$" }}
+            />
+
+            <TextField
+              label="Stock"
+              type="number"
+              value={formData.stock}
+              onChange={(e) =>
+                setFormData({ ...formData, stock: parseInt(e.target.value) })
+              }
+              fullWidth
+              required
+            />
+
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.isActive}
+                  onChange={(e) =>
+                    setFormData({ ...formData, isActive: e.target.checked })
+                  }
+                />
+              }
+              label="Producto Activo"
+            />
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 2, bgcolor: "white", borderRadius: 2, mx: 2, mb: 2 }}>
-          <Button
-            onClick={handleCloseModal}
-            sx={{ color: "#14b8a6", textTransform: "none", fontWeight: 500 }}
-          >
-            CANCELAR
+        <DialogActions>
+          <Button onClick={handleCloseModal} sx={{ textTransform: "none" }}>
+            Cancelar
           </Button>
           <Button
-            onClick={handleSave}
+            onClick={handleSaveProduct}
             variant="contained"
+            disabled={saving || !formData.name || !formData.price}
             sx={{
-              bgcolor: "#14b8a6",
-              "&:hover": { bgcolor: "#0d9488" },
               textTransform: "none",
-              fontWeight: 600,
-              borderRadius: 1,
-              px: 3,
+              backgroundColor: "#06b6d4",
+              "&:hover": { backgroundColor: "#0891b2" },
             }}
           >
-            {editingProduct ? "GUARDAR CAMBIOS" : "CREAR PRODUCTO"}
+            {saving ? "Guardando..." : editingProduct ? "Actualizar" : "Crear"}
           </Button>
         </DialogActions>
       </Dialog>
     </div>
   );
 };
-
