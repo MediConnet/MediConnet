@@ -13,11 +13,13 @@ import {
   TableHead,
   TableRow,
   Typography,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
-import { getPaymentsMock } from "../../../doctor-panel/infrastructure/payments.mock";
+import { getAdminDoctorPaymentsAPI } from "../../infrastructure/admin-payments.api";
 import { formatMoney } from "../../../../shared/lib/formatMoney";
 
 const CURRENT_ADMIN = {
@@ -29,7 +31,25 @@ const CURRENT_ADMIN = {
 const COMMISSION_RATE = 0.15; // 15%
 
 export const CommissionsPage = () => {
-  const [payments] = useState(getPaymentsMock());
+  const [payments, setPayments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadPayments = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getAdminDoctorPaymentsAPI();
+        setPayments(data);
+      } catch (err: any) {
+        setError(err.message || 'Error al cargar pagos');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadPayments();
+  }, []);
 
   // Calcular comisiones por mes
   const commissionsByMonth = useMemo(() => {
@@ -79,6 +99,23 @@ export const CommissionsPage = () => {
           </Box>
         </Stack>
 
+        {/* Loading State */}
+        {loading && (
+          <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+            <CircularProgress />
+          </Box>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
+
+        {/* Content - Only show when not loading */}
+        {!loading && !error && (
+          <>
         {/* Información de la comisión */}
         <Grid2 container spacing={3} mb={4}>
           <Grid2 size={{ xs: 12, md: 4 }}>
@@ -197,6 +234,8 @@ export const CommissionsPage = () => {
             </TableContainer>
           </Box>
         </Paper>
+        </>
+        )}
       </Box>
     </DashboardLayout>
   );

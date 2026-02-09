@@ -17,7 +17,8 @@ import { useEffect, useMemo, useState } from "react";
 import { formatMoney } from "../../../../shared/lib/formatMoney";
 import type { DoctorAppointment } from "../../domain/Appointment.entity";
 import { getAppointmentsAPI } from "../../infrastructure/appointments.api";
-import { getPaymentsMock } from "../../infrastructure/payments.mock";
+import { getDoctorPaymentsAPI } from "../../infrastructure/payments.api";
+import type { Payment } from "../../domain/Payment.entity";
 
 interface DashboardContentProps {
   visits: number;
@@ -28,16 +29,19 @@ interface DashboardContentProps {
 
 export const DashboardContent = ({}: DashboardContentProps) => {
   const [appointments, setAppointments] = useState<DoctorAppointment[]>([]);
-
-  const payments = useMemo(() => getPaymentsMock(), []);
+  const [payments, setPayments] = useState<Payment[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getAppointmentsAPI();
-        setAppointments(data);
+        const [appointmentsData, paymentsData] = await Promise.all([
+          getAppointmentsAPI(),
+          getDoctorPaymentsAPI()
+        ]);
+        setAppointments(appointmentsData);
+        setPayments(paymentsData);
       } catch (error) {
-        console.error("Error cargando citas para dashboard:", error);
+        console.error("Error cargando datos del dashboard:", error);
       }
     };
     fetchData();

@@ -9,32 +9,32 @@ import {
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
 import { useEffect, useMemo, useState } from "react";
-// --- CAMBIO: Imports correctos (API Real + Entidades) ---
-// --- CAMBIO: Imports correctos (API Real + Entidades) ---
 import type { DoctorAppointment } from "../../domain/Appointment.entity";
 import { getAppointmentsAPI } from "../../infrastructure/appointments.api";
-import { getPaymentsMock } from "../../infrastructure/payments.mock";
-// --------------------------------------------------------
+import { getDoctorPaymentsAPI } from "../../infrastructure/payments.api";
+import type { Payment } from "../../domain/Payment.entity";
 import { formatMoney } from "../../../../shared/lib/formatMoney";
 
 export const ReportsSection = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [appointments, setAppointments] = useState<DoctorAppointment[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Cargamos los pagos del mock (ya que el backend de pagos aún no está listo)
-  const payments = useMemo(() => getPaymentsMock(), []);
-
-  // 1. Cargar citas desde la API Real
+  // Cargar citas y pagos desde la API
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const data = await getAppointmentsAPI();
-        setAppointments(data);
+        const [appointmentsData, paymentsData] = await Promise.all([
+          getAppointmentsAPI(),
+          getDoctorPaymentsAPI()
+        ]);
+        setAppointments(appointmentsData);
+        setPayments(paymentsData);
       } catch (error) {
-        console.error("Error loading appointments for reports:", error);
+        console.error("Error loading data for reports:", error);
       } finally {
         setLoading(false);
       }

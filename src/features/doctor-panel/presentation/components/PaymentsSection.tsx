@@ -25,10 +25,11 @@ import {
   InputLabel,
   InputAdornment,
   Alert,
+  CircularProgress,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
 import { useState, useMemo, useEffect } from "react";
-import { getPaymentsMock } from "../../infrastructure/payments.mock";
+import { getDoctorPaymentsAPI } from "../../infrastructure/payments.api";
 import type { Payment } from "../../domain/Payment.entity";
 import { formatMoney } from "../../../../shared/lib/formatMoney";
 import { useDoctorDashboard } from "../hooks/useDoctorDashboard";
@@ -71,11 +72,31 @@ export const PaymentsSection = () => {
   const clinicName = (data as any)?.doctor?.clinicName || '';
   const paymentSource = isClinicAssociated ? 'clinic' : 'admin';
   
-  // Obtener pagos del doctor actual (solo Dr. Juan Pérez)
-  const [payments] = useState<Payment[]>(() => getPaymentsMock(doctorName));
+  // Obtener pagos del doctor desde la API
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [loadingPayments, setLoadingPayments] = useState(true);
+  const [paymentsError, setPaymentsError] = useState<string | null>(null);
+  
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [bankDialogOpen, setBankDialogOpen] = useState(false);
+
+  // Cargar pagos desde la API
+  useEffect(() => {
+    const loadPayments = async () => {
+      try {
+        setLoadingPayments(true);
+        setPaymentsError(null);
+        const data = await getDoctorPaymentsAPI();
+        setPayments(data);
+      } catch (err: any) {
+        setPaymentsError(err.message || 'Error al cargar pagos');
+      } finally {
+        setLoadingPayments(false);
+      }
+    };
+    loadPayments();
+  }, []);
 
   const [bankData, setBankData] = useState({
     bankName: "",
@@ -143,6 +164,23 @@ export const PaymentsSection = () => {
         </div>
       </div>
 
+      {/* Loading State */}
+      {loadingPayments && (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+          <CircularProgress />
+        </Box>
+      )}
+
+      {/* Error State */}
+      {paymentsError && !loadingPayments && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {paymentsError}
+        </Alert>
+      )}
+
+      {/* Content - Only show when not loading */}
+      {!loadingPayments && !paymentsError && (
+        <>
       {/* Banner Informativo según Fuente de Pago */}
       {paymentSource === 'admin' ? (
         <Alert 
@@ -477,6 +515,8 @@ export const PaymentsSection = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      </>
+      )}
     </div>
   );
 };
