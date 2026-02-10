@@ -5,15 +5,19 @@ import type { AmbulanceProfile } from "../../domain/ambulance-profile.entity";
 export const useAmbulanceProfile = () => {
   const [profile, setProfile] = useState<AmbulanceProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         const data = await getAmbulanceProfileUseCase();
         setProfile(data);
-      } catch (error) {
-        console.error("Error loading ambulance profile:", error);
+      } catch (error: any) {
+        console.error("❌ [HOOK] Error loading ambulance profile:", error);
+        const errorMessage = error.response?.data?.message || error.message || "Error al cargar el perfil";
+        setError(errorMessage);
       } finally {
         setIsLoading(false);
       }
@@ -22,5 +26,5 @@ export const useAmbulanceProfile = () => {
     fetchProfile();
   }, []);
 
-  return { profile, isLoading };
+  return { profile, isLoading, error };
 };

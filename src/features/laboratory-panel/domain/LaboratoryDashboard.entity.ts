@@ -34,5 +34,12 @@ export interface LaboratoryDashboard {
     }; // Ubicación (coordenadas)
     isActive?: boolean; // Estado del servicio: Activo / Inactivo
   };
+  reviewsList?: Array<{ // Lista de reseñas recientes (diferente de reviews que es un número)
+    id: string;
+    userName: string;
+    rating: number;
+    comment: string;
+    date: string;
+  }>;
 }
 

@@ -1,4 +1,4 @@
-import { Visibility, Group, Star, TrendingUp } from "@mui/icons-material";
+import { Visibility, Star, TrendingUp } from "@mui/icons-material";
 import type { SupplyDashboard } from "../../domain/SupplyDashboard.entity";
 
 interface StatsCardsProps {
@@ -7,7 +7,7 @@ interface StatsCardsProps {
 
 export const StatsCards = ({ data }: StatsCardsProps) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {/* Visitas al perfil */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-4">
@@ -17,17 +17,6 @@ export const StatsCards = ({ data }: StatsCardsProps) => {
         </div>
         <p className="text-sm text-gray-600 mb-1">Visitas al perfil</p>
         <p className="text-3xl font-bold text-gray-800">{data.visits}</p>
-      </div>
-
-      {/* Contactos */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-4">
-          <div className="w-12 h-12 bg-teal-50 rounded-lg flex items-center justify-center">
-            <Group className="text-teal-600" />
-          </div>
-        </div>
-        <p className="text-sm text-gray-600 mb-1">Contactos</p>
-        <p className="text-3xl font-bold text-gray-800">{data.contacts}</p>
       </div>
 
       {/* Reseñas */}

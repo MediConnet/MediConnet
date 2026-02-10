@@ -15,10 +15,12 @@ import { KPICard } from "../components/KPICard";
 import { usePharmacyProfile } from "../hooks/usePharmacyProfile";
 import { usePharmacySettings } from "../hooks/usePharmacySettings";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import { usePharmacyReviews } from "../hooks/usePharmacyReviews";
 
 export const PharmacySettingsPage = () => {
   const theme = useTheme();
   const { profile, isLoading: isLoadingProfile } = usePharmacyProfile();
+  const { reviews } = usePharmacyReviews();
   const authStore = useAuthStore();
   const { user } = authStore;
 
@@ -49,7 +51,13 @@ export const PharmacySettingsPage = () => {
 
   if (isLoading || !profile || !settings) {
     return (
-      <DashboardLayout role="PROVIDER" userProfile={userProfile}>
+      <DashboardLayout
+        role="PROVIDER"
+        userProfile={userProfile}
+        notificationType="reviews"
+        reviews={reviews}
+        notificationsViewAllPath="/provider/pharmacy/reviews"
+      >
         <Box p={3}>
           <Skeleton
             variant="rectangular"
@@ -67,7 +75,13 @@ export const PharmacySettingsPage = () => {
   }
 
   return (
-    <DashboardLayout role="PROVIDER" userProfile={userProfile}>
+    <DashboardLayout
+      role="PROVIDER"
+      userProfile={userProfile}
+      notificationType="reviews"
+      reviews={reviews}
+      notificationsViewAllPath="/provider/pharmacy/reviews"
+    >
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
         {/* SECTION 1: KPIS (Contexto visual) */}
         <Grid2 container spacing={3} mb={4}>

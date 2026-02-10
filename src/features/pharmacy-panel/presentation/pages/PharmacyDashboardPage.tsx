@@ -20,6 +20,7 @@ import { ScheduleSection } from "../components/ScheduleSection";
 import { ContactLocationSection } from "../components/ContactLocationSection";
 import { DashboardContent } from "../components/DashboardContent";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import { usePharmacyReviews } from "../hooks/usePharmacyReviews";
 
 type TabType = "dashboard" | "profile";
 
@@ -27,6 +28,7 @@ export const PharmacyDashboardPage = () => {
   const [searchParams] = useSearchParams();
   const theme = useTheme();
   const { profile, isLoading, setProfile } = usePharmacyProfile();
+  const { reviews } = usePharmacyReviews();
   const authStore = useAuthStore();
   const { user } = authStore;
 
@@ -51,7 +53,13 @@ export const PharmacyDashboardPage = () => {
 
   if (isLoading || !profile) {
     return (
-      <DashboardLayout role="PROVIDER" userProfile={userProfile}>
+      <DashboardLayout
+        role="PROVIDER"
+        userProfile={userProfile}
+        notificationType="reviews"
+        reviews={reviews}
+        notificationsViewAllPath="/provider/pharmacy/reviews"
+      >
         <Box p={3}>
           <Skeleton
             variant="rectangular"
@@ -69,7 +77,13 @@ export const PharmacyDashboardPage = () => {
   }
 
   return (
-    <DashboardLayout role="PROVIDER" userProfile={userProfile}>
+    <DashboardLayout
+      role="PROVIDER"
+      userProfile={userProfile}
+      notificationType="reviews"
+      reviews={reviews}
+      notificationsViewAllPath="/provider/pharmacy/reviews"
+    >
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
         {/* Cards de Estadísticas - Solo mostrar en la pestaña de dashboard */}
         {currentTab === "dashboard" && (

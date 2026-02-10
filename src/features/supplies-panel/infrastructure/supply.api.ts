@@ -25,13 +25,34 @@ export const getSupplyAPI = async (id: string): Promise<SupplyStore> => {
 };
 
 /**
- * API: Obtener reseñas de una tienda de insumos
+ * API: Obtener reseñas de una tienda de insumos (vista pública)
  * Endpoint: GET /api/supplies/:id/reviews
  */
 export const getSupplyReviewsAPI = async (supplyStoreId: string): Promise<Review[]> => {
   const response = await httpClient.get<{ success: boolean; data: Review[] }>(
     `/supplies/${supplyStoreId}/reviews`
   );
+  return extractData(response);
+};
+
+/**
+ * API: Obtener reseñas del panel de insumos (proveedor autenticado)
+ * Endpoint: GET /api/supplies/reviews
+ * Requiere: Bearer token
+ */
+export const getSupplyPanelReviewsAPI = async (): Promise<{
+  reviews: Review[];
+  averageRating: number;
+  totalReviews: number;
+}> => {
+  const response = await httpClient.get<{
+    success: boolean;
+    data: {
+      reviews: Review[];
+      averageRating: number;
+      totalReviews: number;
+    };
+  }>('/supplies/reviews');
   return extractData(response);
 };
 

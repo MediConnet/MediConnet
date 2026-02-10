@@ -27,12 +27,15 @@ import { EditProfileModal } from "../components/EditProfileModal";
 import { KPICard } from "../components/KPICard";
 import { useAmbulanceProfile } from "../hooks/useAmbulanceProfile";
 import { DashboardContent } from "../components/DashboardContent";
+import { useAmbulanceReviews } from "../hooks/useAmbulanceReviews";
 
-const AMBULANCE_USER = {
-  name: "Ambulancias Vida",
-  roleLabel: "Proveedor",
-  initials: "AV",
-  isActive: true,
+const getInitials = (name: string) => {
+  const cleaned = (name || "").trim();
+  if (!cleaned) return "A";
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  const first = parts[0]?.[0] ?? "A";
+  const second = parts[1]?.[0] ?? parts[0]?.[1] ?? "";
+  return (first + second).toUpperCase();
 };
 
 type TabType = "dashboard" | "profile";
@@ -40,12 +43,29 @@ type TabType = "dashboard" | "profile";
 export const AmbulanceDashboardPage = () => {
   const [searchParams] = useSearchParams();
   const theme = useTheme();
-  const { profile: fetchedProfile, isLoading } = useAmbulanceProfile();
+  const { profile: fetchedProfile, isLoading, error } = useAmbulanceProfile();
+  const { reviews: fetchedReviews } = useAmbulanceReviews();
   const [profile, setProfile] = useState<AmbulanceProfile | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
   const currentTab = (searchParams.get("tab") || "dashboard") as TabType;
   const ambulanceCardColor = "#06b6d4";
+  const effectiveProfile = profile ?? fetchedProfile ?? null;
+
+  const userHeaderProfile = {
+    name: effectiveProfile?.commercialName || "Ambulancia",
+    roleLabel: "Proveedor",
+    initials: getInitials(effectiveProfile?.commercialName || "Ambulancia"),
+    isActive: effectiveProfile?.isActive !== false,
+  };
+
+  const headerReviews = fetchedReviews.map((r) => ({
+    id: r.id,
+    userName: r.patientName,
+    rating: r.rating,
+    comment: r.comment,
+    date: r.date,
+  }));
 
   useEffect(() => {
     if (fetchedProfile) {
@@ -57,9 +77,69 @@ export const AmbulanceDashboardPage = () => {
     setProfile(updatedProfile);
   };
 
+  // Show error state
+  if (error) {
+    return (
+      <DashboardLayout
+        role="PROVIDER"
+        userProfile={userHeaderProfile}
+        notificationType="reviews"
+        reviews={headerReviews}
+        notificationsViewAllPath="/provider/ambulance/reviews"
+      >
+        <Box p={3}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "error.light",
+              backgroundColor: "error.lighter",
+            }}
+          >
+            <Typography variant="h6" color="error" fontWeight={700} mb={2}>
+              ⚠️ Error al Cargar el Perfil
+            </Typography>
+            <Typography variant="body1" color="text.secondary" mb={3}>
+              {error}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" mb={2}>
+              <strong>Posibles causas:</strong>
+            </Typography>
+            <Typography variant="body2" color="text.secondary" component="div">
+              <ul style={{ marginLeft: 20 }}>
+                <li>Tu cuenta de ambulancia no está completamente configurada en el sistema</li>
+                <li>El administrador aún no ha completado la aprobación de tu servicio</li>
+                <li>Hay un problema de conexión con el servidor</li>
+              </ul>
+            </Typography>
+            <Typography variant="body2" color="text.secondary" mt={2}>
+              <strong>Solución:</strong> Contacta al administrador del sistema para verificar el estado de tu cuenta.
+            </Typography>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => window.location.reload()}
+              sx={{ mt: 3 }}
+            >
+              Reintentar
+            </Button>
+          </Paper>
+        </Box>
+      </DashboardLayout>
+    );
+  }
+
   if (isLoading || !profile) {
     return (
-      <DashboardLayout role="PROVIDER" userProfile={AMBULANCE_USER}>
+      <DashboardLayout
+        role="PROVIDER"
+        userProfile={userHeaderProfile}
+        notificationType="reviews"
+        reviews={headerReviews}
+        notificationsViewAllPath="/provider/ambulance/reviews"
+      >
         <Box p={3}>
           <Skeleton
             variant="rectangular"
@@ -77,7 +157,13 @@ export const AmbulanceDashboardPage = () => {
   }
 
   return (
-    <DashboardLayout role="PROVIDER" userProfile={AMBULANCE_USER}>
+    <DashboardLayout
+      role="PROVIDER"
+      userProfile={userHeaderProfile}
+      notificationType="reviews"
+      reviews={headerReviews}
+      notificationsViewAllPath="/provider/ambulance/reviews"
+    >
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
         {/* Cards de Estadísticas - Solo mostrar en la pestaña de dashboard */}
         {currentTab === "dashboard" && (
@@ -85,7 +171,7 @@ export const AmbulanceDashboardPage = () => {
             <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
               <KPICard
                 title="Visitas al perfil"
-                value={profile.stats.profileViews}
+                value={profile.stats?.profileViews ?? 0}
                 icon={<Visibility sx={{ color: theme.palette.primary.main }} />}
                 iconColor={theme.palette.primary.light + "20"}
               />
@@ -93,7 +179,7 @@ export const AmbulanceDashboardPage = () => {
             <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
               <KPICard
                 title="Contactos"
-                value={profile.stats.contactClicks}
+                value={profile.stats?.contactClicks ?? 0}
                 icon={<ContactPhone sx={{ color: theme.palette.info.main }} />}
                 iconColor={theme.palette.info.light + "20"}
               />
@@ -101,7 +187,7 @@ export const AmbulanceDashboardPage = () => {
             <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
               <KPICard
                 title="Reseñas"
-                value={profile.stats.totalReviews}
+                value={profile.stats?.totalReviews ?? 0}
                 icon={<Star sx={{ color: theme.palette.warning.main }} />}
                 iconColor={theme.palette.warning.light + "20"}
               />
@@ -109,7 +195,7 @@ export const AmbulanceDashboardPage = () => {
             <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
               <KPICard
                 title="Rating"
-                value={profile.stats.averageRating}
+                value={profile.stats?.averageRating ?? 0}
                 icon={<Star sx={{ color: "#FFC107" }} />}
                 iconColor="#FFF8E1"
               />

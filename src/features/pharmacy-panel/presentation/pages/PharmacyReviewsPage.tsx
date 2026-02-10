@@ -36,7 +36,13 @@ export const PharmacyReviewsPage = () => {
 
   if (isLoading || !profile) {
     return (
-      <DashboardLayout role="PROVIDER" userProfile={userProfile}>
+      <DashboardLayout
+        role="PROVIDER"
+        userProfile={userProfile}
+        notificationType="reviews"
+        reviews={reviews}
+        notificationsViewAllPath="/provider/pharmacy/reviews"
+      >
         <Box p={3}>
           <Skeleton
             variant="rectangular"
@@ -51,7 +57,13 @@ export const PharmacyReviewsPage = () => {
   }
 
   return (
-    <DashboardLayout role="PROVIDER" userProfile={userProfile}>
+    <DashboardLayout
+      role="PROVIDER"
+      userProfile={userProfile}
+      notificationType="reviews"
+      reviews={reviews}
+      notificationsViewAllPath="/provider/pharmacy/reviews"
+    >
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
         {/* SECTION 1: KPIS (Resumen) */}
         <Grid2 container spacing={3} mb={4}>

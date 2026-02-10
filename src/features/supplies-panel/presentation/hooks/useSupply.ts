@@ -3,8 +3,15 @@ import { getSuppliesUseCase } from '../../application/get-supplies.usecase';
 import { getSupplyUseCase } from '../../application/get-supply.usecase';
 import { getSupplyReviewsUseCase } from '../../application/get-supply-reviews.usecase';
 import { createReviewUseCase, type CreateReviewParams } from '../../application/create-review.usecase';
+import { getSupplyPanelReviewsAPI } from '../../infrastructure/supply.api';
 import type { SupplyStore } from '../../domain/SupplyStore.entity';
 import type { Review } from '../../domain/Review.entity';
+
+interface SupplyPanelReviewsResponse {
+  reviews: Review[];
+  averageRating: number;
+  totalReviews: number;
+}
 
 /**
  * Hook: Obtener lista de tiendas de insumos
@@ -30,7 +37,7 @@ export const useSupply = (id: string) => {
 };
 
 /**
- * Hook: Obtener reseñas de una tienda de insumos
+ * Hook: Obtener reseñas de una tienda de insumos (vista pública)
  */
 export const useSupplyReviews = (supplyStoreId: string) => {
   return useQuery<Review[]>({
@@ -38,6 +45,19 @@ export const useSupplyReviews = (supplyStoreId: string) => {
     queryFn: () => getSupplyReviewsUseCase(supplyStoreId),
     enabled: !!supplyStoreId,
     staleTime: 2 * 60 * 1000, // 2 minutos
+  });
+};
+
+/**
+ * Hook: Obtener reseñas del panel de insumos (proveedor autenticado)
+ * Usa el endpoint: GET /api/supplies/reviews
+ */
+export const useSupplyPanelReviews = () => {
+  return useQuery<SupplyPanelReviewsResponse>({
+    queryKey: ['supply-panel-reviews'],
+    queryFn: () => getSupplyPanelReviewsAPI(),
+    staleTime: 2 * 60 * 1000, // 2 minutos
+    retry: 1,
   });
 };
 

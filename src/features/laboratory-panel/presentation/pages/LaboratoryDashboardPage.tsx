@@ -63,7 +63,12 @@ export const LaboratoryDashboardPage = () => {
   }
 
   return (
-    <DashboardLayout role="PROVIDER" userProfile={userProfile}>
+    <DashboardLayout 
+      role="PROVIDER" 
+      userProfile={userProfile}
+      reviews={data.reviewsList || []}
+      notificationType="reviews"
+    >
       {/* Cards de Estadísticas - Solo mostrar en la pestaña de dashboard */}
       {currentTab === "dashboard" && <StatsCards data={data} />}
 
@@ -80,10 +85,9 @@ export const LaboratoryDashboardPage = () => {
               </Typography>
             </Box>
             <DashboardContent
-              visits={data.visits}
-              contacts={data.contacts}
-              reviews={data.reviews}
-              rating={data.rating}
+              visits={data.visits || 0}
+              reviews={data.reviews || 0}
+              rating={data.rating || 0}
             />
           </Box>
         )}

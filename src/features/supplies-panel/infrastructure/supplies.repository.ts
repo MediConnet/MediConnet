@@ -21,6 +21,22 @@ const mockSupplyDashboard: SupplyDashboard = {
       { day: 'friday', enabled: true, startTime: '08:00', endTime: '18:00' },
     ],
   },
+  reviewsList: [
+    {
+      id: "review-1",
+      userName: "Dr. Carlos Mendoza",
+      rating: 5,
+      comment: "Excelente servicio y productos de calidad. Muy recomendado.",
+      date: new Date().toISOString().split("T")[0], // Hoy
+    },
+    {
+      id: "review-2",
+      userName: "Clínica San José",
+      rating: 4,
+      comment: "Buenos precios y entrega rápida. Seguiremos comprando aquí.",
+      date: new Date().toISOString().split("T")[0], // Hoy
+    },
+  ],
 };
 
 export const getSupplyDashboardAPI = async (_userId: string): Promise<SupplyDashboard> => {

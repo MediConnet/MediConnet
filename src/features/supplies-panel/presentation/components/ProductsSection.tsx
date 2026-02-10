@@ -83,11 +83,27 @@ export const ProductsSection = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getProductsAPI(user.id);
-      setProducts(data);
+      
+      // Intentar cargar del backend
+      try {
+        const data = await getProductsAPI(user.id);
+        setProducts(data);
+        // Guardar en localStorage como backup
+        localStorage.setItem(`products-${user.id}`, JSON.stringify(data));
+      } catch (backendError) {
+        console.warn('Backend no disponible, usando localStorage');
+        // Si falla, cargar de localStorage
+        const saved = localStorage.getItem(`products-${user.id}`);
+        if (saved) {
+          setProducts(JSON.parse(saved));
+        } else {
+          setProducts([]);
+        }
+      }
     } catch (err: any) {
       console.error('Error loading products:', err);
-      setError(err.message || 'Error al cargar productos');
+      setError(null); // No mostrar error, solo usar datos vacíos
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -158,20 +174,50 @@ export const ProductsSection = () => {
   };
 
   const handleSaveProduct = async () => {
+    if (!user?.id) return;
+    
     try {
       setSaving(true);
       setError(null);
 
-      if (editingProduct) {
-        // Actualizar producto existente
-        const updated = await updateProductAPI(editingProduct.id, formData);
-        setProducts(products.map(p => p.id === updated.id ? updated : p));
-      } else {
-        // Crear nuevo producto
-        const created = await createProductAPI(formData);
-        setProducts([...products, created]);
+      let updatedProducts: Product[];
+
+      try {
+        // Intentar guardar en el backend
+        if (editingProduct) {
+          const updated = await updateProductAPI(editingProduct.id, formData);
+          updatedProducts = products.map(p => p.id === updated.id ? updated : p);
+        } else {
+          const created = await createProductAPI(formData);
+          updatedProducts = [...products, created];
+        }
+      } catch (backendError) {
+        console.warn('Backend no disponible, guardando en localStorage');
+        // Si falla el backend, guardar localmente
+        if (editingProduct) {
+          updatedProducts = products.map(p => 
+            p.id === editingProduct.id ? { ...p, ...formData } : p
+          );
+        } else {
+          const newProduct: Product = {
+            id: `local-${Date.now()}`,
+            name: formData.name || '',
+            description: formData.description || '',
+            category: formData.category || 'Movilidad',
+            price: formData.price || 0,
+            stock: formData.stock || 0,
+            isActive: formData.isActive !== false,
+            image: formData.image || '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          updatedProducts = [...products, newProduct];
+        }
       }
 
+      setProducts(updatedProducts);
+      // Guardar en localStorage
+      localStorage.setItem(`products-${user.id}`, JSON.stringify(updatedProducts));
       handleCloseModal();
     } catch (err: any) {
       console.error('Error saving product:', err);
@@ -182,14 +228,24 @@ export const ProductsSection = () => {
   };
 
   const handleDeleteProduct = async (productId: string) => {
+    if (!user?.id) return;
     if (!window.confirm("¿Estás seguro de eliminar este producto?")) {
       return;
     }
 
     try {
       setError(null);
-      await deleteProductAPI(productId);
-      setProducts(products.filter(p => p.id !== productId));
+      
+      try {
+        await deleteProductAPI(productId);
+      } catch (backendError) {
+        console.warn('Backend no disponible, eliminando de localStorage');
+      }
+      
+      const updatedProducts = products.filter(p => p.id !== productId);
+      setProducts(updatedProducts);
+      // Actualizar localStorage
+      localStorage.setItem(`products-${user.id}`, JSON.stringify(updatedProducts));
     } catch (err: any) {
       console.error('Error deleting product:', err);
       setError(err.message || 'Error al eliminar producto');

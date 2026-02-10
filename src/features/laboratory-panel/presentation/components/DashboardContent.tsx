@@ -1,311 +1,260 @@
-import { useMemo } from "react";
 import {
   Box,
   Card,
   CardContent,
   Typography,
   Stack,
-  Paper,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
-import {
-  CalendarToday,
-  TrendingUp,
-  People,
+import { 
+  Biotech, 
+  Visibility, 
+  StarRate, 
+  TrendingUp 
 } from "@mui/icons-material";
-import { generateMockAppointments } from "../../../laboratory-panel/infrastructure/appointments.mock";
 
 interface DashboardContentProps {
   visits: number;
-  contacts: number;
   reviews: number;
   rating: number;
 }
 
-export const DashboardContent = ({}: DashboardContentProps) => {
-  const appointments = useMemo(() => generateMockAppointments(), []);
-
-  // Datos para gráfico de citas por semana
-  const appointmentsByWeek = useMemo(() => {
-    const weekData = [0, 0, 0, 0]; // Últimas 4 semanas
-    appointments.forEach((apt) => {
-      const date = new Date(apt.date);
-      const weekAgo = Math.floor(
-        (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24 * 7)
-      );
-      if (weekAgo >= 0 && weekAgo < 4) {
-        weekData[weekAgo] = (weekData[weekAgo] || 0) + 1;
-      }
-    });
-    return weekData.reverse(); // Más reciente primero
-  }, [appointments]);
-
-  // Distribución de estados de citas
-  const appointmentStatus = useMemo(() => {
-    const statusCount = {
-      completed: 0,
-      pending: 0,
-      cancelled: 0,
-    };
-    appointments.forEach((apt) => {
-      const status = apt.status || "pending";
-      if (status === "completed") statusCount.completed++;
-      else if (status === "pending") statusCount.pending++;
-      else if (status === "cancelled") statusCount.cancelled++;
-    });
-    return statusCount;
-  }, [appointments]);
-
-  const totalAppointments = appointments.length;
-  const maxAppointments = Math.max(...appointmentsByWeek, 1);
-
-  // Citas recientes
-  const recentAppointments = useMemo(() => {
-    return [...appointments]
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 5);
-  }, [appointments]);
+export const DashboardContent = ({
+  visits = 0,
+  reviews = 0,
+  rating = 0,
+}: DashboardContentProps) => {
+  // Calcular el máximo para las barras
+  const maxValue = Math.max(visits, reviews * 100, rating * 100);
 
   return (
     <Box sx={{ mt: 4 }}>
       <Grid2 container spacing={3}>
-        {/* Gráfico de Citas por Semana */}
-        <Grid2 size={{ xs: 12, md: 8 }}>
-          <Card elevation={0} sx={{ border: "1px solid #e5e7eb", height: "100%" }}>
-            <CardContent>
-              <Stack direction="row" spacing={2} alignItems="center" mb={3}>
-                <CalendarToday sx={{ color: "#14b8a6", fontSize: 28 }} />
-                <Box>
-                  <Typography variant="h6" fontWeight={700}>
-                    Estudios por Semana
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Últimas 4 semanas
-                  </Typography>
-                </Box>
-              </Stack>
-
-              <Box sx={{ position: "relative", height: 200 }}>
-                <Stack
-                  direction="row"
-                  spacing={2}
-                  alignItems="flex-end"
-                  sx={{ height: "100%" }}
+        {/* Gráfico de Barras Principal */}
+        <Grid2 size={{ xs: 12, lg: 8 }}>
+          <Card elevation={0} sx={{ border: "1px solid #e5e7eb", borderRadius: 3 }}>
+            <CardContent sx={{ p: 4 }}>
+              <Stack direction="row" spacing={2} alignItems="center" mb={4}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 2,
+                    bgcolor: "rgba(20, 184, 166, 0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
-                  {appointmentsByWeek.map((count, index) => (
-                    <Box key={index} sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
-                      <Box
-                        sx={{
-                          width: "100%",
-                          height: `${(count / maxAppointments) * 160}px`,
-                          bgcolor: "#14b8a6",
-                          borderRadius: "4px 4px 0 0",
-                          minHeight: count > 0 ? "8px" : "0",
-                          transition: "all 0.3s ease",
-                          "&:hover": {
-                            bgcolor: "#0d9488",
-                          },
-                        }}
-                      />
-                      <Typography variant="caption" sx={{ mt: 1, fontWeight: 600 }}>
-                        {count}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.65rem" }}>
-                        Sem {4 - index}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Stack>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid2>
-
-        {/* Gráfico de Pastel - Estados de Estudios */}
-        <Grid2 size={{ xs: 12, md: 4 }}>
-          <Card elevation={0} sx={{ border: "1px solid #e5e7eb", height: "100%" }}>
-            <CardContent>
-              <Stack direction="row" spacing={2} alignItems="center" mb={3}>
-                <TrendingUp sx={{ color: "#3b82f6", fontSize: 28 }} />
+                  <TrendingUp sx={{ fontSize: 24, color: "#14b8a6" }} />
+                </Box>
                 <Box>
                   <Typography variant="h6" fontWeight={700}>
-                    Estado de Estudios
+                    Estadísticas de Rendimiento
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Distribución actual
+                    Métricas principales de tu laboratorio
                   </Typography>
                 </Box>
               </Stack>
 
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Box
-                    sx={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: "50%",
-                      bgcolor: "#10b981",
-                    }}
-                  />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="body2" fontWeight={600}>
-                      Completados
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {appointmentStatus.completed} estudios (
-                      {totalAppointments > 0
-                        ? Math.round(
-                            (appointmentStatus.completed / totalAppointments) * 100
-                          )
-                        : 0}
-                      %)
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Box
-                    sx={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: "50%",
-                      bgcolor: "#f59e0b",
-                    }}
-                  />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="body2" fontWeight={600}>
-                      Pendientes
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {appointmentStatus.pending} estudios (
-                      {totalAppointments > 0
-                        ? Math.round(
-                            (appointmentStatus.pending / totalAppointments) * 100
-                          )
-                        : 0}
-                      %)
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Box
-                    sx={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: "50%",
-                      bgcolor: "#ef4444",
-                    }}
-                  />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="body2" fontWeight={600}>
-                      Cancelados
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {appointmentStatus.cancelled} estudios (
-                      {totalAppointments > 0
-                        ? Math.round(
-                            (appointmentStatus.cancelled / totalAppointments) * 100
-                          )
-                        : 0}
-                      %)
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid2>
-
-        {/* Estudios Recientes */}
-        <Grid2 size={{ xs: 12 }}>
-          <Card elevation={0} sx={{ border: "1px solid #e5e7eb", height: "100%" }}>
-            <CardContent>
-              <Stack direction="row" spacing={2} alignItems="center" mb={3}>
-                <People sx={{ color: "#8b5cf6", fontSize: 28 }} />
+              <Stack spacing={4}>
+                {/* Visitas */}
                 <Box>
-                  <Typography variant="h6" fontWeight={700}>
-                    Estudios Recientes
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Últimos 5 estudios
-                  </Typography>
-                </Box>
-              </Stack>
-
-              <Stack spacing={2}>
-                {recentAppointments.map((apt) => (
-                  <Paper
-                    key={apt.id}
-                    elevation={0}
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <Visibility sx={{ fontSize: 20, color: "#14b8a6" }} />
+                      <Typography variant="body2" fontWeight={600} color="text.secondary">
+                        Visitas al perfil
+                      </Typography>
+                    </Stack>
+                    <Typography variant="h6" fontWeight={700} color="#14b8a6">
+                      {visits.toLocaleString()}
+                    </Typography>
+                  </Stack>
+                  <Box
                     sx={{
-                      p: 2,
-                      border: "1px solid #e5e7eb",
+                      width: "100%",
+                      height: 12,
+                      bgcolor: "#f3f4f6",
                       borderRadius: 2,
-                      "&:hover": {
-                        bgcolor: "#f9fafb",
-                      },
+                      overflow: "hidden",
                     }}
                   >
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
-                    >
-                      <Box>
-                        <Typography variant="body2" fontWeight={600}>
-                          {apt.patientName}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {apt.reason}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ textAlign: "right" }}>
-                        <Typography variant="caption" fontWeight={600}>
-                          {new Date(apt.date).toLocaleDateString("es-ES", {
-                            day: "2-digit",
-                            month: "short",
-                          })}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          {apt.time}
-                        </Typography>
-                        <Box
-                          sx={{
-                            mt: 0.5,
-                            display: "inline-block",
-                            px: 1,
-                            py: 0.25,
-                            borderRadius: 1,
-                            bgcolor:
-                              (apt.status || "pending") === "completed"
-                                ? "#d1fae5"
-                                : (apt.status || "pending") === "pending"
-                                ? "#fef3c7"
-                                : "#fee2e2",
-                            color:
-                              (apt.status || "pending") === "completed"
-                                ? "#065f46"
-                                : (apt.status || "pending") === "pending"
-                                ? "#92400e"
-                                : "#991b1b",
-                            fontSize: "0.65rem",
-                            fontWeight: 600,
-                          }}
-                        >
-                          {(apt.status || "pending") === "completed"
-                            ? "Completado"
-                            : (apt.status || "pending") === "pending"
-                            ? "Pendiente"
-                            : "Cancelado"}
-                        </Box>
-                      </Box>
+                    <Box
+                      sx={{
+                        width: `${(visits / maxValue) * 100}%`,
+                        height: "100%",
+                        bgcolor: "#14b8a6",
+                        borderRadius: 2,
+                        transition: "width 1s ease",
+                      }}
+                    />
+                  </Box>
+                </Box>
+
+                {/* Reseñas */}
+                <Box>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <StarRate sx={{ fontSize: 20, color: "#f59e0b" }} />
+                      <Typography variant="body2" fontWeight={600} color="text.secondary">
+                        Reseñas recibidas
+                      </Typography>
                     </Stack>
-                  </Paper>
-                ))}
+                    <Typography variant="h6" fontWeight={700} color="#f59e0b">
+                      {reviews.toLocaleString()}
+                    </Typography>
+                  </Stack>
+                  <Box
+                    sx={{
+                      width: "100%",
+                      height: 12,
+                      bgcolor: "#f3f4f6",
+                      borderRadius: 2,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: `${(reviews * 100 / maxValue) * 100}%`,
+                        height: "100%",
+                        bgcolor: "#f59e0b",
+                        borderRadius: 2,
+                        transition: "width 1s ease",
+                      }}
+                    />
+                  </Box>
+                </Box>
+
+                {/* Calificación */}
+                <Box>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <StarRate sx={{ fontSize: 20, color: "#3b82f6" }} />
+                      <Typography variant="body2" fontWeight={600} color="text.secondary">
+                        Calificación promedio
+                      </Typography>
+                    </Stack>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Typography variant="h6" fontWeight={700} color="#3b82f6">
+                        {rating.toFixed(1)}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        / 5.0
+                      </Typography>
+                    </Stack>
+                  </Stack>
+                  <Box
+                    sx={{
+                      width: "100%",
+                      height: 12,
+                      bgcolor: "#f3f4f6",
+                      borderRadius: 2,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: `${(rating / 5) * 100}%`,
+                        height: "100%",
+                        bgcolor: "#3b82f6",
+                        borderRadius: 2,
+                        transition: "width 1s ease",
+                      }}
+                    />
+                  </Box>
+                  <Stack direction="row" spacing={0.5} sx={{ mt: 1 }}>
+                    {[...Array(5)].map((_, i) => (
+                      <StarRate
+                        key={i}
+                        sx={{
+                          fontSize: 18,
+                          color: i < Math.floor(rating) ? "#3b82f6" : "#e5e7eb",
+                        }}
+                      />
+                    ))}
+                  </Stack>
+                </Box>
               </Stack>
             </CardContent>
           </Card>
+        </Grid2>
+
+        {/* Panel Lateral con Resumen */}
+        <Grid2 size={{ xs: 12, lg: 4 }}>
+          <Stack spacing={3}>
+            {/* Tarjeta de Resumen Rápido */}
+            <Card
+              elevation={0}
+              sx={{
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                borderRadius: 3,
+                overflow: "hidden",
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Stack spacing={2}>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 2,
+                      bgcolor: "rgba(255, 255, 255, 0.2)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Biotech sx={{ fontSize: 24, color: "white" }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="h6" fontWeight={700} color="white">
+                      Gestiona tu Laboratorio
+                    </Typography>
+                    <Typography variant="body2" color="rgba(255, 255, 255, 0.9)" sx={{ mt: 1 }}>
+                      Administra tu perfil, servicios y horarios desde "Mi Laboratorio"
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+
+            {/* Tarjeta de Estadísticas Rápidas */}
+            <Card elevation={0} sx={{ border: "1px solid #e5e7eb", borderRadius: 3 }}>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="subtitle2" fontWeight={700} gutterBottom>
+                  Resumen Rápido
+                </Typography>
+                <Stack spacing={2} sx={{ mt: 2 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Total de visitas
+                    </Typography>
+                    <Typography variant="h6" fontWeight={700}>
+                      {visits.toLocaleString()}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Reseñas totales
+                    </Typography>
+                    <Typography variant="h6" fontWeight={700} color="#f59e0b">
+                      {reviews.toLocaleString()}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Satisfacción
+                    </Typography>
+                    <Typography variant="h6" fontWeight={700} color="#3b82f6">
+                      {((rating / 5) * 100).toFixed(0)}%
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Stack>
         </Grid2>
       </Grid2>
     </Box>

@@ -7,10 +7,12 @@ import { PharmacyBranchModal } from "../components/PharmacyBranchModal";
 import { PharmacyBranchesTable } from "../components/PharmacyBranchesTable";
 import { usePharmacyBranches } from "../hooks/usePharmacyBranches";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import { usePharmacyReviews } from "../hooks/usePharmacyReviews";
 
 export const PharmacyBranchesPage = () => {
   const authStore = useAuthStore();
   const { user } = authStore;
+  const { reviews } = usePharmacyReviews();
 
   // Obtener iniciales del usuario
   const getInitials = (name: string) => {
@@ -69,7 +71,13 @@ export const PharmacyBranchesPage = () => {
   };
 
   return (
-    <DashboardLayout role="PROVIDER" userProfile={userProfile}>
+    <DashboardLayout
+      role="PROVIDER"
+      userProfile={userProfile}
+      notificationType="reviews"
+      reviews={reviews}
+      notificationsViewAllPath="/provider/pharmacy/reviews"
+    >
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
         {/* HEADER */}
         <Stack

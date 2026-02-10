@@ -11,7 +11,7 @@ export const usePharmacyReviews = () => {
       try {
         setIsLoading(true);
         const data = await getPharmacyReviewsUseCase();
-        setReviews(data);
+        setReviews(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Error cargando reseñas:", error);
       } finally {

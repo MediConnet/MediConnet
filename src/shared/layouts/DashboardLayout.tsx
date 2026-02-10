@@ -7,6 +7,7 @@ interface DashboardLayoutProps {
   children: ReactNode;
   role: UserRole;
   userProfile: UserHeaderProfile;
+  notificationsViewAllPath?: string;
   appointments?: Array<{
     id: string;
     patientName: string;
@@ -22,7 +23,14 @@ interface DashboardLayoutProps {
     status: string;
     totalAmount?: number;
   }>;
-  notificationType?: "appointments" | "orders";
+  reviews?: Array<{
+    id: string;
+    userName: string;
+    rating: number;
+    comment: string;
+    date: string;
+  }>;
+  notificationType?: "appointments" | "orders" | "reviews";
   menuItems?: MenuItem[]; // ⭐ Menú personalizado opcional
 }
 
@@ -30,8 +38,10 @@ export const DashboardLayout = ({
   children,
   role,
   userProfile,
+  notificationsViewAllPath,
   appointments = [],
   orders = [],
+  reviews = [],
   notificationType = "appointments",
   menuItems,
 }: DashboardLayoutProps) => {
@@ -53,7 +63,9 @@ export const DashboardLayout = ({
           onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)}
           appointments={appointments}
           orders={orders}
+          reviews={reviews}
           notificationType={notificationType}
+          notificationsViewAllPath={notificationsViewAllPath}
         />
 
         <main className="flex-1 p-8 mt-20">{children}</main>

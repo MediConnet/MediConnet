@@ -44,6 +44,12 @@ export const ProfileSection = ({ profile, onUpdate }: ProfileSectionProps) => {
     ? profile.chainDescription
     : profile.description || "";
 
+  // ⚠️ Guard: en runtime a veces llega un status fuera del union (ej: "APPROVED").
+  // En ese caso, ocultamos el chip para no mostrar "Desconocido".
+  const rawStatus = (profile as any)?.status as string | undefined;
+  const isKnownStatus =
+    rawStatus === "published" || rawStatus === "draft" || rawStatus === "suspended";
+
   const getStatusLabel = (status: PharmacyProfile["status"]) => {
     switch (status) {
       case "published":
@@ -167,19 +173,21 @@ export const ProfileSection = ({ profile, onUpdate }: ProfileSectionProps) => {
             >
               {displayName}
             </Typography>
-            <Chip
-              label={getStatusLabel(profile.status)}
-              color={getStatusColor(profile.status)}
-              size="medium"
-              icon={
-                profile.status === "published" ? (
-                  <Visibility fontSize="small" />
-                ) : (
-                  <VisibilityOff fontSize="small" />
-                )
-              }
-              sx={{ fontWeight: 600 }}
-            />
+            {isKnownStatus && (
+              <Chip
+                label={getStatusLabel(rawStatus as PharmacyProfile["status"])}
+                color={getStatusColor(rawStatus as PharmacyProfile["status"])}
+                size="medium"
+                icon={
+                  rawStatus === "published" ? (
+                    <Visibility fontSize="small" />
+                  ) : (
+                    <VisibilityOff fontSize="small" />
+                  )
+                }
+                sx={{ fontWeight: 600 }}
+              />
+            )}
           </Box>
 
           <Divider />
@@ -382,19 +390,21 @@ export const ProfileSection = ({ profile, onUpdate }: ProfileSectionProps) => {
 
               {/* Estado */}
               <Box sx={{ mb: 1 }}>
-                <Chip
-                  label={getStatusLabel(profile.status)}
-                  color={getStatusColor(profile.status)}
-                  size="small"
-                  icon={
-                    profile.status === "published" ? (
-                      <Visibility fontSize="small" />
-                    ) : (
-                      <VisibilityOff fontSize="small" />
-                    )
-                  }
-                  sx={{ fontWeight: 600 }}
-                />
+                {isKnownStatus && (
+                  <Chip
+                    label={getStatusLabel(rawStatus as PharmacyProfile["status"])}
+                    color={getStatusColor(rawStatus as PharmacyProfile["status"])}
+                    size="small"
+                    icon={
+                      rawStatus === "published" ? (
+                        <Visibility fontSize="small" />
+                      ) : (
+                        <VisibilityOff fontSize="small" />
+                      )
+                    }
+                    sx={{ fontWeight: 600 }}
+                  />
+                )}
               </Box>
 
               {/* Descripción */}

@@ -1,80 +1,208 @@
-# 📬 MENSAJE RÁPIDO PARA BACKEND
+# 🚨 PROBLEMA CRÍTICO: Endpoint de Ambulancia No Funciona
 
-**Fecha:** 9 de Febrero, 2026
-
----
-
-## ✅ LO QUE HICIMOS HOY
-
-Frontend actualizado de **70% a 86%** (+16% en un día) 🚀
-
-- ✅ Pagos de admin y clínica funcionando perfecto
-- ✅ Supplies adaptado para usar `GET /api/supplies/:id`
-- ✅ Todo compila sin errores
+## Fecha: 10 de febrero de 2026
 
 ---
 
-## 🚨 LO QUE NECESITAMOS (URGENTE)
+## 🎯 EL PROBLEMA
 
-### Pagos de Doctor - 2 endpoints
+Cuando un usuario se registra como ambulancia y el admin aprueba, al iniciar sesión el endpoint `GET /api/ambulances/profile` devuelve error:
 
 ```
-GET /api/doctors/payments
-GET /api/doctors/payments/:id
+Error: Error al obtener ambulancia
 ```
 
-**Frontend está 100% listo esperando estos endpoints.**
+---
 
-**Documentación completa:** `SOLICITUD_BACKEND_DOCTOR_PAYMENTS.md`
+## 🔍 LO QUE ESTÁ PASANDO
 
-**Prioridad:** 🔴 CRÍTICA  
-**Tiempo:** 1-2 días  
-**Impacto:** Sin esto, médicos no pueden ver sus pagos
+1. ✅ Usuario se registra como ambulancia
+2. ✅ Admin aprueba la solicitud
+3. ✅ Usuario inicia sesión → Token JWT generado correctamente
+4. ✅ Frontend envía request: `GET /api/ambulances/profile` con Bearer token
+5. ❌ **Backend devuelve error**: "Error al obtener ambulancia"
 
 ---
 
-## 📦 SUPPLIES (NO URGENTE)
+## 🔧 LO QUE NECESITAN VERIFICAR
 
-Seguimos tu recomendación (Opción C):
+### 1. ¿Se Crea el Provider al Aprobar?
 
-- ✅ Productos: Ya funciona con `GET /api/supplies/:id`
-- ⏳ Órdenes: Pueden implementar en 2-3 días
-- ⏳ CRUD: Pueden implementar en 3-4 días
+Cuando el admin aprueba una solicitud de ambulancia, ¿se crea el registro en la tabla `providers`?
 
-**Frontend tiene fallback temporal que funciona mientras tanto.**
+```sql
+-- Verificar si existe el provider
+SELECT * FROM providers WHERE user_id = 'USER_ID_DEL_TOKEN';
+```
+
+**Debe existir un registro con:**
+- `user_id` = ID del usuario que se registró
+- `category_id` = ID de la categoría "Ambulancia"
+- `verification_status` = 'verified'
+
+### 2. ¿Se Crea la Ambulancia al Aprobar?
+
+Cuando el admin aprueba, ¿se crea el registro en la tabla `ambulances`?
+
+```sql
+-- Verificar si existe la ambulancia
+SELECT * FROM ambulances WHERE provider_id = 'PROVIDER_ID';
+```
+
+**Debe existir un registro con:**
+- `provider_id` = ID del provider
+- Datos de la ambulancia (nombre comercial, teléfono, etc.)
+
+### 3. ¿El Endpoint Busca Correctamente?
+
+El endpoint `GET /api/ambulances/profile` debe:
+
+```javascript
+// 1. Obtener user_id del token JWT
+const userId = req.user.id;
+
+// 2. Buscar el provider
+const provider = await Provider.findOne({
+  where: { user_id: userId }
+});
+
+if (!provider) {
+  return res.status(404).json({
+    success: false,
+    message: 'No se encontró un proveedor asociado a este usuario'
+  });
+}
+
+// 3. Buscar la ambulancia
+const ambulance = await Ambulance.findOne({
+  where: { provider_id: provider.id }
+});
+
+if (!ambulance) {
+  return res.status(404).json({
+    success: false,
+    message: 'No se encontró una ambulancia asociada a este proveedor'
+  });
+}
+
+// 4. Devolver el perfil
+return res.json({
+  success: true,
+  data: ambulance
+});
+```
 
 ---
 
-## 🎯 RESUMEN
+## 🧪 CÓMO PROBAR
 
-**URGENTE esta semana:**
-- `GET /api/doctors/payments`
-- `GET /api/doctors/payments/:id`
+### Paso 1: Registrar una ambulancia de prueba
 
-**Importante próxima semana:**
-- Órdenes de supplies (4 endpoints)
-- CRUD de productos (3 endpoints)
+Email: `test-ambulancia@ejemplo.com`
+Contraseña: `test123`
 
-**Documentación disponible:**
-- `SOLICITUD_BACKEND_DOCTOR_PAYMENTS.md` (specs completas)
-- `CAMBIOS_SUPPLIES_COMPLETADOS.md` (cómo adaptamos frontend)
-- `ESTADO_ACTUAL_PROYECTO.md` (estado general)
+### Paso 2: Aprobar la solicitud
+
+Desde el panel de admin, aprobar la solicitud.
+
+### Paso 3: Verificar en la BD
+
+```sql
+-- 1. Buscar el usuario
+SELECT id, email, role FROM users WHERE email = 'test-ambulancia@ejemplo.com';
+
+-- 2. Buscar el provider (usar el user_id del paso anterior)
+SELECT * FROM providers WHERE user_id = 'USER_ID_AQUI';
+
+-- 3. Buscar la ambulancia (usar el provider_id del paso anterior)
+SELECT * FROM ambulances WHERE provider_id = 'PROVIDER_ID_AQUI';
+```
+
+### Paso 4: Iniciar sesión y verificar
+
+1. Iniciar sesión con `test-ambulancia@ejemplo.com`
+2. Copiar el token JWT de la respuesta
+3. Hacer request manual:
+
+```bash
+curl -X GET http://localhost:3000/api/ambulances/profile \
+  -H "Authorization: Bearer TOKEN_AQUI"
+```
+
+**Respuesta esperada:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "...",
+    "commercialName": "Nombre de la ambulancia",
+    "emergencyPhone": "0999999999",
+    "whatsappContact": "0999999999",
+    ...
+  }
+}
+```
 
 ---
 
-## 💬 RESPUESTA ESPERADA
+## 📊 LOGS RECOMENDADOS
 
-Por favor confirmar:
-1. ¿Pueden implementar `GET /api/doctors/payments` esta semana?
-2. ¿Necesitan aclarar algo de las specs?
-3. ¿Timeline estimado?
+Agregar estos logs en el endpoint para depurar:
+
+```javascript
+console.log('🔍 [AMBULANCE PROFILE] 1. User ID del token:', userId);
+
+const provider = await Provider.findOne({ where: { user_id: userId } });
+console.log('🔍 [AMBULANCE PROFILE] 2. Provider encontrado:', provider);
+
+if (!provider) {
+  console.error('❌ [AMBULANCE PROFILE] No se encontró provider para user_id:', userId);
+  return res.status(404).json({ success: false, message: 'Provider no encontrado' });
+}
+
+const ambulance = await Ambulance.findOne({ where: { provider_id: provider.id } });
+console.log('🔍 [AMBULANCE PROFILE] 3. Ambulancia encontrada:', ambulance);
+
+if (!ambulance) {
+  console.error('❌ [AMBULANCE PROFILE] No se encontró ambulancia para provider_id:', provider.id);
+  return res.status(404).json({ success: false, message: 'Ambulancia no encontrada' });
+}
+```
 
 ---
 
-**Gracias por el excelente trabajo!** 🙏
+## ✅ RESULTADO ESPERADO
 
-Los endpoints de admin y clínica funcionan perfecto. Solo necesitamos completar doctor para tener el flujo completo de pagos.
+Después de la corrección:
+
+1. Usuario se registra como ambulancia
+2. Admin aprueba → Se crean registros en `providers` y `ambulances`
+3. Usuario inicia sesión
+4. Request a `GET /api/ambulances/profile` devuelve los datos correctos
+5. Dashboard muestra el perfil de la ambulancia del usuario
 
 ---
 
-**Frontend Team** 🚀
+## 🚨 URGENCIA
+
+🔴 **CRÍTICO** - Los usuarios no pueden usar la aplicación después de registrarse.
+
+---
+
+## 📝 NOTA
+
+El frontend está funcionando correctamente:
+- ✅ Token se genera correctamente
+- ✅ Token se guarda correctamente
+- ✅ Token se envía correctamente en el header Authorization
+- ✅ El problema está 100% en el backend
+
+**El error está en:**
+1. La creación de registros al aprobar la solicitud, O
+2. La lógica del endpoint `GET /api/ambulances/profile`
+
+---
+
+**Contacto**: Frontend Team
+**Fecha**: 10 de febrero de 2026
+**Prioridad**: 🔴 CRÍTICA

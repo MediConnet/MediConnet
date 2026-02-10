@@ -1,110 +1,102 @@
-import { Star } from "@mui/icons-material";
-
-// Función para obtener fechas recientes
-const getRecentDate = (daysAgo: number) => {
-  const today = new Date();
-  today.setDate(today.getDate() - daysAgo);
-  return today.toISOString().split("T")[0];
-};
-
-// Mock data para reseñas
-const mockReviews = [
-  {
-    id: "1",
-    name: "María García",
-    rating: 5,
-    comment: "Excelente laboratorio, resultados rápidos y confiables. Muy recomendado.",
-    date: getRecentDate(3),
-  },
-  {
-    id: "2",
-    name: "Juan López",
-    rating: 4,
-    comment: "Buena atención, los resultados llegaron a tiempo. Profesional.",
-    date: getRecentDate(7),
-  },
-  {
-    id: "3",
-    name: "Ana Martínez",
-    rating: 5,
-    comment: "Muy satisfecha con el servicio, personal amable y resultados precisos.",
-    date: getRecentDate(10),
-  },
-  {
-    id: "4",
-    name: "Carlos Rodríguez",
-    rating: 5,
-    comment: "Resultados muy precisos y el personal muy profesional. Excelente servicio.",
-    date: getRecentDate(12),
-  },
-  {
-    id: "5",
-    name: "Laura Sánchez",
-    rating: 4,
-    comment: "Buen laboratorio, aunque la espera fue un poco larga. Pero los resultados fueron confiables.",
-    date: getRecentDate(15),
-  },
-  {
-    id: "6",
-    name: "Pedro González",
-    rating: 5,
-    comment: "Muy satisfecho. Resultados en línea muy práctico y el personal muy atento.",
-    date: getRecentDate(18),
-  },
-  {
-    id: "7",
-    name: "Sofía Ramírez",
-    rating: 5,
-    comment: "El mejor laboratorio que he visitado. Muy profesional y resultados rápidos.",
-    date: getRecentDate(22),
-  },
-  {
-    id: "8",
-    name: "Roberto Fernández",
-    rating: 4,
-    comment: "Buena atención y resultados precisos. Recomendado.",
-    date: getRecentDate(25),
-  },
-];
+import { Star, RateReview } from "@mui/icons-material";
+import { useLaboratoryReviews } from "../hooks/useLaboratoryReviews";
+import { Box, Typography, CircularProgress, Alert } from "@mui/material";
 
 export const ReviewsSection = () => {
+  const { data, isLoading, error } = useLaboratoryReviews();
+
+  if (isLoading) {
+    return (
+      <Box className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex justify-center items-center min-h-[200px]">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <Alert severity="error">
+          Error al cargar las reseñas. Por favor, intenta de nuevo más tarde.
+        </Alert>
+      </Box>
+    );
+  }
+
+  const reviews = data?.reviews || [];
+  const averageRating = data?.averageRating || 0;
+  const totalReviews = data?.totalReviews || 0;
+
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-      <div className="mb-4">
-        <h3 className="text-xl font-bold text-gray-800">Reseñas de Clientes</h3>
-        <p className="text-sm text-gray-500 mt-1">
-          Valoraciones recibidas desde la aplicación móvil
-        </p>
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-bold text-gray-800">Reseñas de Clientes</h3>
+            <p className="text-sm text-gray-500 mt-1">
+              Valoraciones recibidas desde la aplicación móvil
+            </p>
+          </div>
+          {totalReviews > 0 && (
+            <div className="text-right">
+              <div className="flex items-center gap-2">
+                <Star className="text-yellow-400 fill-current" />
+                <span className="text-2xl font-bold text-gray-800">
+                  {averageRating.toFixed(1)}
+                </span>
+              </div>
+              <p className="text-sm text-gray-500 mt-1">
+                {totalReviews} {totalReviews === 1 ? 'reseña' : 'reseñas'}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="space-y-4">
-        {mockReviews.map((review) => (
-          <div
-            key={review.id}
-            className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
-          >
-            <div className="flex items-start justify-between mb-2">
-              <div>
-                <p className="font-medium text-gray-800">{review.name}</p>
-                <div className="flex items-center gap-1 mt-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      className={`text-sm ${
-                        star <= review.rating
-                          ? "text-yellow-400 fill-current"
-                          : "text-gray-300"
-                      }`}
-                    />
-                  ))}
+      {reviews.length === 0 ? (
+        <Box className="text-center py-12">
+          <RateReview className="text-gray-300" sx={{ fontSize: 64 }} />
+          <Typography variant="h6" color="text.secondary" sx={{ mt: 2 }}>
+            Aún no tienes reseñas
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Las reseñas de tus clientes aparecerán aquí
+          </Typography>
+        </Box>
+      ) : (
+        <div className="space-y-4">
+          {reviews.map((review, index) => (
+            <div
+              key={`review-${index}`}
+              className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
+            >
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <p className="font-medium text-gray-800">{review.nombre || 'Usuario'}</p>
+                  <div className="flex items-center gap-1 mt-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`text-sm ${
+                          star <= review.rating
+                            ? "text-yellow-400 fill-current"
+                            : "text-gray-300"
+                        }`}
+                      />
+                    ))}
+                  </div>
                 </div>
+                <span className="text-xs text-gray-500">
+                  {new Date(review.fecha).toLocaleDateString('es-MX')}
+                </span>
               </div>
-              <span className="text-xs text-gray-500">{review.date}</span>
+              {review.comentario && (
+                <p className="text-sm text-gray-700 mt-2">{review.comentario}</p>
+              )}
             </div>
-            <p className="text-sm text-gray-700 mt-2">{review.comment}</p>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

@@ -14,17 +14,21 @@ import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { KPICard } from "../components/KPICard";
 import { useAmbulanceProfile } from "../hooks/useAmbulanceProfile";
 import { useAmbulanceSettings } from "../hooks/useAmbulanceSettings";
-
-const AMBULANCE_USER = {
-  name: "Ambulancias Vida",
-  roleLabel: "Proveedor",
-  initials: "AV",
-  isActive: true,
-};
+import { useAmbulanceReviews } from "../hooks/useAmbulanceReviews";
+import { buildAmbulanceUserHeaderProfile } from "../lib/user-header";
 
 export const AmbulanceSettingsPage = () => {
   const theme = useTheme();
   const { profile, isLoading: isLoadingProfile } = useAmbulanceProfile();
+  const { reviews: fetchedReviews } = useAmbulanceReviews();
+  const userHeaderProfile = buildAmbulanceUserHeaderProfile(profile);
+  const headerReviews = fetchedReviews.map((r) => ({
+    id: r.id,
+    userName: r.patientName,
+    rating: r.rating,
+    comment: r.comment,
+    date: r.date,
+  }));
   const {
     settings,
     isLoading: isLoadingSettings,
@@ -35,7 +39,13 @@ export const AmbulanceSettingsPage = () => {
 
   if (isLoading || !profile || !settings) {
     return (
-      <DashboardLayout role="PROVIDER" userProfile={AMBULANCE_USER}>
+      <DashboardLayout
+        role="PROVIDER"
+        userProfile={userHeaderProfile}
+        notificationType="reviews"
+        reviews={headerReviews}
+        notificationsViewAllPath="/provider/ambulance/reviews"
+      >
         <Box p={3}>
           <Skeleton
             variant="rectangular"
@@ -53,7 +63,13 @@ export const AmbulanceSettingsPage = () => {
   }
 
   return (
-    <DashboardLayout role="PROVIDER" userProfile={AMBULANCE_USER}>
+    <DashboardLayout
+      role="PROVIDER"
+      userProfile={userHeaderProfile}
+      notificationType="reviews"
+      reviews={headerReviews}
+      notificationsViewAllPath="/provider/ambulance/reviews"
+    >
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
         {/* SECTION 1: KPIS (Subidos) */}
         <Grid2 container spacing={3} mb={4}>

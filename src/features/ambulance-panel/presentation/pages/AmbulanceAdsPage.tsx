@@ -11,6 +11,9 @@ import {
 import Grid2 from "@mui/material/Grid2";
 import { useState } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
+import { useAmbulanceProfile } from "../hooks/useAmbulanceProfile";
+import { useAmbulanceReviews } from "../hooks/useAmbulanceReviews";
+import { buildAmbulanceUserHeaderProfile } from "../lib/user-header";
 
 // Componentes Compartidos
 import { AdsEmptyState } from "../../../../shared/components/AdsEmptyState";
@@ -21,16 +24,18 @@ import { PromotionalBanner } from "../../../../shared/components/PromotionalBann
 import type { CreateAdParams } from "../../../../shared/api/ads.api";
 import { useAdRequest } from "../../../../shared/hooks/useAdRequest";
 
-// Mock del usuario
-const AMBULANCE_USER = {
-  name: "Ambulancias Vida",
-  roleLabel: "Proveedor",
-  initials: "AV",
-  isActive: true,
-};
-
 export const AmbulanceAdsPage = () => {
   const theme = useTheme();
+  const { profile } = useAmbulanceProfile();
+  const { reviews: fetchedReviews } = useAmbulanceReviews();
+  const userHeaderProfile = buildAmbulanceUserHeaderProfile(profile);
+  const headerReviews = fetchedReviews.map((r) => ({
+    id: r.id,
+    userName: r.patientName,
+    rating: r.rating,
+    comment: r.comment,
+    date: r.date,
+  }));
 
   const {
     activeAd,
@@ -87,7 +92,13 @@ export const AmbulanceAdsPage = () => {
 
   if (isLoading) {
     return (
-      <DashboardLayout role="PROVIDER" userProfile={AMBULANCE_USER}>
+      <DashboardLayout
+        role="PROVIDER"
+        userProfile={userHeaderProfile}
+        notificationType="reviews"
+        reviews={headerReviews}
+        notificationsViewAllPath="/provider/ambulance/reviews"
+      >
         <div className="p-3 max-w-[1400px] mx-auto">
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex items-center justify-center min-h-[400px]">
             <CircularProgress
@@ -102,7 +113,13 @@ export const AmbulanceAdsPage = () => {
   }
 
   return (
-    <DashboardLayout role="PROVIDER" userProfile={AMBULANCE_USER}>
+    <DashboardLayout
+      role="PROVIDER"
+      userProfile={userHeaderProfile}
+      notificationType="reviews"
+      reviews={headerReviews}
+      notificationsViewAllPath="/provider/ambulance/reviews"
+    >
       {/* Contenedor principal de la página */}
       <div className="p-3 max-w-[1400px] mx-auto">
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">

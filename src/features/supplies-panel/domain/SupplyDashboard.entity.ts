@@ -8,7 +8,7 @@ export interface WorkSchedule {
 export interface SupplyDashboard {
   visits: number;
   contacts: number;
-  reviews: number;
+  reviews: number; // Cantidad de reseñas
   rating: number;
   supply: {
     name: string;
@@ -20,5 +20,12 @@ export interface SupplyDashboard {
     workSchedule?: WorkSchedule[]; // Horario laboral de lunes a viernes
     isActive?: boolean; // Estado del servicio: Activo / Inactivo
   };
+  reviewsList?: Array<{ // Lista de reseñas (diferente de reviews que es un número)
+    id: string;
+    userName: string;
+    rating: number;
+    comment: string;
+    date: string;
+  }>;
 }
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { AccessTime, Person, Close, CalendarToday, ShoppingCart } from "@mui/icons-material";
+import { AccessTime, Person, Close, CalendarToday, ShoppingCart, StarRate } from "@mui/icons-material";
 
 interface Appointment {
   id: string;
@@ -19,14 +19,24 @@ interface Order {
   totalAmount?: number;
 }
 
+interface Review {
+  id: string;
+  userName: string;
+  rating: number;
+  comment: string;
+  date: string;
+}
+
 interface NotificationsDropdownProps {
   open: boolean;
   onClose: () => void;
   appointments: Appointment[];
   orders?: Order[];
-  notificationType?: "appointments" | "orders";
+  reviews?: Review[];
+  notificationType?: "appointments" | "orders" | "reviews";
   viewedNotifications?: Set<string>;
   onMarkAllAsRead?: () => void;
+  viewAllPath?: string;
 }
 
 export const NotificationsDropdown = ({
@@ -34,12 +44,18 @@ export const NotificationsDropdown = ({
   onClose,
   appointments,
   orders = [],
+  reviews = [],
   notificationType = "appointments",
   viewedNotifications = new Set(),
   onMarkAllAsRead,
+  viewAllPath,
 }: NotificationsDropdownProps) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  // ✅ Guard runtime: si por alguna razón llega un objeto (backend shape inesperado),
+  // evitamos crashear el Header/Dropdown.
+  const safeReviews: Review[] = Array.isArray(reviews) ? reviews : [];
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -69,8 +85,16 @@ export const NotificationsDropdown = ({
     .filter((order) => order.orderDate === today)
     .sort((a, b) => a.orderNumber.localeCompare(b.orderNumber));
 
+  // Para reseñas: mostrar las más recientes (no limitar solo a hoy)
+  const recentReviews = safeReviews
+    .slice()
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 20);
+
   // Contar cuántas no están vistas
-  const unreadCount = notificationType === "orders"
+  const unreadCount = notificationType === "reviews"
+    ? recentReviews.filter((review) => !viewedNotifications.has(review.id)).length
+    : notificationType === "orders"
     ? todayOrders.filter((order) => !viewedNotifications.has(order.id)).length
     : todayAppointments.filter((apt) => !viewedNotifications.has(apt.id)).length;
 
@@ -86,7 +110,11 @@ export const NotificationsDropdown = ({
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-bold text-gray-800">
-              {notificationType === "orders" ? "Pedidos de Hoy" : "Citas de Hoy"}
+              {notificationType === "reviews" 
+                ? "Nuevas Reseñas" 
+                : notificationType === "orders" 
+                ? "Pedidos de Hoy" 
+                : "Citas de Hoy"}
             </h3>
             <p className="text-xs text-gray-500 mt-1">
               {new Date().toLocaleDateString("es-ES", {
@@ -106,7 +134,9 @@ export const NotificationsDropdown = ({
         </div>
         <div className="flex items-center justify-between mt-2">
           <p className="text-sm text-gray-500">
-            {notificationType === "orders"
+            {notificationType === "reviews"
+              ? `${recentReviews.length} reseña${recentReviews.length !== 1 ? "s" : ""} reciente${recentReviews.length !== 1 ? "s" : ""}`
+              : notificationType === "orders"
               ? `${todayOrders.length} pedido${todayOrders.length !== 1 ? "s" : ""} recibido${todayOrders.length !== 1 ? "s" : ""} hoy`
               : `${todayAppointments.length} cita${todayAppointments.length !== 1 ? "s" : ""} programada${todayAppointments.length !== 1 ? "s" : ""} para hoy`}
           </p>
@@ -123,7 +153,61 @@ export const NotificationsDropdown = ({
 
       {/* Content */}
       <div className="overflow-y-auto max-h-[500px]">
-        {notificationType === "orders" ? (
+        {notificationType === "reviews" ? (
+          recentReviews.length > 0 ? (
+            <div className="divide-y divide-gray-100">
+              {recentReviews.map((review) => {
+                const isRead = viewedNotifications.has(review.id);
+                return (
+                <div
+                  key={review.id}
+                  className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
+                    !isRead ? "bg-blue-50 border-l-4 border-blue-500" : ""
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center shrink-0">
+                      <StarRate className="text-yellow-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-bold text-gray-800 text-base">
+                          {review.userName}
+                        </h4>
+                        <div className="flex items-center gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <StarRate
+                              key={i}
+                              className={`text-sm ${
+                                i < review.rating ? "text-yellow-500" : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
+                        {review.comment}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <StarRate className="text-gray-400 text-3xl" />
+              </div>
+              <p className="text-gray-500 text-sm font-medium mb-1">
+                No hay reseñas recientes
+              </p>
+              <p className="text-gray-400 text-xs">
+                Las reseñas aparecerán aquí
+              </p>
+            </div>
+          )
+        ) : notificationType === "orders" ? (
           todayOrders.length > 0 ? (
             <div className="divide-y divide-gray-100">
               {todayOrders.map((order) => {
@@ -232,7 +316,13 @@ export const NotificationsDropdown = ({
         <button
           onClick={() => {
             onClose();
-            if (notificationType === "orders") {
+            if (viewAllPath) {
+              navigate(viewAllPath);
+              return;
+            }
+            if (notificationType === "reviews") {
+              navigate("/supply/dashboard?tab=reviews");
+            } else if (notificationType === "orders") {
               navigate("/supply/dashboard?tab=orders");
             } else {
               navigate("/doctor/dashboard?tab=appointments");
@@ -240,7 +330,11 @@ export const NotificationsDropdown = ({
           }}
           className="w-full px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-medium text-sm"
         >
-          {notificationType === "orders"
+          {notificationType === "reviews"
+            ? recentReviews.length > 0
+              ? "Ver todas las reseñas"
+              : "Ver reseñas"
+            : notificationType === "orders"
             ? todayOrders.length > 0
               ? "Ver todos los pedidos"
               : "Ver pedidos"

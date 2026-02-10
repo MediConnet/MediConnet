@@ -13,6 +13,7 @@ interface HeaderProps {
   user: UserHeaderProfile;
   onMenuToggle: () => void;
   isMenuOpen: boolean;
+  notificationsViewAllPath?: string;
   appointments?: Array<{
     id: string;
     patientName: string;
@@ -28,15 +29,24 @@ interface HeaderProps {
     status: string;
     totalAmount?: number;
   }>;
-  notificationType?: "appointments" | "orders";
+  reviews?: Array<{
+    id: string;
+    userName: string;
+    rating: number;
+    comment: string;
+    date: string;
+  }>;
+  notificationType?: "appointments" | "orders" | "reviews";
 }
 
 export const Header = ({
   user,
   onMenuToggle,
   isMenuOpen,
+  notificationsViewAllPath,
   appointments = [],
   orders = [],
+  reviews = [],
   notificationType = "appointments",
 }: HeaderProps) => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -57,17 +67,27 @@ export const Header = ({
     
     if (saved) {
       try {
-        const viewed = JSON.parse(saved);
-        // Obtener IDs de notificaciones de hoy
+        const viewed: string[] = JSON.parse(saved);
+
+        // Para reseñas: no limitar a "hoy". Mantener solo IDs que aún existan.
+        if (notificationType === "reviews") {
+          const existing = new Set(reviews.map((r) => r.id));
+          const stillValid = viewed.filter((id) => existing.has(id));
+          setViewedNotifications(new Set(stillValid));
+          localStorage.setItem(
+            `viewed-notifications-${notificationType}`,
+            JSON.stringify(stillValid)
+          );
+          return;
+        }
+
+        // Para citas/pedidos: mantener solo las de hoy
         const todayItems = notificationType === "orders"
           ? orders.filter((order) => order.orderDate === today).map((o) => o.id)
           : appointments.filter((apt) => apt.date === today).map((a) => a.id);
-        
-        // Solo mantener las notificaciones vistas que son de hoy
-        const todayViewed = viewed.filter((id: string) => todayItems.includes(id));
+
+        const todayViewed = viewed.filter((id) => todayItems.includes(id));
         setViewedNotifications(new Set(todayViewed));
-        
-        // Guardar solo las de hoy
         localStorage.setItem(
           `viewed-notifications-${notificationType}`,
           JSON.stringify(todayViewed)
@@ -76,21 +96,24 @@ export const Header = ({
         console.error("Error loading viewed notifications:", error);
       }
     }
-  }, [notificationType, appointments, orders]);
+  }, [notificationType, appointments, orders, reviews]);
 
   // Obtener solo las citas o pedidos de hoy
   const today = new Date().toISOString().split("T")[0];
   
   // Filtrar notificaciones no vistas
   const unreadNotifications = useMemo(() => {
-    if (notificationType === "orders") {
+    if (notificationType === "reviews") {
+      const todayReviews = reviews.filter((review) => review.date === today);
+      return todayReviews.filter((review) => !viewedNotifications.has(review.id));
+    } else if (notificationType === "orders") {
       const todayOrders = orders.filter((order) => order.orderDate === today);
       return todayOrders.filter((order) => !viewedNotifications.has(order.id));
     } else {
       const todayAppointments = appointments.filter((apt) => apt.date === today);
       return todayAppointments.filter((apt) => !viewedNotifications.has(apt.id));
     }
-  }, [appointments, orders, today, notificationType, viewedNotifications]);
+  }, [appointments, orders, reviews, today, notificationType, viewedNotifications]);
 
   const notificationCount = unreadNotifications.length;
 
@@ -101,6 +124,9 @@ export const Header = ({
   const unreadOrders = notificationType === "orders"
     ? (unreadNotifications as typeof orders)
     : [];
+  const unreadReviews = notificationType === "reviews"
+    ? (unreadNotifications as typeof reviews)
+    : [];
 
   // Solo abrir/cerrar el dropdown sin marcar como vistas automáticamente
   const handleNotificationsOpen = () => {
@@ -109,7 +135,9 @@ export const Header = ({
 
   // Función para marcar todas las notificaciones como leídas manualmente
   const handleMarkAllAsRead = () => {
-    const todayItems = notificationType === "orders"
+    const todayItems = notificationType === "reviews"
+      ? reviews.filter((review) => review.date === today)
+      : notificationType === "orders"
       ? orders.filter((order) => order.orderDate === today)
       : appointments.filter((apt) => apt.date === today);
     
@@ -166,9 +194,11 @@ export const Header = ({
             onClose={() => setNotificationsOpen(false)}
             appointments={notificationType === "appointments" ? appointments.filter((apt) => apt.date === today) : []}
             orders={notificationType === "orders" ? orders.filter((order) => order.orderDate === today) : []}
+            reviews={notificationType === "reviews" ? reviews : []}
             notificationType={notificationType}
             viewedNotifications={viewedNotifications}
             onMarkAllAsRead={handleMarkAllAsRead}
+            viewAllPath={notificationsViewAllPath}
           />
         </div>
 

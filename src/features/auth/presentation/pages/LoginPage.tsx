@@ -60,6 +60,10 @@ export const LoginPage = () => {
         // 2. Extracción de datos
         const { user, token } = response;
 
+        console.log("🔍 [LOGIN] Respuesta completa del backend:", response);
+        console.log("🔍 [LOGIN] User recibido:", user);
+        console.log("🔍 [LOGIN] Token recibido:", token?.substring(0, 30) + "...");
+
         // 3. Normalización para el Store y Redirección
         const roleForStore = user.role.toLowerCase();
         // Prioridad: tipo (backend) > serviceType (backend)
@@ -72,6 +76,8 @@ export const LoginPage = () => {
         console.log("✅ Login Exitoso:", {
           role: roleForStore,
           tipo: tipoForStore,
+          userId: user.userId,
+          email: user.email,
         });
 
         // 4. Guardar en Zustand (Persistencia automática)

@@ -6,14 +6,7 @@ import { KPICard } from "../components/KPICard";
 import { ReviewItem } from "../components/ReviewItem";
 import { useAmbulanceProfile } from "../hooks/useAmbulanceProfile";
 import { useAmbulanceReviews } from "../hooks/useAmbulanceReviews";
-
-// Mock del usuario logueado
-const AMBULANCE_USER = {
-  name: "Ambulancias Vida",
-  roleLabel: "Proveedor",
-  initials: "AV",
-  isActive: true,
-};
+import { buildAmbulanceUserHeaderProfile } from "../lib/user-header";
 
 export const AmbulanceReviewsPage = () => {
   const theme = useTheme();
@@ -21,12 +14,26 @@ export const AmbulanceReviewsPage = () => {
   const { profile, isLoading: isLoadingProfile } = useAmbulanceProfile();
   // 2. Hook de reseñas para la lista
   const { reviews, isLoading: isLoadingReviews } = useAmbulanceReviews();
+  const userHeaderProfile = buildAmbulanceUserHeaderProfile(profile);
+  const headerReviews = reviews.map((r) => ({
+    id: r.id,
+    userName: r.patientName,
+    rating: r.rating,
+    comment: r.comment,
+    date: r.date,
+  }));
 
   const isLoading = isLoadingProfile || isLoadingReviews;
 
   if (isLoading || !profile) {
     return (
-      <DashboardLayout role="PROVIDER" userProfile={AMBULANCE_USER}>
+      <DashboardLayout
+        role="PROVIDER"
+        userProfile={userHeaderProfile}
+        notificationType="reviews"
+        reviews={headerReviews}
+        notificationsViewAllPath="/provider/ambulance/reviews"
+      >
         <Box p={3}>
           <Skeleton
             variant="rectangular"
@@ -41,7 +48,13 @@ export const AmbulanceReviewsPage = () => {
   }
 
   return (
-    <DashboardLayout role="PROVIDER" userProfile={AMBULANCE_USER}>
+    <DashboardLayout
+      role="PROVIDER"
+      userProfile={userHeaderProfile}
+      notificationType="reviews"
+      reviews={headerReviews}
+      notificationsViewAllPath="/provider/ambulance/reviews"
+    >
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
         {/* SECTION 1: KPIS (Subidos al inicio) */}
         <Grid2 container spacing={3} mb={4}>

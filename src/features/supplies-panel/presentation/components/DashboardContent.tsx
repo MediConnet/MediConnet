@@ -1,445 +1,260 @@
-import { useMemo, useState, useEffect } from "react";
 import {
   Box,
   Card,
   CardContent,
   Typography,
   Stack,
-  Paper,
-  CircularProgress,
-  Alert,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
-import {
-  ShoppingCart,
-  AttachMoney,
-  TrendingUp,
-  Inventory,
+import { 
+  Inventory, 
+  Visibility, 
+  StarRate, 
+  TrendingUp 
 } from "@mui/icons-material";
-import { getOrdersAPI } from "../../infrastructure/orders.api";
-import type { SupplyOrder } from "../../domain/Order.entity";
-import { formatMoney } from "../../../../shared/lib/formatMoney";
 
 interface DashboardContentProps {
   visits: number;
-  contacts: number;
   reviews: number;
   rating: number;
 }
 
-export const DashboardContent = ({}: DashboardContentProps) => {
-  const [orders, setOrders] = useState<SupplyOrder[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const loadOrders = async () => {
-      try {
-        setLoading(true);
-        const data = await getOrdersAPI();
-        setOrders(data);
-      } catch (err: any) {
-        console.error('Error loading orders:', err);
-        setError(err.message || 'Error al cargar pedidos');
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadOrders();
-  }, []);
-
-  // Datos para gráfico de pedidos por semana
-  const ordersByWeek = useMemo(() => {
-    const weekData = [0, 0, 0, 0]; // Últimas 4 semanas
-    orders.forEach((order) => {
-      const date = new Date(order.orderDate);
-      const weekAgo = Math.floor(
-        (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24 * 7)
-      );
-      if (weekAgo >= 0 && weekAgo < 4) {
-        weekData[weekAgo] = (weekData[weekAgo] || 0) + 1;
-      }
-    });
-    return weekData.reverse(); // Más reciente primero
-  }, [orders]);
-
-  // Datos para gráfico de ingresos
-  const incomeByWeek = useMemo(() => {
-    const weekData = [0, 0, 0, 0];
-    orders.forEach((order) => {
-      const date = new Date(order.orderDate);
-      const weekAgo = Math.floor(
-        (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24 * 7)
-      );
-      if (weekAgo >= 0 && weekAgo < 4) {
-        weekData[weekAgo] = (weekData[weekAgo] || 0) + order.totalAmount;
-      }
-    });
-    return weekData.reverse();
-  }, [orders]);
-
-  // Distribución de estados de pedidos
-  const orderStatus = useMemo(() => {
-    const statusCount = {
-      delivered: 0,
-      shipped: 0,
-      preparing: 0,
-      confirmed: 0,
-      pending: 0,
-      cancelled: 0,
-    };
-    orders.forEach((order) => {
-      if (order.status === "delivered") statusCount.delivered++;
-      else if (order.status === "shipped") statusCount.shipped++;
-      else if (order.status === "preparing") statusCount.preparing++;
-      else if (order.status === "confirmed") statusCount.confirmed++;
-      else if (order.status === "pending") statusCount.pending++;
-      else if (order.status === "cancelled") statusCount.cancelled++;
-    });
-    return statusCount;
-  }, [orders]);
-
-  const maxOrders = Math.max(...ordersByWeek, 1);
-  const maxIncome = Math.max(...incomeByWeek, 1);
-
-  // Pedidos recientes
-  const recentOrders = useMemo(() => {
-    return [...orders]
-      .sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime())
-      .slice(0, 5);
-  }, [orders]);
-
-  if (loading) {
-    return (
-      <Box sx={{ mt: 4, display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px" }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Box sx={{ mt: 4 }}>
-        <Alert severity="error">{error}</Alert>
-      </Box>
-    );
-  }
+export const DashboardContent = ({
+  visits,
+  reviews,
+  rating,
+}: DashboardContentProps) => {
+  // Calcular el máximo para las barras
+  const maxValue = Math.max(visits, reviews * 100, rating * 100);
 
   return (
     <Box sx={{ mt: 4 }}>
       <Grid2 container spacing={3}>
-        {/* Gráfico de Pedidos por Semana */}
-        <Grid2 size={{ xs: 12, md: 6 }}>
-          <Card elevation={0} sx={{ border: "1px solid #e5e7eb", height: "100%" }}>
-            <CardContent>
-              <Stack direction="row" spacing={2} alignItems="center" mb={3}>
-                <ShoppingCart sx={{ color: "#14b8a6", fontSize: 28 }} />
-                <Box>
-                  <Typography variant="h6" fontWeight={700}>
-                    Pedidos por Semana
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Últimas 4 semanas
-                  </Typography>
-                </Box>
-              </Stack>
-
-              <Box sx={{ position: "relative", height: 200 }}>
-                <Stack
-                  direction="row"
-                  spacing={2}
-                  alignItems="flex-end"
-                  sx={{ height: "100%" }}
+        {/* Gráfico de Barras Principal */}
+        <Grid2 size={{ xs: 12, lg: 8 }}>
+          <Card elevation={0} sx={{ border: "1px solid #e5e7eb", borderRadius: 3 }}>
+            <CardContent sx={{ p: 4 }}>
+              <Stack direction="row" spacing={2} alignItems="center" mb={4}>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 2,
+                    bgcolor: "rgba(20, 184, 166, 0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
-                  {ordersByWeek.map((count, index) => (
-                    <Box key={index} sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
-                      <Box
-                        sx={{
-                          width: "100%",
-                          height: `${(count / maxOrders) * 160}px`,
-                          bgcolor: "#14b8a6",
-                          borderRadius: "4px 4px 0 0",
-                          minHeight: count > 0 ? "8px" : "0",
-                          transition: "all 0.3s ease",
-                          "&:hover": {
-                            bgcolor: "#0d9488",
-                          },
-                        }}
-                      />
-                      <Typography variant="caption" sx={{ mt: 1, fontWeight: 600 }}>
-                        {count}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.65rem" }}>
-                        Sem {4 - index}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Stack>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid2>
-
-        {/* Gráfico de Ingresos */}
-        <Grid2 size={{ xs: 12, md: 6 }}>
-          <Card elevation={0} sx={{ border: "1px solid #e5e7eb", height: "100%" }}>
-            <CardContent>
-              <Stack direction="row" spacing={2} alignItems="center" mb={3}>
-                <AttachMoney sx={{ color: "#10b981", fontSize: 28 }} />
+                  <TrendingUp sx={{ fontSize: 24, color: "#14b8a6" }} />
+                </Box>
                 <Box>
                   <Typography variant="h6" fontWeight={700}>
-                    Ingresos por Semana
+                    Estadísticas de Rendimiento
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Últimas 4 semanas
+                    Métricas principales de tu tienda
                   </Typography>
                 </Box>
               </Stack>
 
-              <Box sx={{ position: "relative", height: 200 }}>
-                <Stack
-                  direction="row"
-                  spacing={2}
-                  alignItems="flex-end"
-                  sx={{ height: "100%" }}
-                >
-                  {incomeByWeek.map((income, index) => (
-                    <Box key={index} sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
-                      <Box
-                        sx={{
-                          width: "100%",
-                          height: `${(income / maxIncome) * 160}px`,
-                          bgcolor: "#10b981",
-                          borderRadius: "4px 4px 0 0",
-                          minHeight: income > 0 ? "8px" : "0",
-                          transition: "all 0.3s ease",
-                          "&:hover": {
-                            bgcolor: "#059669",
-                          },
-                        }}
-                      />
-                      <Typography variant="caption" sx={{ mt: 1, fontWeight: 600 }}>
-                        {formatMoney(income)}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.65rem" }}>
-                        Sem {4 - index}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Stack>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid2>
-
-        {/* Gráfico de Estados de Pedidos */}
-        <Grid2 size={{ xs: 12, md: 4 }}>
-          <Card elevation={0} sx={{ border: "1px solid #e5e7eb", height: "100%" }}>
-            <CardContent>
-              <Stack direction="row" spacing={2} alignItems="center" mb={3}>
-                <TrendingUp sx={{ color: "#3b82f6", fontSize: 28 }} />
+              <Stack spacing={4}>
+                {/* Visitas */}
                 <Box>
-                  <Typography variant="h6" fontWeight={700}>
-                    Estado de Pedidos
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Distribución actual
-                  </Typography>
-                </Box>
-              </Stack>
-
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <Visibility sx={{ fontSize: 20, color: "#14b8a6" }} />
+                      <Typography variant="body2" fontWeight={600} color="text.secondary">
+                        Visitas al perfil
+                      </Typography>
+                    </Stack>
+                    <Typography variant="h6" fontWeight={700} color="#14b8a6">
+                      {visits.toLocaleString()}
+                    </Typography>
+                  </Stack>
                   <Box
                     sx={{
-                      width: 12,
+                      width: "100%",
                       height: 12,
-                      borderRadius: "50%",
-                      bgcolor: "#10b981",
-                    }}
-                  />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="caption" fontWeight={600}>
-                      Entregados: {orderStatus.delivered}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Box
-                    sx={{
-                      width: 12,
-                      height: 12,
-                      borderRadius: "50%",
-                      bgcolor: "#3b82f6",
-                    }}
-                  />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="caption" fontWeight={600}>
-                      Enviados: {orderStatus.shipped}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Box
-                    sx={{
-                      width: 12,
-                      height: 12,
-                      borderRadius: "50%",
-                      bgcolor: "#f59e0b",
-                    }}
-                  />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="caption" fontWeight={600}>
-                      Preparando: {orderStatus.preparing}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Box
-                    sx={{
-                      width: 12,
-                      height: 12,
-                      borderRadius: "50%",
-                      bgcolor: "#8b5cf6",
-                    }}
-                  />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="caption" fontWeight={600}>
-                      Confirmados: {orderStatus.confirmed}
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Box
-                    sx={{
-                      width: 12,
-                      height: 12,
-                      borderRadius: "50%",
-                      bgcolor: "#ef4444",
-                    }}
-                  />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="caption" fontWeight={600}>
-                      Pendientes: {orderStatus.pending}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid2>
-
-        {/* Pedidos Recientes */}
-        <Grid2 size={{ xs: 12, md: 8 }}>
-          <Card elevation={0} sx={{ border: "1px solid #e5e7eb", height: "100%" }}>
-            <CardContent>
-              <Stack direction="row" spacing={2} alignItems="center" mb={3}>
-                <Inventory sx={{ color: "#8b5cf6", fontSize: 28 }} />
-                <Box>
-                  <Typography variant="h6" fontWeight={700}>
-                    Pedidos Recientes
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Últimos 5 pedidos
-                  </Typography>
-                </Box>
-              </Stack>
-
-              <Stack spacing={2}>
-                {recentOrders.map((order) => (
-                  <Paper
-                    key={order.id}
-                    elevation={0}
-                    sx={{
-                      p: 2,
-                      border: "1px solid #e5e7eb",
+                      bgcolor: "#f3f4f6",
                       borderRadius: 2,
-                      "&:hover": {
-                        bgcolor: "#f9fafb",
-                      },
+                      overflow: "hidden",
                     }}
                   >
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
-                    >
-                      <Box>
-                        <Typography variant="body2" fontWeight={600}>
-                          {order.clientName}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {order.items.length} producto(s)
-                        </Typography>
-                      </Box>
-                      <Box sx={{ textAlign: "right" }}>
-                        <Typography variant="body2" fontWeight={600} color="#10b981">
-                          {formatMoney(order.totalAmount)}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          {new Date(order.orderDate).toLocaleDateString("es-ES", {
-                            day: "2-digit",
-                            month: "short",
-                          })}
-                        </Typography>
-                        <Box
-                          sx={{
-                            mt: 0.5,
-                            display: "inline-block",
-                            px: 1,
-                            py: 0.25,
-                            borderRadius: 1,
-                            bgcolor:
-                              order.status === "delivered"
-                                ? "#d1fae5"
-                                : order.status === "shipped"
-                                ? "#dbeafe"
-                                : order.status === "preparing"
-                                ? "#fef3c7"
-                                : order.status === "confirmed"
-                                ? "#ede9fe"
-                                : order.status === "pending"
-                                ? "#fee2e2"
-                                : "#fee2e2",
-                            color:
-                              order.status === "delivered"
-                                ? "#065f46"
-                                : order.status === "shipped"
-                                ? "#1e40af"
-                                : order.status === "preparing"
-                                ? "#92400e"
-                                : order.status === "confirmed"
-                                ? "#5b21b6"
-                                : order.status === "pending"
-                                ? "#991b1b"
-                                : "#991b1b",
-                            fontSize: "0.65rem",
-                            fontWeight: 600,
-                          }}
-                        >
-                          {order.status === "delivered"
-                            ? "Entregado"
-                            : order.status === "shipped"
-                            ? "Enviado"
-                            : order.status === "preparing"
-                            ? "Preparando"
-                            : order.status === "confirmed"
-                            ? "Confirmado"
-                            : order.status === "pending"
-                            ? "Pendiente"
-                            : "Cancelado"}
-                        </Box>
-                      </Box>
+                    <Box
+                      sx={{
+                        width: `${(visits / maxValue) * 100}%`,
+                        height: "100%",
+                        bgcolor: "#14b8a6",
+                        borderRadius: 2,
+                        transition: "width 1s ease",
+                      }}
+                    />
+                  </Box>
+                </Box>
+
+                {/* Reseñas */}
+                <Box>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <StarRate sx={{ fontSize: 20, color: "#f59e0b" }} />
+                      <Typography variant="body2" fontWeight={600} color="text.secondary">
+                        Reseñas recibidas
+                      </Typography>
                     </Stack>
-                  </Paper>
-                ))}
+                    <Typography variant="h6" fontWeight={700} color="#f59e0b">
+                      {reviews.toLocaleString()}
+                    </Typography>
+                  </Stack>
+                  <Box
+                    sx={{
+                      width: "100%",
+                      height: 12,
+                      bgcolor: "#f3f4f6",
+                      borderRadius: 2,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: `${(reviews * 100 / maxValue) * 100}%`,
+                        height: "100%",
+                        bgcolor: "#f59e0b",
+                        borderRadius: 2,
+                        transition: "width 1s ease",
+                      }}
+                    />
+                  </Box>
+                </Box>
+
+                {/* Calificación */}
+                <Box>
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <StarRate sx={{ fontSize: 20, color: "#3b82f6" }} />
+                      <Typography variant="body2" fontWeight={600} color="text.secondary">
+                        Calificación promedio
+                      </Typography>
+                    </Stack>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Typography variant="h6" fontWeight={700} color="#3b82f6">
+                        {rating.toFixed(1)}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        / 5.0
+                      </Typography>
+                    </Stack>
+                  </Stack>
+                  <Box
+                    sx={{
+                      width: "100%",
+                      height: 12,
+                      bgcolor: "#f3f4f6",
+                      borderRadius: 2,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: `${(rating / 5) * 100}%`,
+                        height: "100%",
+                        bgcolor: "#3b82f6",
+                        borderRadius: 2,
+                        transition: "width 1s ease",
+                      }}
+                    />
+                  </Box>
+                  <Stack direction="row" spacing={0.5} sx={{ mt: 1 }}>
+                    {[...Array(5)].map((_, i) => (
+                      <StarRate
+                        key={i}
+                        sx={{
+                          fontSize: 18,
+                          color: i < Math.floor(rating) ? "#3b82f6" : "#e5e7eb",
+                        }}
+                      />
+                    ))}
+                  </Stack>
+                </Box>
               </Stack>
             </CardContent>
           </Card>
+        </Grid2>
+
+        {/* Panel Lateral con Resumen */}
+        <Grid2 size={{ xs: 12, lg: 4 }}>
+          <Stack spacing={3}>
+            {/* Tarjeta de Resumen Rápido */}
+            <Card
+              elevation={0}
+              sx={{
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                borderRadius: 3,
+                overflow: "hidden",
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Stack spacing={2}>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 2,
+                      bgcolor: "rgba(255, 255, 255, 0.2)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Inventory sx={{ fontSize: 24, color: "white" }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="h6" fontWeight={700} color="white">
+                      Gestiona tu Catálogo
+                    </Typography>
+                    <Typography variant="body2" color="rgba(255, 255, 255, 0.9)" sx={{ mt: 1 }}>
+                      Agrega y organiza tus productos desde la pestaña "Productos"
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+
+            {/* Tarjeta de Estadísticas Rápidas */}
+            <Card elevation={0} sx={{ border: "1px solid #e5e7eb", borderRadius: 3 }}>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="subtitle2" fontWeight={700} gutterBottom>
+                  Resumen Rápido
+                </Typography>
+                <Stack spacing={2} sx={{ mt: 2 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Total de visitas
+                    </Typography>
+                    <Typography variant="h6" fontWeight={700}>
+                      {visits.toLocaleString()}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Reseñas totales
+                    </Typography>
+                    <Typography variant="h6" fontWeight={700} color="#f59e0b">
+                      {reviews.toLocaleString()}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Satisfacción
+                    </Typography>
+                    <Typography variant="h6" fontWeight={700} color="#3b82f6">
+                      {((rating / 5) * 100).toFixed(0)}%
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Stack>
         </Grid2>
       </Grid2>
     </Box>

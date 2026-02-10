@@ -1,4 +1,4 @@
-import { Visibility, Group, Star, TrendingUp } from "@mui/icons-material";
+import { Visibility, Star, TrendingUp } from "@mui/icons-material";
 import type { LaboratoryDashboard } from "../../domain/LaboratoryDashboard.entity";
 
 interface StatsCardsProps {
@@ -6,8 +6,12 @@ interface StatsCardsProps {
 }
 
 export const StatsCards = ({ data }: StatsCardsProps) => {
+  const visits = data?.visits || 0;
+  const reviews = data?.reviews || 0;
+  const rating = data?.rating || 0;
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {/* Visitas al perfil */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-4">
@@ -16,18 +20,7 @@ export const StatsCards = ({ data }: StatsCardsProps) => {
           </div>
         </div>
         <p className="text-sm text-gray-600 mb-1">Visitas al perfil</p>
-        <p className="text-3xl font-bold text-gray-800">{data.visits}</p>
-      </div>
-
-      {/* Contactos */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-4">
-          <div className="w-12 h-12 bg-teal-50 rounded-lg flex items-center justify-center">
-            <Group className="text-teal-600" />
-          </div>
-        </div>
-        <p className="text-sm text-gray-600 mb-1">Contactos</p>
-        <p className="text-3xl font-bold text-gray-800">{data.contacts}</p>
+        <p className="text-3xl font-bold text-gray-800">{visits}</p>
       </div>
 
       {/* Reseñas */}
@@ -38,7 +31,7 @@ export const StatsCards = ({ data }: StatsCardsProps) => {
           </div>
         </div>
         <p className="text-sm text-gray-600 mb-1">Reseñas</p>
-        <p className="text-3xl font-bold text-gray-800">{data.reviews}</p>
+        <p className="text-3xl font-bold text-gray-800">{reviews}</p>
       </div>
 
       {/* Rating */}
@@ -52,7 +45,7 @@ export const StatsCards = ({ data }: StatsCardsProps) => {
           </div>
         </div>
         <p className="text-sm text-gray-600 mb-1">Rating</p>
-        <p className="text-3xl font-bold text-gray-800">{data.rating}</p>
+        <p className="text-3xl font-bold text-gray-800">{rating}</p>
       </div>
     </div>
   );

@@ -62,7 +62,12 @@ export const SupplyDashboardPage = () => {
   }
 
   return (
-    <DashboardLayout role="PROVIDER" userProfile={userProfile}>
+    <DashboardLayout 
+      role="PROVIDER" 
+      userProfile={userProfile}
+      reviews={data.reviewsList || []}
+      notificationType="reviews"
+    >
       {/* Cards de Estadísticas - Solo mostrar en la pestaña de dashboard */}
       {currentTab === "dashboard" && <StatsCards data={data} />}
 
@@ -80,7 +85,6 @@ export const SupplyDashboardPage = () => {
             </Box>
             <DashboardContent
               visits={data.visits}
-              contacts={data.contacts}
               reviews={data.reviews}
               rating={data.rating}
             />

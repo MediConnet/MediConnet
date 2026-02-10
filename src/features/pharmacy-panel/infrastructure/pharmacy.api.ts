@@ -4,65 +4,142 @@ import type { PharmacyBranch } from '../domain/pharmacy-branch.entity';
 import type { PharmacyReview } from '../domain/pharmacy-review.entity';
 
 // ⭐ Interfaz para la respuesta del backend
-interface BackendPharmacyProfile {
+// ⚠️ Nota: El backend puede variar nombres de campos (snake_case/camelCase o nested chain).
+// Usamos un tipo flexible y normalizamos en el mapper.
+type BackendPharmacyProfile = {
   id: string;
-  full_name: string; // ⭐ Nombre de la cadena si isChainMember === true
+  // Nombres posibles de "nombre comercial"
+  full_name?: string;
+  fullName?: string;
+  commercial_name?: string;
+  commercialName?: string;
+  name?: string;
+
   profile_picture_url?: string | null;
-  ruc: string;
-  description: string; // ⭐ Descripción de la cadena si isChainMember === true
+  profilePictureUrl?: string | null;
+
+  ruc?: string;
+  description?: string;
   website_url?: string;
-  address: string;
-  status: "draft" | "published" | "suspended";
-  whatsapp: string;
+  websiteUrl?: string;
+  address?: string;
+  status?: "draft" | "published" | "suspended" | string;
+  whatsapp?: string;
+
   chain_id?: string | null;
-  is_chain_member?: boolean; // ⭐ Nuevo campo
-  chain_name?: string; // ⭐ Nuevo campo
-  chain_logo?: string; // ⭐ Nuevo campo
-  chain_description?: string; // ⭐ Nuevo campo
+  chainId?: string | null;
+  is_chain_member?: boolean;
+  isChainMember?: boolean;
+  chain_name?: string;
+  chainName?: string;
+  chain_logo?: string;
+  chainLogo?: string;
+  chain_description?: string;
+  chainDescription?: string;
+  chain?: {
+    id?: string;
+    name?: string;
+    logoUrl?: string;
+    logo_url?: string;
+    description?: string;
+  };
+
   location?: {
     latitude: number;
     longitude: number;
     address: string;
   };
-  schedule: WorkSchedule[];
-  stats: {
+
+  schedule?: WorkSchedule[];
+  stats?: {
     profile_views?: number;
     contact_clicks?: number;
     total_reviews?: number;
     average_rating?: number;
+    profileViews?: number;
+    contactClicks?: number;
+    totalReviews?: number;
+    averageRating?: number;
   };
+
   is_active?: boolean;
-}
+  isActive?: boolean;
+};
 
 // ⭐ Función para mapear la respuesta del backend al formato del frontend
 const mapBackendToFrontend = (backend: BackendPharmacyProfile): PharmacyProfile => {
+  const chainId =
+    backend.chain_id ??
+    backend.chainId ??
+    backend.chain?.id ??
+    undefined;
+
+  const chainName =
+    backend.chain_name ??
+    backend.chainName ??
+    backend.chain?.name ??
+    undefined;
+
+  const chainLogo =
+    backend.chain_logo ??
+    backend.chainLogo ??
+    backend.chain?.logoUrl ??
+    backend.chain?.logo_url ??
+    undefined;
+
+  const chainDescription =
+    backend.chain_description ??
+    backend.chainDescription ??
+    backend.chain?.description ??
+    undefined;
+
+  const isChainMember =
+    backend.is_chain_member === true ||
+    backend.isChainMember === true ||
+    !!chainId ||
+    !!chainName;
+
+  const commercialName =
+    backend.full_name ??
+    backend.fullName ??
+    backend.commercial_name ??
+    backend.commercialName ??
+    backend.name ??
+    "";
+
+  const profilePicture =
+    backend.profile_picture_url ??
+    backend.profilePictureUrl ??
+    "";
+
+  const stats = backend.stats ?? {};
+
   return {
     id: backend.id,
-    commercialName: backend.full_name || "", // ⭐ Usar full_name (viene de la cadena si isChainMember)
-    logoUrl: backend.chain_logo || backend.profile_picture_url || "", // ⭐ Priorizar chainLogo
+    commercialName,
+    logoUrl: chainLogo || profilePicture || "",
     ruc: backend.ruc || "",
-    description: backend.chain_description || backend.description || "", // ⭐ Priorizar chainDescription
-    websiteUrl: backend.website_url || "",
+    description: chainDescription || backend.description || "",
+    websiteUrl: backend.website_url ?? backend.websiteUrl ?? "",
     address: backend.address || "",
-    status: backend.status || "draft",
+    status: (backend.status as any) || "draft",
     whatsapp: backend.whatsapp || "",
-    chainId: backend.chain_id || undefined,
-    
-    // ⭐ Nuevos campos
-    isChainMember: backend.is_chain_member || false,
-    chainName: backend.chain_name,
-    chainLogo: backend.chain_logo,
-    chainDescription: backend.chain_description,
-    
+    chainId: chainId || undefined,
+
+    isChainMember,
+    chainName,
+    chainLogo,
+    chainDescription,
+
     location: backend.location,
     schedule: backend.schedule || [],
     stats: {
-      profileViews: backend.stats?.profile_views || 0,
-      contactClicks: backend.stats?.contact_clicks || 0,
-      totalReviews: backend.stats?.total_reviews || 0,
-      averageRating: backend.stats?.average_rating || 0,
+      profileViews: stats.profile_views ?? stats.profileViews ?? 0,
+      contactClicks: stats.contact_clicks ?? stats.contactClicks ?? 0,
+      totalReviews: stats.total_reviews ?? stats.totalReviews ?? 0,
+      averageRating: stats.average_rating ?? stats.averageRating ?? 0,
     },
-    isActive: backend.is_active ?? true,
+    isActive: backend.is_active ?? backend.isActive ?? true,
   };
 };
 

@@ -11,7 +11,7 @@ export const useAmbulanceReviews = () => {
       try {
         setIsLoading(true);
         const data = await getAmbulanceReviewsUseCase();
-        setReviews(data);
+        setReviews(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Error loading reviews:", error);
       } finally {
