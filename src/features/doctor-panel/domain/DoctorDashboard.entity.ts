@@ -4,6 +4,9 @@ export interface WorkSchedule {
   enabled: boolean; // Mapear desde 'is_active'
   startTime: string; // 'HH:mm'
   endTime: string; // 'HH:mm'
+  // Break time (almuerzo). Si no hay almuerzo: ambos null.
+  breakStart?: string | null; // 'HH:mm' | null
+  breakEnd?: string | null;   // 'HH:mm' | null
   timeSlots?: TimeSlot[]; 
   blockedHours?: string[];
 }

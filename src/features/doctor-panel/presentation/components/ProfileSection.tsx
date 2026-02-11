@@ -64,11 +64,13 @@ const MenuProps = {
 
 // Esto define el orden y los días que SIEMPRE deben aparecer en el formulario
 const DEFAULT_SCHEDULE_TEMPLATE: WorkSchedule[] = [
-  { day: "monday", enabled: true, startTime: "09:00", endTime: "17:00" },
-  { day: "tuesday", enabled: true, startTime: "09:00", endTime: "17:00" },
-  { day: "wednesday", enabled: true, startTime: "09:00", endTime: "17:00" },
-  { day: "thursday", enabled: true, startTime: "09:00", endTime: "17:00" },
-  { day: "friday", enabled: true, startTime: "09:00", endTime: "17:00" },
+  { day: "monday", enabled: true, startTime: "09:00", endTime: "17:00", breakStart: null, breakEnd: null },
+  { day: "tuesday", enabled: true, startTime: "09:00", endTime: "17:00", breakStart: null, breakEnd: null },
+  { day: "wednesday", enabled: true, startTime: "09:00", endTime: "17:00", breakStart: null, breakEnd: null },
+  { day: "thursday", enabled: true, startTime: "09:00", endTime: "17:00", breakStart: null, breakEnd: null },
+  { day: "friday", enabled: true, startTime: "09:00", endTime: "17:00", breakStart: null, breakEnd: null },
+  { day: "saturday", enabled: false, startTime: "09:00", endTime: "17:00", breakStart: null, breakEnd: null },
+  { day: "sunday", enabled: false, startTime: "09:00", endTime: "17:00", breakStart: null, breakEnd: null },
 ];
 
 export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
@@ -262,6 +264,46 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const handleSave = async () => {
     if (!user?.id) return;
 
+    // Validación de horario + almuerzo (break time)
+    const timeLessThan = (a: string, b: string) => a < b; // HH:mm funciona lexicográficamente
+    for (const s of formData.workSchedule) {
+      if (!s.enabled) continue;
+
+      if (!s.startTime || !s.endTime) {
+        alert(`Completa el horario de ${dayLabels[s.day] || s.day}`);
+        return;
+      }
+
+      if (!timeLessThan(s.startTime, s.endTime)) {
+        alert(`El horario de ${dayLabels[s.day] || s.day} es inválido: inicio debe ser menor que fin.`);
+        return;
+      }
+
+      const hasBreakStart = Boolean(s.breakStart);
+      const hasBreakEnd = Boolean(s.breakEnd);
+
+      if (hasBreakStart !== hasBreakEnd) {
+        alert(`Almuerzo incompleto en ${dayLabels[s.day] || s.day}: selecciona inicio y fin, o elige "Sin almuerzo".`);
+        return;
+      }
+
+      if (hasBreakStart && hasBreakEnd) {
+        const bs = s.breakStart as string;
+        const be = s.breakEnd as string;
+
+        if (!timeLessThan(bs, be)) {
+          alert(`Almuerzo inválido en ${dayLabels[s.day] || s.day}: inicio debe ser menor que fin.`);
+          return;
+        }
+
+        // Recomendado: break dentro del rango laboral
+        if (!(timeLessThan(s.startTime, bs) && timeLessThan(be, s.endTime))) {
+          alert(`El almuerzo de ${dayLabels[s.day] || s.day} debe estar dentro del horario laboral.`);
+          return;
+        }
+      }
+    }
+
     // 🔍 DEBUG: Ver qué datos se están enviando
     const payload = {
       name: formData.name,
@@ -303,13 +345,30 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
   const handleScheduleChange = (
     day: string,
-    field: "enabled" | "startTime" | "endTime",
-    value: boolean | string,
+    field: "enabled" | "startTime" | "endTime" | "breakStart" | "breakEnd",
+    value: boolean | string | null,
   ) => {
     setFormData((prev) => ({
       ...prev,
       workSchedule: prev.workSchedule.map((schedule: WorkSchedule) =>
-        schedule.day === day ? { ...schedule, [field]: value } : schedule,
+        schedule.day === day
+          ? {
+              ...schedule,
+              [field]:
+                field === "breakStart" || field === "breakEnd"
+                  ? (value === "" ? null : value)
+                  : value,
+            }
+          : schedule,
+      ),
+    }));
+  };
+
+  const handleNoLunch = (day: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      workSchedule: prev.workSchedule.map((s: WorkSchedule) =>
+        s.day === day ? { ...s, breakStart: null, breakEnd: null } : s,
       ),
     }));
   };
@@ -320,6 +379,8 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     wednesday: "Miércoles",
     thursday: "Jueves",
     friday: "Viernes",
+    saturday: "Sábado",
+    sunday: "Domingo",
   };
 
   const handleImageClick = () => {
@@ -884,32 +945,71 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                       </span>
                     </div>
                     {schedule.enabled && (
-                      <div className="flex items-center gap-2 flex-1">
-                        <input
-                          type="time"
-                          value={schedule.startTime}
-                          onChange={(e) =>
-                            handleScheduleChange(
-                              schedule.day,
-                              "startTime",
-                              e.target.value,
-                            )
-                          }
-                          className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                        />
-                        <span className="text-gray-500">-</span>
-                        <input
-                          type="time"
-                          value={schedule.endTime}
-                          onChange={(e) =>
-                            handleScheduleChange(
-                              schedule.day,
-                              "endTime",
-                              e.target.value,
-                            )
-                          }
-                          className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                        />
+                      <div className="flex flex-col gap-2 flex-1">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="time"
+                            value={schedule.startTime}
+                            onChange={(e) =>
+                              handleScheduleChange(
+                                schedule.day,
+                                "startTime",
+                                e.target.value,
+                              )
+                            }
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                          />
+                          <span className="text-gray-500">-</span>
+                          <input
+                            type="time"
+                            value={schedule.endTime}
+                            onChange={(e) =>
+                              handleScheduleChange(
+                                schedule.day,
+                                "endTime",
+                                e.target.value,
+                              )
+                            }
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                          />
+                        </div>
+
+                        {/* Break time / Almuerzo */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500 w-20">Almuerzo</span>
+                          <input
+                            type="time"
+                            value={schedule.breakStart ?? ""}
+                            onChange={(e) =>
+                              handleScheduleChange(
+                                schedule.day,
+                                "breakStart",
+                                e.target.value,
+                              )
+                            }
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                          />
+                          <span className="text-gray-500">-</span>
+                          <input
+                            type="time"
+                            value={schedule.breakEnd ?? ""}
+                            onChange={(e) =>
+                              handleScheduleChange(
+                                schedule.day,
+                                "breakEnd",
+                                e.target.value,
+                              )
+                            }
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleNoLunch(schedule.day)}
+                            className="ml-2 text-xs px-3 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100"
+                          >
+                            Sin almuerzo
+                          </button>
+                        </div>
                       </div>
                     )}
                     {!schedule.enabled && (

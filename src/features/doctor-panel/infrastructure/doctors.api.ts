@@ -6,9 +6,22 @@ import type { DoctorDashboard, PaymentMethod, ProfileStatus, WorkSchedule } from
 interface BackendSchedule {
   day_id: number;
   day: string;
-  start: string; 
-  end: string;   
-  is_active: boolean;
+  // Algunos backends envían timestamps ISO, otros HH:mm
+  start?: string | null;
+  end?: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+
+  // Break time (almuerzo)
+  break_start?: string | null;
+  break_end?: string | null;
+  breakStart?: string | null;
+  breakEnd?: string | null;
+
+  is_active?: boolean;
+  enabled?: boolean;
 }
 
 interface BackendProfileResponse {
@@ -133,6 +146,23 @@ const mapFrontendPaymentsToBackend = (method: PaymentMethod): string[] => {
  */
 const mapBackendScheduleToFrontend = (backendSchedules: BackendSchedule[]): WorkSchedule[] => {
   const safeSchedules = Array.isArray(backendSchedules) ? backendSchedules : [];
+
+  const toHHmm = (value: any, fallback: string | null = null): string | null => {
+    if (value === null || value === undefined || value === "") return fallback;
+    if (typeof value !== "string") return fallback;
+
+    // Ya viene como HH:mm o HH:mm:ss
+    const hhmm = value.match(/^(\d{2}):(\d{2})/);
+    if (hhmm) return `${hhmm[1]}:${hhmm[2]}`;
+
+    // Intentar parsear ISO/timestamp
+    const d = new Date(value);
+    if (!isNaN(d.getTime())) {
+      return d.toISOString().substring(11, 16);
+    }
+
+    return fallback;
+  };
   
   const daysTemplate = [
     { day: "monday", day_id: 1 },
@@ -140,6 +170,8 @@ const mapBackendScheduleToFrontend = (backendSchedules: BackendSchedule[]): Work
     { day: "wednesday", day_id: 3 },
     { day: "thursday", day_id: 4 },
     { day: "friday", day_id: 5 },
+    { day: "saturday", day_id: 6 },
+    { day: "sunday", day_id: 7 },
   ];
 
   return daysTemplate.map(template => {
@@ -150,12 +182,20 @@ const mapBackendScheduleToFrontend = (backendSchedules: BackendSchedule[]): Work
 
     if (found) {
       // CASO A: El día existe en base de datos. Usamos sus datos reales.
+      const enabled = Boolean(found.enabled ?? found.is_active ?? false);
+      const startTime = toHHmm(found.startTime ?? found.start_time ?? found.start, "09:00") || "09:00";
+      const endTime = toHHmm(found.endTime ?? found.end_time ?? found.end, "17:00") || "17:00";
+      const breakStart = toHHmm(found.breakStart ?? found.break_start, null);
+      const breakEnd = toHHmm(found.breakEnd ?? found.break_end, null);
+
       return {
         day: template.day,
         day_id: template.day_id,
-        enabled: found.is_active,
-        startTime: found.start ? new Date(found.start).toISOString().substring(11, 16) : "09:00",
-        endTime: found.end ? new Date(found.end).toISOString().substring(11, 16) : "17:00",
+        enabled,
+        startTime,
+        endTime,
+        breakStart,
+        breakEnd,
       };
     } else {
       // CASO B: El día NO vino del backend (hueco). Lo rellenamos como "Cerrado".
@@ -165,6 +205,8 @@ const mapBackendScheduleToFrontend = (backendSchedules: BackendSchedule[]): Work
         enabled: false, 
         startTime: "09:00",
         endTime: "17:00",
+        breakStart: null,
+        breakEnd: null,
       };
     }
   });
@@ -335,6 +377,22 @@ export const updateDoctorProfileAPI = async (
   }
   if (params.paymentMethods !== undefined) {
     backendPayload.payment_methods = mapFrontendPaymentsToBackend(params.paymentMethods);
+  }
+
+  // ✅ Backend ahora acepta workSchedule (incluye breakStart/breakEnd) por /doctors/profile
+  if (params.workSchedule !== undefined) {
+    backendPayload.workSchedule = params.workSchedule.map((s) => {
+      const hasBreak = Boolean(s.breakStart) && Boolean(s.breakEnd);
+
+      return {
+        day: s.day,
+        enabled: Boolean(s.enabled),
+        startTime: s.enabled ? s.startTime : null,
+        endTime: s.enabled ? s.endTime : null,
+        breakStart: s.enabled && hasBreak ? (s.breakStart as string) : null,
+        breakEnd: s.enabled && hasBreak ? (s.breakEnd as string) : null,
+      };
+    });
   }
   
   // NO enviar workSchedule en el PUT de perfil, se actualiza por separado
