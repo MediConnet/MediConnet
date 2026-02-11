@@ -81,13 +81,20 @@ export const LoginPage = () => {
         });
 
         // 4. Guardar en Zustand (Persistencia automática)
+        const preferredName =
+          (user as any)?.provider?.commercialName ||
+          user.name ||
+          user.email.split("@")[0];
+        const providerId = (user as any)?.provider?.id || null;
+
         login(
           {
             id: user.userId,
             email: user.email,
-            name: user.name || user.email.split("@")[0],
+            name: preferredName,
             role: roleForStore,
             tipo: tipoForStore || null,
+            providerId,
           },
           token,
         );

@@ -60,6 +60,50 @@ export interface UpdateDoctorProfileParams {
   };
 }
 
+// ---------------------------------------------------------------------------
+// REVIEWS (Panel Doctor - autenticado)
+// ---------------------------------------------------------------------------
+
+export interface DoctorReview {
+  id: string;
+  userName?: string;
+  rating: number;
+  comment?: string;
+  createdAt?: string;
+  date?: string;
+}
+
+/**
+ * API: Obtener reseñas del doctor (panel profesional)
+ * Endpoint: GET /api/doctors/reviews
+ * Requiere: Bearer token
+ *
+ * Nota: backend puede responder placeholder con { reviews: [] }.
+ */
+export const getDoctorPanelReviewsAPI = async (): Promise<{
+  reviews: DoctorReview[];
+  averageRating: number;
+  totalReviews: number;
+}> => {
+  const response = await httpClient.get<{
+    success: boolean;
+    data: {
+      reviews: DoctorReview[];
+      averageRating?: number;
+      totalReviews?: number;
+    };
+  }>('/doctors/reviews');
+
+  const data = extractData(response) as any;
+  const reviews = Array.isArray(data?.reviews) ? (data.reviews as DoctorReview[]) : [];
+
+  return {
+    reviews,
+    averageRating: Number(data?.averageRating ?? 0),
+    totalReviews: Number(data?.totalReviews ?? reviews.length),
+  };
+};
+
 // --- HELPER FUNCTIONS (Mappers) ---
 
 /**

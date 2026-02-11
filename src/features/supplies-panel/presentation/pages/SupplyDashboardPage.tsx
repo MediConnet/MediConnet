@@ -34,10 +34,11 @@ export const SupplyDashboardPage = () => {
       .slice(0, 2);
   };
 
+  const displayName = data?.supply?.name || user?.name || "Insumos";
   const userProfile = {
-    name: user?.name || "Insumos Médicos",
+    name: displayName,
     roleLabel: "Insumos Médicos",
-    initials: getInitials(user?.name || "IM"),
+    initials: getInitials(displayName),
     isActive: true,
   };
 

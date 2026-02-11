@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Menu as MenuIcon, Notifications } from "@mui/icons-material";
 import { NotificationsDropdown } from "./NotificationsDropdown";
+import { useAuthStore } from "../../../app/store/auth.store";
 
 export interface UserHeaderProfile {
   name: string;
@@ -14,6 +15,11 @@ interface HeaderProps {
   onMenuToggle: () => void;
   isMenuOpen: boolean;
   notificationsViewAllPath?: string;
+  notificationsVariant?: "legacy" | "professional";
+  agendaPath?: string;
+  reviewsPath?: string;
+  reviewsCount?: number;
+  enableReviewAlerts?: boolean;
   appointments?: Array<{
     id: string;
     patientName: string;
@@ -44,6 +50,11 @@ export const Header = ({
   onMenuToggle,
   isMenuOpen,
   notificationsViewAllPath,
+  notificationsVariant = "legacy",
+  agendaPath,
+  reviewsPath,
+  reviewsCount = 0,
+  enableReviewAlerts = true,
   appointments = [],
   orders = [],
   reviews = [],
@@ -51,6 +62,7 @@ export const Header = ({
 }: HeaderProps) => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [viewedNotifications, setViewedNotifications] = useState<Set<string>>(new Set());
+  const { user: authUser } = useAuthStore();
 
   // Validar que user existe, si no, usar valores por defecto
   const safeUser = user || {
@@ -62,6 +74,9 @@ export const Header = ({
 
   // Cargar notificaciones vistas desde localStorage y limpiar las de días anteriores
   useEffect(() => {
+    // Variante profesional: no usar el sistema legacy de "vistas" por día.
+    if (notificationsVariant === "professional") return;
+
     const saved = localStorage.getItem(`viewed-notifications-${notificationType}`);
     const today = new Date().toISOString().split("T")[0];
     
@@ -103,6 +118,8 @@ export const Header = ({
   
   // Filtrar notificaciones no vistas
   const unreadNotifications = useMemo(() => {
+    if (notificationsVariant === "professional") return [];
+
     if (notificationType === "reviews") {
       const todayReviews = reviews.filter((review) => review.date === today);
       return todayReviews.filter((review) => !viewedNotifications.has(review.id));
@@ -115,7 +132,29 @@ export const Header = ({
     }
   }, [appointments, orders, reviews, today, notificationType, viewedNotifications]);
 
-  const notificationCount = unreadNotifications.length;
+  // Conteo de badge: legacy = no leídas, professional = agendaItems + nuevas reseñas
+  const lastSeenReviewsKey = useMemo(() => {
+    const id = authUser?.id || authUser?.email || safeUser.name;
+    return `last-seen-reviews-count-${id}`;
+  }, [authUser?.id, authUser?.email, safeUser.name]);
+
+  const lastSeenReviewsCount = useMemo(() => {
+    try {
+      const raw = localStorage.getItem(lastSeenReviewsKey);
+      return raw ? Number(raw) : 0;
+    } catch {
+      return 0;
+    }
+  }, [lastSeenReviewsKey]);
+
+  const newReviewsCount = enableReviewAlerts
+    ? Math.max(0, Number(reviewsCount || 0) - Number(lastSeenReviewsCount || 0))
+    : 0;
+
+  const notificationCount =
+    notificationsVariant === "professional"
+      ? (appointments?.length || 0) + newReviewsCount
+      : unreadNotifications.length;
 
   // Separar notificaciones no vistas por tipo
   const unreadAppointments = notificationType === "appointments" 
@@ -135,6 +174,8 @@ export const Header = ({
 
   // Función para marcar todas las notificaciones como leídas manualmente
   const handleMarkAllAsRead = () => {
+    if (notificationsVariant === "professional") return;
+
     const todayItems = notificationType === "reviews"
       ? reviews.filter((review) => review.date === today)
       : notificationType === "orders"
@@ -150,6 +191,14 @@ export const Header = ({
       `viewed-notifications-${notificationType}`,
       JSON.stringify(Array.from(newViewed))
     );
+  };
+
+  const acknowledgeReviews = () => {
+    try {
+      localStorage.setItem(lastSeenReviewsKey, String(reviewsCount || 0));
+    } catch {
+      // ignore
+    }
   };
 
   return (
@@ -192,13 +241,37 @@ export const Header = ({
           <NotificationsDropdown
             open={notificationsOpen}
             onClose={() => setNotificationsOpen(false)}
-            appointments={notificationType === "appointments" ? appointments.filter((apt) => apt.date === today) : []}
-            orders={notificationType === "orders" ? orders.filter((order) => order.orderDate === today) : []}
-            reviews={notificationType === "reviews" ? reviews : []}
+            variant={notificationsVariant}
+            appointments={
+              notificationsVariant === "professional"
+                ? appointments
+                : notificationType === "appointments"
+                ? appointments.filter((apt) => apt.date === today)
+                : []
+            }
+            orders={
+              notificationsVariant === "professional"
+                ? []
+                : notificationType === "orders"
+                ? orders.filter((order) => order.orderDate === today)
+                : []
+            }
+            reviews={
+              notificationsVariant === "professional"
+                ? []
+                : notificationType === "reviews"
+                ? reviews
+                : []
+            }
             notificationType={notificationType}
             viewedNotifications={viewedNotifications}
             onMarkAllAsRead={handleMarkAllAsRead}
             viewAllPath={notificationsViewAllPath}
+            agendaPath={agendaPath}
+            reviewsPath={reviewsPath}
+            newReviewsCount={newReviewsCount}
+            showReviewsSection={enableReviewAlerts}
+            onAcknowledgeReviews={acknowledgeReviews}
           />
         </div>
 

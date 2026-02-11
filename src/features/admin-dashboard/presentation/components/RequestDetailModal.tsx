@@ -40,6 +40,11 @@ export const RequestDetailModal = ({
 }: Props) => {
   if (!request) return null;
 
+  const handleDownload = (url?: string) => {
+    if (!url) return;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <Dialog
       open={open}
@@ -207,47 +212,65 @@ export const RequestDetailModal = ({
             Documentos Adjuntos ({request.documents.length})
           </Typography>
 
-          <Grid2 container spacing={2}>
-            {request.documents.map((doc) => (
-              <Grid2 size={{ xs: 12, sm: 6 }} key={doc.id}>
-                <Paper
-                  variant="outlined"
-                  sx={{
-                    p: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 2,
-                    borderRadius: 2,
-                  }}
-                >
-                  <Box
+          {request.documents.length === 0 ? (
+            <Paper
+              variant="outlined"
+              sx={{ p: 2, borderRadius: 2, bgcolor: "grey.50" }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                No hay documentos adjuntos en esta solicitud.
+              </Typography>
+            </Paper>
+          ) : (
+            <Grid2 container spacing={2}>
+              {request.documents.map((doc) => (
+                <Grid2 size={{ xs: 12, sm: 6 }} key={doc.id}>
+                  <Paper
+                    variant="outlined"
                     sx={{
-                      color: doc.type === "pdf" ? "error.main" : "primary.main",
+                      p: 2,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                      borderRadius: 2,
                     }}
                   >
-                    {doc.type === "pdf" ? <PictureAsPdf /> : <ImageIcon />}
-                  </Box>
-
-                  <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
-                    <Typography variant="body1" noWrap fontWeight={500}>
-                      {doc.name}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ textTransform: "uppercase" }}
+                    <Box
+                      sx={{
+                        color:
+                          doc.type === "pdf" ? "error.main" : "primary.main",
+                      }}
                     >
-                      {doc.type}
-                    </Typography>
-                  </Box>
+                      {doc.type === "pdf" ? <PictureAsPdf /> : <ImageIcon />}
+                    </Box>
 
-                  <IconButton size="small" color="primary">
-                    <Download fontSize="small" />
-                  </IconButton>
-                </Paper>
-              </Grid2>
-            ))}
-          </Grid2>
+                    <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
+                      <Typography variant="body1" noWrap fontWeight={500}>
+                        {doc.name}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ textTransform: "uppercase" }}
+                      >
+                        {doc.type}
+                      </Typography>
+                    </Box>
+
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      onClick={() => handleDownload(doc.url)}
+                      disabled={!doc.url}
+                      title={doc.url ? "Descargar" : "URL no disponible"}
+                    >
+                      <Download fontSize="small" />
+                    </IconButton>
+                  </Paper>
+                </Grid2>
+              ))}
+            </Grid2>
+          )}
         </Box>
       </DialogContent>
 

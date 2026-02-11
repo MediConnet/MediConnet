@@ -8,6 +8,11 @@ interface DashboardLayoutProps {
   role: UserRole;
   userProfile: UserHeaderProfile;
   notificationsViewAllPath?: string;
+  notificationsVariant?: "legacy" | "professional";
+  agendaPath?: string;
+  reviewsPath?: string;
+  reviewsCount?: number;
+  enableReviewAlerts?: boolean;
   appointments?: Array<{
     id: string;
     patientName: string;
@@ -39,6 +44,11 @@ export const DashboardLayout = ({
   role,
   userProfile,
   notificationsViewAllPath,
+  notificationsVariant = "legacy",
+  agendaPath,
+  reviewsPath,
+  reviewsCount = 0,
+  enableReviewAlerts = true,
   appointments = [],
   orders = [],
   reviews = [],
@@ -61,6 +71,11 @@ export const DashboardLayout = ({
           user={userProfile}
           isMenuOpen={isSidebarOpen}
           onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+          notificationsVariant={notificationsVariant}
+          agendaPath={agendaPath}
+          reviewsPath={reviewsPath}
+          reviewsCount={reviewsCount}
+          enableReviewAlerts={enableReviewAlerts}
           appointments={appointments}
           orders={orders}
           reviews={reviews}

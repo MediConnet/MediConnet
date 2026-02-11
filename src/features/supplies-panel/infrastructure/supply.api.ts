@@ -2,6 +2,18 @@ import { httpClient, extractData } from '../../../shared/lib/http';
 import type { SupplyStore } from '../domain/SupplyStore.entity';
 import type { Review } from '../domain/Review.entity';
 
+export interface SupplyProfile {
+  id: string;
+  name: string;
+  description: string;
+  phone: string;
+  whatsapp: string;
+  address: string;
+  schedule: string;
+  logoUrl?: string | null;
+  isActive: boolean;
+}
+
 /**
  * API: Obtener lista de tiendas de insumos
  * Endpoint: GET /api/supplies
@@ -64,6 +76,33 @@ export const createReviewAPI = async (params: { supplyStoreId: string; rating: n
   const response = await httpClient.post<{ success: boolean; data: Review }>(
     `/supplies/${params.supplyStoreId}/reviews`,
     { rating: params.rating, comment: params.comment }
+  );
+  return extractData(response);
+};
+
+/**
+ * API: Obtener perfil del proveedor de insumos (panel autenticado)
+ * Endpoint: GET /api/supplies/profile
+ * Requiere: Bearer token
+ */
+export const getSupplyProfileAPI = async (): Promise<SupplyProfile> => {
+  const response = await httpClient.get<{ success: boolean; data: SupplyProfile }>(
+    '/supplies/profile'
+  );
+  return extractData(response);
+};
+
+/**
+ * API: Actualizar perfil del proveedor de insumos (panel autenticado)
+ * Endpoint: PUT /api/supplies/profile
+ * Requiere: Bearer token
+ */
+export const updateSupplyProfileAPI = async (
+  profile: Partial<SupplyProfile>
+): Promise<SupplyProfile> => {
+  const response = await httpClient.put<{ success: boolean; data: SupplyProfile }>(
+    '/supplies/profile',
+    profile
   );
   return extractData(response);
 };

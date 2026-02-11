@@ -33,7 +33,7 @@ import {
 } from "@mui/material";
 import { useState, useEffect, useRef } from "react";
 import { 
-  getProductsAPI, 
+  getSupplyPanelProductsWithFallbackAPI,
   createProductAPI, 
   updateProductAPI, 
   deleteProductAPI 
@@ -72,7 +72,7 @@ export const ProductsSection = () => {
   // Cargar productos al montar el componente
   useEffect(() => {
     loadProducts();
-  }, [user?.id]);
+  }, [user?.providerId]);
 
   const loadProducts = async () => {
     if (!user?.id) {
@@ -83,26 +83,13 @@ export const ProductsSection = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      // Intentar cargar del backend
-      try {
-        const data = await getProductsAPI(user.id);
-        setProducts(data);
-        // Guardar en localStorage como backup
-        localStorage.setItem(`products-${user.id}`, JSON.stringify(data));
-      } catch (backendError) {
-        console.warn('Backend no disponible, usando localStorage');
-        // Si falla, cargar de localStorage
-        const saved = localStorage.getItem(`products-${user.id}`);
-        if (saved) {
-          setProducts(JSON.parse(saved));
-        } else {
-          setProducts([]);
-        }
-      }
+
+      // ✅ 100%: no usar localStorage como “BD” ni mostrar DEMO
+      const data = await getSupplyPanelProductsWithFallbackAPI(user?.providerId);
+      setProducts(Array.isArray(data) ? data : []);
     } catch (err: any) {
       console.error('Error loading products:', err);
-      setError(null); // No mostrar error, solo usar datos vacíos
+      setError(err?.message || 'No se pudo cargar productos');
       setProducts([]);
     } finally {
       setLoading(false);
@@ -216,8 +203,6 @@ export const ProductsSection = () => {
       }
 
       setProducts(updatedProducts);
-      // Guardar en localStorage
-      localStorage.setItem(`products-${user.id}`, JSON.stringify(updatedProducts));
       handleCloseModal();
     } catch (err: any) {
       console.error('Error saving product:', err);
@@ -239,13 +224,12 @@ export const ProductsSection = () => {
       try {
         await deleteProductAPI(productId);
       } catch (backendError) {
-        console.warn('Backend no disponible, eliminando de localStorage');
+        // Si el backend falla, no inventar persistencia local
+        throw backendError;
       }
       
       const updatedProducts = products.filter(p => p.id !== productId);
       setProducts(updatedProducts);
-      // Actualizar localStorage
-      localStorage.setItem(`products-${user.id}`, JSON.stringify(updatedProducts));
     } catch (err: any) {
       console.error('Error deleting product:', err);
       setError(err.message || 'Error al eliminar producto');

@@ -38,6 +38,78 @@ export const getProductsAPI = async (storeId: string): Promise<Product[]> => {
 };
 
 /**
+ * API: Obtener productos del panel de insumos (proveedor autenticado)
+ * Endpoint esperado: GET /api/supplies/products
+ *
+ * Nota: Si el backend aún no expone este endpoint, se puede usar como fallback
+ * `getProductsAPI(storeId)` (vista por storeId).
+ */
+export const getSupplyPanelProductsAPI = async (): Promise<Product[]> => {
+  const response = await httpClient.get<{ success: boolean; data: any }>(
+    '/supplies/products'
+  );
+  const data = extractData(response) as any;
+
+  // Backend puede devolver: Product[] | { products: Product[] } | { items: Product[] }
+  const rawProducts: any[] = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.products)
+    ? data.products
+    : Array.isArray(data?.items)
+    ? data.items
+    : [];
+
+  // Si ya viene en formato Product, retornarlo. Si viene tipo backend, mapear.
+  return rawProducts.map((p: any) => {
+    // Heurística: si tiene `category` ya es frontend
+    if (p && typeof p === 'object' && 'category' in p) {
+      return {
+        id: p.id,
+        name: p.name,
+        description: p.description || '',
+        category: p.category,
+        price: Number(p.price) || 0,
+        stock: Number(p.stock) || 0,
+        image: p.image,
+        isActive: p.isActive !== false,
+        createdAt: p.createdAt || new Date().toISOString(),
+        updatedAt: p.updatedAt || new Date().toISOString(),
+      } as Product;
+    }
+
+    // Backend-like
+    return {
+      id: p.id,
+      name: p.name,
+      description: p.description || '',
+      category: p.type || p.category || 'Otros',
+      price: Number(p.price) || 0,
+      stock: Number(p.stock) || 0,
+      image: p.imageUrl || p.image,
+      isActive: p.isActive !== false,
+      createdAt: p.createdAt || new Date().toISOString(),
+      updatedAt: p.updatedAt || new Date().toISOString(),
+    } as Product;
+  });
+};
+
+/**
+ * Helper: Obtener productos para panel, con fallback por storeId si el endpoint panel aún no existe.
+ */
+export const getSupplyPanelProductsWithFallbackAPI = async (
+  storeId?: string | null
+): Promise<Product[]> => {
+  try {
+    return await getSupplyPanelProductsAPI();
+  } catch (e) {
+    if (storeId) {
+      return await getProductsAPI(storeId);
+    }
+    throw e;
+  }
+};
+
+/**
  * API: Obtener un producto específico por ID
  * Endpoint: GET /api/supplies/:storeId
  * 

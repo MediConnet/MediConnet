@@ -1,80 +1,32 @@
-import { Star } from "@mui/icons-material";
-
-// Función para obtener fechas recientes
-const getRecentDate = (daysAgo: number) => {
-  const today = new Date();
-  today.setDate(today.getDate() - daysAgo);
-  return today.toISOString().split("T")[0];
-};
-
-// Mock data para reseñas
-const mockReviews = [
-  {
-    id: "1",
-    name: "María García",
-    rating: 5,
-    comment: "Excelente doctor, muy profesional y atento. Me explicó todo con detalle.",
-    date: getRecentDate(2),
-  },
-  {
-    id: "2",
-    name: "Juan López",
-    rating: 4,
-    comment: "Buena atención, un poco de espera pero valió la pena. Muy recomendado.",
-    date: getRecentDate(5),
-  },
-  {
-    id: "3",
-    name: "Ana Martínez",
-    rating: 5,
-    comment: "Lo recomiendo ampliamente, muy dedicado y conocedor.",
-    date: getRecentDate(8),
-  },
-  {
-    id: "4",
-    name: "Carlos Rodríguez",
-    rating: 5,
-    comment: "Muy satisfecho con la atención. El doctor fue muy claro en el diagnóstico y tratamiento.",
-    date: getRecentDate(12),
-  },
-  {
-    id: "5",
-    name: "Laura Sánchez",
-    rating: 4,
-    comment: "Buen servicio, aunque la espera fue un poco larga. Pero la consulta fue muy completa.",
-    date: getRecentDate(15),
-  },
-  {
-    id: "6",
-    name: "Pedro González",
-    rating: 5,
-    comment: "Excelente profesional. Muy empático y con gran conocimiento. Definitivamente volveré.",
-    date: getRecentDate(18),
-  },
-  {
-    id: "7",
-    name: "Sofía Ramírez",
-    rating: 5,
-    comment: "El mejor doctor que he visitado. Muy profesional y atento a los detalles.",
-    date: getRecentDate(22),
-  },
-  {
-    id: "8",
-    name: "Roberto Fernández",
-    rating: 4,
-    comment: "Buena atención médica. El doctor explicó todo muy bien y me sentí en confianza.",
-    date: getRecentDate(25),
-  },
-  {
-    id: "9",
-    name: "Carmen Torres",
-    rating: 5,
-    comment: "Muy recomendado. Atención de calidad y muy profesional.",
-    date: getRecentDate(30),
-  },
-];
+import { Star, RateReview } from "@mui/icons-material";
+import { Box, Typography, CircularProgress, Alert } from "@mui/material";
+import { useDoctorReviews } from "../hooks/useDoctorReviews";
 
 export const ReviewsSection = () => {
+  const { data, isLoading, error } = useDoctorReviews();
+
+  if (isLoading) {
+    return (
+      <Box className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex justify-center items-center min-h-[200px]">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <Alert severity="error">
+          Error al cargar las reseñas. Por favor, intenta de nuevo más tarde.
+        </Alert>
+      </Box>
+    );
+  }
+
+  const reviews = data?.reviews || [];
+  const averageRating = data?.averageRating || 0;
+  const totalReviews = data?.totalReviews || 0;
+
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
       <div className="mb-4">
@@ -84,34 +36,68 @@ export const ReviewsSection = () => {
         </p>
       </div>
 
-      <div className="space-y-4">
-        {mockReviews.map((review) => (
-          <div
-            key={review.id}
-            className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
-          >
-            <div className="flex items-start justify-between mb-2">
-              <div>
-                <p className="font-medium text-gray-800">{review.name}</p>
-                <div className="flex items-center gap-1 mt-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      className={`text-sm ${
-                        star <= review.rating
-                          ? "text-yellow-400 fill-current"
-                          : "text-gray-300"
-                      }`}
-                    />
-                  ))}
-                </div>
+      {reviews.length === 0 ? (
+        <Box className="text-center py-12">
+          <RateReview className="text-gray-300" sx={{ fontSize: 64 }} />
+          <Typography variant="h6" color="text.secondary" sx={{ mt: 2 }}>
+            Aún no tienes reseñas
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Las reseñas de tus pacientes aparecerán aquí
+          </Typography>
+        </Box>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-center justify-end mb-2">
+            <div className="text-right">
+              <div className="flex items-center gap-2 justify-end">
+                <Star className="text-yellow-400 fill-current" />
+                <span className="text-2xl font-bold text-gray-800">
+                  {averageRating.toFixed(1)}
+                </span>
               </div>
-              <span className="text-xs text-gray-500">{review.date}</span>
+              <p className="text-sm text-gray-500 mt-1">
+                {totalReviews} {totalReviews === 1 ? "reseña" : "reseñas"}
+              </p>
             </div>
-            <p className="text-sm text-gray-700 mt-2">{review.comment}</p>
           </div>
-        ))}
-      </div>
+
+          {reviews.map((review) => (
+            <div
+              key={review.id}
+              className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
+            >
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <p className="font-medium text-gray-800">
+                    {review.userName || "Usuario"}
+                  </p>
+                  <div className="flex items-center gap-1 mt-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`text-sm ${
+                          star <= review.rating
+                            ? "text-yellow-400 fill-current"
+                            : "text-gray-300"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <span className="text-xs text-gray-500">
+                  {new Date(
+                    review.createdAt || review.date || Date.now(),
+                  ).toLocaleDateString("es-MX")}
+                </span>
+              </div>
+              {review.comment && (
+                <p className="text-sm text-gray-700 mt-2">{review.comment}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

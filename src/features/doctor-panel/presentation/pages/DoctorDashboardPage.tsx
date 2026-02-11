@@ -203,6 +203,10 @@ export const DoctorDashboardPage = () => {
       role="PROVIDER"
       userProfile={userProfile}
       appointments={sidebarAppointments}
+      notificationsVariant="professional"
+      agendaPath="/doctor/dashboard?tab=appointments"
+      reviewsPath="/doctor/dashboard?tab=reviews"
+      reviewsCount={displayData?.reviews || 0}
       menuItems={menuItems}
     >
       {/* Cards de Estadísticas - Solo mostrar en la pestaña de dashboard */}

@@ -22,6 +22,7 @@ import Grid2 from "@mui/material/Grid2";
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../../../../app/store/auth.store";
 import type { SupplyDashboard } from "../../domain/SupplyDashboard.entity";
+import { updateSupplyProfileAPI } from "../../infrastructure/supply.api";
 
 interface ProfileSectionProps {
   data: SupplyDashboard;
@@ -49,19 +50,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
         description: data.supply.description,
         isActive: data.supply.isActive !== false,
       });
+      setProfileImage(data.supply.logoUrl || null);
     }
   }, [data]);
-
-  useEffect(() => {
-    if (user?.id) {
-      const savedImage = localStorage.getItem(
-        `supply-profile-image-${user.id}`
-      );
-      if (savedImage) {
-        setProfileImage(savedImage);
-      }
-    }
-  }, [user?.id]);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -81,24 +72,40 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const handleSave = async () => {
     if (!user?.id) return;
 
-    const updatedData: SupplyDashboard = {
-      ...data,
-      supply: {
-        ...data.supply,
+    try {
+      // ✅ 100%: persistir en backend
+      const saved = await updateSupplyProfileAPI({
         name: formData.name,
         description: formData.description,
         isActive: formData.isActive,
-      },
-    };
+        logoUrl: profileImage,
+        // mantener campos existentes si el backend requiere body completo
+        address: data?.supply?.address || "",
+        phone: data?.supply?.phone || "",
+        whatsapp: data?.supply?.whatsapp || "",
+        schedule: data?.supply?.schedule || "",
+      });
 
-    localStorage.setItem(
-      `supply-profile-${user.id}`,
-      JSON.stringify(updatedData)
-    );
+      const updatedData: SupplyDashboard = {
+        ...data,
+        supply: {
+          ...data.supply,
+          name: saved.name,
+          description: saved.description,
+          isActive: saved.isActive,
+          address: saved.address,
+          phone: saved.phone,
+          whatsapp: saved.whatsapp,
+          schedule: saved.schedule,
+          logoUrl: saved.logoUrl ?? null,
+        },
+      };
 
-    setIsEditing(false);
-    if (onUpdate) {
-      onUpdate(updatedData);
+      setIsEditing(false);
+      if (onUpdate) onUpdate(updatedData);
+    } catch (e: any) {
+      console.error("Error updating supply profile:", e);
+      alert(e?.message || "No se pudo guardar el perfil. Intenta de nuevo.");
     }
   };
 
@@ -125,9 +132,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
       reader.onloadend = () => {
         const base64String = reader.result as string;
         setProfileImage(base64String);
-        if (user?.id) {
-          localStorage.setItem(`supply-profile-image-${user.id}`, base64String);
-        }
       };
       reader.readAsDataURL(file);
     }

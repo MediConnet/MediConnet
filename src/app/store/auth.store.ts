@@ -8,6 +8,7 @@ interface User {
   name: string;
   role: string;
   tipo?: string | null;
+  providerId?: string | null;
 }
 
 interface AuthState {

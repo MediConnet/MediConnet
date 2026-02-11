@@ -1,4 +1,5 @@
 import { Box, Typography, CircularProgress } from "@mui/material";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuthStore } from "../../../../app/store/auth.store";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
@@ -13,6 +14,8 @@ import { SchedulesSection } from "../components/SchedulesSection";
 import { ClinicPaymentsSection } from "../components/ClinicPaymentsSection";
 import { BankAccountPage } from "./BankAccountPage";
 import { ConsultationPricesPage } from "./ConsultationPricesPage";
+import { getClinicAppointmentsUseCase } from "../../application/get-clinic-appointments.usecase";
+import type { ClinicAppointment } from "../../domain/appointment.entity";
 
 type TabType =
   | "dashboard"
@@ -77,6 +80,43 @@ export const ClinicDashboardPage = () => {
   const displayData = data || defaultData;
   const clinic = displayData.clinic || defaultClinicProfile;
 
+  // ---------------------------------------------------------------------------
+  // Notificaciones: Agenda Centralizada (hoy) para el dropdown profesional
+  // ---------------------------------------------------------------------------
+  const today = useMemo(() => new Date().toISOString().split("T")[0], []);
+  const [agendaAppointments, setAgendaAppointments] = useState<ClinicAppointment[]>([]);
+
+  useEffect(() => {
+    const loadAgendaNotifications = async () => {
+      try {
+        if (!clinic?.id) return;
+        const appts = await getClinicAppointmentsUseCase(clinic.id, today);
+        setAgendaAppointments(Array.isArray(appts) ? appts : []);
+      } catch (e) {
+        // No bloquear UI por notificaciones
+        setAgendaAppointments([]);
+      }
+    };
+
+    loadAgendaNotifications();
+  }, [clinic?.id, today]);
+
+  const notificationAppointments = useMemo(
+    () =>
+      agendaAppointments
+        .slice()
+        .sort((a, b) => a.time.localeCompare(b.time))
+        .slice(0, 10)
+        .map((a) => ({
+          id: a.id,
+          patientName: a.patientName,
+          date: a.date,
+          time: a.time,
+          reason: a.reason || "Cita",
+        })),
+    [agendaAppointments],
+  );
+
   const userProfile = {
     name: user?.name || "Administrador",
     roleLabel: clinic.name || "Clínica",
@@ -86,7 +126,13 @@ export const ClinicDashboardPage = () => {
 
   if (loading) {
     return (
-      <DashboardLayout role="PROVIDER" userProfile={userProfile} appointments={[]}>
+      <DashboardLayout
+        role="PROVIDER"
+        userProfile={userProfile}
+        notificationsVariant="professional"
+        agendaPath="/clinic/dashboard?tab=appointments"
+        appointments={[]}
+      >
         <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
           <CircularProgress />
         </Box>
@@ -97,7 +143,13 @@ export const ClinicDashboardPage = () => {
   // Mostrar error solo si hay un error real, no si simplemente no hay datos
   if (error && !data) {
     return (
-      <DashboardLayout role="PROVIDER" userProfile={userProfile} appointments={[]}>
+      <DashboardLayout
+        role="PROVIDER"
+        userProfile={userProfile}
+        notificationsVariant="professional"
+        agendaPath="/clinic/dashboard?tab=appointments"
+        appointments={[]}
+      >
         <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
           <Typography color="error">Error al cargar el dashboard: {error.message}</Typography>
         </Box>
@@ -106,7 +158,14 @@ export const ClinicDashboardPage = () => {
   }
 
   return (
-    <DashboardLayout role="PROVIDER" userProfile={userProfile} appointments={[]}>
+    <DashboardLayout
+      role="PROVIDER"
+      userProfile={userProfile}
+      notificationsVariant="professional"
+      agendaPath="/clinic/dashboard?tab=appointments"
+      appointments={notificationAppointments}
+      enableReviewAlerts={false}
+    >
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
         {currentTab === "dashboard" && (
           <>

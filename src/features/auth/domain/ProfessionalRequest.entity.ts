@@ -1,5 +1,6 @@
 export interface ProfessionalRequest {
   type: "doctor" | "pharmacy" | "lab" | "ambulance" | "supplies" | "clinic";
+  // Puede venir como nombre completo o razón social/representante según el tipo
   name: string;
   email: string;
   password: string;
@@ -17,7 +18,12 @@ export interface ProfessionalRequest {
   
   // Opcionales según el tipo
   chainId?: string;   // Solo para farmacias
-  specialty?: string; // Solo para doctores
+  // Doctor
+  specialties?: string[]; // ids de especialidades
+  yearsOfExperience?: string;
+  firstName?: string;
+  lastName?: string;
+  role?: string;
   
   // Archivos (Se envían al backend para subir a S3/Local)
   files?: {

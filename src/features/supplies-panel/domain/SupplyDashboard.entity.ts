@@ -13,10 +13,12 @@ export interface SupplyDashboard {
   supply: {
     name: string;
     email: string;
+    phone?: string;
     whatsapp: string;
     address: string;
     description: string;
     schedule: string;
+    logoUrl?: string | null;
     workSchedule?: WorkSchedule[]; // Horario laboral de lunes a viernes
     isActive?: boolean; // Estado del servicio: Activo / Inactivo
   };

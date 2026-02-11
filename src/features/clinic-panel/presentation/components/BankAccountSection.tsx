@@ -72,7 +72,8 @@ export const BankAccountSection = ({ clinicId, bankAccount, onUpdate }: BankAcco
     initialValues: {
       bankName: bankAccount?.bankName || '',
       accountNumber: bankAccount?.accountNumber || '',
-      accountType: bankAccount?.accountType || 'checking',
+      // Si no hay datos aún, mantener vacío para que el usuario seleccione explícitamente.
+      accountType: bankAccount?.accountType || '',
       accountHolder: bankAccount?.accountHolder || '',
       identificationNumber: bankAccount?.identificationNumber || '',
     },
@@ -101,6 +102,9 @@ export const BankAccountSection = ({ clinicId, bankAccount, onUpdate }: BankAcco
         accountHolder: bankAccount.accountHolder,
         identificationNumber: bankAccount.identificationNumber || '',
       });
+    } else {
+      // Asegura que al agregar por primera vez se abra siempre limpio
+      formik.resetForm();
     }
     setDialogOpen(true);
   };
@@ -259,6 +263,9 @@ export const BankAccountSection = ({ clinicId, bankAccount, onUpdate }: BankAcco
                   error={formik.touched.accountType && Boolean(formik.errors.accountType)}
                   label="Tipo de Cuenta *"
                 >
+                  <MenuItem value="" disabled>
+                    Selecciona un tipo
+                  </MenuItem>
                   <MenuItem value="checking">Corriente</MenuItem>
                   <MenuItem value="savings">Ahorros</MenuItem>
                 </Select>

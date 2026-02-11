@@ -1,5 +1,5 @@
 import { Box } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BankAccountSection } from '../components/BankAccountSection';
 import type { BankAccount } from '../../domain/clinic.entity';
 
@@ -8,14 +8,22 @@ interface BankAccountPageProps {
 }
 
 export const BankAccountPage = ({ clinicId }: BankAccountPageProps) => {
-  // Mock de cuenta bancaria (en producción vendría del backend)
-  const [bankAccount, setBankAccount] = useState<BankAccount | undefined>({
-    bankName: 'Banco Pichincha',
-    accountNumber: '2100123456789',
-    accountType: 'checking',
-    accountHolder: 'Clínica Central S.A.',
-    identificationNumber: '1792345678001',
-  });
+  // Inicia vacío: si es una clínica nueva, no debe mostrar datos precargados.
+  // Si existen datos guardados (mock), se cargan desde localStorage.
+  const [bankAccount, setBankAccount] = useState<BankAccount | undefined>(undefined);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`clinic_bank_account_${clinicId}`);
+      if (saved) {
+        setBankAccount(JSON.parse(saved) as BankAccount);
+      } else {
+        setBankAccount(undefined);
+      }
+    } catch {
+      setBankAccount(undefined);
+    }
+  }, [clinicId]);
 
   const handleUpdateBankAccount = async (newBankAccount: BankAccount) => {
     try {
