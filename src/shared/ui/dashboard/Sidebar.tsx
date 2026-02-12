@@ -40,19 +40,22 @@ export const Sidebar = ({ role, isOpen, menuItems: customMenuItems }: SidebarPro
       {/* ... LOGO ... */}
       <div
         className={`h-20 flex items-center ${
-          isOpen ? "px-6 gap-2" : "justify-center px-0"
+          isOpen ? "px-6 gap-3" : "justify-center px-0"
         }`}
       >
-        <div className="bg-teal-500 p-2 rounded-lg shrink-0">
-          <span className="text-white font-bold text-xl">M</span>
-        </div>
+        <img 
+          src="/src/assets/docalink-logo.png" 
+          alt="DOCALINK"
+          className="shrink-0 object-contain"
+          style={{ width: isOpen ? '48px' : '40px', height: isOpen ? '48px' : '40px' }}
+        />
         <div
           className={`overflow-hidden transition-all duration-300 ${
             isOpen ? "w-auto opacity-100" : "w-0 opacity-0"
           }`}
         >
           <h1 className="text-xl font-bold text-gray-800 whitespace-nowrap">
-            MEDICONNECT
+            DOCALINK
           </h1>
         </div>
       </div>
