@@ -165,20 +165,17 @@ export const sendResetPasswordAPI = async (
  * API: Resetear contraseña
  * Endpoint: POST /api/auth/reset-password
  */
-export const resetPasswordAPI = async (
-  token: string,      
-  newPassword: string,
-  email: string       
-): Promise<{ message: string }> => { 
-  
-  const response = await httpClient.post<{ success: boolean; data: { message: string } }>(
-    '/auth/reset-password',
-    { 
-      code: token, 
-      newPassword, 
-      email: email 
-    }
-  );
+export const resetPasswordAPI = async (request: {
+  token: string;
+  newPassword: string;
+}): Promise<{ message: string }> => {
+  const response = await httpClient.post<{
+    success: boolean;
+    data: { message: string };
+  }>('/auth/reset-password', {
+    token: request.token,
+    newPassword: request.newPassword,
+  });
 
   return extractData(response);
 };

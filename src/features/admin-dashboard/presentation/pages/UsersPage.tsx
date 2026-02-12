@@ -1,4 +1,4 @@
-import { Group, Block, CheckCircle } from "@mui/icons-material";
+import { Group, Block, CheckCircle, Delete } from "@mui/icons-material";
 import {
   Avatar,
   Box,
@@ -42,6 +42,8 @@ export const UsersPage = () => {
   const [searchText, setSearchText] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -110,6 +112,32 @@ export const UsersPage = () => {
   const handleEdit = (user: User) => {
     setSelectedUser(user);
     setIsEditModalOpen(true);
+  };
+
+  const handleDeleteClick = (user: User) => {
+    setUserToDelete(user);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+
+    try {
+      // Llamar a la API para eliminar el usuario
+      await fetch(`/api/users/${userToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      // Eliminar de la lista local
+      setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
+      setIsDeleteModalOpen(false);
+      setUserToDelete(null);
+    } catch (err: any) {
+      alert(err.message || 'Error al eliminar usuario');
+    }
   };
 
   const handleSaveEdit = async () => {
@@ -278,6 +306,15 @@ export const UsersPage = () => {
                         >
                           {user.isActive ? "Desactivar" : "Activar"}
                         </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="error"
+                          onClick={() => handleDeleteClick(user)}
+                          startIcon={<Delete />}
+                        >
+                          Eliminar
+                        </Button>
                       </Stack>
                     </TableCell>
                   </TableRow>
@@ -362,6 +399,62 @@ export const UsersPage = () => {
             </Button>
             <Button variant="contained" onClick={handleSaveEdit}>
               Guardar
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Modal de confirmación de eliminación */}
+        <Dialog
+          open={isDeleteModalOpen}
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setUserToDelete(null);
+          }}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ color: 'error.main' }}>
+            ¿Eliminar Usuario?
+          </DialogTitle>
+          <DialogContent>
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              Esta acción no se puede deshacer. El usuario será eliminado permanentemente de la base de datos.
+            </Alert>
+            {userToDelete && (
+              <Box>
+                <Typography variant="body1" gutterBottom>
+                  Estás a punto de eliminar al siguiente usuario:
+                </Typography>
+                <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+                  <Typography variant="body2">
+                    <strong>Nombre:</strong> {getUserDisplayName(userToDelete)}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>Email:</strong> {userToDelete.email}
+                  </Typography>
+                  <Typography variant="body2">
+                    <strong>Rol:</strong> {getRoleLabel(userToDelete.role, userToDelete.tipo)}
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button 
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+                setUserToDelete(null);
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant="contained" 
+              color="error"
+              onClick={handleConfirmDelete}
+              startIcon={<Delete />}
+            >
+              Eliminar
             </Button>
           </DialogActions>
         </Dialog>

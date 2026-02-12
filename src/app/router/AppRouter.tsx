@@ -22,6 +22,7 @@ import { AuthLayout } from "../../shared/layouts/AuthLayout";
 import { ForgotPasswordPage } from "../../features/auth/presentation/pages/ForgotPasswordPage";
 import { LoginPage } from "../../features/auth/presentation/pages/LoginPage";
 import { RegisterPage } from "../../features/auth/presentation/pages/RegisterPage";
+import { ResetPasswordPage } from "../../features/auth/presentation/pages/ResetPasswordPage";
 import { HomePage } from "../../features/home/presentation/pages/HomePage";
 import { ServicesCatalogPage } from "../../features/home/presentation/pages/ServicesCatalogPage";
 
@@ -95,6 +96,7 @@ export const AppRouter = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
         </Route>
 
         {/* --- Rutas públicas con Layout Principal --- */}
