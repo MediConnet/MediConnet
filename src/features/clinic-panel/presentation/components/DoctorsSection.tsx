@@ -17,7 +17,7 @@ import {
   DialogActions,
   TextField,
 } from "@mui/material";
-import { Email, Link, Edit, ToggleOn, ToggleOff, Delete, Visibility } from "@mui/icons-material";
+import { Email, Edit, ToggleOn, ToggleOff, Delete, Visibility } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import { useClinicDoctors } from "../hooks/useClinicDoctors";
 import { useFormik } from "formik";
@@ -115,21 +115,6 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
     setInviteDialogOpen(true);
   };
 
-  const handleInviteByLink = async () => {
-    try {
-      // Obtener email del formulario de invitación si está abierto
-      const email = inviteFormik.values.email || prompt("Ingresa el email del médico:");
-      if (!email) return;
-      
-      const result = await generateInvitationLinkAPI(email);
-      navigator.clipboard.writeText(result.invitationLink);
-      alert(`Link de invitación copiado al portapapeles. Expira el ${new Date(result.expiresAt).toLocaleDateString()}`);
-    } catch (error) {
-      console.error("Error generando link de invitación:", error);
-      alert("Error al generar el link de invitación");
-    }
-  };
-
   const handleAssignOffice = (doctorId: string) => {
     setSelectedDoctor(doctorId);
     setAssignOfficeDialogOpen(true);
@@ -175,24 +160,14 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
         <Typography variant="h5" sx={{ fontWeight: 700 }}>
           Gestión de Médicos
         </Typography>
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <Button
-            variant="outlined"
-            startIcon={<Link />}
-            onClick={handleInviteByLink}
-            sx={{ borderColor: "#14b8a6", color: "#14b8a6" }}
-          >
-            Invitar por Link
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<Email />}
-            onClick={handleInviteByEmail}
-            sx={{ backgroundColor: "#14b8a6", "&:hover": { backgroundColor: "#0d9488" } }}
-          >
-            Invitar por Email
-          </Button>
-        </Box>
+        <Button
+          variant="contained"
+          startIcon={<Email />}
+          onClick={handleInviteByEmail}
+          sx={{ backgroundColor: "#14b8a6", "&:hover": { backgroundColor: "#0d9488" } }}
+        >
+          Invitar por Email
+        </Button>
       </Box>
 
       <TableContainer component={Paper}>

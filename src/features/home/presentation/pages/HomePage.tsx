@@ -1008,20 +1008,18 @@ export const HomePage = () => {
             <Grid item xs={12} md={6}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
                 <Box
+                  component="img"
+                  src="/src/assets/docalink-logo.png"
+                  alt="DOCALINK"
                   sx={{
                     width: 40,
                     height: 40,
                     borderRadius: 1.5,
-                    backgroundColor: '#06b6d4',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
+                    objectFit: 'contain',
                   }}
-                >
-                  <Favorite sx={{ fontSize: 24, color: 'white' }} />
-                </Box>
+                />
                 <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'white' }}>
-                  MediConnect
+                  DOCALINK
                 </Typography>
               </Box>
               <Typography
@@ -1176,7 +1174,7 @@ export const HomePage = () => {
             }}
           >
             <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '0.875rem' }}>
-              © 2026 MediConnect. Todos los derechos reservados.
+              © 2026 DOCALINK. Todos los derechos reservados.
             </Typography>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Link href="#" sx={{ color: 'rgba(255, 255, 255, 0.7)', '&:hover': { color: 'white' } }}>

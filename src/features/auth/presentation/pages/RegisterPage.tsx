@@ -498,7 +498,7 @@ export const RegisterPage = () => {
                 ¿Qué tipo de servicio ofreces?
               </Typography>
               <Typography variant="body1" sx={{ color: "text.secondary" }}>
-                Selecciona el tipo de servicio que deseas registrar en MEDICONES
+                Selecciona el tipo de servicio que deseas registrar en DOCALINK
               </Typography>
             </Box>
             <Box

@@ -88,7 +88,7 @@ export const AppLayout = () => {
               gap: 2,
             }}
           >
-            {/* NOTE: Logo MediConnect a la izquierda */}
+            {/* NOTE: Logo DOCALINK a la izquierda */}
             <Box
               onClick={() => navigate(ROUTES.HOME)}
               sx={{
@@ -101,18 +101,15 @@ export const AppLayout = () => {
               }}
             >
               <Box
+                component="img"
+                src="/src/assets/docalink-logo.png"
+                alt="DOCALINK"
                 sx={{
-                  width: { xs: 32, sm: 40 },
-                  height: { xs: 32, sm: 40 },
-                  borderRadius: 1.5,
-                  backgroundColor: '#06b6d4',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  width: { xs: 50, sm: 60 },
+                  height: { xs: 50, sm: 60 },
+                  objectFit: 'contain',
                 }}
-              >
-                <Favorite sx={{ fontSize: { xs: 20, sm: 24 }, color: 'white' }} />
-              </Box>
+              />
               <Typography
                 sx={{
                   fontSize: { xs: '1.25rem', sm: '1.5rem' },
@@ -121,7 +118,7 @@ export const AppLayout = () => {
                   display: { xs: 'none', sm: 'block' },
                 }}
               >
-                MediConnect
+                DOCALINK
               </Typography>
             </Box>
 
