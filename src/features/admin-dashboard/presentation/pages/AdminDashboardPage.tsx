@@ -15,6 +15,7 @@ import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { StatCard } from "../components/StatCard";
 import { StatusCard } from "../components/StatusCard";
 import { useDashboardStats } from "../hooks/useDashboardStats";
+import { useAdminNotificationsLayout } from "../hooks/useAdminNotificationsLayout";
 
 const CURRENT_ADMIN = {
   name: "Admin General",
@@ -24,6 +25,7 @@ const CURRENT_ADMIN = {
 
 export const AdminDashboardPage = () => {
   const { data: stats, isLoading, error } = useDashboardStats();
+  const { appointments: adminAppointments, notificationsViewAllPath } = useAdminNotificationsLayout();
 
   if (isLoading) {
     return <div className="p-8">Cargando dashboard...</div>;
@@ -61,7 +63,13 @@ export const AdminDashboardPage = () => {
   }
 
   return (
-    <DashboardLayout role="ADMIN" userProfile={CURRENT_ADMIN}>
+    <DashboardLayout 
+      role="ADMIN" 
+      userProfile={CURRENT_ADMIN}
+      appointments={adminAppointments}
+      notificationsVariant="professional"
+      notificationsViewAllPath={notificationsViewAllPath}
+    >
       {/* FILA 1: Estadísticas Principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <StatCard

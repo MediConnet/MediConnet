@@ -29,6 +29,7 @@ import { useState, useMemo, useEffect } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { getUsersAPI, toggleUserStatusAPI, updateUserAPI } from "../../infrastructure/users.api";
 import type { User } from "../../domain/user.entity";
+import { useAdminNotificationsLayout } from "../hooks/useAdminNotificationsLayout";
 
 const CURRENT_ADMIN = {
   name: "Admin General",
@@ -46,6 +47,7 @@ export const UsersPage = () => {
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { appointments: adminAppointments, notificationsViewAllPath } = useAdminNotificationsLayout();
 
   // Cargar usuarios desde la API
   useEffect(() => {
@@ -177,7 +179,13 @@ export const UsersPage = () => {
   };
 
   return (
-    <DashboardLayout role="ADMIN" userProfile={CURRENT_ADMIN}>
+    <DashboardLayout 
+      role="ADMIN" 
+      userProfile={CURRENT_ADMIN}
+      appointments={adminAppointments}
+      notificationsVariant="professional"
+      notificationsViewAllPath={notificationsViewAllPath}
+    >
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
         <Stack direction="row" spacing={2} alignItems="center" mb={3}>
           <Group sx={{ fontSize: 32, color: "primary.main" }} />

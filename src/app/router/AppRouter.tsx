@@ -66,6 +66,7 @@ import { SupplyStoreDetailPage } from "../../features/supplies-panel/presentatio
 
 // Pages - Clínica
 import { ClinicDashboardPage } from "../../features/clinic-panel/presentation/pages/ClinicDashboardPage";
+import { ClinicInvitationPage } from "../../features/clinic-panel/presentation/pages/ClinicInvitationPage";
 import { httpClient } from "../../shared/lib/http";
 
 export const AppRouter = () => {
@@ -105,6 +106,8 @@ export const AppRouter = () => {
           <Route path="/services" element={<ServicesCatalogPage />} />
           <Route path="/supplies" element={<SuppliesListPage />} />
           <Route path="/supplies/:id" element={<SupplyStoreDetailPage />} />
+          {/* Ruta pública para invitaciones de clínica */}
+          <Route path="/clinic/invite/:token" element={<ClinicInvitationPage />} />
         </Route>
 
         {/* --- Panel de Administrador --- */}

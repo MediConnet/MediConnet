@@ -2,6 +2,7 @@ import { Box, Divider, Paper, Skeleton, Typography } from "@mui/material";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { SettingsItem } from "../../../admin-dashboard/presentation/components/SettingsItem";
 import { useAdminSettings } from "../../../admin-dashboard/presentation/hooks/useAdminSettings";
+import { useAdminNotificationsLayout } from "../../../admin-dashboard/presentation/hooks/useAdminNotificationsLayout";
 
 const CURRENT_ADMIN = {
   name: "Administrador General",
@@ -11,10 +12,17 @@ const CURRENT_ADMIN = {
 
 export const SettingsPage = () => {
   const { settings, isLoading, toggleSetting } = useAdminSettings();
+  const { appointments: adminAppointments, notificationsViewAllPath } = useAdminNotificationsLayout();
 
   if (isLoading || !settings) {
     return (
-      <DashboardLayout role="ADMIN" userProfile={CURRENT_ADMIN}>
+      <DashboardLayout 
+        role="ADMIN" 
+        userProfile={CURRENT_ADMIN}
+        appointments={adminAppointments}
+        notificationsVariant="professional"
+        notificationsViewAllPath={notificationsViewAllPath}
+      >
         <Box sx={{ p: 3, maxWidth: 1000, margin: "0 auto" }}>
           <Skeleton
             variant="rectangular"
@@ -27,7 +35,13 @@ export const SettingsPage = () => {
   }
 
   return (
-    <DashboardLayout role="ADMIN" userProfile={CURRENT_ADMIN}>
+    <DashboardLayout 
+      role="ADMIN" 
+      userProfile={CURRENT_ADMIN}
+      appointments={adminAppointments}
+      notificationsVariant="professional"
+      notificationsViewAllPath={notificationsViewAllPath}
+    >
       <Box sx={{ p: 3, maxWidth: 1000, margin: "0 auto" }}>
         <Paper
           elevation={0}

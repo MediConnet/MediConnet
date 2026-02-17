@@ -37,6 +37,7 @@ import { approveAdRequestUseCase } from "../../application/approve-ad-request.us
 import { rejectAdRequestUseCase } from "../../application/reject-ad-request.usecase";
 import { clearAdsFromStorage } from "../../infrastructure/ads.mock";
 import { clearAdRequests } from "../../infrastructure/ad-requests.mock";
+import { useAdminNotificationsLayout } from "../hooks/useAdminNotificationsLayout";
 
 const CURRENT_ADMIN = {
   name: "Admin General",
@@ -54,6 +55,7 @@ const SERVICE_ICONS: Record<string, React.ReactNode> = {
 
 export const AdRequestsPage = () => {
   const { data: initialData, isLoading, refetch } = useAdRequests();
+  const { appointments: adminAppointments, notificationsViewAllPath } = useAdminNotificationsLayout();
 
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("PENDING"); // Filtrar solo PENDING por defecto
@@ -295,7 +297,13 @@ export const AdRequestsPage = () => {
   ];
 
   return (
-    <DashboardLayout role="ADMIN" userProfile={CURRENT_ADMIN}>
+    <DashboardLayout 
+      role="ADMIN" 
+      userProfile={CURRENT_ADMIN}
+      appointments={adminAppointments}
+      notificationsVariant="professional"
+      notificationsViewAllPath={notificationsViewAllPath}
+    >
       <Box sx={{ p: 3 }}>
         <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between" mb={3}>
           <Stack direction="row" spacing={2} alignItems="center">

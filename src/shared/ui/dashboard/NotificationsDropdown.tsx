@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { AccessTime, Person, Close, CalendarToday, ShoppingCart, StarRate } from "@mui/icons-material";
+import { AccessTime, Person, Close, CalendarToday, ShoppingCart, StarRate, PersonAdd, Campaign } from "@mui/icons-material";
 
 interface Appointment {
   id: string;
@@ -118,9 +118,23 @@ export const NotificationsDropdown = ({
   if (variant === "professional") {
     const hasAgendaItems = appointments.length > 0;
     const hasNewReviews = showReviewsSection && (newReviewsCount || 0) > 0;
+    
+    // Detectar si son notificaciones de admin (por el formato de patientName)
+    const isAdminNotifications = appointments.length > 0 && 
+      (appointments[0].patientName === "Nuevo Usuario" || appointments[0].patientName === "Nuevo Anuncio");
+    
+    // Separar notificaciones de usuarios y anuncios para admin
+    const userNotifications = isAdminNotifications 
+      ? appointments.filter(apt => apt.patientName === "Nuevo Usuario")
+      : [];
+    const adNotifications = isAdminNotifications
+      ? appointments.filter(apt => apt.patientName === "Nuevo Anuncio")
+      : [];
 
     const ctaLabel = hasAgendaItems
-      ? "Ver agenda"
+      ? isAdminNotifications 
+        ? "Ver pendientes"
+        : "Ver agenda"
       : hasNewReviews
       ? "Ver reseñas"
       : "Entendido";
@@ -128,7 +142,11 @@ export const NotificationsDropdown = ({
     const handleCTA = () => {
       if (hasAgendaItems) {
         onClose();
-        navigate(agendaPath || "/clinic/dashboard?tab=appointments");
+        if (isAdminNotifications) {
+          navigate(viewAllPath || "/admin/requests");
+        } else {
+          navigate(agendaPath || "/clinic/dashboard?tab=appointments");
+        }
         return;
       }
 
@@ -173,60 +191,165 @@ export const NotificationsDropdown = ({
 
         {/* Content */}
         <div className="overflow-y-auto max-h-[500px]">
-          {/* Agenda Centralizada */}
-          <div className="p-4 border-b border-gray-100">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-bold text-gray-800">Agenda Centralizada</p>
-              <p className="text-xs text-gray-500">{appointments.length}</p>
-            </div>
-
-            {appointments.length === 0 ? (
-              <div className="text-center py-6">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <CalendarToday className="text-gray-400 text-2xl" />
-                </div>
-                <p className="text-gray-500 text-sm font-medium mb-1">
-                  No hay novedades en la agenda
-                </p>
-                <p className="text-gray-400 text-xs">
-                  Las citas aparecerán aquí
-                </p>
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-100 rounded-lg border border-gray-100 overflow-hidden">
-                {appointments.slice(0, 8).map((apt) => (
-                  <div key={apt.id} className="p-3 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center shrink-0">
-                        <Person className="text-teal-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-semibold text-gray-800 text-sm truncate">
-                            {apt.patientName}
-                          </p>
-                          <div className="flex items-center gap-2 px-2 py-1 bg-teal-50 rounded-lg shrink-0">
-                            <AccessTime className="text-teal-600 text-sm" />
-                            <span className="font-semibold text-teal-700 text-sm">
-                              {apt.time}
-                            </span>
+          {/* Notificaciones de Admin o Agenda Centralizada */}
+          {isAdminNotifications ? (
+            <>
+              {/* Usuarios Pendientes */}
+              {userNotifications.length > 0 && (
+                <div className="p-4 border-b border-gray-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <PersonAdd className="text-amber-600" />
+                      <p className="text-sm font-bold text-gray-800">Usuarios Pendientes</p>
+                    </div>
+                    <p className="text-xs text-gray-500">{userNotifications.length}</p>
+                  </div>
+                  <div className="divide-y divide-gray-100 rounded-lg border border-gray-100 overflow-hidden">
+                    {userNotifications.slice(0, 5).map((apt) => (
+                      <div 
+                        key={apt.id} 
+                        className="p-3 hover:bg-amber-50 transition-colors cursor-pointer"
+                        onClick={() => {
+                          onClose();
+                          navigate(viewAllPath || "/admin/requests");
+                        }}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center shrink-0">
+                            <PersonAdd className="text-amber-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-800 text-sm">
+                              Nuevo usuario pendiente
+                            </p>
+                            <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                              {apt.reason}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              {new Date(apt.date).toLocaleDateString("es-ES")} a las {apt.time}
+                            </p>
                           </div>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {apt.date}
-                        </p>
-                        {apt.reason && (
-                          <p className="text-xs text-gray-600 mt-1 line-clamp-1">
-                            {apt.reason}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Anuncios Pendientes */}
+              {adNotifications.length > 0 && (
+                <div className="p-4 border-b border-gray-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Campaign className="text-blue-600" />
+                      <p className="text-sm font-bold text-gray-800">Anuncios Pendientes</p>
+                    </div>
+                    <p className="text-xs text-gray-500">{adNotifications.length}</p>
+                  </div>
+                  <div className="divide-y divide-gray-100 rounded-lg border border-gray-100 overflow-hidden">
+                    {adNotifications.slice(0, 5).map((apt) => (
+                      <div 
+                        key={apt.id} 
+                        className="p-3 hover:bg-blue-50 transition-colors cursor-pointer"
+                        onClick={() => {
+                          onClose();
+                          navigate("/admin/ad-requests");
+                        }}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
+                            <Campaign className="text-blue-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-gray-800 text-sm">
+                              Nuevo anuncio pendiente
+                            </p>
+                            <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                              {apt.reason}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              {new Date(apt.date).toLocaleDateString("es-ES")} a las {apt.time}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {userNotifications.length === 0 && adNotifications.length === 0 && (
+                <div className="p-4">
+                  <div className="text-center py-6">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <PersonAdd className="text-gray-400 text-2xl" />
+                    </div>
+                    <p className="text-gray-500 text-sm font-medium mb-1">
+                      No hay pendientes
+                    </p>
+                    <p className="text-gray-400 text-xs">
+                      Las solicitudes aparecerán aquí
+                    </p>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            /* Agenda Centralizada */
+            <div className="p-4 border-b border-gray-100">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-bold text-gray-800">Agenda Centralizada</p>
+                <p className="text-xs text-gray-500">{appointments.length}</p>
+              </div>
+
+              {appointments.length === 0 ? (
+                <div className="text-center py-6">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <CalendarToday className="text-gray-400 text-2xl" />
+                  </div>
+                  <p className="text-gray-500 text-sm font-medium mb-1">
+                    No hay novedades en la agenda
+                  </p>
+                  <p className="text-gray-400 text-xs">
+                    Las citas aparecerán aquí
+                  </p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-100 rounded-lg border border-gray-100 overflow-hidden">
+                  {appointments.slice(0, 8).map((apt) => (
+                    <div key={apt.id} className="p-3 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center shrink-0">
+                          <Person className="text-teal-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <p className="font-semibold text-gray-800 text-sm truncate">
+                              {apt.patientName}
+                            </p>
+                            <div className="flex items-center gap-2 px-2 py-1 bg-teal-50 rounded-lg shrink-0">
+                              <AccessTime className="text-teal-600 text-sm" />
+                              <span className="font-semibold text-teal-700 text-sm">
+                                {apt.time}
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {apt.date}
                           </p>
-                        )}
+                          {apt.reason && (
+                            <p className="text-xs text-gray-600 mt-1 line-clamp-1">
+                              {apt.reason}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Reseñas */}
           {showReviewsSection && (

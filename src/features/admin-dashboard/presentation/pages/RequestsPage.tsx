@@ -36,6 +36,7 @@ import { RequestStatusBadge } from "../components/RequestStatusBadge";
 import { useProviderRequests } from "../hooks/useProviderRequests";
 import { useRequestFiltering } from "../hooks/useRequestFiltering";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAdminNotificationsLayout } from "../hooks/useAdminNotificationsLayout";
 
 const CURRENT_ADMIN = {
   name: "Admin General",
@@ -46,6 +47,7 @@ const CURRENT_ADMIN = {
 export const RequestsPage = () => {
   const { data: initialData, isLoading } = useProviderRequests();
   const queryClient = useQueryClient();
+  const { appointments: adminAppointments, notificationsViewAllPath } = useAdminNotificationsLayout();
 
   const {
     requests,
@@ -273,7 +275,13 @@ export const RequestsPage = () => {
   ];
 
   return (
-    <DashboardLayout role="ADMIN" userProfile={CURRENT_ADMIN}>
+    <DashboardLayout 
+      role="ADMIN" 
+      userProfile={CURRENT_ADMIN}
+      appointments={adminAppointments}
+      notificationsVariant="professional"
+      notificationsViewAllPath={notificationsViewAllPath}
+    >
       <Box sx={{ height: "100%", width: "100%", p: 1 }}>
         {/* Header */}
         <Stack

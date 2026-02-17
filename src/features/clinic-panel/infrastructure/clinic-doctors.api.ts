@@ -83,6 +83,16 @@ export const acceptInvitationAPI = async (
 };
 
 /**
+ * API: Rechazar invitación
+ * Endpoint: POST /api/clinics/invite/:token/reject
+ */
+export const rejectInvitationAPI = async (token: string): Promise<void> => {
+  await httpClient.post<{ success: boolean }>(
+    `/clinics/invite/${token}/reject`
+  );
+};
+
+/**
  * API: Activar/desactivar médico
  * Endpoint: PATCH /api/clinics/doctors/:doctorId/status
  */

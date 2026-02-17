@@ -23,6 +23,7 @@ import { useClinicDoctors } from "../hooks/useClinicDoctors";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { generateInvitationLinkAPI } from "../../infrastructure/clinic-doctors.api";
+import { Typography } from "@mui/material";
 import { clearClinicMocks } from "../../infrastructure/clear-clinic-mocks";
 import { DoctorProfileViewModal } from "./DoctorProfileViewModal";
 import type { ClinicDoctor } from "../../domain/doctor.entity";
@@ -46,29 +47,13 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
   const [doctorToDelete, setDoctorToDelete] = useState<{ id: string; name?: string; email: string } | null>(null);
   const [profileViewOpen, setProfileViewOpen] = useState(false);
   const [selectedDoctorForView, setSelectedDoctorForView] = useState<ClinicDoctor | null>(null);
+  const [doctorEmail, setDoctorEmail] = useState<string>("");
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
 
   // ⭐ Limpiar mocks al cargar el componente (solo una vez)
   useEffect(() => {
     clearClinicMocks();
   }, []);
-
-  const inviteFormik = useFormik({
-    initialValues: { 
-      email: ""
-    },
-    validationSchema: inviteValidationSchema,
-    onSubmit: async (values) => {
-      try {
-        await inviteDoctor(values.email);
-        setInviteDialogOpen(false);
-        inviteFormik.resetForm();
-        alert("Médico invitado correctamente");
-      } catch (error) {
-        console.error("Error al invitar médico:", error);
-        alert("Error al invitar médico. Intenta nuevamente.");
-      }
-    },
-  });
 
   const officeFormik = useFormik({
     initialValues: { officeNumber: "" },
@@ -113,6 +98,38 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
 
   const handleInviteByEmail = () => {
     setInviteDialogOpen(true);
+    setDoctorEmail("");
+  };
+
+  const handleGenerateAndOpenEmail = async () => {
+    if (!doctorEmail || !inviteValidationSchema.isValidSync({ email: doctorEmail })) {
+      alert("Por favor ingresa un email válido");
+      return;
+    }
+
+    setIsGeneratingLink(true);
+    try {
+      // Generar el link de invitación
+      const { invitationLink } = await generateInvitationLinkAPI(doctorEmail);
+      
+      // Copiar automáticamente al portapapeles
+      await navigator.clipboard.writeText(invitationLink);
+      
+      // Cerrar el diálogo
+      setInviteDialogOpen(false);
+      setDoctorEmail("");
+      
+      // Abrir el cliente de correo vacío
+      window.location.href = "mailto:";
+      
+      // Mostrar mensaje de confirmación
+      alert(`✅ Link de invitación generado y copiado al portapapeles.\n\nPega el link (Ctrl+V) en tu email cuando lo escribas.`);
+    } catch (error) {
+      console.error("Error al generar link de invitación:", error);
+      alert("Error al generar el link de invitación. Intenta nuevamente.");
+    } finally {
+      setIsGeneratingLink(false);
+    }
   };
 
   const handleAssignOffice = (doctorId: string) => {
@@ -246,30 +263,54 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
         </Table>
       </TableContainer>
 
-      {/* Dialog Invitar por Email */}
-      <Dialog open={inviteDialogOpen} onClose={() => setInviteDialogOpen(false)} maxWidth="sm" fullWidth>
-        <form onSubmit={inviteFormik.handleSubmit}>
-          <DialogTitle>Invitar Médico por Email</DialogTitle>
-          <DialogContent>
-            <TextField
-              fullWidth
-              label="Email del médico *"
-              name="email"
-              type="email"
-              value={inviteFormik.values.email}
-              onChange={inviteFormik.handleChange}
-              error={inviteFormik.touched.email && Boolean(inviteFormik.errors.email)}
-              helperText={inviteFormik.touched.email && inviteFormik.errors.email || "El médico completará su nombre y especialidad al aceptar la invitación"}
-              sx={{ mt: 2 }}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setInviteDialogOpen(false)}>Cancelar</Button>
-            <Button type="submit" variant="contained" sx={{ backgroundColor: "#14b8a6" }}>
-              Enviar Invitación
-            </Button>
-          </DialogActions>
-        </form>
+      {/* Dialog Invitar por Email - VERSIÓN SIMPLIFICADA */}
+      <Dialog open={inviteDialogOpen} onClose={() => {
+        setInviteDialogOpen(false);
+        setDoctorEmail("");
+      }} maxWidth="sm" fullWidth>
+        <DialogTitle>Invitar Médico por Email</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Ingresa el email del médico. Se generará un link de invitación que se copiará automáticamente al portapapeles.
+          </Typography>
+          <TextField
+            fullWidth
+            label="Email del médico *"
+            type="email"
+            value={doctorEmail}
+            onChange={(e) => setDoctorEmail(e.target.value)}
+            error={doctorEmail !== "" && !inviteValidationSchema.isValidSync({ email: doctorEmail })}
+            helperText={
+              doctorEmail !== "" && !inviteValidationSchema.isValidSync({ email: doctorEmail })
+                ? "Email inválido"
+                : "El link se copiará automáticamente y se abrirá tu cliente de correo"
+            }
+            sx={{ mt: 1 }}
+            autoFocus
+            onKeyPress={(e) => {
+              if (e.key === "Enter" && doctorEmail && inviteValidationSchema.isValidSync({ email: doctorEmail })) {
+                handleGenerateAndOpenEmail();
+              }
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {
+            setInviteDialogOpen(false);
+            setDoctorEmail("");
+          }}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleGenerateAndOpenEmail}
+            disabled={isGeneratingLink || !doctorEmail || !inviteValidationSchema.isValidSync({ email: doctorEmail })}
+            sx={{ backgroundColor: "#14b8a6" }}
+            startIcon={<Email />}
+          >
+            {isGeneratingLink ? "Generando..." : "Generar y Abrir Correo"}
+          </Button>
+        </DialogActions>
       </Dialog>
 
       {/* Dialog Asignar Consultorio */}
