@@ -23,7 +23,6 @@ import { useClinicDoctors } from "../hooks/useClinicDoctors";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { generateInvitationLinkAPI } from "../../infrastructure/clinic-doctors.api";
-import { Typography } from "@mui/material";
 import { clearClinicMocks } from "../../infrastructure/clear-clinic-mocks";
 import { DoctorProfileViewModal } from "./DoctorProfileViewModal";
 import type { ClinicDoctor } from "../../domain/doctor.entity";
