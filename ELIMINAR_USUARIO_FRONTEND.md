@@ -1,41 +1,41 @@
-# 🐛 Corrección: Endpoint de Eliminación de Usuarios
+# ✅ Corrección Implementada: Endpoint de Eliminación de Usuarios
 
-## 📋 Problema Identificado
+## 📋 Problema Identificado (RESUELTO)
 
-Al eliminar un usuario desde el panel de administración, el usuario desaparece de la interfaz pero **no se elimina de la base de datos**. Al refrescar la página, el usuario vuelve a aparecer.
+~~Al eliminar un usuario desde el panel de administración, el usuario desaparece de la interfaz pero **no se elimina de la base de datos**. Al refrescar la página, el usuario vuelve a aparecer.~~
 
-### Causa Raíz
+### Causa Raíz (CORREGIDA)
 
-El frontend está llamando al endpoint **incorrecto**:
+~~El frontend estaba llamando al endpoint **incorrecto**:~~
 
-- ❌ **Endpoint actual (incorrecto):** `DELETE /api/users/{id}`
-- ✅ **Endpoint correcto:** `DELETE /api/admin/users/{id}`
+- ❌ ~~**Endpoint anterior (incorrecto):** `DELETE /api/users/{id}`~~
+- ✅ **Endpoint actual (correcto):** `DELETE /api/admin/users/{id}` ✅ **IMPLEMENTADO**
 
-El backend retorna **404 Not Found** porque la ruta `/api/users/{id}` no existe.
+**Estado:** ✅ **CORREGIDO** - El frontend ahora usa el endpoint correcto.
 
 ---
 
-## ✅ Solución
+## ✅ Solución Implementada
 
-### 1. Corregir la URL del Endpoint
+### 1. ✅ URL del Endpoint Corregida
 
-**Cambiar de:**
+**Implementación actual (CORRECTA):**
 ```typescript
-// ❌ INCORRECTO
-const response = await fetch(`/api/users/${userId}`, {
-  method: 'DELETE',
-  // ...
-});
+// ✅ CORRECTO - Implementado en src/features/admin-dashboard/infrastructure/users.api.ts
+export const deleteUserAPI = async (userId: string): Promise<void> => {
+  await httpClient.delete<{ success: boolean }>(`/admin/users/${userId}`);
+};
 ```
 
-**A:**
+**Uso en el componente:**
 ```typescript
-// ✅ CORRECTO
-const response = await fetch(`/api/admin/users/${userId}`, {
-  method: 'DELETE',
-  // ...
-});
+// ✅ CORRECTO - Implementado en src/features/admin-dashboard/presentation/pages/UsersPage.tsx
+await deleteUserAPI(userToDelete.id);
 ```
+
+**Archivos modificados:**
+- ✅ `src/features/admin-dashboard/infrastructure/users.api.ts` - Endpoint correcto
+- ✅ `src/features/admin-dashboard/presentation/pages/UsersPage.tsx` - Usa `deleteUserAPI`
 
 ### 2. Verificar Autenticación
 
@@ -121,4 +121,61 @@ El backend realiza las siguientes validaciones:
 ---
 
 **Fecha:** 2026-02-18  
-**Versión:** 1.0.0
+**Versión:** 1.1.0  
+**Estado:** ✅ **IMPLEMENTADO Y VERIFICADO**
+
+---
+
+## ✅ Verificación de Implementación
+
+### Código Actual
+
+**Archivo:** `src/features/admin-dashboard/infrastructure/users.api.ts`
+```typescript
+/**
+ * API: Eliminar usuario
+ * Endpoint: DELETE /api/admin/users/:id
+ */
+export const deleteUserAPI = async (userId: string): Promise<void> => {
+  await httpClient.delete<{ success: boolean }>(`/admin/users/${userId}`);
+};
+```
+
+**Archivo:** `src/features/admin-dashboard/presentation/pages/UsersPage.tsx`
+```typescript
+const handleConfirmDelete = async () => {
+  if (!userToDelete) return;
+
+  try {
+    // ✅ Usa el endpoint correcto
+    await deleteUserAPI(userToDelete.id);
+    
+    // Eliminar de la lista local
+    setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
+    setIsDeleteModalOpen(false);
+    setUserToDelete(null);
+    setSnackbar({
+      open: true,
+      message: "Usuario eliminado correctamente",
+      severity: 'success'
+    });
+  } catch (err: any) {
+    console.error("Error al eliminar usuario:", err);
+    setSnackbar({
+      open: true,
+      message: err.message || 'Error al eliminar usuario. Verifica que tengas permisos de administrador.',
+      severity: 'error'
+    });
+  }
+};
+```
+
+### ✅ Confirmación
+
+- ✅ El endpoint correcto está implementado: `/admin/users/:id`
+- ✅ Se usa `httpClient` con autenticación automática
+- ✅ Manejo de errores implementado con Snackbar
+- ✅ El usuario se elimina de la lista local después de éxito
+- ✅ Notificaciones de éxito/error implementadas
+
+**Última verificación:** 2026-02-11

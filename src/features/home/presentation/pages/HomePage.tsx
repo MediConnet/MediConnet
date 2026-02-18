@@ -837,31 +837,16 @@ export const HomePage = () => {
             }}
           >
             <Box
+              component="img"
+              src="/src/assets/imagenApp.png"
+              alt="App móvil MediConnet"
               sx={{
-                width: { xs: '200px', md: '300px' },
-                height: { xs: '400px', md: '600px' },
-                border: '2px solid #06b6d4',
-                borderRadius: 4,
-                backgroundColor: 'rgba(6, 182, 212, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative',
+                width: { xs: '100%', sm: '80%', md: '100%' },
+                maxWidth: { xs: '300px', md: '500px' },
+                height: 'auto',
+                objectFit: 'contain',
               }}
-            >
-              <Typography sx={{ color: '#06b6d4', fontSize: '3rem' }}>📱</Typography>
-              <Chip
-                label="Gratis"
-                sx={{
-                  position: 'absolute',
-                  top: 16,
-                  right: 16,
-                  backgroundColor: 'white',
-                  color: '#1e3a8a',
-                  fontWeight: 600,
-                }}
-              />
-            </Box>
+            />
           </Box>
         </Box>
       </Box>

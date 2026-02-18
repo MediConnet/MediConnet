@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { env } from '../config/env';
 
 // 1. Definición de Tipos
 interface User {
@@ -24,7 +25,7 @@ interface AuthState {
   updateUser: (userData: Partial<User>) => void;
 }
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = env.API_URL || 'https://api.mediconnet.com/v1';
 
 // Creación del Store con Persistencia
 export const useAuthStore = create<AuthState>()(

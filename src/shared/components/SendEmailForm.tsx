@@ -11,6 +11,7 @@ import {
   Stack,
 } from '@mui/material';
 import { Send, Email } from '@mui/icons-material';
+import { env } from '../../app/config/env';
 
 interface SendEmailFormProps {
   onSuccess?: () => void;
@@ -37,7 +38,7 @@ export const SendEmailForm: React.FC<SendEmailFormProps> = ({
 
     try {
       // Enviar los datos al backend usando Axios
-      const response = await axios.post('http://localhost:3000/send-email', {
+      const response = await axios.post(`${env.API_URL}/send-email`, {
         from,
         to,
         subject,

@@ -4,7 +4,10 @@
  * Se cargan desde el archivo .env usando el prefijo VITE_
  */
 export const env = {
-  API_URL: import.meta.env.VITE_API_URL || 'https://api.mediconnet.com/v1',
+  // En desarrollo, usar localhost. En producción, usar la URL de producción
+  API_URL: import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'development' 
+    ? 'http://localhost:3000/api' 
+    : 'https://api.mediconnet.com/v1'),
   APP_NAME: import.meta.env.VITE_APP_NAME || 'MediConnet',
   NODE_ENV: import.meta.env.VITE_NODE_ENV || import.meta.env.MODE || 'development',
   // AWS Cognito (opcional - si se usa autenticación directa desde frontend)
