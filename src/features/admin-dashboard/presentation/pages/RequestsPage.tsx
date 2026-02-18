@@ -108,6 +108,83 @@ export const RequestsPage = () => {
     handleOpenRejectModal(request);
   };
 
+  const handleExportCSV = () => {
+    if (requests.length === 0) {
+      alert("No hay datos para exportar");
+      return;
+    }
+
+    // Definir las columnas del CSV
+    const headers = [
+      "ID",
+      "Nombre del Proveedor",
+      "Email",
+      "Tipo de Servicio",
+      "Teléfono",
+      "WhatsApp",
+      "Ciudad",
+      "Dirección",
+      "Fecha de Solicitud",
+      "Número de Documentos",
+      "Estado",
+      "Motivo de Rechazo"
+    ];
+
+    // Convertir los datos a filas CSV
+    const rows = requests.map((request) => [
+      request.id,
+      request.providerName,
+      request.email,
+      request.serviceType,
+      request.phone || "",
+      request.whatsapp || "",
+      request.city || "",
+      request.address || "",
+      request.submissionDate,
+      request.documentsCount.toString(),
+      request.status,
+      request.rejectionReason || ""
+    ]);
+
+    // Crear el contenido CSV
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => 
+        row.map(cell => {
+          // Escapar comillas y envolver en comillas si contiene comas o saltos de línea
+          const cellStr = String(cell || "");
+          if (cellStr.includes(",") || cellStr.includes("\n") || cellStr.includes('"')) {
+            return `"${cellStr.replace(/"/g, '""')}"`;
+          }
+          return cellStr;
+        }).join(",")
+      )
+    ].join("\n");
+
+    // Crear el BOM para UTF-8 (para que Excel abra correctamente caracteres especiales)
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+    
+    // Crear el link de descarga
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    
+    // Nombre del archivo con fecha actual
+    const date = new Date().toISOString().split("T")[0];
+    const fileName = `solicitudes_proveedores_${date}.csv`;
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", fileName);
+    link.style.visibility = "hidden";
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Limpiar el URL object
+    URL.revokeObjectURL(url);
+  };
+
   // --- Definición de Columnas ---
   const columns: GridColDef<ProviderRequest>[] = [
     { field: "id", headerName: "ID", width: 90 },
@@ -298,7 +375,12 @@ export const RequestsPage = () => {
               Gestiona las solicitudes de registro y verificación.
             </Typography>
           </Box>
-          <Button variant="outlined" startIcon={<Download />}>
+          <Button 
+            variant="outlined" 
+            startIcon={<Download />}
+            onClick={handleExportCSV}
+            disabled={requests.length === 0 || isLoading}
+          >
             Exportar CSV
           </Button>
         </Stack>
