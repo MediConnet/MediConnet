@@ -16,6 +16,8 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { Email, Edit, ToggleOn, ToggleOff, Delete, Visibility } from "@mui/icons-material";
 import { useState, useEffect } from "react";
@@ -48,6 +50,11 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
   const [selectedDoctorForView, setSelectedDoctorForView] = useState<ClinicDoctor | null>(null);
   const [doctorEmail, setDoctorEmail] = useState<string>("");
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'info' }>({
+    open: false,
+    message: '',
+    severity: 'info'
+  });
 
   // ⭐ Limpiar mocks al cargar el componente (solo una vez)
   useEffect(() => {
@@ -77,7 +84,11 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
         try {
           const fee = parseFloat(values.consultationFee);
           if (isNaN(fee) || fee < 0) {
-            alert("Por favor ingresa un precio válido");
+            setSnackbar({
+              open: true,
+              message: "Por favor ingresa un precio válido",
+              severity: 'error'
+            });
             return;
           }
           
@@ -86,10 +97,18 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
           setPriceDialogOpen(false);
           priceFormik.resetForm();
           setSelectedDoctor(null);
-          alert("Precio actualizado correctamente");
+          setSnackbar({
+            open: true,
+            message: "Precio actualizado correctamente",
+            severity: 'success'
+          });
         } catch (error) {
           console.error("Error al actualizar precio:", error);
-          alert("Error al actualizar el precio. Intenta nuevamente.");
+          setSnackbar({
+            open: true,
+            message: "Error al actualizar el precio. Intenta nuevamente.",
+            severity: 'error'
+          });
         }
       }
     },
@@ -102,7 +121,11 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
 
   const handleGenerateAndOpenEmail = async () => {
     if (!doctorEmail || !inviteValidationSchema.isValidSync({ email: doctorEmail })) {
-      alert("Por favor ingresa un email válido");
+      setSnackbar({
+        open: true,
+        message: "Por favor ingresa un email válido",
+        severity: 'error'
+      });
       return;
     }
 
@@ -122,10 +145,18 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
       window.location.href = "mailto:";
       
       // Mostrar mensaje de confirmación
-      alert(`✅ Link de invitación generado y copiado al portapapeles.\n\nPega el link (Ctrl+V) en tu email cuando lo escribas.`);
+      setSnackbar({
+        open: true,
+        message: "Link de invitación generado y copiado al portapapeles. Pega el link (Ctrl+V) en tu email cuando lo escribas.",
+        severity: 'success'
+      });
     } catch (error) {
       console.error("Error al generar link de invitación:", error);
-      alert("Error al generar el link de invitación. Intenta nuevamente.");
+      setSnackbar({
+        open: true,
+        message: "Error al generar el link de invitación. Intenta nuevamente.",
+        severity: 'error'
+      });
     } finally {
       setIsGeneratingLink(false);
     }
@@ -153,10 +184,18 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
         await deleteDoctor(doctorToDelete.id);
         setDeleteDialogOpen(false);
         setDoctorToDelete(null);
-        alert("Médico eliminado correctamente");
+        setSnackbar({
+          open: true,
+          message: "Médico eliminado correctamente",
+          severity: 'success'
+        });
       } catch (error) {
         console.error("Error al eliminar médico:", error);
-        alert("Error al eliminar médico. Intenta nuevamente.");
+        setSnackbar({
+          open: true,
+          message: "Error al eliminar médico. Intenta nuevamente.",
+          severity: 'error'
+        });
       }
     }
   };
@@ -396,6 +435,23 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
         }}
         doctor={selectedDoctorForView}
       />
+
+      {/* Snackbar para notificaciones */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+          variant="filled"
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

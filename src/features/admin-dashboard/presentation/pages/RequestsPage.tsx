@@ -18,6 +18,8 @@ import {
   Stack,
   TextField,
   Typography,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import {
   DataGrid,
@@ -64,6 +66,11 @@ export const RequestsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [requestToReject, setRequestToReject] = useState<ProviderRequest | null>(null);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'info' }>({
+    open: false,
+    message: '',
+    severity: 'info'
+  });
 
   // --- Handlers UI ---
   const handleViewRequest = (request: ProviderRequest) => {
@@ -110,7 +117,11 @@ export const RequestsPage = () => {
 
   const handleExportCSV = () => {
     if (requests.length === 0) {
-      alert("No hay datos para exportar");
+      setSnackbar({
+        open: true,
+        message: "No hay datos para exportar",
+        severity: 'info'
+      });
       return;
     }
 
@@ -183,6 +194,12 @@ export const RequestsPage = () => {
     
     // Limpiar el URL object
     URL.revokeObjectURL(url);
+    
+    setSnackbar({
+      open: true,
+      message: `Archivo CSV exportado correctamente: ${fileName}`,
+      severity: 'success'
+    });
   };
 
   // --- Definición de Columnas ---
@@ -477,6 +494,23 @@ export const RequestsPage = () => {
           request={requestToReject}
           onConfirm={handleReject}
         />
+
+        {/* Snackbar para notificaciones */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+            variant="filled"
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Box>
     </DashboardLayout>
   );

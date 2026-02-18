@@ -20,6 +20,8 @@ import {
   TextField,
   Typography,
   Chip,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import {
   DataGrid,
@@ -62,6 +64,11 @@ export const AdRequestsPage = () => {
   const [selectedRequest, setSelectedRequest] = useState<AdRequest | null>(null);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'info' }>({
+    open: false,
+    message: '',
+    severity: 'info'
+  });
 
   const filteredRequests = useMemo(() => {
     if (!initialData) return [];
@@ -119,7 +126,11 @@ export const AdRequestsPage = () => {
       clearAdsFromStorage();
       clearAdRequests();
       refetch();
-      alert("✅ Anuncios y solicitudes limpiados correctamente");
+      setSnackbar({
+        open: true,
+        message: "Anuncios y solicitudes limpiados correctamente",
+        severity: 'success'
+      });
     }
   };
 
@@ -413,6 +424,23 @@ export const AdRequestsPage = () => {
           request={selectedRequest}
           onConfirm={handleReject}
         />
+
+        {/* Snackbar para notificaciones */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+            variant="filled"
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Box>
     </DashboardLayout>
   );

@@ -24,10 +24,11 @@ import {
   DialogActions,
   CircularProgress,
   Alert,
+  Snackbar,
 } from "@mui/material";
 import { useState, useMemo, useEffect } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
-import { getUsersAPI, toggleUserStatusAPI, updateUserAPI } from "../../infrastructure/users.api";
+import { getUsersAPI, toggleUserStatusAPI, updateUserAPI, deleteUserAPI } from "../../infrastructure/users.api";
 import type { User } from "../../domain/user.entity";
 import { useAdminNotificationsLayout } from "../hooks/useAdminNotificationsLayout";
 
@@ -48,6 +49,11 @@ export const UsersPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { appointments: adminAppointments, notificationsViewAllPath } = useAdminNotificationsLayout();
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'info' | 'warning' }>({
+    open: false,
+    message: '',
+    severity: 'info'
+  });
 
   // Cargar usuarios desde la API
   useEffect(() => {
@@ -106,8 +112,17 @@ export const UsersPage = () => {
       setUsers((prev) =>
         prev.map((u) => (u.id === userId ? { ...u, isActive: !u.isActive } : u))
       );
+      setSnackbar({
+        open: true,
+        message: `Usuario ${!user.isActive ? 'activado' : 'desactivado'} correctamente`,
+        severity: 'success'
+      });
     } catch (err: any) {
-      alert(err.message || 'Error al cambiar estado del usuario');
+      setSnackbar({
+        open: true,
+        message: err.message || 'Error al cambiar estado del usuario',
+        severity: 'error'
+      });
     }
   };
 
@@ -125,20 +140,25 @@ export const UsersPage = () => {
     if (!userToDelete) return;
 
     try {
-      // Llamar a la API para eliminar el usuario
-      await fetch(`/api/users/${userToDelete.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      // Llamar a la API para eliminar el usuario usando el endpoint correcto
+      await deleteUserAPI(userToDelete.id);
 
       // Eliminar de la lista local
       setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
       setIsDeleteModalOpen(false);
       setUserToDelete(null);
+      setSnackbar({
+        open: true,
+        message: "Usuario eliminado correctamente",
+        severity: 'success'
+      });
     } catch (err: any) {
-      alert(err.message || 'Error al eliminar usuario');
+      console.error("Error al eliminar usuario:", err);
+      setSnackbar({
+        open: true,
+        message: err.message || 'Error al eliminar usuario. Verifica que tengas permisos de administrador.',
+        severity: 'error'
+      });
     }
   };
 
@@ -157,8 +177,17 @@ export const UsersPage = () => {
       );
       setIsEditModalOpen(false);
       setSelectedUser(null);
+      setSnackbar({
+        open: true,
+        message: "Usuario actualizado correctamente",
+        severity: 'success'
+      });
     } catch (err: any) {
-      alert(err.message || 'Error al actualizar usuario');
+      setSnackbar({
+        open: true,
+        message: err.message || 'Error al actualizar usuario',
+        severity: 'error'
+      });
     }
   };
 
@@ -425,9 +454,6 @@ export const UsersPage = () => {
             ¿Eliminar Usuario?
           </DialogTitle>
           <DialogContent>
-            <Alert severity="warning" sx={{ mb: 2 }}>
-              Esta acción no se puede deshacer. El usuario será eliminado permanentemente de la base de datos.
-            </Alert>
             {userToDelete && (
               <Box>
                 <Typography variant="body1" gutterBottom>
@@ -466,6 +492,23 @@ export const UsersPage = () => {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Snackbar para notificaciones */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+            variant="filled"
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Box>
     </DashboardLayout>
   );

@@ -16,6 +16,7 @@ import {
   Alert,
   Stack,
   Chip,
+  Snackbar,
 } from '@mui/material';
 import { AccountBalance, Edit, Add, CheckCircle, Warning } from '@mui/icons-material';
 import { useState } from 'react';
@@ -67,6 +68,11 @@ const BANKS_ECUADOR = [
 export const BankAccountSection = ({ clinicId, bankAccount, onUpdate }: BankAccountSectionProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false,
+    message: '',
+    severity: 'error'
+  });
 
   const formik = useFormik({
     initialValues: {
@@ -86,7 +92,11 @@ export const BankAccountSection = ({ clinicId, bankAccount, onUpdate }: BankAcco
         formik.resetForm({ values });
       } catch (error) {
         console.error('Error al actualizar cuenta bancaria:', error);
-        alert('Error al actualizar la cuenta bancaria. Intenta nuevamente.');
+        setSnackbar({
+          open: true,
+          message: 'Error al actualizar la cuenta bancaria. Intenta nuevamente.',
+          severity: 'error'
+        });
       } finally {
         setLoading(false);
       }
@@ -321,6 +331,23 @@ export const BankAccountSection = ({ clinicId, bankAccount, onUpdate }: BankAcco
           </DialogActions>
         </form>
       </Dialog>
+
+      {/* Snackbar para notificaciones */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+          variant="filled"
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

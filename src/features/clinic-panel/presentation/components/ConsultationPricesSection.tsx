@@ -18,6 +18,7 @@ import {
   Chip,
   IconButton,
   Stack,
+  Snackbar,
 } from '@mui/material';
 import { AttachMoney, Edit, Warning } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
@@ -51,6 +52,11 @@ export const ConsultationPricesSection = ({
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [prices, setPrices] = useState<ConsultationPrice[]>(consultationPrices);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
 
   // Sincronizar precios cuando cambien las especialidades del perfil o consultationPrices
   useEffect(() => {
@@ -110,10 +116,18 @@ export const ConsultationPricesSection = ({
         setDialogOpen(false);
         setSelectedSpecialty(null);
         formik.resetForm();
-        alert('Precio actualizado correctamente');
+        setSnackbar({
+          open: true,
+          message: 'Precio actualizado correctamente',
+          severity: 'success'
+        });
       } catch (error) {
         console.error('❌ Error al actualizar precio:', error);
-        alert('Error al actualizar el precio. Intenta nuevamente.');
+        setSnackbar({
+          open: true,
+          message: 'Error al actualizar el precio. Intenta nuevamente.',
+          severity: 'error'
+        });
       } finally {
         setLoading(false);
       }
@@ -285,6 +299,23 @@ export const ConsultationPricesSection = ({
           </DialogActions>
         </form>
       </Dialog>
+
+      {/* Snackbar para notificaciones */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+          variant="filled"
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

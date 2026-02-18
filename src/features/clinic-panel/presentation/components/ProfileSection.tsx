@@ -1,4 +1,4 @@
-import { Box, Typography, Button, TextField, Grid2, Card, CardContent, Chip, Avatar } from "@mui/material";
+import { Box, Typography, Button, TextField, Grid2, Card, CardContent, Chip, Avatar, Snackbar, Alert } from "@mui/material";
 import { Save, CloudUpload, LocationOn, CameraAlt, LocalHospital } from "@mui/icons-material";
 import { useState, useEffect, useRef } from "react";
 import type { ClinicProfile } from "../../domain/clinic.entity";
@@ -126,13 +126,21 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
       // Validar tamaño del archivo (máximo 10MB antes de comprimir)
       const maxSize = 10 * 1024 * 1024; // 10MB
       if (file.size > maxSize) {
-        alert("La imagen es demasiado grande. Por favor, selecciona una imagen menor a 10MB.");
+        setSnackbar({
+          open: true,
+          message: "La imagen es demasiado grande. Por favor, selecciona una imagen menor a 10MB.",
+          severity: 'error'
+        });
         return;
       }
 
       // Validar tipo de archivo
       if (!file.type.startsWith("image/")) {
-        alert("Por favor, selecciona un archivo de imagen válido.");
+        setSnackbar({
+          open: true,
+          message: "Por favor, selecciona un archivo de imagen válido.",
+          severity: 'error'
+        });
         return;
       }
 
@@ -152,7 +160,11 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
         } as ClinicProfile);
       } catch (error) {
         console.error("Error procesando logo:", error);
-        alert("Error al procesar el logo. Por favor, intenta con otra imagen.");
+        setSnackbar({
+          open: true,
+          message: "Error al procesar el logo. Por favor, intenta con otra imagen.",
+          severity: 'error'
+        });
         setLogoPreview(profile?.logoUrl || null);
       }
     }
@@ -424,6 +436,23 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
           </CardContent>
         </Card>
       )}
+
+      {/* Snackbar para notificaciones */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+          variant="filled"
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

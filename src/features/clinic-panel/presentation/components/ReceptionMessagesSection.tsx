@@ -13,6 +13,8 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { Send, Message as MessageIcon, Person } from "@mui/icons-material";
 import { useState, useEffect, useRef } from "react";
@@ -30,6 +32,11 @@ export const ReceptionMessagesSection = ({ clinicId }: ReceptionMessagesSectionP
   const [selectedDoctorId, setSelectedDoctorId] = useState<string>("");
   const [messageText, setMessageText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false,
+    message: '',
+    severity: 'error'
+  });
 
   const { messages, loading, sending, sendMessage, markAsRead } = useClinicReceptionMessages(
     clinicId,
@@ -56,7 +63,11 @@ export const ReceptionMessagesSection = ({ clinicId }: ReceptionMessagesSectionP
       setMessageText("");
     } catch (error) {
       console.error("Error enviando mensaje:", error);
-      alert("Error al enviar el mensaje");
+      setSnackbar({
+        open: true,
+        message: "Error al enviar el mensaje",
+        severity: 'error'
+      });
     }
   };
 
@@ -259,6 +270,23 @@ export const ReceptionMessagesSection = ({ clinicId }: ReceptionMessagesSectionP
           )}
         </CardContent>
       </Card>
+
+      {/* Snackbar para notificaciones */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+          variant="filled"
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
