@@ -7,6 +7,7 @@ import { useClinicDashboard } from "../hooks/useClinicDashboard";
 import { StatsCards } from "../components/StatsCards";
 import { DashboardCharts } from "../components/DashboardCharts";
 import { ProfileSection } from "../components/ProfileSection";
+import { ErrorBoundary } from "../../../../shared/components/ErrorBoundary";
 import { DoctorsSection } from "../components/DoctorsSection";
 import { AppointmentsSection } from "../components/AppointmentsSection";
 import { ReceptionSection } from "../components/ReceptionSection";
@@ -179,7 +180,11 @@ export const ClinicDashboardPage = () => {
           </>
         )}
 
-        {currentTab === "profile" && <ProfileSection clinicId={clinic.id} />}
+        {currentTab === "profile" && (
+          <ErrorBoundary>
+            <ProfileSection clinicId={clinic.id} />
+          </ErrorBoundary>
+        )}
 
         {currentTab === "doctors" && <DoctorsSection clinicId={clinic.id} />}
 

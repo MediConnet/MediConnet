@@ -1,13 +1,19 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Box, Typography, Button, Paper, CircularProgress, Alert } from "@mui/material";
 import { CheckCircle, Cancel, LocalHospital } from "@mui/icons-material";
 import { validateInvitationTokenAPI, rejectInvitationAPI } from "../../infrastructure/clinic-doctors.api";
-import { AppLayout } from "../../../../shared/layouts/AppLayout";
+import { useAuthStore } from "../../../../app/store/auth.store";
 
 export const ClinicInvitationPage = () => {
-  const { token } = useParams<{ token: string }>();
+  const { token: tokenFromPath } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const authStore = useAuthStore();
+  const { user, isAuthenticated } = authStore;
+  
+  // ⭐ Obtener token de path parameter o query parameter
+  const token = tokenFromPath || searchParams.get('token');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [invitation, setInvitation] = useState<{
@@ -28,13 +34,16 @@ export const ClinicInvitationPage = () => {
       }
 
       try {
+        console.log('🔍 Validando token de invitación:', token);
         const data = await validateInvitationTokenAPI(token);
+        console.log('✅ Datos de invitación recibidos:', data);
         setInvitation(data);
         
         if (!data.isValid) {
           setError("Esta invitación ha expirado o ya no es válida");
         }
       } catch (err: any) {
+        console.error('❌ Error al validar invitación:', err);
         setError(err.message || "Error al cargar la invitación");
       } finally {
         setLoading(false);
@@ -45,11 +54,28 @@ export const ClinicInvitationPage = () => {
   }, [token]);
 
   const handleAccept = async () => {
-    if (!token) return;
+    if (!token || !invitation) return;
 
     setProcessing(true);
     try {
-      // Redirigir al registro con el token de invitación
+      // Si el usuario ya está logueado y es doctor, verificar si puede aceptar directamente
+      if (isAuthenticated && user) {
+        // Verificar si el email del usuario coincide con el email de la invitación
+        if (user.email === invitation.email && user.role === 'profesional' && user.tipo === 'doctor') {
+          // El usuario ya está registrado como doctor, redirigir al dashboard
+          // El backend debería asociarlo automáticamente cuando acceda al dashboard
+          navigate('/doctor/dashboard');
+          return;
+        } else if (user.email === invitation.email) {
+          // Email coincide pero no es doctor, mostrar error
+          setError("Este email ya está registrado con otro tipo de cuenta. Por favor, inicia sesión con otra cuenta o contacta al administrador.");
+          setProcessing(false);
+          return;
+        }
+      }
+
+      // Si no está logueado o el email no coincide, redirigir al registro
+      // El registro manejará la asociación automáticamente cuando se complete
       navigate(`/register?invitation=${token}&type=doctor`);
     } catch (err: any) {
       setError(err.message || "Error al aceptar la invitación");
@@ -72,56 +98,49 @@ export const ClinicInvitationPage = () => {
 
   if (loading) {
     return (
-      <AppLayout>
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-          <CircularProgress />
-        </Box>
-      </AppLayout>
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
   if (error || !invitation || !invitation.isValid) {
     return (
-      <AppLayout>
-        <Box sx={{ maxWidth: 600, margin: "0 auto", mt: 8, p: 3 }}>
-          <Paper sx={{ p: 4, textAlign: "center" }}>
-            <Cancel sx={{ fontSize: 64, color: "error.main", mb: 2 }} />
-            <Typography variant="h5" gutterBottom>
-              Invitación No Válida
-            </Typography>
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {error || "Esta invitación ha expirado o ya no es válida"}
-            </Alert>
-          </Paper>
-        </Box>
-      </AppLayout>
+      <Box sx={{ maxWidth: 600, margin: "0 auto", mt: 8, p: 3 }}>
+        <Paper sx={{ p: 4, textAlign: "center" }}>
+          <Cancel sx={{ fontSize: 64, color: "error.main", mb: 2 }} />
+          <Typography variant="h5" gutterBottom>
+            Invitación No Válida
+          </Typography>
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {error || "Esta invitación ha expirado o ya no es válida"}
+          </Alert>
+        </Paper>
+      </Box>
     );
   }
 
   if (status === "rejected") {
     return (
-      <AppLayout>
-        <Box sx={{ maxWidth: 600, margin: "0 auto", mt: 8, p: 3 }}>
-          <Paper sx={{ p: 4, textAlign: "center" }}>
-            <Cancel sx={{ fontSize: 64, color: "error.main", mb: 2 }} />
-            <Typography variant="h5" gutterBottom>
-              Invitación Rechazada
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-              Has rechazado la invitación de <strong>{invitation.clinic.name}</strong>.
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Gracias por tu tiempo.
-            </Typography>
-          </Paper>
-        </Box>
-      </AppLayout>
+      <Box sx={{ maxWidth: 600, margin: "0 auto", mt: 8, p: 3 }}>
+        <Paper sx={{ p: 4, textAlign: "center" }}>
+          <Cancel sx={{ fontSize: 64, color: "error.main", mb: 2 }} />
+          <Typography variant="h5" gutterBottom>
+            Invitación Rechazada
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            Has rechazado la invitación de <strong>{invitation.clinic.name}</strong>.
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Gracias por tu tiempo.
+          </Typography>
+        </Paper>
+      </Box>
     );
   }
 
   return (
-    <AppLayout>
-      <Box sx={{ maxWidth: 600, margin: "0 auto", mt: 8, p: 3 }}>
+    <Box sx={{ maxWidth: 600, margin: "0 auto", mt: 8, p: 3 }}>
         <Paper sx={{ p: 4, textAlign: "center" }}>
           <LocalHospital sx={{ fontSize: 64, color: "primary.main", mb: 2 }} />
           
@@ -176,10 +195,11 @@ export const ClinicInvitationPage = () => {
           </Box>
 
           <Typography variant="caption" color="text.secondary" sx={{ mt: 3, display: "block" }}>
-            Al aceptar, serás redirigido al registro para completar tu perfil.
+            {isAuthenticated && user?.email === invitation.email
+              ? "Al aceptar, serás asociado a esta clínica y tendrás acceso al panel de médico asociado."
+              : "Al aceptar, serás redirigido al registro para completar tu perfil. Una vez registrado, estarás asociado a esta clínica automáticamente."}
           </Typography>
         </Paper>
       </Box>
-    </AppLayout>
   );
 };

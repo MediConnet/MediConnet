@@ -98,6 +98,8 @@ export const AppRouter = () => {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          {/* Ruta pública para invitaciones de clínica (sin header) */}
+          <Route path="/clinic/invite/:token" element={<ClinicInvitationPage />} />
         </Route>
 
         {/* --- Rutas públicas con Layout Principal --- */}
@@ -106,8 +108,6 @@ export const AppRouter = () => {
           <Route path="/services" element={<ServicesCatalogPage />} />
           <Route path="/supplies" element={<SuppliesListPage />} />
           <Route path="/supplies/:id" element={<SupplyStoreDetailPage />} />
-          {/* Ruta pública para invitaciones de clínica */}
-          <Route path="/clinic/invite/:token" element={<ClinicInvitationPage />} />
         </Route>
 
         {/* --- Panel de Administrador --- */}

@@ -134,8 +134,38 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
       // Generar el link de invitación
       const { invitationLink } = await generateInvitationLinkAPI(doctorEmail);
       
+      // ⭐ CONSTRUIR URL COMPLETA DEL FRONTEND
+      let fullInvitationLink = invitationLink;
+      
+      // Si el link no empieza con http:// o https://, construir la URL completa
+      if (!invitationLink.startsWith('http://') && !invitationLink.startsWith('https://')) {
+        const frontendBaseUrl = window.location.origin;
+        
+        if (invitationLink.startsWith('/')) {
+          fullInvitationLink = `${frontendBaseUrl}${invitationLink}`;
+        } else {
+          fullInvitationLink = `${frontendBaseUrl}/clinic/invite/${invitationLink}`;
+        }
+      }
+      
+      // ⭐ CONVERTIR QUERY PARAMETER A PATH PARAMETER
+      // Si el link tiene formato ?token=..., convertirlo a /:token
+      try {
+        const url = new URL(fullInvitationLink);
+        if (url.searchParams.has('token')) {
+          const token = url.searchParams.get('token');
+          if (token) {
+            // Construir la URL correcta con path parameter
+            fullInvitationLink = `${url.origin}/clinic/invite/${token}`;
+          }
+        }
+      } catch (e) {
+        // Si no es una URL válida, continuar con el link original
+        console.warn('No se pudo parsear la URL:', e);
+      }
+      
       // Copiar automáticamente al portapapeles
-      await navigator.clipboard.writeText(invitationLink);
+      await navigator.clipboard.writeText(fullInvitationLink);
       
       // Cerrar el diálogo
       setInviteDialogOpen(false);

@@ -52,6 +52,17 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  // Estado para el Snackbar
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error' | 'warning' | 'info';
+  }>({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
+  
   // Actualizar especialidades cuando el perfil se carga
   useEffect(() => {
     if (profile?.specialties) {
@@ -181,7 +192,7 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
       description: profile?.description || "",
     },
     validationSchema,
-    enableReinitialize: true,
+    enableReinitialize: !!profile, // Solo reinicializar cuando profile esté disponible
     onSubmit: async (values) => {
       if (!profile) return;
       await updateProfile({
@@ -189,7 +200,7 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
         ...values,
         latitude: values.latitude && values.latitude !== "" ? Number(values.latitude) : undefined,
         longitude: values.longitude && values.longitude !== "" ? Number(values.longitude) : undefined,
-        specialties: selectedSpecialties.length > 0 ? selectedSpecialties : profile.specialties,
+        specialties: selectedSpecialties.length > 0 ? selectedSpecialties : (profile.specialties || []),
       } as ClinicProfile);
     },
   });
@@ -414,7 +425,7 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
       </Card>
 
       {/* Mapa de Ubicación */}
-      {profile.latitude && profile.longitude && (
+      {profile?.latitude && profile?.longitude && (
         <Card sx={{ mt: 3 }}>
           <CardContent>
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
@@ -424,9 +435,9 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
               </Typography>
             </Box>
             <Map
-              latitude={profile.latitude}
-              longitude={profile.longitude}
-              address={profile.address}
+              latitude={profile?.latitude || 0}
+              longitude={profile?.longitude || 0}
+              address={profile?.address || ""}
               height={400}
             />
             <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
