@@ -30,6 +30,7 @@ import {
   Switch,
   FormControlLabel,
   Alert,
+  Snackbar,
 } from "@mui/material";
 import { useState, useRef } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
@@ -55,6 +56,11 @@ export const PharmacyChainsPage = () => {
     isActive: true,
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error' | 'info' | 'warning';
+  }>({ open: false, message: '', severity: 'success' });
 
   const handleCreate = () => {
     setEditingChain(null);
@@ -76,8 +82,23 @@ export const PharmacyChainsPage = () => {
     if (confirm("¿Estás seguro de eliminar esta cadena?")) {
       try {
         await deleteChain(id);
-      } catch (err) {
-        alert("Error al eliminar la cadena. Por favor, intenta nuevamente.");
+        setSnackbar({
+          open: true,
+          message: "Cadena eliminada correctamente",
+          severity: 'success'
+        });
+      } catch (err: any) {
+        // Extraer el mensaje de error del backend
+        const errorMessage = 
+          err?.message || 
+          err?.response?.data?.message || 
+          "Error al eliminar la cadena. Por favor, intenta nuevamente.";
+        
+        setSnackbar({
+          open: true,
+          message: errorMessage,
+          severity: 'error'
+        });
       }
     }
   };
@@ -85,14 +106,27 @@ export const PharmacyChainsPage = () => {
   const handleToggleActive = async (chain: PharmacyChain) => {
     try {
       await updateChain(chain.id, { isActive: !chain.isActive });
+      setSnackbar({
+        open: true,
+        message: `Cadena ${chain.isActive ? 'desactivada' : 'activada'} correctamente`,
+        severity: 'success'
+      });
     } catch (err) {
-      alert("Error al cambiar el estado. Por favor, intenta nuevamente.");
+      setSnackbar({
+        open: true,
+        message: "Error al cambiar el estado. Por favor, intenta nuevamente.",
+        severity: 'error'
+      });
     }
   };
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      alert("El nombre es requerido");
+      setSnackbar({
+        open: true,
+        message: "El nombre es requerido",
+        severity: 'warning'
+      });
       return;
     }
 
@@ -105,12 +139,22 @@ export const PharmacyChainsPage = () => {
           logoUrl: formData.logoUrl,
           isActive: formData.isActive,
         });
+        setSnackbar({
+          open: true,
+          message: "Cadena actualizada correctamente",
+          severity: 'success'
+        });
       } else {
         // Crear
         await createChain({
           name: formData.name,
           logoUrl: formData.logoUrl,
           isActive: formData.isActive,
+        });
+        setSnackbar({
+          open: true,
+          message: "Cadena creada correctamente",
+          severity: 'success'
         });
       }
       setIsModalOpen(false);
@@ -372,6 +416,23 @@ export const PharmacyChainsPage = () => {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Snackbar para notificaciones */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Box>
     </DashboardLayout>
   );

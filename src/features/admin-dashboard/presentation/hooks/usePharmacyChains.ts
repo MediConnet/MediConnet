@@ -64,7 +64,12 @@ export const usePharmacyChains = () => {
       await deletePharmacyChainAPI(id);
       await loadChains(); // Recargar lista
     } catch (err: any) {
-      const errorMessage = err?.response?.data?.message || 'Error al eliminar la cadena';
+      // El interceptor de httpClient convierte el error en Error con el mensaje
+      // También puede venir como AxiosError con response.data.message
+      const errorMessage = 
+        err?.message || 
+        err?.response?.data?.message || 
+        'Error al eliminar la cadena';
       setError(errorMessage);
       throw new Error(errorMessage);
     }

@@ -34,8 +34,10 @@ export const updatePharmacyChainAPI = async (
   id: string,
   data: Partial<Omit<PharmacyChain, 'id' | 'createdAt' | 'updatedAt'>>
 ): Promise<PharmacyChain> => {
+  // Limpiar el ID (remover ":1" o cualquier sufijo después de ":")
+  const cleanId = id.split(':')[0].trim();
   const response = await httpClient.put<{ success: boolean; data: PharmacyChain }>(
-    `/admin/pharmacy-chains/${id}`,
+    `/admin/pharmacy-chains/${cleanId}`,
     data
   );
   return extractData(response);
@@ -46,7 +48,9 @@ export const updatePharmacyChainAPI = async (
  * Endpoint: DELETE /api/admin/pharmacy-chains/:id
  */
 export const deletePharmacyChainAPI = async (id: string): Promise<void> => {
-  await httpClient.delete<{ success: boolean }>(`/admin/pharmacy-chains/${id}`);
+  // Limpiar el ID (remover ":1" o cualquier sufijo después de ":")
+  const cleanId = id.split(':')[0].trim();
+  await httpClient.delete<{ success: boolean }>(`/admin/pharmacy-chains/${cleanId}`);
 };
 
 /**
