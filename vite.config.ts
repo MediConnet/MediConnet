@@ -7,7 +7,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false, // Desactivar en producción para mejor rendimiento
-    minify: 'terser',
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: {

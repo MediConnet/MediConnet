@@ -34,6 +34,11 @@ export const loadingManager = {
 /**
  * Cliente HTTP configurado con interceptors.
  */
+// Log para verificar la URL que se está usando
+console.log('🔌 [HTTP] API URL configurada:', env.API_URL);
+console.log('🔌 [HTTP] VITE_API_URL desde env:', import.meta.env.VITE_API_URL);
+console.log('🔌 [HTTP] MODE:', import.meta.env.MODE);
+
 export const httpClient: AxiosInstance = axios.create({
   baseURL: env.API_URL,
   headers: {
