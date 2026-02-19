@@ -7,7 +7,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false, // Desactivar en producción para mejor rendimiento
-    minify: 'esbuild',
+    minify: 'esbuild', // Usar esbuild en lugar de terser (requerido para Vercel)
     rollupOptions: {
       output: {
         manualChunks: {
