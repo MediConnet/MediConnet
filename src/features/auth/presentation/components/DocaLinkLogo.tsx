@@ -15,7 +15,7 @@ export const DocaLinkLogo = () => {
       {/* NOTE: Logo oficial de DOCALINK */}
       <Box
         component="img"
-        src="/src/assets/docalink-logo.png"
+        src="/docalink-logo.png"
         alt="DOCALINK - Conecta tu salud"
         sx={{
           width: { xs: 48, sm: 56, md: 64 },

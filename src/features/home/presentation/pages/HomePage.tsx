@@ -838,7 +838,7 @@ export const HomePage = () => {
           >
             <Box
               component="img"
-              src="/src/assets/imagenApp.png"
+              src="/imagenApp.png"
               alt="App móvil MediConnet"
               sx={{
                 width: { xs: '100%', sm: '80%', md: '100%' },
@@ -994,7 +994,7 @@ export const HomePage = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
                 <Box
                   component="img"
-                  src="/src/assets/docalink-logo.png"
+                  src="/docalink-logo.png"
                   alt="DOCALINK"
                   sx={{
                     width: 40,

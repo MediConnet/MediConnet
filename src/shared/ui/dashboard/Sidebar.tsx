@@ -44,7 +44,7 @@ export const Sidebar = ({ role, isOpen, menuItems: customMenuItems }: SidebarPro
         }`}
       >
         <img 
-          src="/src/assets/docalink-logo.png" 
+          src="/docalink-logo.png" 
           alt="DOCALINK"
           className="shrink-0 object-contain"
           style={{ width: isOpen ? '48px' : '40px', height: isOpen ? '48px' : '40px' }}

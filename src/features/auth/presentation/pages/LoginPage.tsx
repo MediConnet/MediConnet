@@ -239,7 +239,7 @@ export const LoginPage = () => {
             <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
               <Box
                 component="img"
-                src="/src/assets/docalink-logo.png"
+                src="/docalink-logo.png"
                 alt="DOCALINK"
                 sx={{
                   width: 80,
