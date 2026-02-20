@@ -197,6 +197,9 @@ export const EditScheduleModal = ({
                             <AccessTime sx={{ color: "text.secondary", mr: 1 }} />
                           ),
                         }}
+                        slotProps={{
+                          htmlInput: { step: 1800 }
+                        }}
                       />
                     </Grid2>
                     <Grid2 size={{ xs: 12, sm: 4 }}>
@@ -213,6 +216,9 @@ export const EditScheduleModal = ({
                           startAdornment: (
                             <AccessTime sx={{ color: "text.secondary", mr: 1 }} />
                           ),
+                        }}
+                        slotProps={{
+                          htmlInput: { step: 1800 }
                         }}
                       />
                     </Grid2>

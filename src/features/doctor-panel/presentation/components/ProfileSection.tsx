@@ -949,6 +949,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                         <div className="flex items-center gap-2">
                           <input
                             type="time"
+                            step="1800"
                             value={schedule.startTime}
                             onChange={(e) =>
                               handleScheduleChange(
@@ -962,6 +963,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                           <span className="text-gray-500">-</span>
                           <input
                             type="time"
+                            step="1800"
                             value={schedule.endTime}
                             onChange={(e) =>
                               handleScheduleChange(
@@ -979,6 +981,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                           <span className="text-xs text-gray-500 w-20">Almuerzo</span>
                           <input
                             type="time"
+                            step="1800"
                             value={schedule.breakStart ?? ""}
                             onChange={(e) =>
                               handleScheduleChange(
@@ -992,6 +995,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                           <span className="text-gray-500">-</span>
                           <input
                             type="time"
+                            step="1800"
                             value={schedule.breakEnd ?? ""}
                             onChange={(e) =>
                               handleScheduleChange(

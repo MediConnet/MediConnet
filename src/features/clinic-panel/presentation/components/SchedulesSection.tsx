@@ -220,6 +220,9 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
                           InputLabelProps={{ shrink: true }}
                           size="small"
                           disabled={!isEditing}
+                          slotProps={{
+                            htmlInput: { step: 1800 }
+                          }}
                         />
                         <TextField
                           type="time"
@@ -229,6 +232,9 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
                           InputLabelProps={{ shrink: true }}
                           size="small"
                           disabled={!isEditing}
+                          slotProps={{
+                            htmlInput: { step: 1800 }
+                          }}
                         />
                       </>
                     )}

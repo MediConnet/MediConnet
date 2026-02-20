@@ -408,7 +408,10 @@ export const PharmacyBranchModal = ({
                   onChange={(e) =>
                     handleScheduleChange("startTime", e.target.value)
                   }
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{ 
+                    inputLabel: { shrink: true },
+                    htmlInput: { step: 1800 }
+                  }}
                 />
               </Grid2>
               <Grid2 size={{ xs: 6 }}>
@@ -421,7 +424,10 @@ export const PharmacyBranchModal = ({
                   onChange={(e) =>
                     handleScheduleChange("endTime", e.target.value)
                   }
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{ 
+                    inputLabel: { shrink: true },
+                    htmlInput: { step: 1800 }
+                  }}
                 />
               </Grid2>
             </Grid2>

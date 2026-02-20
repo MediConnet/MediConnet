@@ -372,6 +372,9 @@ export const EditProfileModal = ({
                       }
                     }}
                     InputLabelProps={{ shrink: true }}
+                    slotProps={{
+                      htmlInput: { step: 1800 }
+                    }}
                   />
                 </Grid2>
                 <Grid2 size={{ xs: 12, md: 3 }}>
@@ -392,6 +395,9 @@ export const EditProfileModal = ({
                       }
                     }}
                     InputLabelProps={{ shrink: true }}
+                    slotProps={{
+                      htmlInput: { step: 1800 }
+                    }}
                   />
                 </Grid2>
               </>
