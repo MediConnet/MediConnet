@@ -100,6 +100,7 @@ export const AppRouter = () => {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           {/* Ruta pública para invitaciones de clínica (sin header) */}
           <Route path="/clinic/invite/:token" element={<ClinicInvitationPage />} />
+          <Route path="/invite/:token" element={<ClinicInvitationPage />} />
         </Route>
 
         {/* --- Rutas públicas con Layout Principal --- */}
