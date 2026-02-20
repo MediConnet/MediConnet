@@ -8,7 +8,7 @@ export const env = {
   API_URL: import.meta.env.VITE_API_URL || (import.meta.env.MODE === 'development' 
     ? 'http://localhost:3000/api' 
     : 'https://doca-link-backend.onrender.com/api'),
-  APP_NAME: import.meta.env.VITE_APP_NAME || 'MediConnet',
+  APP_NAME: import.meta.env.VITE_APP_NAME || 'DOCALINK',
   NODE_ENV: import.meta.env.VITE_NODE_ENV || import.meta.env.MODE || 'development',
   // AWS Cognito (opcional - si se usa autenticación directa desde frontend)
   COGNITO_USER_POOL_ID: import.meta.env.VITE_COGNITO_USER_POOL_ID,

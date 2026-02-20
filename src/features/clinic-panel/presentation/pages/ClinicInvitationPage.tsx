@@ -149,7 +149,7 @@ export const ClinicInvitationPage = () => {
           </Typography>
           
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4, mt: 2 }}>
-            Has sido invitado a formar parte de nuestra clínica en MediConnect.
+            Has sido invitado a formar parte de nuestra clínica en DOCALINK.
             Al aceptar, podrás gestionar tus citas, pacientes y horarios desde nuestra plataforma.
           </Typography>
 

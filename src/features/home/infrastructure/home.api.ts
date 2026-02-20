@@ -35,13 +35,13 @@ export const getHomeContentAPI = async (): Promise<HomeContent> => {
         rotationInterval: 5,
       },
       joinSection: {
-        title: 'Únete a Medify',
+        title: 'Únete a DOCALINK',
         subtitle: 'La plataforma que conecta a pacientes y profesionales de la salud',
         ctaText: '¡Regístrate ahora!',
         ctaLink: '/register',
       },
       footer: {
-        copyright: 'Conectando salud y bienestar | Medify © 2025',
+        copyright: 'Conecta tu salud | DOCALINK © 2025',
         links: [
           { label: 'Política de privacidad', url: '/privacy' },
           { label: 'Términos y condiciones', url: '/terms' },

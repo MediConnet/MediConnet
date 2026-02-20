@@ -26,15 +26,15 @@ export const Footer = () => {
           </Box>
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 700, color: 'white' }}>
-              Medify
+              DOCALINK
             </Typography>
             <Typography variant="body2" sx={{ color: 'white', fontSize: '0.75rem' }}>
-              Conectando salud y bienestar
+              Conecta tu salud
             </Typography>
           </Box>
         </Box>
         <Typography variant="body2" sx={{ color: 'white', fontSize: '0.75rem' }}>
-          © 2025 Medify. Todos los derechos reservados.
+          © 2025 DOCALINK. Todos los derechos reservados.
         </Typography>
       </Box>
     </Box>
