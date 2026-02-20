@@ -12,6 +12,7 @@ import { useClinicAssociatedDoctor } from "../hooks/useClinicAssociatedDoctor";
 // Componentes de secciones
 import { AdsSection } from "../components/AdsSection";
 import { AppointmentsSection } from "../components/AppointmentsSection";
+import { ConsultationPricesSection } from "../components/ConsultationPricesSection";
 import { DashboardContent } from "../components/DashboardContent";
 import { PatientsSection } from "../components/PatientsSection";
 import { PaymentsSection } from "../components/PaymentsSection";
@@ -43,6 +44,7 @@ import { getAppointmentsAPI } from "../../infrastructure/appointments.api";
 type TabType =
   | "dashboard"
   | "profile"
+  | "consultation-prices"
   | "ads"
   | "reviews"
   | "appointments"
@@ -343,6 +345,10 @@ export const DoctorDashboardPage = () => {
                   }
                 }}
               />
+            )}
+
+            {currentTab === "consultation-prices" && (
+              <ConsultationPricesSection />
             )}
 
             {currentTab === "ads" && <AdsSection />}

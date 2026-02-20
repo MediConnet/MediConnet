@@ -77,6 +77,11 @@ export const DOCTOR_MENU: MenuItem[] = [
     label: "Mi Perfil",
     path: "/doctor/dashboard?tab=profile",
   },
+  {
+    icon: <AttachMoney />,
+    label: "Tarifas de Consulta",
+    path: "/doctor/dashboard?tab=consultation-prices",
+  },
   { icon: <Campaign />, label: "Anuncios", path: "/doctor/dashboard?tab=ads" },
   {
     icon: <StarRate />,
@@ -94,7 +99,7 @@ export const DOCTOR_MENU: MenuItem[] = [
     path: "/doctor/dashboard?tab=patients",
   },
   {
-    icon: <AttachMoney />,
+    icon: <Receipt />,
     label: "Pagos e Ingresos",
     path: "/doctor/dashboard?tab=payments",
   },
