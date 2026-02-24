@@ -198,7 +198,7 @@ export const ResetPasswordPage = () => {
             <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
               <Box
                 component="img"
-                src="/docalink-logo.png"
+                src="/docalink-logo.png?v=2"
                 alt="DOCALINK"
                 sx={{
                   width: 80,

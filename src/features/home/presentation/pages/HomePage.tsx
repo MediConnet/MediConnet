@@ -994,12 +994,11 @@ export const HomePage = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
                 <Box
                   component="img"
-                  src="/docalink-logo.png"
+                  src="/docalink-logo.png?v=3"
                   alt="DOCALINK"
                   sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 1.5,
+                    width: 60,
+                    height: 60,
                     objectFit: 'contain',
                   }}
                 />

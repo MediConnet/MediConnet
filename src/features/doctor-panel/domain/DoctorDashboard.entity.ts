@@ -29,7 +29,8 @@ export interface DoctorDashboard {
   doctor: {
     id?: string; // Útil tener el ID
     name: string;
-    specialty: string;
+    specialty: string | string[]; // Puede ser string o array
+    specialties?: Array<{ id: string; name: string }>; // Array estructurado de especialidades
     email: string;
     whatsapp: string;
     address: string;

@@ -40,6 +40,7 @@ import type {
   ProfileStatus,
 } from "../../domain/DoctorDashboard.entity";
 import { getAppointmentsAPI } from "../../infrastructure/appointments.api";
+import { getSpecialtiesAPI } from "../../infrastructure/doctors.api";
 
 type TabType =
   | "dashboard"
@@ -90,6 +91,9 @@ export const DoctorDashboardPage = () => {
 
   // Estado para las citas de la barra lateral (Notificaciones)
   const [sidebarAppointments, setSidebarAppointments] = useState<any[]>([]);
+  
+  // Estado para las especialidades con IDs reales
+  const [doctorSpecialtiesWithIds, setDoctorSpecialtiesWithIds] = useState<Array<{ id: string; name: string }>>([]);
 
   const currentTab = (searchParams.get("tab") || "dashboard") as TabType;
 
@@ -127,6 +131,36 @@ export const DoctorDashboardPage = () => {
 
     fetchAppointments();
   }, []);
+
+  // EFECTO: Cargar especialidades con IDs reales del backend
+  useEffect(() => {
+    const fetchSpecialtiesWithIds = async () => {
+      try {
+        // Obtener todas las especialidades disponibles
+        const allSpecialties = await getSpecialtiesAPI();
+        
+        // Obtener las especialidades del médico (nombres)
+        const doctorSpecialtyNames = Array.isArray(dashboardData?.doctor?.specialty)
+          ? dashboardData.doctor.specialty
+          : Array.isArray(profileData?.doctor?.specialty)
+          ? profileData.doctor.specialty
+          : [];
+        
+        // Filtrar solo las especialidades que el médico tiene
+        const doctorSpecialties = allSpecialties.filter(spec =>
+          doctorSpecialtyNames.includes(spec.name)
+        );
+        
+        setDoctorSpecialtiesWithIds(doctorSpecialties);
+      } catch (error) {
+        console.error("Error cargando especialidades:", error);
+      }
+    };
+
+    if (dashboardData?.doctor?.specialty || profileData?.doctor?.specialty) {
+      fetchSpecialtiesWithIds();
+    }
+  }, [dashboardData?.doctor?.specialty, profileData?.doctor?.specialty]);
 
   // Datos por defecto para usuarios nuevos
   const defaultData: DoctorDashboard = {
@@ -348,7 +382,9 @@ export const DoctorDashboardPage = () => {
             )}
 
             {currentTab === "consultation-prices" && (
-              <ConsultationPricesSection />
+              <ConsultationPricesSection 
+                specialties={doctorSpecialtiesWithIds}
+              />
             )}
 
             {currentTab === "ads" && <AdsSection />}

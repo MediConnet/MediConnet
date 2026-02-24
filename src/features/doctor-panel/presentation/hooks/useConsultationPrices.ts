@@ -1,18 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getConsultationPricesAPI,
-  updateConsultationPricesAPI,
+  createConsultationPriceAPI,
+  updateConsultationPriceAPI,
+  deleteConsultationPriceAPI,
 } from "../../infrastructure/consultation-prices.api";
+import type { CreateConsultationPriceRequest, UpdateConsultationPriceRequest } from "../../domain/ConsultationPrice.entity";
 
 /**
- * Hook para gestionar los precios de consulta por especialidad
+ * Hook para gestionar los tipos de consulta por especialidad
  */
 export const useConsultationPrices = () => {
   const queryClient = useQueryClient();
 
-  // Query para obtener precios
+  // Query para obtener todos los tipos de consulta
   const {
-    data: prices = {},
+    data: consultationPrices = [],
     isLoading,
     error,
     refetch,
@@ -22,22 +25,41 @@ export const useConsultationPrices = () => {
     staleTime: 5 * 60 * 1000, // 5 minutos
   });
 
-  // Mutation para actualizar precios
-  const updateMutation = useMutation({
-    mutationFn: updateConsultationPricesAPI,
+  // Mutation para crear tipo de consulta
+  const createMutation = useMutation({
+    mutationFn: createConsultationPriceAPI,
     onSuccess: () => {
-      // Invalidar cache para refrescar datos
       queryClient.invalidateQueries({ queryKey: ["consultation-prices"] });
-      queryClient.invalidateQueries({ queryKey: ["doctor-profile"] });
+    },
+  });
+
+  // Mutation para actualizar tipo de consulta
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateConsultationPriceRequest }) =>
+      updateConsultationPriceAPI(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["consultation-prices"] });
+    },
+  });
+
+  // Mutation para eliminar tipo de consulta
+  const deleteMutation = useMutation({
+    mutationFn: deleteConsultationPriceAPI,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["consultation-prices"] });
     },
   });
 
   return {
-    prices,
+    consultationPrices,
     isLoading,
     error,
     refetch,
-    updatePrices: updateMutation.mutateAsync,
+    createConsultationPrice: createMutation.mutateAsync,
+    updateConsultationPrice: updateMutation.mutateAsync,
+    deleteConsultationPrice: deleteMutation.mutateAsync,
+    isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
   };
 };

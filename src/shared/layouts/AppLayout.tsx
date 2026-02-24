@@ -102,7 +102,7 @@ export const AppLayout = () => {
             >
               <Box
                 component="img"
-                src="/docalink-logo.png"
+                src="/docalink-logo.png?v=2"
                 alt="DOCALINK"
                 sx={{
                   width: { xs: 50, sm: 60 },
