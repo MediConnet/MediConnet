@@ -2,12 +2,5 @@
   "buildCommand": "pnpm run build",
   "outputDirectory": "dist",
   "installCommand": "pnpm install",
-  "framework": "vite",
-  "cleanUrls": true,
-  "rewrites": [
-    {
-      "source": "/([^.]+)$",
-      "destination": "/index.html"
-    }
-  ]
+  "framework": "vite"
 }
