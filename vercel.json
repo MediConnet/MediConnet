@@ -3,7 +3,7 @@
   "outputDirectory": "dist",
   "installCommand": "pnpm install",
   "framework": "vite",
-  "cleanUrls": true
+  "cleanUrls": true,
   "rewrites": [
     {
       "source": "/((?!.*\\.(png|jpg|jpeg|gif|svg|ico|css|js|woff|woff2|ttf|eot|json|webp)).*)",
