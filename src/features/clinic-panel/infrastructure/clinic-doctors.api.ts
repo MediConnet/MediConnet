@@ -30,11 +30,12 @@ export const inviteDoctorByEmailAPI = async (email: string): Promise<DoctorInvit
 
 /**
  * API: Generar link de invitación
- * Endpoint: POST /api/clinics/doctors/invite/link
+ * Endpoint: POST /api/clinics/doctors/invitation
+ * Nota: Este endpoint genera el link Y envía el email automáticamente
  */
 export const generateInvitationLinkAPI = async (email: string): Promise<{ invitationLink: string; expiresAt: string }> => {
   const response = await httpClient.post<{ success: boolean; data: { invitationLink: string; expiresAt: string } }>(
-    '/clinics/doctors/invite/link',
+    '/clinics/doctors/invitation',
     { email }
   );
   return extractData(response);
