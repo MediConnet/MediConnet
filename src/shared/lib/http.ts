@@ -38,9 +38,23 @@ export const loadingManager = {
 console.log('🔌 [HTTP] API URL configurada:', env.API_URL);
 console.log('🔌 [HTTP] VITE_API_URL desde env:', import.meta.env.VITE_API_URL);
 console.log('🔌 [HTTP] MODE:', import.meta.env.MODE);
+console.log('🔌 [HTTP] Verificación - URL termina en /api:', env.API_URL.endsWith('/api'));
+
+// Validación crítica: La URL DEBE terminar en /api
+if (!env.API_URL.endsWith('/api')) {
+  console.error('❌ [HTTP] ERROR CRÍTICO: API_URL no termina en /api:', env.API_URL);
+  console.error('❌ [HTTP] Esto causará errores 404. Corrigiendo automáticamente...');
+}
+
+// Asegurar que baseURL siempre termine en /api
+const baseURL = env.API_URL.endsWith('/api') 
+  ? env.API_URL 
+  : `${env.API_URL.replace(/\/$/, '')}/api`;
+
+console.log('🔌 [HTTP] baseURL final para axios:', baseURL);
 
 export const httpClient: AxiosInstance = axios.create({
-  baseURL: env.API_URL,
+  baseURL: baseURL,
   headers: {
     'Content-Type': 'application/json',
   },

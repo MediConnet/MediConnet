@@ -25,7 +25,10 @@ interface AuthState {
   updateUser: (userData: Partial<User>) => void;
 }
 
-const API_URL = env.API_URL || 'https://api.mediconnet.com/v1';
+// Asegurar que API_URL siempre termine en /api
+const API_URL = env.API_URL.endsWith('/api') 
+  ? env.API_URL 
+  : `${env.API_URL.replace(/\/$/, '')}/api`;
 
 // Creación del Store con Persistencia
 export const useAuthStore = create<AuthState>()(
