@@ -7,6 +7,7 @@ El frontend está haciendo peticiones a rutas **sin el prefijo `/api`**, lo que 
 ### ❌ URL Actual (Incorrecta):
 ```
 https://medi-connect-backend-1-2c8b.onrender.com/auth/login
+sadas
 ```
 
 ### ✅ URL Correcta:
