@@ -3,7 +3,7 @@
 
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Box, Button, Typography, IconButton, Drawer, List, ListItem, ListItemButton, ListItemText, useMediaQuery, useTheme } from '@mui/material';
-import { ArrowForward, Download, Favorite, Menu, Close } from '@mui/icons-material';
+import { ArrowForward, Download, Menu, Close, Login } from '@mui/icons-material';
 import { ROUTES } from '../../app/config/constants';
 import { useAuthStore } from '../../app/store/auth.store';
 import { useState } from 'react';
@@ -198,7 +198,10 @@ export const AppLayout = () => {
                   {navItems.map((item) => (
                     <ListItem key={item.label} disablePadding>
                       <ListItemButton
-                        onClick={item.action}
+                        onClick={() => {
+                          item.action();
+                          setMobileMenuOpen(false);
+                        }}
                         sx={{
                           py: 1.5,
                           px: 3,
@@ -214,6 +217,86 @@ export const AppLayout = () => {
                       </ListItemButton>
                     </ListItem>
                   ))}
+                  
+                  {/* Botón Iniciar Sesión en móvil - solo si no está autenticado */}
+                  {!user && (
+                    <>
+                      <Box sx={{ px: 3, py: 1.5, borderTop: '1px solid #e5e7eb', mt: 1 }}>
+                        <Button
+                          fullWidth
+                          variant="outlined"
+                          startIcon={<Login />}
+                          onClick={() => {
+                            navigate(ROUTES.LOGIN);
+                            setMobileMenuOpen(false);
+                          }}
+                          sx={{
+                            textTransform: 'none',
+                            color: '#06b6d4',
+                            borderColor: '#06b6d4',
+                            fontWeight: 600,
+                            py: 1.25,
+                            '&:hover': {
+                              backgroundColor: 'rgba(6, 182, 212, 0.08)',
+                              borderColor: '#0891b2',
+                            },
+                          }}
+                        >
+                          Iniciar Sesión
+                        </Button>
+                      </Box>
+                      <Box sx={{ px: 3, py: 1 }}>
+                        <Button
+                          fullWidth
+                          variant="contained"
+                          startIcon={<Download />}
+                          onClick={() => {
+                            navigate(ROUTES.HOME);
+                            setMobileMenuOpen(false);
+                          }}
+                          sx={{
+                            textTransform: 'none',
+                            backgroundColor: '#06b6d4',
+                            color: 'white',
+                            fontWeight: 600,
+                            py: 1.25,
+                            '&:hover': {
+                              backgroundColor: '#0891b2',
+                            },
+                          }}
+                        >
+                          Descargar App
+                        </Button>
+                      </Box>
+                    </>
+                  )}
+                  
+                  {/* Botón Cerrar Sesión en móvil - solo si está autenticado */}
+                  {user && (
+                    <Box sx={{ px: 3, py: 1.5, borderTop: '1px solid #e5e7eb', mt: 1 }}>
+                      <Button
+                        fullWidth
+                        variant="outlined"
+                        onClick={() => {
+                          handleLogout();
+                          setMobileMenuOpen(false);
+                        }}
+                        sx={{
+                          textTransform: 'none',
+                          color: '#ef4444',
+                          borderColor: '#ef4444',
+                          fontWeight: 600,
+                          py: 1.25,
+                          '&:hover': {
+                            backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                            borderColor: '#dc2626',
+                          },
+                        }}
+                      >
+                        Cerrar Sesión
+                      </Button>
+                    </Box>
+                  )}
                 </List>
               </Box>
             </Drawer>
