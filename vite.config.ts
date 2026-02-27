@@ -17,7 +17,7 @@ export default defineConfig({
         },
       },
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 1500, // Aumentado para evitar warnings en Vercel
   },
   server: {
     port: 5173, // Puerto por defecto de Vite (el backend usa 3000)
