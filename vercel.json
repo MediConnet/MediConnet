@@ -2,7 +2,6 @@
   "buildCommand": "pnpm run build",
   "outputDirectory": "dist",
   "installCommand": "pnpm install",
-  "cleanUrls": true,
   "rewrites": [
     {
       "source": "/(.*)",
