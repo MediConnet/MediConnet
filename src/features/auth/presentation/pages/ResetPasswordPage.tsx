@@ -80,16 +80,29 @@ export const ResetPasswordPage = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          p: 2,
+          p: { xs: 1, sm: 2 },
           backgroundColor: "#f9fafb",
         }}
       >
-        <Card sx={{ maxWidth: 480, width: "100%", p: 3 }}>
-          <CardContent sx={{ textAlign: "center" }}>
-            <Typography variant="h5" fontWeight={700} color="error" gutterBottom>
+        <Card sx={{ maxWidth: { xs: "100%", sm: 480 }, width: "100%", p: { xs: 2, sm: 3 } }}>
+          <CardContent sx={{ textAlign: "center", p: { xs: 2, sm: 3 } }}>
+            <Typography 
+              variant="h5" 
+              fontWeight={700} 
+              color="error" 
+              gutterBottom
+              sx={{ fontSize: { xs: "1.25rem", sm: "1.5rem" } }}
+            >
               Enlace Inválido
             </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+            <Typography 
+              variant="body1" 
+              color="text.secondary" 
+              sx={{ 
+                mb: 3,
+                fontSize: { xs: "0.875rem", sm: "1rem" },
+              }}
+            >
               El enlace de recuperación es inválido o ha expirado.
             </Typography>
             <Button
@@ -97,6 +110,8 @@ export const ResetPasswordPage = () => {
               onClick={() => navigate(ROUTES.FORGOT_PASSWORD)}
               sx={{
                 backgroundColor: "#14b8a6",
+                fontSize: { xs: "0.875rem", sm: "1rem" },
+                py: { xs: 1, sm: 1.5 },
                 "&:hover": { backgroundColor: "#0d9488" },
               }}
             >
@@ -115,7 +130,7 @@ export const ResetPasswordPage = () => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        p: 2,
+        p: { xs: 1, sm: 2 },
         position: "relative",
         overflow: "hidden",
         backgroundColor: "#f9fafb",
@@ -126,12 +141,12 @@ export const ResetPasswordPage = () => {
         sx={{
           position: "absolute",
           inset: 0,
-          opacity: 0.3,
+          opacity: { xs: 0.2, sm: 0.3 },
           backgroundImage: `
             linear-gradient(rgba(6, 182, 212, 0.08) 1px, transparent 1px),
             linear-gradient(90deg, rgba(6, 182, 212, 0.08) 1px, transparent 1px)
           `,
-          backgroundSize: "40px 40px",
+          backgroundSize: { xs: "30px 30px", sm: "40px 40px" },
         }}
       />
       <Box
@@ -139,8 +154,8 @@ export const ResetPasswordPage = () => {
           position: "absolute",
           top: 0,
           right: 0,
-          width: "500px",
-          height: "500px",
+          width: { xs: "300px", sm: "500px" },
+          height: { xs: "300px", sm: "500px" },
           background: "rgba(6, 182, 212, 0.05)",
           borderRadius: "50%",
           filter: "blur(80px)",
@@ -151,8 +166,8 @@ export const ResetPasswordPage = () => {
           position: "absolute",
           bottom: 0,
           left: 0,
-          width: "400px",
-          height: "400px",
+          width: { xs: "250px", sm: "400px" },
+          height: { xs: "250px", sm: "400px" },
           background: "rgba(6, 182, 212, 0.05)",
           borderRadius: "50%",
           filter: "blur(80px)",
@@ -164,7 +179,7 @@ export const ResetPasswordPage = () => {
           position: "relative",
           zIndex: 1,
           width: "100%",
-          maxWidth: "480px",
+          maxWidth: { xs: "100%", sm: "480px" },
         }}
       >
         {/* Back Button */}
@@ -172,10 +187,12 @@ export const ResetPasswordPage = () => {
           onClick={() => navigate(ROUTES.LOGIN)}
           startIcon={<ArrowBack />}
           sx={{
-            mb: 3,
+            mb: { xs: 2, sm: 3 },
             color: "#14b8a6",
             fontWeight: 500,
             textTransform: "none",
+            fontSize: { xs: "0.875rem", sm: "1rem" },
+            px: { xs: 1, sm: 2 },
             "&:hover": {
               backgroundColor: "rgba(20, 184, 166, 0.1)",
             },
@@ -186,23 +203,23 @@ export const ResetPasswordPage = () => {
 
         <Card
           sx={{
-            borderRadius: 3,
-            p: 2,
+            borderRadius: { xs: 2, sm: 3 },
+            p: { xs: 1.5, sm: 2 },
             boxShadow: "0 20px 60px rgba(0, 0, 0, 0.1)",
             backgroundColor: "rgba(255, 255, 255, 0.95)",
             backdropFilter: "blur(10px)",
           }}
         >
-          <CardContent sx={{ textAlign: "center", p: { xs: 3, sm: 4 } }}>
+          <CardContent sx={{ textAlign: "center", p: { xs: 2, sm: 4 } }}>
             {/* Logo */}
-            <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
+            <Box sx={{ display: "flex", justifyContent: "center", mb: { xs: 2, sm: 3 } }}>
               <Box
                 component="img"
                 src="/docalink-logo.png?v=2"
                 alt="DOCALINK"
                 sx={{
-                  width: 80,
-                  height: 80,
+                  width: { xs: 60, sm: 80 },
+                  height: { xs: 60, sm: 80 },
                   objectFit: "contain",
                 }}
               />
@@ -212,20 +229,28 @@ export const ResetPasswordPage = () => {
               // Success View
               <Box>
                 <CheckCircleOutline
-                  sx={{ fontSize: 60, color: "#14b8a6", mb: 2 }}
+                  sx={{ 
+                    fontSize: { xs: 48, sm: 60 }, 
+                    color: "#14b8a6", 
+                    mb: { xs: 1.5, sm: 2 } 
+                  }}
                 />
                 <Typography
                   variant="h5"
                   fontWeight={700}
                   color="#1f2937"
                   gutterBottom
+                  sx={{ fontSize: { xs: "1.25rem", sm: "1.5rem" } }}
                 >
                   ¡Contraseña Actualizada!
                 </Typography>
                 <Typography
                   variant="body1"
                   color="text.secondary"
-                  sx={{ mb: 4 }}
+                  sx={{ 
+                    mb: { xs: 3, sm: 4 },
+                    fontSize: { xs: "0.875rem", sm: "1rem" },
+                  }}
                 >
                   Tu contraseña ha sido actualizada correctamente. Ya puedes
                   iniciar sesión con tu nueva contraseña.
@@ -235,8 +260,9 @@ export const ResetPasswordPage = () => {
                   variant="contained"
                   onClick={() => navigate(ROUTES.LOGIN)}
                   sx={{
-                    py: 1.5,
+                    py: { xs: 1.25, sm: 1.5 },
                     backgroundColor: "#14b8a6",
+                    fontSize: { xs: "0.875rem", sm: "1rem" },
                     "&:hover": { backgroundColor: "#0d9488" },
                   }}
                 >
@@ -252,7 +278,7 @@ export const ResetPasswordPage = () => {
                     fontWeight: 700,
                     mb: 1,
                     color: "#1f2937",
-                    fontSize: "1.75rem",
+                    fontSize: { xs: "1.5rem", sm: "1.75rem" },
                   }}
                 >
                   Nueva Contraseña
@@ -261,8 +287,8 @@ export const ResetPasswordPage = () => {
                   variant="body2"
                   sx={{
                     color: "#6b7280",
-                    mb: 4,
-                    fontSize: "0.9375rem",
+                    mb: { xs: 3, sm: 4 },
+                    fontSize: { xs: "0.875rem", sm: "0.9375rem" },
                     lineHeight: 1.6,
                   }}
                 >
@@ -287,11 +313,12 @@ export const ResetPasswordPage = () => {
                       helperText={
                         formik.touched.newPassword && formik.errors.newPassword
                       }
+                      size="small"
                       slotProps={{
                         input: {
                           startAdornment: (
                             <InputAdornment position="start">
-                              <LockIcon sx={{ color: "#9ca3af" }} />
+                              <LockIcon sx={{ color: "#9ca3af", fontSize: { xs: "1.2rem", sm: "1.5rem" } }} />
                             </InputAdornment>
                           ),
                           endAdornment: (
@@ -299,6 +326,7 @@ export const ResetPasswordPage = () => {
                               <IconButton
                                 onClick={() => setShowPassword(!showPassword)}
                                 edge="end"
+                                size="small"
                               >
                                 {showPassword ? (
                                   <VisibilityOff />
@@ -314,7 +342,7 @@ export const ResetPasswordPage = () => {
                   </Box>
 
                   {/* Confirm Password */}
-                  <Box sx={{ mb: 3 }}>
+                  <Box sx={{ mb: { xs: 2, sm: 3 } }}>
                     <TextField
                       fullWidth
                       label="Confirmar Contraseña"
@@ -331,11 +359,12 @@ export const ResetPasswordPage = () => {
                         formik.touched.confirmPassword &&
                         formik.errors.confirmPassword
                       }
+                      size="small"
                       slotProps={{
                         input: {
                           startAdornment: (
                             <InputAdornment position="start">
-                              <LockIcon sx={{ color: "#9ca3af" }} />
+                              <LockIcon sx={{ color: "#9ca3af", fontSize: { xs: "1.2rem", sm: "1.5rem" } }} />
                             </InputAdornment>
                           ),
                           endAdornment: (
@@ -345,6 +374,7 @@ export const ResetPasswordPage = () => {
                                   setShowConfirmPassword(!showConfirmPassword)
                                 }
                                 edge="end"
+                                size="small"
                               >
                                 {showConfirmPassword ? (
                                   <VisibilityOff />
@@ -365,8 +395,9 @@ export const ResetPasswordPage = () => {
                     variant="contained"
                     disabled={resetPassword.isPending}
                     sx={{
-                      py: 1.5,
+                      py: { xs: 1.25, sm: 1.5 },
                       backgroundColor: "#14b8a6",
+                      fontSize: { xs: "0.875rem", sm: "1rem" },
                       "&:hover": { backgroundColor: "#0d9488" },
                     }}
                   >

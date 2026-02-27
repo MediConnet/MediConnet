@@ -163,7 +163,7 @@ export const LoginPage = () => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        p: 2,
+        p: { xs: 1, sm: 2 },
         position: "relative",
         overflow: "hidden",
         backgroundColor: "#f9fafb",
@@ -174,12 +174,12 @@ export const LoginPage = () => {
         sx={{
           position: "absolute",
           inset: 0,
-          opacity: 0.3,
+          opacity: { xs: 0.2, sm: 0.3 },
           backgroundImage: `
             linear-gradient(rgba(6, 182, 212, 0.08) 1px, transparent 1px),
             linear-gradient(90deg, rgba(6, 182, 212, 0.08) 1px, transparent 1px)
           `,
-          backgroundSize: "40px 40px",
+          backgroundSize: { xs: "30px 30px", sm: "40px 40px" },
         }}
       />
       <Box
@@ -187,8 +187,8 @@ export const LoginPage = () => {
           position: "absolute",
           top: 0,
           right: 0,
-          width: "500px",
-          height: "500px",
+          width: { xs: "300px", sm: "500px" },
+          height: { xs: "300px", sm: "500px" },
           background: "rgba(6, 182, 212, 0.05)",
           borderRadius: "50%",
           filter: "blur(80px)",
@@ -199,8 +199,8 @@ export const LoginPage = () => {
           position: "absolute",
           bottom: 0,
           left: 0,
-          width: "400px",
-          height: "400px",
+          width: { xs: "250px", sm: "400px" },
+          height: { xs: "250px", sm: "400px" },
           background: "rgba(6, 182, 212, 0.05)",
           borderRadius: "50%",
           filter: "blur(80px)",
@@ -212,7 +212,7 @@ export const LoginPage = () => {
           position: "relative",
           zIndex: 1,
           width: "100%",
-          maxWidth: "500px",
+          maxWidth: { xs: "100%", sm: "500px" },
         }}
       >
         {/* Back Button */}
@@ -220,30 +220,36 @@ export const LoginPage = () => {
           variant="text"
           startIcon={<ArrowBack />}
           onClick={() => navigate(ROUTES.HOME)}
-          sx={{ mb: 3, color: "#14b8a6", fontWeight: 500 }}
+          sx={{ 
+            mb: { xs: 2, sm: 3 }, 
+            color: "#14b8a6", 
+            fontWeight: 500,
+            fontSize: { xs: "0.875rem", sm: "1rem" },
+            px: { xs: 1, sm: 2 },
+          }}
         >
           Volver al inicio
         </Button>
 
         <Card
           sx={{
-            borderRadius: 3,
-            p: 2,
+            borderRadius: { xs: 2, sm: 3 },
+            p: { xs: 1.5, sm: 2 },
             boxShadow: "0 20px 60px rgba(0, 0, 0, 0.1)",
             backgroundColor: "rgba(255, 255, 255, 0.95)",
             backdropFilter: "blur(10px)",
           }}
         >
-          <CardContent sx={{ textAlign: "center", p: 4 }}>
+          <CardContent sx={{ textAlign: "center", p: { xs: 2, sm: 4 } }}>
             {/* Logo */}
-            <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
+            <Box sx={{ display: "flex", justifyContent: "center", mb: { xs: 2, sm: 3 } }}>
               <Box
                 component="img"
                 src="/docalink-logo.png?v=3"
                 alt="DOCALINK"
                 sx={{
-                  width: 120,
-                  height: 120,
+                  width: { xs: 80, sm: 120 },
+                  height: { xs: 80, sm: 120 },
                   objectFit: 'contain',
                 }}
               />
@@ -252,16 +258,28 @@ export const LoginPage = () => {
             {/* Title */}
             <Typography
               variant="h4"
-              sx={{ fontWeight: 700, mb: 1, color: "#1f2937" }}
+              sx={{ 
+                fontWeight: 700, 
+                mb: 1, 
+                color: "#1f2937",
+                fontSize: { xs: "1.5rem", sm: "2.125rem" },
+              }}
             >
               Iniciar Sesión
             </Typography>
-            <Typography variant="body2" sx={{ color: "#6b7280", mb: 4 }}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: "#6b7280", 
+                mb: { xs: 3, sm: 4 },
+                fontSize: { xs: "0.875rem", sm: "1rem" },
+              }}
+            >
               Accede a tu panel de gestión de servicios
             </Typography>
 
             {/* Form */}
-            <Box component="form" onSubmit={formik.handleSubmit} sx={{ mb: 3 }}>
+            <Box component="form" onSubmit={formik.handleSubmit} sx={{ mb: { xs: 2, sm: 3 } }}>
               {/* Campo Email */}
               <Box sx={{ mb: 2 }}>
                 <TextField
@@ -274,12 +292,13 @@ export const LoginPage = () => {
                   onBlur={formik.handleBlur}
                   error={formik.touched.email && Boolean(formik.errors.email)}
                   helperText={formik.touched.email && formik.errors.email}
+                  size="small"
                   // ✅ FIX: Reemplazo de InputProps por slotProps
                   slotProps={{
                     input: {
                       startAdornment: (
                         <InputAdornment position="start">
-                          <EmailIcon sx={{ color: "#9ca3af" }} />
+                          <EmailIcon sx={{ color: "#9ca3af", fontSize: { xs: "1.2rem", sm: "1.5rem" } }} />
                         </InputAdornment>
                       ),
                     },
@@ -301,11 +320,12 @@ export const LoginPage = () => {
                     formik.touched.password && Boolean(formik.errors.password)
                   }
                   helperText={formik.touched.password && formik.errors.password}
+                  size="small"
                   slotProps={{
                     input: {
                       startAdornment: (
                         <InputAdornment position="start">
-                          <LockIcon sx={{ color: "#9ca3af" }} />
+                          <LockIcon sx={{ color: "#9ca3af", fontSize: { xs: "1.2rem", sm: "1.5rem" } }} />
                         </InputAdornment>
                       ),
                       endAdornment: (
@@ -313,6 +333,7 @@ export const LoginPage = () => {
                           <IconButton
                             onClick={() => setShowPassword(!showPassword)}
                             edge="end"
+                            size="small"
                           >
                             {showPassword ? <VisibilityOff /> : <Visibility />}
                           </IconButton>
@@ -323,11 +344,15 @@ export const LoginPage = () => {
                 />
               </Box>
 
-              <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+              <Box sx={{ display: "flex", justifyContent: "flex-end", mb: { xs: 2, sm: 3 } }}>
                 <Link
                   component={RouterLink}
                   to={ROUTES.FORGOT_PASSWORD}
-                  sx={{ color: "#14b8a6", textDecoration: "none" }}
+                  sx={{ 
+                    color: "#14b8a6", 
+                    textDecoration: "none",
+                    fontSize: { xs: "0.875rem", sm: "1rem" },
+                  }}
                 >
                   ¿Olvidaste tu contraseña?
                 </Link>
@@ -339,8 +364,9 @@ export const LoginPage = () => {
                 variant="contained"
                 disabled={isLoading}
                 sx={{
-                  py: 1.5,
+                  py: { xs: 1.25, sm: 1.5 },
                   backgroundColor: "#14b8a6",
+                  fontSize: { xs: "0.875rem", sm: "1rem" },
                   "&:hover": { backgroundColor: "#0d9488" },
                 }}
               >
@@ -353,8 +379,14 @@ export const LoginPage = () => {
             </Box>
 
             {/* Register Link */}
-            <Box sx={{ textAlign: "center", mb: 3 }}>
-              <Typography variant="body2" sx={{ color: "#6b7280" }}>
+            <Box sx={{ textAlign: "center", mb: { xs: 2, sm: 3 } }}>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  color: "#6b7280",
+                  fontSize: { xs: "0.875rem", sm: "1rem" },
+                }}
+              >
                 ¿No tienes cuenta?{" "}
                 <Link
                   component={RouterLink}
