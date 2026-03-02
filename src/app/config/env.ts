@@ -25,7 +25,7 @@ const getBaseBackendUrl = (): string => {
   if (import.meta.env.MODE === 'development') {
     return 'http://localhost:3000';
   }
-  return 'https://medi-connect-backend-1-2c8b.onrender.com';
+  return 'https://doca-link-backend-pwfj.onrender.com';
 };
 
 // Construir URL completa con /api
