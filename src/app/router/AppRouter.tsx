@@ -7,6 +7,7 @@ import {
   Routes,
 } from "react-router-dom";
 import { useAuthStore } from "../../app/store/auth.store";
+import { logger } from "../../shared/lib/logger";
 
 // Guards / Rutas Protegidas
 import { ClinicRoute } from "./ClinicRoute";
@@ -79,9 +80,9 @@ export const AppRouter = () => {
 
       try {
         await httpClient.get("/auth/me");
-        console.log("✅ Sesión verificada correctamente");
+        logger.log("✅ Sesión verificada correctamente");
       } catch (error) {
-        console.error("❌ Sesión expirada o token inválido", error);
+        logger.error("❌ Sesión expirada o token inválido", error);
         logout();
       }
     };

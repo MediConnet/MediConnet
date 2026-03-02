@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { env } from '../config/env';
+import { logger } from '../../shared/lib/logger';
 
 // 1. Definición de Tipos
 interface User {
@@ -72,10 +73,10 @@ export const useAuthStore = create<AuthState>()(
                 'Content-Type': 'application/json'
               }
             });
-            console.log('✅ [STORE] Sesión revocada en el servidor');
+            logger.log('✅ [STORE] Sesión revocada en el servidor');
           } catch (error) {
             // Si falla (ej: servidor caído), no importa, seguimos borrando lo local
-            console.warn('⚠️ [STORE] No se pudo notificar al servidor (logout offline):', error);
+            logger.warn('⚠️ [STORE] No se pudo notificar al servidor (logout offline):', error);
           }
         }
 

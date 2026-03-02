@@ -25,6 +25,7 @@ import { ROUTES } from "../../../../app/config/constants";
 import { env } from "../../../../app/config/env";
 import { useAuthStore } from "../../../../app/store/auth.store";
 import { loginAPI } from "../../infrastructure/auth.api";
+import { logger } from "../../../../shared/lib/logger";
 
 const loginValidationSchema = Yup.object({
   email: Yup.string()
@@ -60,9 +61,9 @@ export const LoginPage = () => {
         // 2. Extracción de datos
         const { user, token } = response;
 
-        console.log("🔍 [LOGIN] Respuesta completa del backend:", response);
-        console.log("🔍 [LOGIN] User recibido:", user);
-        console.log("🔍 [LOGIN] Token recibido:", token?.substring(0, 30) + "...");
+        // Logs de debug solo en desarrollo (no mostrar datos sensibles en producción)
+        logger.debug("🔍 [LOGIN] Login exitoso");
+        logger.debug("🔍 [LOGIN] Role:", user.role);
 
         // 3. Normalización para el Store y Redirección
         const roleForStore = user.role.toLowerCase();
@@ -73,11 +74,9 @@ export const LoginPage = () => {
           ""
         ).toLowerCase();
 
-        console.log("✅ Login Exitoso:", {
+        logger.log("✅ Login Exitoso:", {
           role: roleForStore,
           tipo: tipoForStore,
-          userId: user.userId,
-          email: user.email,
         });
 
         // 4. Guardar en Zustand (Persistencia automática)
@@ -136,7 +135,7 @@ export const LoginPage = () => {
           navigate(ROUTES.HOME, { replace: true });
         }
       } catch (error: any) {
-        console.error("❌ Error al iniciar sesión:", error);
+        logger.error("❌ Error al iniciar sesión:", error);
 
         let errorMessage =
           "Error al iniciar sesión. Verifica tus credenciales.";

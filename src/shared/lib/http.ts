@@ -4,6 +4,7 @@
 import axios, { AxiosError, type AxiosInstance, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import { env } from '../../app/config/env';
 import { useAuthStore } from '../../app/store/auth.store';
+import { logger } from './logger';
 
 // ⭐ Sistema de loading global (singleton)
 let globalLoadingCount = 0;
@@ -34,16 +35,16 @@ export const loadingManager = {
 /**
  * Cliente HTTP configurado con interceptors.
  */
-// Log para verificar la URL que se está usando
-console.log('🔌 [HTTP] API URL configurada:', env.API_URL);
-console.log('🔌 [HTTP] VITE_API_URL desde env:', import.meta.env.VITE_API_URL);
-console.log('🔌 [HTTP] MODE:', import.meta.env.MODE);
-console.log('🔌 [HTTP] Verificación - URL termina en /api:', env.API_URL.endsWith('/api'));
+// Log para verificar la URL que se está usando (solo en desarrollo)
+logger.log('🔌 [HTTP] API URL configurada:', env.API_URL);
+logger.log('🔌 [HTTP] VITE_API_URL desde env:', import.meta.env.VITE_API_URL);
+logger.log('🔌 [HTTP] MODE:', import.meta.env.MODE);
+logger.log('🔌 [HTTP] Verificación - URL termina en /api:', env.API_URL.endsWith('/api'));
 
 // Validación crítica: La URL DEBE terminar en /api
 if (!env.API_URL.endsWith('/api')) {
-  console.error('❌ [HTTP] ERROR CRÍTICO: API_URL no termina en /api:', env.API_URL);
-  console.error('❌ [HTTP] Esto causará errores 404. Corrigiendo automáticamente...');
+  logger.error('❌ [HTTP] ERROR CRÍTICO: API_URL no termina en /api:', env.API_URL);
+  logger.error('❌ [HTTP] Esto causará errores 404. Corrigiendo automáticamente...');
 }
 
 // Asegurar que baseURL siempre termine en /api
@@ -51,7 +52,7 @@ const baseURL = env.API_URL.endsWith('/api')
   ? env.API_URL 
   : `${env.API_URL.replace(/\/$/, '')}/api`;
 
-console.log('🔌 [HTTP] baseURL final para axios:', baseURL);
+logger.log('🔌 [HTTP] baseURL final para axios:', baseURL);
 
 export const httpClient: AxiosInstance = axios.create({
   baseURL: baseURL,
@@ -120,7 +121,7 @@ httpClient.interceptors.response.use(
 
     // A. Manejo de Sesión Expirada (401)
     if (status === 401) {
-      console.warn('⚠️ Sesión expirada o token inválido. Cerrando sesión...');
+      logger.warn('⚠️ Sesión expirada o token inválido. Cerrando sesión...');
       
       useAuthStore.getState().logout();
       
@@ -130,7 +131,7 @@ httpClient.interceptors.response.use(
 
     // B. Manejo de Acceso Denegado (403)
     if (status === 403) {
-      console.warn('⛔ Acceso denegado: No tienes permisos para esta acción');
+      logger.warn('⛔ Acceso denegado: No tienes permisos para esta acción');
     }
 
     // C. Retornar el mensaje de error del backend si existe
