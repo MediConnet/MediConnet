@@ -25,7 +25,7 @@ const getBaseBackendUrl = (): string => {
   if (import.meta.env.MODE === 'development') {
     return 'http://localhost:3000';
   }
-  return 'https://doca-link-backend-pwfj.onrender.com';
+  return 'https://api.docalink.com';
 };
 
 // Construir URL completa con /api
