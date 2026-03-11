@@ -45,7 +45,6 @@ export const AppLayout = () => {
     { label: 'Cómo funciona', action: () => scrollToSection('como-funciona'), isActive: false },
     { label: 'Servicios', action: () => scrollToSection('servicios'), isActive: false },
     { label: 'Para profesionales', action: () => navigate(ROUTES.REGISTER), isActive: false },
-    { label: 'Destacados', action: () => scrollToSection('destacados'), isActive: false },
   ];
 
   return (
