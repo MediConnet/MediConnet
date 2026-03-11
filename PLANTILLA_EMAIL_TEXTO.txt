@@ -1,0 +1,33 @@
+Asunto: Invitación para unirte a {{CLINIC_NAME}} en DOCALINK
+
+---
+
+¡Bienvenido a DOCALINK!
+
+Hola,
+
+{{CLINIC_NAME}} te ha invitado a formar parte de su equipo médico en DOCALINK, la plataforma que conecta profesionales de la salud con pacientes.
+
+BENEFICIOS DE UNIRTE:
+✓ Gestiona tus citas y horarios desde un solo lugar
+✓ Accede al historial médico de tus pacientes
+✓ Recibe pagos de forma segura y transparente
+✓ Comunícate con la clínica en tiempo real
+✓ Aumenta tu visibilidad profesional
+
+ACEPTA TU INVITACIÓN:
+Para completar tu registro, visita el siguiente enlace:
+
+{{INVITATION_LINK}}
+
+IMPORTANTE:
+⏰ Esta invitación expira el {{EXPIRATION_DATE}}
+📧 Si no solicitaste esta invitación, puedes ignorar este correo
+
+¿NECESITAS AYUDA?
+Contáctanos en: soporte@docalink.com
+
+---
+
+DOCALINK - Conecta tu salud
+© 2024 Todos los derechos reservados

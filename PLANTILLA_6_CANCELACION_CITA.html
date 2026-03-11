@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cita Cancelada - DOCALINK</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f9fafb;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f9fafb; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 40px 30px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700;">
+                ❌ Cita Cancelada
+              </h1>
+              <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 16px; opacity: 0.9;">
+                Tu cita ha sido cancelada
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Contenido -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <h2 style="margin: 0 0 20px 0; color: #1f2937; font-size: 24px; font-weight: 600;">
+                Confirmación de Cancelación
+              </h2>
+              
+              <p style="margin: 0 0 15px 0; color: #1f2937; font-size: 16px; line-height: 1.6;">
+                Hola <strong>{{patientName}}</strong>,
+              </p>
+              
+              <p style="margin: 0 0 25px 0; color: #6b7280; font-size: 15px; line-height: 1.6;">
+                Tu cita ha sido cancelada exitosamente. A continuación los detalles de la cita cancelada:
+              </p>
+              
+              <!-- Detalles de la Cita Cancelada -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fef2f2; border-radius: 12px; padding: 25px; border: 2px solid #ef4444;">
+                <tr>
+                  <td>
+                    <table width="100%" cellpadding="8" cellspacing="0">
+                      <tr>
+                        <td style="color: #991b1b; font-size: 14px; width: 40%;">👨‍⚕️ Médico:</td>
+                        <td style="color: #1f2937; font-size: 15px; font-weight: 600;">{{doctorName}}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #991b1b; font-size: 14px;">🩺 Especialidad:</td>
+                        <td style="color: #1f2937; font-size: 15px; font-weight: 600;">{{specialty}}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #991b1b; font-size: 14px;">📅 Fecha:</td>
+                        <td style="color: #1f2937; font-size: 15px; font-weight: 600;">{{appointmentDate}}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #991b1b; font-size: 14px;">🕐 Hora:</td>
+                        <td style="color: #1f2937; font-size: 15px; font-weight: 600;">{{appointmentTime}}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #991b1b; font-size: 14px;">📍 Lugar:</td>
+                        <td style="color: #1f2937; font-size: 15px; font-weight: 600;">{{clinicAddress}}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #991b1b; font-size: 14px;">🗓️ Cancelada el:</td>
+                        <td style="color: #ef4444; font-size: 14px; font-weight: 600;">{{cancellationDate}}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Motivo de Cancelación (si aplica) -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 20px; background-color: #fef3c7; border-radius: 8px; padding: 20px; border-left: 4px solid #f59e0b;">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 8px 0; color: #92400e; font-size: 14px; font-weight: 600;">
+                      📝 Motivo de cancelación:
+                    </p>
+                    <p style="margin: 0; color: #78350f; font-size: 14px; line-height: 1.6;">
+                      {{cancellationReason}}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Información de Reembolso (si aplica) -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 20px; background-color: #f0fdf4; border-radius: 8px; padding: 20px; border-left: 4px solid #22c55e;">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 8px 0; color: #166534; font-size: 14px; font-weight: 600;">
+                      💰 Información de reembolso:
+                    </p>
+                    <p style="margin: 0; color: #15803d; font-size: 14px; line-height: 1.6;">
+                      {{refundInfo}}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Botón para Reagendar -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 30px;">
+                <tr>
+                  <td align="center">
+                    <p style="margin: 0 0 15px 0; color: #1f2937; font-size: 15px; font-weight: 600;">
+                      ¿Deseas agendar una nueva cita?
+                    </p>
+                    <a href="{{rescheduleLink}}" style="display: inline-block; background-color: #14b8a6; color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 6px rgba(20, 184, 166, 0.3);">
+                      Agendar Nueva Cita →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Alternativas -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 30px;">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 15px 0; color: #1f2937; font-size: 15px; font-weight: 600;">
+                      🔍 También puedes:
+                    </p>
+                    <table width="100%" cellpadding="8" cellspacing="0">
+                      <tr>
+                        <td>
+                          <a href="{{findDoctorLink}}" style="color: #14b8a6; text-decoration: none; font-size: 14px;">
+                            👨‍⚕️ Buscar otro médico →
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <a href="{{viewHistoryLink}}" style="color: #14b8a6; text-decoration: none; font-size: 14px;">
+                            📋 Ver historial de citas →
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <a href="{{contactSupportLink}}" style="color: #14b8a6; text-decoration: none; font-size: 14px;">
+                            💬 Contactar soporte →
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              
+              <!-- Nota -->
+              <p style="margin: 30px 0 0 0; color: #6b7280; font-size: 13px; text-align: center; line-height: 1.6;">
+                Si tienes alguna pregunta sobre esta cancelación, no dudes en contactarnos.<br>
+                Estamos aquí para ayudarte.
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 13px;">
+                🏥 DOCALINK - Conecta tu salud
+              </p>
+              <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                © 2024 DOCALINK<br>
+                Este es un email automático, por favor no respondas a este mensaje.
+              </p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

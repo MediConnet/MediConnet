@@ -10,9 +10,18 @@ export const registerProfessionalUseCase = async (
   
   const { files, ...cleanData } = data as ProfessionalRequest & Record<string, unknown>;
 
+  // 🔍 DEBUG: Ver datos antes de procesar
+  console.log('🔍 cleanData completo:', cleanData);
+  console.log('📧 cleanData.email:', cleanData.email);
+  console.log('📧 Email es undefined?', cleanData.email === undefined);
+  console.log('📧 Email es null?', cleanData.email === null);
+  console.log('📧 Email es string vacío?', cleanData.email === '');
+
   const hasFiles =
     Boolean(files) &&
     (files?.licenses?.length || files?.certificates?.length || files?.titles?.length);
+
+  console.log('📁 Tiene archivos?', hasFiles);
 
   const response = await (hasFiles
     ? httpClient.post<{
@@ -51,6 +60,17 @@ export const registerProfessionalUseCase = async (
           files?.certificates?.forEach((file) => formData.append('certificates', file));
           files?.titles?.forEach((file) => formData.append('titles', file));
 
+          // 🔍 DEBUG: Ver qué hay en el FormData
+          console.log('📦 FormData entries:');
+          for (let [key, value] of formData.entries()) {
+            console.log(`  ${key}:`, value);
+          }
+
+          const emailValue = formData.get('email');
+          console.log('📧 Email en FormData:', emailValue);
+          console.log('📧 Email en FormData es undefined?', emailValue === undefined);
+          console.log('📧 Email en FormData es null?', emailValue === null);
+
           return formData;
         })(),
         {
@@ -59,11 +79,15 @@ export const registerProfessionalUseCase = async (
           headers: { 'Content-Type': 'multipart/form-data' },
         }
       )
-    : httpClient.post<{
-        success: boolean;
-        data: { message?: string } | null;
-        message?: string;
-      }>('/auth/register', cleanData));
+    : (() => {
+        // 🔍 DEBUG: Ver datos JSON antes de enviar
+        console.log('📤 Enviando JSON (sin archivos):', cleanData);
+        return httpClient.post<{
+          success: boolean;
+          data: { message?: string } | null;
+          message?: string;
+        }>('/auth/register', cleanData);
+      })());
 
   // 3. Extracción del mensaje
   const extracted = extractData(response);
