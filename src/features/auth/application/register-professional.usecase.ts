@@ -11,8 +11,13 @@ export const registerProfessionalUseCase = async (
   const { files, ...cleanData } = data as ProfessionalRequest & Record<string, unknown>;
 
   // 🔍 DEBUG: Ver datos antes de procesar
-  console.log('🔍 cleanData completo:', cleanData);
-  console.log('📧 cleanData.email:', cleanData.email);
+  console.log('🔍 [FRONTEND] cleanData completo:', cleanData);
+  console.log('🔍 [FRONTEND] cleanData antes de FormData:', {
+    email: cleanData.email,
+    password: cleanData.password ? '***' : undefined,
+    hasEmail: !!cleanData.email,
+    hasPassword: !!cleanData.password,
+  });
 
   const hasFiles =
     Boolean(files) &&
@@ -55,8 +60,19 @@ export const registerProfessionalUseCase = async (
           files?.certificates?.forEach((file) => formData.append('certificates', file));
           files?.titles?.forEach((file) => formData.append('titles', file));
 
-          // 🔍 DEBUG: Ver email en FormData
-          console.log('📧 Email en FormData:', formData.get('email'));
+          // 🔍 DEBUG: Verificar FormData completo
+          console.log('🔍 [FRONTEND] Verificando FormData:');
+          for (let [key, value] of formData.entries()) {
+            if (key === 'email' || key === 'password') {
+              console.log(`  ✅ ${key}:`, value);
+            } else {
+              console.log(`  ${key}:`, typeof value === 'string' ? value.substring(0, 20) + '...' : value);
+            }
+          }
+
+          // Verificar específicamente email y password
+          console.log('📧 [FRONTEND] Email en FormData:', formData.get('email'));
+          console.log('🔑 [FRONTEND] Password en FormData:', formData.get('password') ? '***' : 'undefined');
 
           return formData;
         })(),
