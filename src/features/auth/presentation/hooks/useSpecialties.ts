@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { httpClient, extractData } from '../../../shared/lib/http';
+import { httpClient, extractData } from '../../../../shared/lib/http';
 import type { Specialty } from '../../infrastructure/auth.api';
 
 /**
