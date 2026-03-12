@@ -39,11 +39,9 @@ import type {
   ProfileStatus,
   WorkSchedule,
 } from "../../domain/DoctorDashboard.entity";
-import {
-  getSpecialtiesAPI,
-  type Specialty,
-} from "../../infrastructure/doctors.api";
+import type { Specialty } from "../../infrastructure/doctors.api";
 import { useUpdateDoctorProfile } from "../hooks/useUpdateDoctorProfile";
+import { useSpecialties } from "../../../auth/presentation/hooks/useSpecialties";
 
 interface ProfileSectionProps {
   data: DoctorDashboard;
@@ -77,9 +75,8 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
-  // Estado para la lista de especialidades disponibles desde la API
-  const [specialtiesList, setSpecialtiesList] = useState<Specialty[]>([]);
-  const [loadingSpecialties, setLoadingSpecialties] = useState(false);
+  // Usar hook de React Query para especialidades
+  const { data: specialtiesList = [], isLoading: loadingSpecialties } = useSpecialties();
 
   // Estado para detectar si estamos usando horarios por defecto (BD vacía)
   const [isUsingDefaultSchedule, setIsUsingDefaultSchedule] = useState(false);
@@ -109,22 +106,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const [initialFormData, setInitialFormData] = useState<
     typeof formData | null
   >(null);
-
-  useEffect(() => {
-    const fetchSpecialties = async () => {
-      try {
-        setLoadingSpecialties(true);
-        const list = await getSpecialtiesAPI();
-        setSpecialtiesList(list);
-      } catch (error) {
-        console.error("Error cargando especialidades:", error);
-        setSpecialtiesList([{ id: "gen", name: "Medicina General" }]);
-      } finally {
-        setLoadingSpecialties(false);
-      }
-    };
-    fetchSpecialties();
-  }, []);
 
   useEffect(() => {
     if (data?.doctor) {

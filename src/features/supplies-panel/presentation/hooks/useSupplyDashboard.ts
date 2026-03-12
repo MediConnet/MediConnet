@@ -1,46 +1,27 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { SupplyDashboard } from "../../domain/SupplyDashboard.entity";
 import { getSupplyDashboardUseCase } from "../../application/get-supply-dashboard.usecase";
 import { useAuthStore } from "../../../../app/store/auth.store";
 
+/**
+ * Hook: Obtener dashboard de insumos médicos
+ * Migrado a React Query
+ */
 export const useSupplyDashboard = () => {
-  const [data, setData] = useState<SupplyDashboard | null>(null);
-  const [loading, setLoading] = useState(true);
-  const authStore = useAuthStore();
-  const { user } = authStore;
+  const { user } = useAuthStore();
 
-  useEffect(() => {
-    if (user?.id) {
-      setLoading(true);
-      getSupplyDashboardUseCase(user.id)
-        .then((r) => {
-          setData(r);
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error('Error loading supply dashboard:', err);
-          setLoading(false);
-        });
-    } else {
-      setLoading(false);
-    }
-  }, [user?.id]);
+  const {
+    data,
+    isLoading: loading,
+    error,
+    refetch,
+  } = useQuery<SupplyDashboard>({
+    queryKey: ['supplies', 'dashboard', user?.id],
+    queryFn: () => getSupplyDashboardUseCase(user!.id),
+    enabled: !!user?.id,
+    staleTime: 1 * 60 * 1000, // 1 minuto
+  });
 
-  const refetch = () => {
-    if (user?.id) {
-      setLoading(true);
-      getSupplyDashboardUseCase(user.id)
-        .then((r) => {
-          setData(r);
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error('Error loading supply dashboard:', err);
-          setLoading(false);
-        });
-    }
-  };
-
-  return { data, loading, refetch, setData };
+  return { data: data || null, loading, error, refetch, setData: () => {} };
 };
 

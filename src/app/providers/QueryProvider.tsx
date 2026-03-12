@@ -1,7 +1,7 @@
 // NOTE: Provider de React Query para gestión de estado del servidor
-// TODO: Agregar React Query DevTools en desarrollo
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import type { ReactNode } from 'react';
 
 // NOTE: Configuración del cliente de React Query
@@ -15,6 +15,9 @@ const queryClient = new QueryClient({
       retry: 1,
       staleTime: 5 * 60 * 1000, // 5 minutos
     },
+    mutations: {
+      retry: 1,
+    },
   },
 });
 
@@ -23,9 +26,12 @@ interface QueryProviderProps {
 }
 
 export const QueryProvider = ({ children }: QueryProviderProps) => {
+  const isDevelopment = import.meta.env.MODE === 'development';
+
   return (
     <QueryClientProvider client={queryClient}>
       {children}
+      {isDevelopment && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   );
 };

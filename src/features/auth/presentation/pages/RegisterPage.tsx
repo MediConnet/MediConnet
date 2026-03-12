@@ -54,12 +54,12 @@ import {
 } from "../../../../shared/lib/inputValidation";
 import { getPharmacyChains } from "../../../../shared/lib/pharmacy-chains";
 import {
-  getCitiesAPI,
-  getSpecialtiesAPI,
   type City,
   type Specialty,
 } from "../../infrastructure/auth.api";
 import { useRegisterProfessional } from "../hooks/useRegisterProfessional";
+import { useCities } from "../hooks/useCities";
+import { useSpecialties } from "../hooks/useSpecialties";
 
 // Tipos
 type ServiceType =
@@ -129,9 +129,13 @@ export const RegisterPage = () => {
   const professionalTitleInputRef = useRef<HTMLInputElement>(null);
 
   const [pharmacyChains, setPharmacyChains] = useState<PharmacyChain[]>([]);
-  const [cities, setCities] = useState<City[]>([]);
-
-  const [specialtiesList, setSpecialtiesList] = useState<Specialty[]>([]);
+  
+  // Usar hooks de React Query para ciudades y especialidades
+  const { data: citiesData = [], isLoading: citiesLoading } = useCities();
+  const { data: specialtiesData = [], isLoading: specialtiesLoading } = useSpecialties();
+  
+  const cities = citiesData;
+  const specialtiesList = selectedType === "doctor" ? specialtiesData : [];
 
   // Carga de cadenas de farmacia
   useEffect(() => {
@@ -145,33 +149,6 @@ export const RegisterPage = () => {
         }
       };
       loadChains();
-    }
-  }, [selectedType]);
-
-  // Carga de ciudades
-  useEffect(() => {
-    const loadCities = async () => {
-      try {
-        const data = await getCitiesAPI();
-        setCities(data);
-      } catch (error) {
-        console.error("Error loading cities", error);
-      }
-    };
-    loadCities();
-  }, []);
-
-  useEffect(() => {
-    if (selectedType === "doctor") {
-      const loadSpecialties = async () => {
-        try {
-          const data = await getSpecialtiesAPI();
-          setSpecialtiesList(data);
-        } catch (error) {
-          console.error("Error loading specialties:", error);
-        }
-      };
-      loadSpecialties();
     }
   }, [selectedType]);
 

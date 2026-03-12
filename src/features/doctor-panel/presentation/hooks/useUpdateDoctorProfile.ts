@@ -1,28 +1,26 @@
-import { useState } from "react";
-import { updateDoctorProfileUseCase } from "../../application/update-doctor-profile.usecase";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthStore } from "../../../../app/store/auth.store";
+import {
+  updateDoctorProfileAPI,
+  type UpdateDoctorProfileParams,
+} from "../../infrastructure/doctors.api";
 import type { DoctorDashboard } from "../../domain/DoctorDashboard.entity";
-import type { UpdateDoctorProfileParams } from "../../infrastructure/doctors.api";
 
+/**
+ * Hook: Actualizar perfil del doctor
+ * Con invalidación automática del cache relacionado
+ */
 export const useUpdateDoctorProfile = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
 
-  const updateProfile = async (
-    params: UpdateDoctorProfileParams
-  ): Promise<DoctorDashboard | null> => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const updatedDashboard = await updateDoctorProfileUseCase(params);
-      setLoading(false);
-      return updatedDashboard;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al actualizar el perfil");
-      setLoading(false);
-      return null;
-    }
-  };
-
-  return { updateProfile, loading, error };
+  return useMutation<DoctorDashboard, Error, UpdateDoctorProfileParams>({
+    mutationFn: updateDoctorProfileAPI,
+    onSuccess: () => {
+      // Invalidar cache del perfil
+      queryClient.invalidateQueries({ queryKey: ['doctors', 'profile', user?.id] });
+      // Invalidar cache del dashboard (puede tener datos del perfil)
+      queryClient.invalidateQueries({ queryKey: ['doctors', 'dashboard', user?.id] });
+    },
+  });
 };

@@ -1,6 +1,6 @@
 import { Box, Typography, CircularProgress, Alert } from '@mui/material';
 import { ConsultationPricesSection } from '../components/ConsultationPricesSection';
-import { useClinicProfile } from '../hooks/useClinicProfile';
+import { useClinicProfile, useUpdateClinicProfile } from '../hooks/useClinicProfile';
 import type { ConsultationPrice } from '../../domain/clinic.entity';
 
 interface ConsultationPricesPageProps {
@@ -8,7 +8,8 @@ interface ConsultationPricesPageProps {
 }
 
 export const ConsultationPricesPage = ({ clinicId }: ConsultationPricesPageProps) => {
-  const { profile: clinic, loading, error, updateProfile } = useClinicProfile();
+  const { profile: clinic, loading, error } = useClinicProfile();
+  const { mutateAsync: updateProfile } = useUpdateClinicProfile();
 
   const handleUpdatePrices = async (prices: ConsultationPrice[]) => {
     if (!clinic) return;

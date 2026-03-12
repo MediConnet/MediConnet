@@ -1,45 +1,26 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { LaboratoryDashboard } from "../../domain/LaboratoryDashboard.entity";
 import { getLaboratoryDashboardUseCase } from "../../application/get-laboratory-dashboard.usecase";
 import { useAuthStore } from "../../../../app/store/auth.store";
 
+/**
+ * Hook: Obtener dashboard del laboratorio
+ * Migrado a React Query
+ */
 export const useLaboratoryDashboard = () => {
-  const [data, setData] = useState<LaboratoryDashboard | null>(null);
-  const [loading, setLoading] = useState(true);
-  const authStore = useAuthStore();
-  const { user } = authStore;
+  const { user } = useAuthStore();
 
-  useEffect(() => {
-    if (user?.id) {
-      setLoading(true);
-      getLaboratoryDashboardUseCase(user.id)
-        .then((r) => {
-          setData(r);
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error('Error loading laboratory dashboard:', err);
-          setLoading(false);
-        });
-    } else {
-      setLoading(false);
-    }
-  }, [user?.id]);
+  const {
+    data,
+    isLoading: loading,
+    error,
+    refetch,
+  } = useQuery<LaboratoryDashboard>({
+    queryKey: ['laboratories', 'dashboard', user?.id],
+    queryFn: () => getLaboratoryDashboardUseCase(user!.id),
+    enabled: !!user?.id,
+    staleTime: 1 * 60 * 1000, // 1 minuto
+  });
 
-  const refetch = () => {
-    if (user?.id) {
-      setLoading(true);
-      getLaboratoryDashboardUseCase(user.id)
-        .then((r) => {
-          setData(r);
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error('Error loading laboratory dashboard:', err);
-          setLoading(false);
-        });
-    }
-  };
-
-  return { data, loading, refetch, setData };
+  return { data: data || null, loading, error, refetch, setData: () => {} };
 };

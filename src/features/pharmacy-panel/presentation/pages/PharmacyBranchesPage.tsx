@@ -5,7 +5,12 @@ import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import type { PharmacyBranch } from "../../domain/pharmacy-branch.entity";
 import { PharmacyBranchModal } from "../components/PharmacyBranchModal";
 import { PharmacyBranchesTable } from "../components/PharmacyBranchesTable";
-import { usePharmacyBranches } from "../hooks/usePharmacyBranches";
+import {
+  usePharmacyBranches,
+  useCreatePharmacyBranch,
+  useUpdatePharmacyBranch,
+  useDeletePharmacyBranch,
+} from "../hooks/usePharmacyBranches";
 import { useAuthStore } from "../../../../app/store/auth.store";
 import { usePharmacyReviews } from "../hooks/usePharmacyReviews";
 
@@ -30,9 +35,13 @@ export const PharmacyBranchesPage = () => {
     initials: getInitials(user?.name || "FA"),
     isActive: true,
   };
-  // 1. Hook con lógica de negocio (CRUD local)
-  const { branches, isLoading, addBranch, updateBranch, deleteBranch } =
-    usePharmacyBranches();
+  // 1. Hook para obtener sucursales
+  const { branches, isLoading } = usePharmacyBranches();
+  
+  // 2. Hooks de mutations con optimistic updates
+  const { mutateAsync: addBranch } = useCreatePharmacyBranch();
+  const { mutateAsync: updateBranch } = useUpdatePharmacyBranch();
+  const { mutateAsync: deleteBranch } = useDeletePharmacyBranch();
 
   // 2. Estado local para el Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -52,21 +61,30 @@ export const PharmacyBranchesPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm("¿Estás seguro de eliminar esta sucursal?")) {
-      deleteBranch(id);
+      try {
+        await deleteBranch(id);
+      } catch (error) {
+        console.error("Error eliminando sucursal:", error);
+      }
     }
   };
 
-  const handleSave = (
+  const handleSave = async (
     branchData: PharmacyBranch | Omit<PharmacyBranch, "id">
   ) => {
-    if ("id" in branchData) {
-      // Tiene ID -> Es Edición
-      updateBranch(branchData as PharmacyBranch);
-    } else {
-      // No tiene ID -> Es Creación
-      addBranch(branchData);
+    try {
+      if ("id" in branchData) {
+        // Tiene ID -> Es Edición
+        await updateBranch(branchData as PharmacyBranch);
+      } else {
+        // No tiene ID -> Es Creación
+        await addBranch(branchData);
+      }
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("Error guardando sucursal:", error);
     }
   };
 

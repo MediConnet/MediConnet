@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthStore } from "../../../../app/store/auth.store";
 import { getPharmacyBranchesUseCase } from "../../application/get-pharmacy-branches.usecase";
 import type { PharmacyBranch } from "../../domain/pharmacy-branch.entity";
 import {
@@ -7,61 +8,129 @@ import {
   updatePharmacyBranchAPI,
 } from "../../infrastructure/pharmacy.api";
 
+/**
+ * Hook: Obtener sucursales de la farmacia
+ * Migrado a React Query
+ */
 export const usePharmacyBranches = () => {
-  const [branches, setBranches] = useState<PharmacyBranch[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuthStore();
 
-  // Carga inicial
-  useEffect(() => {
-    const fetchBranches = async () => {
-      try {
-        setIsLoading(true);
-        const data = await getPharmacyBranchesUseCase();
-        setBranches(data);
-      } catch (error) {
-        console.error("Error cargando sucursales:", error);
-      } finally {
-        setIsLoading(false);
+  const {
+    data: branches = [],
+    isLoading,
+  } = useQuery<PharmacyBranch[]>({
+    queryKey: ['pharmacies', 'branches', user?.id],
+    queryFn: getPharmacyBranchesUseCase,
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000, // 2 minutos
+  });
+
+  return { branches, isLoading };
+};
+
+/**
+ * Hook: Crear sucursal con optimistic update
+ */
+export const useCreatePharmacyBranch = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+
+  return useMutation<PharmacyBranch, Error, Omit<PharmacyBranch, "id">>({
+    mutationFn: createPharmacyBranchAPI,
+    onMutate: async (newBranch) => {
+      // Cancelar queries en curso
+      await queryClient.cancelQueries({ queryKey: ['pharmacies', 'branches', user?.id] });
+      
+      // Snapshot del valor anterior
+      const previousBranches = queryClient.getQueryData<PharmacyBranch[]>(['pharmacies', 'branches', user?.id]);
+      
+      // Optimistic update
+      const optimisticBranch: PharmacyBranch = {
+        ...newBranch,
+        id: `temp-${Date.now()}`, // ID temporal
+      };
+      queryClient.setQueryData<PharmacyBranch[]>(
+        ['pharmacies', 'branches', user?.id],
+        (old = []) => [...old, optimisticBranch]
+      );
+      
+      return { previousBranches };
+    },
+    onError: (_err, _newBranch, context) => {
+      // Rollback en caso de error
+      if (context?.previousBranches) {
+        queryClient.setQueryData(['pharmacies', 'branches', user?.id], context.previousBranches);
       }
-    };
+    },
+    onSuccess: () => {
+      // Invalidar para refrescar con datos reales
+      queryClient.invalidateQueries({ queryKey: ['pharmacies', 'branches', user?.id] });
+    },
+  });
+};
 
-    fetchBranches();
-  }, []);
+/**
+ * Hook: Actualizar sucursal con optimistic update
+ */
+export const useUpdatePharmacyBranch = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
 
-  // --- ACCIONES (Backend) ---
+  return useMutation<PharmacyBranch, Error, PharmacyBranch>({
+    mutationFn: (branch) => updatePharmacyBranchAPI(branch.id, branch),
+    onMutate: async (updatedBranch) => {
+      await queryClient.cancelQueries({ queryKey: ['pharmacies', 'branches', user?.id] });
+      
+      const previousBranches = queryClient.getQueryData<PharmacyBranch[]>(['pharmacies', 'branches', user?.id]);
+      
+      // Optimistic update
+      queryClient.setQueryData<PharmacyBranch[]>(
+        ['pharmacies', 'branches', user?.id],
+        (old = []) => old.map((b) => (b.id === updatedBranch.id ? updatedBranch : b))
+      );
+      
+      return { previousBranches };
+    },
+    onError: (_err, _updatedBranch, context) => {
+      if (context?.previousBranches) {
+        queryClient.setQueryData(['pharmacies', 'branches', user?.id], context.previousBranches);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pharmacies', 'branches', user?.id] });
+    },
+  });
+};
 
-  const addBranch = async (branch: Omit<PharmacyBranch, "id">) => {
-    try {
-      const created = await createPharmacyBranchAPI(branch);
-      setBranches((prev) => [...prev, created]);
-    } catch (error) {
-      console.error("Error creando sucursal:", error);
-    }
-  };
+/**
+ * Hook: Eliminar sucursal con optimistic update
+ */
+export const useDeletePharmacyBranch = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
 
-  const updateBranch = async (updatedBranch: PharmacyBranch) => {
-    try {
-      const saved = await updatePharmacyBranchAPI(updatedBranch.id, updatedBranch);
-      setBranches((prev) => prev.map((b) => (b.id === saved.id ? saved : b)));
-    } catch (error) {
-      console.error("Error actualizando sucursal:", error);
-    }
-  };
-
-  const deleteBranch = async (id: string) => {
-    try {
-      await deletePharmacyBranchAPI(id);
-      setBranches((prev) => prev.filter((b) => b.id !== id));
-    } catch (error) {
-      console.error("Error eliminando sucursal:", error);
-    }
-  };
-
-  return { 
-    branches, 
-    isLoading, 
-    addBranch, 
-    updateBranch, 
-    deleteBranch 
-  };
+  return useMutation<void, Error, string>({
+    mutationFn: deletePharmacyBranchAPI,
+    onMutate: async (branchId) => {
+      await queryClient.cancelQueries({ queryKey: ['pharmacies', 'branches', user?.id] });
+      
+      const previousBranches = queryClient.getQueryData<PharmacyBranch[]>(['pharmacies', 'branches', user?.id]);
+      
+      // Optimistic update
+      queryClient.setQueryData<PharmacyBranch[]>(
+        ['pharmacies', 'branches', user?.id],
+        (old = []) => old.filter((b) => b.id !== branchId)
+      );
+      
+      return { previousBranches };
+    },
+    onError: (_err, _branchId, context) => {
+      if (context?.previousBranches) {
+        queryClient.setQueryData(['pharmacies', 'branches', user?.id], context.previousBranches);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pharmacies', 'branches', user?.id] });
+    },
+  });
 };

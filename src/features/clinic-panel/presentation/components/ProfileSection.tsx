@@ -2,7 +2,7 @@ import { Box, Typography, Button, TextField, Grid2, Card, CardContent, Chip, Ava
 import { Save, CloudUpload, LocationOn, CameraAlt, LocalHospital } from "@mui/icons-material";
 import { useState, useEffect, useRef } from "react";
 import type { ClinicProfile } from "../../domain/clinic.entity";
-import { useClinicProfile } from "../hooks/useClinicProfile";
+import { useClinicProfile, useUpdateClinicProfile } from "../hooks/useClinicProfile";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 // ⭐ Ya no necesitamos uploadClinicLogoAPI - enviamos Base64 directamente en updateProfile
@@ -47,7 +47,8 @@ const validationSchema = Yup.object({
 });
 
 export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => {
-  const { profile, loading, updateProfile } = useClinicProfile();
+  const { profile, loading } = useClinicProfile();
+  const { mutateAsync: updateProfile, isPending: isUpdating } = useUpdateClinicProfile();
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);

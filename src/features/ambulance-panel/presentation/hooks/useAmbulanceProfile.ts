@@ -1,30 +1,29 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAuthStore } from "../../../../app/store/auth.store";
 import { getAmbulanceProfileUseCase } from "../../application/get-ambulance-profile.usecase";
 import type { AmbulanceProfile } from "../../domain/ambulance-profile.entity";
 
+/**
+ * Hook: Obtener perfil de ambulancia
+ * Migrado a React Query
+ */
 export const useAmbulanceProfile = () => {
-  const [profile, setProfile] = useState<AmbulanceProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuthStore();
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const data = await getAmbulanceProfileUseCase();
-        setProfile(data);
-      } catch (error: any) {
-        console.error("❌ [HOOK] Error loading ambulance profile:", error);
-        const errorMessage = error.response?.data?.message || error.message || "Error al cargar el perfil";
-        setError(errorMessage);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const {
+    data: profile,
+    isLoading,
+    error,
+  } = useQuery<AmbulanceProfile>({
+    queryKey: ['ambulances', 'profile', user?.id],
+    queryFn: getAmbulanceProfileUseCase,
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000, // 2 minutos
+  });
 
-    fetchProfile();
-  }, []);
-
-  return { profile, isLoading, error };
+  return {
+    profile: profile || null,
+    isLoading,
+    error: error ? (error as any)?.response?.data?.message || error.message || "Error al cargar el perfil" : null,
+  };
 };
