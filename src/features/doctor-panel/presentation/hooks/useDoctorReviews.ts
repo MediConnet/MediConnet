@@ -1,25 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import {
-  getDoctorPanelReviewsAPI,
-  type DoctorReview,
-} from "../../infrastructure/doctors.api";
-
-interface DoctorReviewsResponse {
-  reviews: DoctorReview[];
-  averageRating: number;
-  totalReviews: number;
-}
+import { useAuthStore } from "../../../../app/store/auth.store";
+import { getDoctorPanelReviewsAPI } from "../../infrastructure/doctors.api";
 
 /**
- * Hook: Obtener reseñas del panel de doctor (proveedor autenticado)
- * Usa el endpoint: GET /api/doctors/reviews
+ * Hook: Obtener reseñas del doctor (panel profesional)
  */
 export const useDoctorReviews = () => {
-  return useQuery<DoctorReviewsResponse>({
-    queryKey: ["doctor-panel-reviews"],
-    queryFn: () => getDoctorPanelReviewsAPI(),
+  const { user } = useAuthStore();
+
+  return useQuery({
+    queryKey: ['doctors', 'reviews', user?.id],
+    queryFn: getDoctorPanelReviewsAPI,
+    enabled: !!user?.id,
     staleTime: 2 * 60 * 1000, // 2 minutos
-    retry: 1,
   });
 };
-

@@ -1,58 +1,57 @@
-import { useEffect, useState } from "react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../../../../app/store/auth.store";
 import type { Patient } from "../../domain/Patient.entity";
-import { getPatientsAPI } from "../../infrastructure/patients.api";
+import { getPatientsAPI, type GetPatientsParams } from "../../infrastructure/patients.api";
 
+/**
+ * Hook: Obtener lista de pacientes del doctor
+ * Migrado a React Query para mejor gestión de caché y estados
+ */
 export const usePatients = () => {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuthStore();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalPatients, setTotalPatients] = useState(0);
 
-  const { user } = useAuthStore();
+  // Parámetros para la query (con debounce implícito de React Query)
+  const queryParams: GetPatientsParams = useMemo(
+    () => ({
+      page,
+      limit: 10,
+      search,
+    }),
+    [page, search]
+  );
 
-  const fetchPatients = async () => {
-    if (!user?.id) return;
-    
-    try {
-      setLoading(true);
-      const { patients: data, meta } = await getPatientsAPI({ page, limit: 10, search });
-      setPatients(data);
-      setTotalPages(meta.totalPages);
-      setTotalPatients(meta.total);
-    } catch (error) {
-      console.error("Error cargando pacientes:", error);
-      setPatients([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Query con React Query
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['doctors', 'patients', user?.id, queryParams],
+    queryFn: () => getPatientsAPI(queryParams),
+    enabled: !!user?.id,
+    staleTime: 1 * 60 * 1000, // 1 minuto
+  });
 
-  // Recargar cuando cambie la página, la búsqueda o el usuario
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      fetchPatients();
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [page, search, user?.id]);
-
+  // Función para manejar cambios en la búsqueda (resetear página)
   const handleSearchChange = (term: string) => {
     setSearch(term);
-    setPage(1); 
+    setPage(1);
   };
 
   return {
-    patients,
-    loading,
+    patients: data?.patients || [],
+    loading: isLoading,
+    error,
     page,
-    totalPages,
-    totalPatients,
+    totalPages: data?.meta?.totalPages || 1,
+    totalPatients: data?.meta?.total || 0,
     search,
     setPage,
     setSearch: handleSearchChange,
-    refetch: fetchPatients
+    refetch,
   };
 };

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Paper, Tab, Tabs, Typography, Divider, Button } from "@mui/material";
+import { Box, Paper, Tab, Tabs, Typography, Divider, Button, Snackbar, Alert } from "@mui/material";
 import { Save } from "@mui/icons-material";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { CommissionSettingItem } from "../components/CommissionSettingItem";
@@ -27,9 +27,14 @@ const TabPanel = ({ children, value, index }: TabPanelProps) => {
 };
 
 export const CommissionsPage = () => {
-  const { settings, isLoading, updateCommission } = useAdminSettings();
+  const { settings, isLoading, isSaving, updateCommission, saveSettings } = useAdminSettings();
   const [activeTab, setActiveTab] = useState(0);
   const [hasChanges, setHasChanges] = useState(false);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
 
   console.log("🎬 CommissionsPage renderizado");
   console.log("📊 Settings:", settings);
@@ -45,11 +50,27 @@ export const CommissionsPage = () => {
     setHasChanges(true);
   };
 
-  const handleSave = () => {
-    // Aquí iría la llamada al backend para guardar
-    console.log("Guardando comisiones:", settings);
-    setHasChanges(false);
-    // TODO: Implementar guardado en backend
+  const handleSave = async () => {
+    const success = await saveSettings();
+    
+    if (success) {
+      setHasChanges(false);
+      setSnackbar({
+        open: true,
+        message: 'Configuración guardada correctamente',
+        severity: 'success'
+      });
+    } else {
+      setSnackbar({
+        open: true,
+        message: 'Error al guardar la configuración. Intenta nuevamente.',
+        severity: 'error'
+      });
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
   };
 
   if (isLoading || !settings) {
@@ -316,16 +337,27 @@ export const CommissionsPage = () => {
               variant="contained"
               startIcon={<Save />}
               onClick={handleSave}
-              disabled={!hasChanges}
+              disabled={!hasChanges || isSaving}
               sx={{
                 backgroundColor: "#14b8a6",
                 "&:hover": { backgroundColor: "#0d9488" },
               }}
             >
-              Guardar Cambios
+              {isSaving ? "Guardando..." : "Guardar Cambios"}
             </Button>
           </Box>
         </Paper>
+
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        >
+          <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Box>
     </DashboardLayout>
   );

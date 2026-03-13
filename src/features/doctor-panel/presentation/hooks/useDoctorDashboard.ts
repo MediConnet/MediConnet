@@ -1,13 +1,14 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { DoctorDashboard, ProfileStatus, PaymentMethod } from "../../domain/DoctorDashboard.entity";
 import { getDoctorDashboardUseCase } from "../../application/get-doctor-dashboard.usecase";
 import { useAuthStore } from "../../../../app/store/auth.store";
 
+/**
+ * Hook: Obtener dashboard del doctor
+ * Migrado a React Query para mejor gestión de caché y estados
+ */
 export const useDoctorDashboard = () => {
-  const [data, setData] = useState<DoctorDashboard | null>(null);
-  const [loading, setLoading] = useState(true);
-  const authStore = useAuthStore();
-  const { user } = authStore;
+  const { user } = useAuthStore();
 
   // Función para crear datos por defecto para usuarios nuevos
   const getDefaultData = (): DoctorDashboard => ({
@@ -29,43 +30,34 @@ export const useDoctorDashboard = () => {
     },
   });
 
-  useEffect(() => {
-    if (user?.id) {
-      setLoading(true);
-      getDoctorDashboardUseCase(user.id)
-        .then((r) => {
-          setData(r);
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error('Error loading doctor dashboard:', err);
-          // En caso de error, usar datos por defecto para que el usuario pueda ver las pantallas vacías
-          setData(getDefaultData());
-          setLoading(false);
-        });
-    } else {
-      // Si no hay usuario, usar datos por defecto
-      setData(getDefaultData());
-      setLoading(false);
-    }
-  }, [user?.id]);
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<DoctorDashboard>({
+    queryKey: ['doctors', 'dashboard', user?.id],
+    queryFn: () => {
+      if (!user?.id) {
+        return Promise.resolve(getDefaultData());
+      }
+      return getDoctorDashboardUseCase(user.id).catch((err) => {
+        console.error('Error loading doctor dashboard:', err);
+        // En caso de error, retornar datos por defecto
+        return getDefaultData();
+      });
+    },
+    enabled: !!user?.id,
+    staleTime: 1 * 60 * 1000, // 1 minuto
+    // Datos por defecto mientras carga
+    placeholderData: getDefaultData(),
+  });
 
-  const refetch = () => {
-    if (user?.id) {
-      setLoading(true);
-      getDoctorDashboardUseCase(user.id)
-        .then((r) => {
-          setData(r);
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error('Error loading doctor dashboard:', err);
-          // En caso de error, usar datos por defecto
-          setData(getDefaultData());
-          setLoading(false);
-        });
-    }
+  return {
+    data: data || getDefaultData(),
+    loading: isLoading,
+    error,
+    refetch,
+    setData: () => {}, // Mantener compatibilidad, pero React Query maneja esto
   };
-
-  return { data, loading, refetch, setData };
 };
