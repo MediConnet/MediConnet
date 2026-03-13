@@ -30,3 +30,15 @@ export const rejectProviderRequestAPI = async (
 ): Promise<void> => {
   await httpClient.put<{ success: boolean }>(`/admin/requests/${id}/reject`, { reason });
 };
+
+/**
+ * API: Obtener historial de solicitudes (aprobadas y rechazadas)
+ * Endpoint: GET /api/admin/history
+ * Este endpoint devuelve solo solicitudes aprobadas y rechazadas para mejor rendimiento
+ */
+export const getProviderHistoryAPI = async (): Promise<ProviderRequest[]> => {
+  const response = await httpClient.get<{ success: boolean; data: ProviderRequest[] }>(
+    '/admin/history'
+  );
+  return extractData(response);
+};

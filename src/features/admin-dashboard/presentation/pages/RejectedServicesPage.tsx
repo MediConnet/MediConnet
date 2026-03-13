@@ -32,7 +32,7 @@ import { useState, useMemo } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import type { ProviderRequest } from "../../domain/provider-request.entity";
 import type { AdRequest } from "../../domain/ad-request.entity";
-import { useProviderRequests } from "../hooks/useProviderRequests";
+import { useHistoryRequests } from "../hooks/useHistoryRequests";
 import { useAdRequests } from "../hooks/useAdRequests";
 
 const CURRENT_ADMIN = {
@@ -67,24 +67,29 @@ const SERVICE_COLORS: Record<string, string> = {
 };
 
 export const HistoryPage = () => {
-  const { data: allRequests, isLoading: isLoadingProviders } = useProviderRequests();
+  // Usar el endpoint optimizado GET /api/admin/history para historial de proveedores
+  const { data: historyRequests, isLoading: isLoadingProviders } = useHistoryRequests();
   const { data: allAdRequests, isLoading: isLoadingAds } = useAdRequests();
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "APPROVED" | "REJECTED" | "PENDING">("all");
   const [activeTab, setActiveTab] = useState<"providers" | "ads">("providers");
 
   // Filtrar servicios según el estado seleccionado
+  // Nota: El endpoint /admin/history ya devuelve solo APPROVED y REJECTED, pero mantenemos el filtro por si acaso
   const filteredByStatus = useMemo(() => {
     if (activeTab === "providers") {
-      if (!allRequests) return [];
-      if (statusFilter === "all") return allRequests;
-      return allRequests.filter((req) => req.status === statusFilter);
+      if (!historyRequests) return [];
+      // El endpoint /admin/history ya devuelve solo aprobadas y rechazadas, pero filtramos por si acaso
+      if (statusFilter === "all") return historyRequests;
+      // Si el filtro es PENDING, no debería haber resultados del historial, pero lo manejamos
+      if (statusFilter === "PENDING") return [];
+      return historyRequests.filter((req) => req.status === statusFilter);
     } else {
       if (!allAdRequests) return [];
       if (statusFilter === "all") return allAdRequests;
       return allAdRequests.filter((req) => req.status === statusFilter);
     }
-  }, [allRequests, allAdRequests, statusFilter, activeTab]);
+  }, [historyRequests, allAdRequests, statusFilter, activeTab]);
 
   const filteredRequests = useMemo(() => {
     if (!searchText) return filteredByStatus;
