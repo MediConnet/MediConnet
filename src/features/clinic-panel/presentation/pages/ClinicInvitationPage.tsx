@@ -4,6 +4,7 @@ import { Box, Typography, Button, Paper, CircularProgress, Alert } from "@mui/ma
 import { CheckCircle, Cancel, LocalHospital } from "@mui/icons-material";
 import { validateInvitationTokenAPI, rejectInvitationAPI } from "../../infrastructure/clinic-doctors.api";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import { logger } from "../../../../shared/lib/logger";
 
 export const ClinicInvitationPage = () => {
   const { token: tokenFromPath } = useParams<{ token: string }>();
@@ -34,16 +35,16 @@ export const ClinicInvitationPage = () => {
       }
 
       try {
-        console.log('🔍 Validando token de invitación:', token);
+        logger.info('🔍 Validando token de invitación:', token);
         const data = await validateInvitationTokenAPI(token);
-        console.log('✅ Datos de invitación recibidos:', data);
+        logger.info('✅ Datos de invitación recibidos:', data);
         setInvitation(data);
         
         if (!data.isValid) {
           setError("Esta invitación ha expirado o ya no es válida");
         }
       } catch (err: any) {
-        console.error('❌ Error al validar invitación:', err);
+        logger.error('❌ Error al validar invitación:', err);
         setError(err.message || "Error al cargar la invitación");
       } finally {
         setLoading(false);

@@ -111,7 +111,12 @@ export const RegisterPage = () => {
   const [searchParams] = useSearchParams();
   const { submit, loading } = useRegisterProfessional();
 
-  const initialType = searchParams.get("tipo") as ServiceType | null;
+  // Soportar tanto ?tipo=doctor como ?type=doctor (desde invitaciones)
+  const typeFromQuery =
+    (searchParams.get("tipo") as ServiceType | null) ||
+    (searchParams.get("type") as ServiceType | null);
+
+  const initialType = typeFromQuery;
   const [step, setStep] = useState(initialType ? 1 : 0);
   const [selectedType, setSelectedType] = useState<ServiceType | null>(
     initialType,
