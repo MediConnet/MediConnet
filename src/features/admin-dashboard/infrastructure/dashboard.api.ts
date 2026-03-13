@@ -18,10 +18,14 @@ export const getDashboardStatsAPI = async (): Promise<DashboardStats> => {
  * Endpoint: GET /api/admin/settings
  */
 export const getAdminSettingsAPI = async (): Promise<AdminSettings> => {
+  console.log("🌐 getAdminSettingsAPI: Haciendo GET /admin/settings");
   const response = await httpClient.get<{ success: boolean; data: AdminSettings }>(
     '/admin/settings'
   );
-  return extractData(response);
+  console.log("🌐 getAdminSettingsAPI: Respuesta recibida:", response);
+  const data = extractData(response);
+  console.log("🌐 getAdminSettingsAPI: Datos extraídos:", data);
+  return data;
 };
 
 /**
@@ -29,9 +33,13 @@ export const getAdminSettingsAPI = async (): Promise<AdminSettings> => {
  * Endpoint: PUT /api/admin/settings
  */
 export const updateAdminSettingsAPI = async (settings: Partial<AdminSettings>): Promise<AdminSettings> => {
+  console.log("🌐 updateAdminSettingsAPI: Haciendo PUT /admin/settings con:", settings);
   const response = await httpClient.put<{ success: boolean; data: AdminSettings }>(
     '/admin/settings',
     settings
   );
-  return extractData(response);
+  console.log("🌐 updateAdminSettingsAPI: Respuesta recibida:", response);
+  const data = extractData(response);
+  console.log("🌐 updateAdminSettingsAPI: Datos extraídos:", data);
+  return data;
 };

@@ -10,11 +10,13 @@ export const useAdminSettings = () => {
 
   const fetchSettings = async () => {
     try {
+      console.log("🎣 useAdminSettings: Iniciando fetchSettings...");
       setIsLoading(true);
       const data = await getAdminSettingsUseCase();
+      console.log("🎣 useAdminSettings: Datos recibidos:", data);
       setSettings(data);
     } catch (error) {
-      console.error("Error fetching settings:", error);
+      console.error("❌ useAdminSettings: Error fetching settings:", error);
     } finally {
       setIsLoading(false);
     }
@@ -46,12 +48,14 @@ export const useAdminSettings = () => {
     if (!settings) return false;
     
     try {
+      console.log("💾 useAdminSettings: Guardando settings:", settings);
       setIsSaving(true);
       const updatedSettings = await updateAdminSettingsUseCase(settings);
+      console.log("💾 useAdminSettings: Settings guardados exitosamente:", updatedSettings);
       setSettings(updatedSettings);
       return true;
     } catch (error) {
-      console.error("Error saving settings:", error);
+      console.error("❌ useAdminSettings: Error saving settings:", error);
       return false;
     } finally {
       setIsSaving(false);

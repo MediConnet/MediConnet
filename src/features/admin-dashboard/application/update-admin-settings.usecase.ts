@@ -7,5 +7,8 @@ import type { AdminSettings } from '../domain/admin-settings.entity';
 export const updateAdminSettingsUseCase = async (
   settings: Partial<AdminSettings>
 ): Promise<AdminSettings> => {
-  return await updateAdminSettingsAPI(settings);
+  console.log("🟢 updateAdminSettingsUseCase: Enviando al backend:", settings);
+  const result = await updateAdminSettingsAPI(settings);
+  console.log("🟢 updateAdminSettingsUseCase: Respuesta del backend:", result);
+  return result;
 };
