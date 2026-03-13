@@ -1,6 +1,6 @@
 import type { AdminSettings } from "../domain/admin-settings.entity";
-import { getAdminSettingsMock } from "../infrastructure/settings.mock";
+import { getAdminSettingsAPI } from "../infrastructure/dashboard.api";
 
 export const getAdminSettingsUseCase = async (): Promise<AdminSettings> => {
-  return await getAdminSettingsMock();
+  return await getAdminSettingsAPI();
 };
