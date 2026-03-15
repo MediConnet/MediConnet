@@ -41,6 +41,7 @@ const validationSchema = Yup.object({
   address: Yup.string().required("La dirección es requerida"),
   latitude: Yup.number().nullable().min(-90).max(90),
   longitude: Yup.number().nullable().min(-180).max(180),
+  google_maps_url: Yup.string().nullable().url("Debe ser una URL válida"),
   phone: Yup.string().matches(/^\d{10}$/, "El teléfono debe tener 10 dígitos").required("El teléfono es requerido"),
   whatsapp: Yup.string().matches(/^\d{10}$/, "El WhatsApp debe tener 10 dígitos").required("El WhatsApp es requerido"),
   description: Yup.string().min(10, "La descripción debe tener al menos 10 caracteres").required("La descripción es requerida"),
@@ -188,6 +189,7 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
       address: profile?.address || "",
       latitude: profile?.latitude?.toString() || "",
       longitude: profile?.longitude?.toString() || "",
+      google_maps_url: profile?.google_maps_url || "",
       phone: profile?.phone || "",
       whatsapp: profile?.whatsapp || "",
       description: profile?.description || "",
@@ -201,6 +203,7 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
         ...values,
         latitude: values.latitude && values.latitude !== "" ? Number(values.latitude) : undefined,
         longitude: values.longitude && values.longitude !== "" ? Number(values.longitude) : undefined,
+        google_maps_url: values.google_maps_url || null,
         specialties: selectedSpecialties.length > 0 ? selectedSpecialties : (profile.specialties || []),
       } as ClinicProfile);
     },
@@ -367,6 +370,20 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
                   error={formik.touched.longitude && Boolean(formik.errors.longitude)}
                   helperText={(formik.touched.longitude && formik.errors.longitude) || "Ejemplo: -78.467834"}
                   inputProps={{ step: "any" }}
+                />
+              </Grid2>
+
+              <Grid2 size={{ xs: 12 }}>
+                <TextField
+                  fullWidth
+                  type="url"
+                  label="Link de Google Maps (opcional)"
+                  name="google_maps_url"
+                  value={formik.values.google_maps_url}
+                  onChange={formik.handleChange}
+                  error={formik.touched.google_maps_url && Boolean(formik.errors.google_maps_url)}
+                  helperText={(formik.touched.google_maps_url && formik.errors.google_maps_url) || "Ejemplo: https://maps.app.goo.gl/..."}
+                  placeholder="https://maps.app.goo.gl/..."
                 />
               </Grid2>
 

@@ -4,6 +4,9 @@ export interface AmbulanceProfile {
   commercialName: string;
   shortDescription: string;
   address: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  google_maps_url?: string | null;
   whatsappContact: string;
   emergencyPhone: string;
   arrivalField?: number;

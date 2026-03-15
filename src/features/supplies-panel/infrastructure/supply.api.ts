@@ -9,6 +9,9 @@ export interface SupplyProfile {
   phone: string;
   whatsapp: string;
   address: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  google_maps_url?: string | null;
   schedule: string;
   logoUrl?: string | null;
   isActive: boolean;

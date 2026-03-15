@@ -19,6 +19,7 @@ type BackendAmbulanceProfile = {
   city?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  google_maps_url?: string | null;
   status?: string | null;
 };
 
@@ -32,6 +33,9 @@ const mapBackendToFrontend = (data: BackendAmbulanceProfile): AmbulanceProfile =
     commercialName: data.name ?? '',
     shortDescription: data.description ?? '',
     address: data.address ?? '',
+    latitude: data.latitude ?? null,
+    longitude: data.longitude ?? null,
+    google_maps_url: (data as any).google_maps_url ?? null,
     whatsappContact: data.whatsapp ?? '',
     emergencyPhone: data.phone ?? '',
     isActive: data.isActive ?? true,

@@ -34,6 +34,7 @@ export const EditContactLocationModal = ({
     address: "",
     latitude: "",
     longitude: "",
+    google_maps_url: "",
   });
 
   useEffect(() => {
@@ -41,8 +42,9 @@ export const EditContactLocationModal = ({
       setFormData({
         whatsapp: profile.whatsapp || "",
         address: profile.address || "",
-        latitude: profile.location?.latitude?.toString() || "",
-        longitude: profile.location?.longitude?.toString() || "",
+        latitude: profile.latitude?.toString() || profile.location?.latitude?.toString() || "",
+        longitude: profile.longitude?.toString() || profile.location?.longitude?.toString() || "",
+        google_maps_url: profile.google_maps_url || "",
       });
     }
   }, [profile, open]);
@@ -55,6 +57,9 @@ export const EditContactLocationModal = ({
     const updatedFields: Partial<PharmacyProfile> = {
       whatsapp: formData.whatsapp,
       address: formData.address,
+      latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+      longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+      google_maps_url: formData.google_maps_url || null,
       location:
         formData.latitude && formData.longitude
           ? {
@@ -165,6 +170,17 @@ export const EditContactLocationModal = ({
               Las coordenadas se utilizan para mostrar la ubicación en el mapa
             </Typography>
           </Box>
+
+          {/* Google Maps URL */}
+          <TextField
+            fullWidth
+            type="url"
+            label="Link de Google Maps (opcional)"
+            placeholder="https://maps.app.goo.gl/..."
+            value={formData.google_maps_url}
+            onChange={(e) => handleChange("google_maps_url", e.target.value)}
+            helperText="Pega el link de Google Maps para compartir la ubicación exacta"
+          />
         </Stack>
       </DialogContent>
 

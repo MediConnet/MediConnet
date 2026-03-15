@@ -71,6 +71,65 @@ const DEFAULT_SCHEDULE_TEMPLATE: WorkSchedule[] = [
   { day: "sunday", enabled: false, startTime: "09:00", endTime: "17:00", breakStart: null, breakEnd: null },
 ];
 
+// Función helper para extraer coordenadas de Google Maps URL
+const extractCoordinatesFromGoogleMapsUrl = (url: string): { lat: number | null, lng: number | null } => {
+  if (!url || url.trim() === "") return { lat: null, lng: null };
+  
+  try {
+    // Formato 1: https://maps.google.com/?q=lat,lng
+    const qMatch = url.match(/[?&]q=([^&]+)/);
+    if (qMatch) {
+      const coords = qMatch[1].split(',');
+      if (coords.length === 2) {
+        const lat = parseFloat(coords[0]);
+        const lng = parseFloat(coords[1]);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          return { lat, lng };
+        }
+      }
+    }
+    
+    // Formato 2: https://www.google.com/maps/place/.../@lat,lng
+    const atMatch = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+    if (atMatch) {
+      const lat = parseFloat(atMatch[1]);
+      const lng = parseFloat(atMatch[2]);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        return { lat, lng };
+      }
+    }
+  } catch (error) {
+    // Si no se puede extraer, retornar null
+  }
+  
+  return { lat: null, lng: null };
+};
+
+// Función de validación
+const validateLocationData = (data: { latitude?: string; longitude?: string; google_maps_url?: string }) => {
+  if (data.latitude !== undefined && data.latitude !== "" && data.latitude !== null) {
+    const lat = parseFloat(data.latitude);
+    if (isNaN(lat) || lat < -90 || lat > 90) {
+      throw new Error("Latitud debe estar entre -90 y 90");
+    }
+  }
+  
+  if (data.longitude !== undefined && data.longitude !== "" && data.longitude !== null) {
+    const lng = parseFloat(data.longitude);
+    if (isNaN(lng) || lng < -180 || lng > 180) {
+      throw new Error("Longitud debe estar entre -180 y 180");
+    }
+  }
+  
+  if (data.google_maps_url && data.google_maps_url !== "") {
+    try {
+      new URL(data.google_maps_url);
+    } catch {
+      throw new Error("Google Maps URL no es válida");
+    }
+  }
+};
+
 export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -93,6 +152,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     email: "",
     whatsapp: "",
     address: "",
+    latitude: "",
+    longitude: "",
+    google_maps_url: "",
     price: "0",
     experience: "0",
     description: "",
@@ -151,6 +213,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
         email: data.doctor.email || "",
         whatsapp: data.doctor.whatsapp || "",
         address: data.doctor.address || "",
+        latitude: data.doctor.latitude?.toString() || "",
+        longitude: data.doctor.longitude?.toString() || "",
+        google_maps_url: data.doctor.google_maps_url || "",
         price: (data.doctor.price || 0).toString(),
         experience: (data.doctor.experience || 0).toString(),
         description: data.doctor.description || "",
@@ -188,6 +253,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     if (formData.email !== initialFormData.email) return true;
     if (formData.whatsapp !== initialFormData.whatsapp) return true;
     if (formData.address !== initialFormData.address) return true;
+    if (formData.latitude !== initialFormData.latitude) return true;
+    if (formData.longitude !== initialFormData.longitude) return true;
+    if (formData.google_maps_url !== initialFormData.google_maps_url) return true;
     if (formData.price !== initialFormData.price) return true;
     if (formData.experience !== initialFormData.experience) return true;
     if (formData.description !== initialFormData.description) return true;
@@ -285,6 +353,30 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
       }
     }
 
+    // Validar datos de ubicación
+    try {
+      validateLocationData({
+        latitude: formData.latitude,
+        longitude: formData.longitude,
+        google_maps_url: formData.google_maps_url,
+      });
+    } catch (error: any) {
+      alert(error.message);
+      return;
+    }
+
+    // Extraer coordenadas automáticamente si hay Google Maps URL y no hay coordenadas
+    let finalLatitude = formData.latitude ? parseFloat(formData.latitude) : null;
+    let finalLongitude = formData.longitude ? parseFloat(formData.longitude) : null;
+    
+    if (formData.google_maps_url && (!finalLatitude || !finalLongitude)) {
+      const extracted = extractCoordinatesFromGoogleMapsUrl(formData.google_maps_url);
+      if (extracted.lat && extracted.lng) {
+        finalLatitude = extracted.lat;
+        finalLongitude = extracted.lng;
+      }
+    }
+
     // 🔍 DEBUG: Ver qué datos se están enviando
     const payload = {
       name: formData.name,
@@ -292,6 +384,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
       email: formData.email,
       whatsapp: formData.whatsapp,
       address: formData.address,
+      latitude: finalLatitude,
+      longitude: finalLongitude,
+      google_maps_url: formData.google_maps_url || null,
       price: parseFloat(formData.price) || 0,
       experience: parseInt(formData.experience) || 0,
       description: formData.description,
@@ -495,6 +590,22 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 <p className="text-gray-800 font-medium mt-1">
                   {doctor.address}
                 </p>
+                {doctor.google_maps_url && (
+                  <a
+                    href={doctor.google_maps_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-teal-600 hover:text-teal-700 text-sm mt-1 inline-block"
+                  >
+                    Ver en Google Maps →
+                  </a>
+                )}
+                {(doctor.latitude !== null && doctor.latitude !== undefined && 
+                  doctor.longitude !== null && doctor.longitude !== undefined) && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Coordenadas: {doctor.latitude}, {doctor.longitude}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600">
@@ -792,6 +903,71 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   Letras, números y caracteres especiales
                 </p>
               </div>
+
+              {/* Campos de ubicación */}
+              <div className="md:col-span-2">
+                <label className="text-sm text-gray-600 mb-1 block">
+                  Link de Google Maps (opcional)
+                </label>
+                <input
+                  type="url"
+                  value={formData.google_maps_url}
+                  onChange={(e) => {
+                    handleChange("google_maps_url", e.target.value);
+                    // Intentar extraer coordenadas automáticamente
+                    if (e.target.value) {
+                      const coords = extractCoordinatesFromGoogleMapsUrl(e.target.value);
+                      if (coords.lat && coords.lng) {
+                        setFormData(prev => ({
+                          ...prev,
+                          latitude: coords.lat?.toString() || "",
+                          longitude: coords.lng?.toString() || "",
+                        }));
+                      }
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  placeholder="https://maps.app.goo.gl/..."
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Si pegas un link de Google Maps, las coordenadas se extraerán automáticamente
+                </p>
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-600 mb-1 block">
+                  Latitud (opcional)
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  value={formData.latitude}
+                  onChange={(e) => handleChange("latitude", e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  placeholder="Ejemplo: -0.180653"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Entre -90 y 90
+                </p>
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-600 mb-1 block">
+                  Longitud (opcional)
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  value={formData.longitude}
+                  onChange={(e) => handleChange("longitude", e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  placeholder="Ejemplo: -78.467834"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Entre -180 y 180
+                </p>
+              </div>
+
               <div>
                 <label className="text-sm text-gray-600 mb-1 block">
                   Tarifa de consulta ($)

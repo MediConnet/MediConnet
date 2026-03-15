@@ -49,6 +49,9 @@ type BackendPharmacyProfile = {
     longitude: number;
     address: string;
   };
+  latitude?: number | null;
+  longitude?: number | null;
+  google_maps_url?: string | null;
 
   schedule?: WorkSchedule[];
   stats?: {
@@ -132,6 +135,9 @@ const mapBackendToFrontend = (backend: BackendPharmacyProfile): PharmacyProfile 
     chainDescription,
 
     location: backend.location,
+    latitude: backend.latitude ?? backend.location?.latitude ?? null,
+    longitude: backend.longitude ?? backend.location?.longitude ?? null,
+    google_maps_url: backend.google_maps_url ?? null,
     schedule: backend.schedule || [],
     stats: {
       profileViews: stats.profile_views ?? stats.profileViews ?? 0,
@@ -187,6 +193,9 @@ export const updatePharmacyProfileAPI = async (
     ...(payload.status && { status: payload.status }),
     ...(payload.isActive !== undefined && { is_active: payload.isActive }),
     ...(payload.chainId && { chain_id: payload.chainId }),
+    ...(payload.latitude !== undefined && { latitude: payload.latitude }),
+    ...(payload.longitude !== undefined && { longitude: payload.longitude }),
+    ...(payload.google_maps_url !== undefined && { google_maps_url: payload.google_maps_url || null }),
   };
   
   // ⭐ Solo incluir full_name, profile_picture_url y description si NO es miembro de cadena
