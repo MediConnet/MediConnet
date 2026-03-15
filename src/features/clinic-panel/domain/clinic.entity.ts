@@ -5,8 +5,9 @@ export interface ClinicProfile {
   specialties: string[]; // Especialidades que ofrece la clínica
   consultationPrices?: ConsultationPrice[]; // Precios por especialidad
   address: string;
-  latitude?: number; // Coordenada de latitud para el mapa
-  longitude?: number; // Coordenada de longitud para el mapa
+  latitude?: number | null; // Coordenada de latitud para el mapa
+  longitude?: number | null; // Coordenada de longitud para el mapa
+  google_maps_url?: string | null;
   phone: string;
   whatsapp: string;
   generalSchedule: ClinicSchedule; // Horarios generales de la clínica

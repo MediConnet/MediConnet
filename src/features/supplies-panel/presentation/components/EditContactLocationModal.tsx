@@ -10,7 +10,9 @@ import {
   InputAdornment,
   Stack,
   TextField,
+  Typography,
 } from "@mui/material";
+import Grid2 from "@mui/material/Grid2";
 import { useState, useEffect } from "react";
 import type { SupplyDashboard } from "../../domain/SupplyDashboard.entity";
 
@@ -30,6 +32,9 @@ export const EditContactLocationModal = ({
   const [formData, setFormData] = useState({
     whatsapp: "",
     address: "",
+    latitude: "",
+    longitude: "",
+    google_maps_url: "",
   });
 
   useEffect(() => {
@@ -37,6 +42,9 @@ export const EditContactLocationModal = ({
       setFormData({
         whatsapp: data.supply.whatsapp || "",
         address: data.supply.address || "",
+        latitude: data.supply.latitude?.toString() || "",
+        longitude: data.supply.longitude?.toString() || "",
+        google_maps_url: data.supply.google_maps_url || "",
       });
     }
   }, [data, open]);
@@ -45,17 +53,34 @@ export const EditContactLocationModal = ({
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = () => {
-    const updatedData: SupplyDashboard = {
-      ...data,
-      supply: {
-        ...data.supply,
+  const handleSave = async () => {
+    try {
+      const { updateSupplyProfileAPI } = await import("../../infrastructure/supply.api");
+      await updateSupplyProfileAPI({
         whatsapp: formData.whatsapp,
         address: formData.address,
-      },
-    };
-    onSave(updatedData);
-    onClose();
+        latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+        longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+        google_maps_url: formData.google_maps_url || null,
+      });
+      
+      const updatedData: SupplyDashboard = {
+        ...data,
+        supply: {
+          ...data.supply,
+          whatsapp: formData.whatsapp,
+          address: formData.address,
+          latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+          longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+          google_maps_url: formData.google_maps_url || null,
+        },
+      };
+      onSave(updatedData);
+      onClose();
+    } catch (error: any) {
+      console.error("Error updating supply contact location:", error);
+      alert(error?.message || "No se pudo guardar. Intenta de nuevo.");
+    }
   };
 
   return (
@@ -121,6 +146,52 @@ export const EditContactLocationModal = ({
               ),
             }}
             helperText="Dirección completa de tu negocio"
+          />
+
+          {/* Coordenadas (Opcional) */}
+          <Box>
+            <Typography variant="subtitle2" fontWeight={600} mb={2}>
+              Coordenadas (Opcional)
+            </Typography>
+            <Grid2 container spacing={2}>
+              <Grid2 size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Latitud"
+                  placeholder="-0.1807"
+                  type="number"
+                  step="any"
+                  value={formData.latitude}
+                  onChange={(e) => handleChange("latitude", e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  helperText="Entre -90 y 90"
+                />
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Longitud"
+                  placeholder="-78.4678"
+                  type="number"
+                  step="any"
+                  value={formData.longitude}
+                  onChange={(e) => handleChange("longitude", e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  helperText="Entre -180 y 180"
+                />
+              </Grid2>
+            </Grid2>
+          </Box>
+
+          {/* Google Maps URL */}
+          <TextField
+            fullWidth
+            type="url"
+            label="Link de Google Maps (opcional)"
+            placeholder="https://maps.app.goo.gl/..."
+            value={formData.google_maps_url}
+            onChange={(e) => handleChange("google_maps_url", e.target.value)}
+            helperText="Pega el link de Google Maps para compartir la ubicación exacta"
           />
         </Stack>
       </DialogContent>

@@ -287,6 +287,44 @@ export const EditProfileModal = ({
             </Grid2>
           </Grid2>
 
+          {/* Campos de ubicación */}
+          <Grid2 container spacing={2}>
+            <Grid2 size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                type="number"
+                step="any"
+                label="Latitud (opcional)"
+                value={formData.latitude?.toString() || ""}
+                onChange={(e) => handleChange("latitude", e.target.value ? parseFloat(e.target.value) : null)}
+                placeholder="Ejemplo: -0.180653"
+                helperText="Entre -90 y 90"
+              />
+            </Grid2>
+            <Grid2 size={{ xs: 12, md: 6 }}>
+              <TextField
+                fullWidth
+                type="number"
+                step="any"
+                label="Longitud (opcional)"
+                value={formData.longitude?.toString() || ""}
+                onChange={(e) => handleChange("longitude", e.target.value ? parseFloat(e.target.value) : null)}
+                placeholder="Ejemplo: -78.467834"
+                helperText="Entre -180 y 180"
+              />
+            </Grid2>
+          </Grid2>
+
+          <TextField
+            fullWidth
+            type="url"
+            label="Link de Google Maps (opcional)"
+            value={formData.google_maps_url || ""}
+            onChange={(e) => handleChange("google_maps_url", e.target.value || null)}
+            placeholder="https://maps.app.goo.gl/..."
+            helperText="Pega el link de Google Maps para compartir la ubicación exacta"
+          />
+
           <TextField
             fullWidth
             label="Descripción Corta"

@@ -16,6 +16,9 @@ export interface SupplyDashboard {
     phone?: string;
     whatsapp: string;
     address: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    google_maps_url?: string | null;
     description: string;
     schedule: string;
     logoUrl?: string | null;

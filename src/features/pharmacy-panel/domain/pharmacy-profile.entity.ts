@@ -35,6 +35,9 @@ export interface PharmacyProfile {
     longitude: number;
     address: string;
   }; // Ubicación (coordenadas)
+  latitude?: number | null;
+  longitude?: number | null;
+  google_maps_url?: string | null;
   schedule: WorkSchedule[]; // Horarios de atención
   stats: PharmacyStats;
   isActive?: boolean; // Estado del servicio: Activo / Inactivo

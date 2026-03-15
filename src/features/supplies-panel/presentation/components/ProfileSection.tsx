@@ -84,6 +84,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
         phone: data?.supply?.phone || "",
         whatsapp: data?.supply?.whatsapp || "",
         schedule: data?.supply?.schedule || "",
+        latitude: data?.supply?.latitude ?? null,
+        longitude: data?.supply?.longitude ?? null,
+        google_maps_url: data?.supply?.google_maps_url ?? null,
       });
 
       const updatedData: SupplyDashboard = {
