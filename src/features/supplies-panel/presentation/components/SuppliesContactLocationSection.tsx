@@ -126,13 +126,33 @@ export const SuppliesContactLocationSection = ({
             >
               <Stack direction="row" alignItems="center" spacing={2} mb={2}>
                 <LocationOn sx={{ color: "#06b6d4", fontSize: 28 }} />
-                <Box>
+                <Box flex={1}>
                   <Typography variant="caption" color="text.secondary" fontWeight={600}>
                     Dirección
                   </Typography>
-                  <Typography variant="body1" fontWeight={600} color="text.primary">
+                  <Typography variant="body1" fontWeight={600} color="text.primary" sx={{ wordBreak: "break-word" }}>
                     {data.supply.address}
                   </Typography>
+                  {data.supply.google_maps_url && (
+                    <Box mt={1}>
+                      <Typography
+                        component="a"
+                        href={data.supply.google_maps_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        variant="body2"
+                        sx={{
+                          color: "#06b6d4",
+                          textDecoration: "none",
+                          "&:hover": { textDecoration: "underline" },
+                          wordBreak: "break-all",
+                          display: "inline-block",
+                        }}
+                      >
+                        Ver en Google Maps →
+                      </Typography>
+                    </Box>
+                  )}
                 </Box>
               </Stack>
               <Button

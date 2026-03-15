@@ -393,9 +393,29 @@ export const AmbulanceDashboardPage = () => {
                     >
                       Dirección Base
                     </Typography>
-                    <Typography variant="body1" fontWeight={500} mt={0.5}>
+                    <Typography variant="body1" fontWeight={500} mt={0.5} sx={{ wordBreak: "break-word" }}>
                       {profile.address}
                     </Typography>
+                    {profile.google_maps_url && (
+                      <Box mt={1}>
+                        <Typography
+                          component="a"
+                          href={profile.google_maps_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          variant="body2"
+                          sx={{
+                            color: "#06b6d4",
+                            textDecoration: "none",
+                            "&:hover": { textDecoration: "underline" },
+                            wordBreak: "break-all",
+                            display: "inline-block",
+                          }}
+                        >
+                          Ver en Google Maps →
+                        </Typography>
+                      </Box>
+                    )}
                   </Grid2>
                 </Grid2>
 

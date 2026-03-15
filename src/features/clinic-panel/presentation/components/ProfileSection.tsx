@@ -462,6 +462,26 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
               Ingresa las coordenadas (latitud y longitud) para mostrar la ubicación en el mapa.
               Puedes obtenerlas desde Google Maps haciendo clic derecho en cualquier ubicación.
             </Typography>
+            {profile?.google_maps_url && (
+              <Box sx={{ mt: 2 }}>
+                <Typography
+                  component="a"
+                  href={profile.google_maps_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="body2"
+                  sx={{
+                    color: "#14b8a6",
+                    textDecoration: "none",
+                    "&:hover": { textDecoration: "underline" },
+                    wordBreak: "break-all",
+                    display: "inline-block",
+                  }}
+                >
+                  Ver en Google Maps →
+                </Typography>
+              </Box>
+            )}
           </CardContent>
         </Card>
       )}

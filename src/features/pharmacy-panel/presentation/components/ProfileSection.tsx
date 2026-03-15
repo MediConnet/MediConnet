@@ -256,9 +256,29 @@ export const ProfileSection = ({ profile, onUpdate }: ProfileSectionProps) => {
               >
                 Dirección
               </Typography>
-              <Typography variant="body1" color="text.primary" mt={0.5}>
+              <Typography variant="body1" color="text.primary" mt={0.5} sx={{ wordBreak: "break-word" }}>
                 {profile.address || "Sin dirección registrada."}
               </Typography>
+              {profile.google_maps_url && (
+                <Box mt={1}>
+                  <Typography
+                    component="a"
+                    href={profile.google_maps_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    variant="body2"
+                    sx={{
+                      color: "#14b8a6",
+                      textDecoration: "none",
+                      "&:hover": { textDecoration: "underline" },
+                      wordBreak: "break-all",
+                      display: "inline-block",
+                    }}
+                  >
+                    Ver en Google Maps →
+                  </Typography>
+                </Box>
+              )}
             </Box>
           </Box>
 
