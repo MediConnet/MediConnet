@@ -36,6 +36,9 @@ interface BackendProfileResponse {
   payment_methods: string[]; // ["Efectivo", "Tarjeta..."]
   description: string;
   address: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  google_maps_url?: string | null;
   phone: string;
   whatsapp: string;
   status: string; // "APPROVED", "PENDING"
@@ -57,6 +60,9 @@ export interface UpdateDoctorProfileParams {
   email?: string;
   whatsapp?: string;
   address?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  google_maps_url?: string | null;
   price?: number;
   description?: string;
   experience?: number; 
@@ -265,6 +271,9 @@ export const getDoctorDashboardAPI = async (userId: string): Promise<DoctorDashb
       email: provider.email || (provider.users && provider.users.email) || "", 
       whatsapp: provider.phone_contact || "", 
       address: provider.address_text || "", 
+      latitude: provider.latitude ?? null,
+      longitude: provider.longitude ?? null,
+      google_maps_url: provider.google_maps_url ?? null,
       price: Number(provider.consultation_fee) || 0,
       description: provider.description || "",
       experience: provider.years_of_experience || 0,
@@ -324,6 +333,9 @@ export const getDoctorProfileAPI = async (): Promise<DoctorDashboard> => {
       
       whatsapp: backendData.whatsapp || backendData.phone || "",
       address: backendData.address || "",
+      latitude: backendData.latitude ?? null,
+      longitude: backendData.longitude ?? null,
+      google_maps_url: backendData.google_maps_url ?? null,
       
       // Conversión numérica segura
       price: Number(backendData.consultation_fee) || 0,
@@ -365,6 +377,9 @@ export const updateDoctorProfileAPI = async (
   if (params.name !== undefined) backendPayload.full_name = params.name;
   if (params.description !== undefined) backendPayload.description = params.description;
   if (params.address !== undefined) backendPayload.address = params.address;
+  if (params.latitude !== undefined) backendPayload.latitude = params.latitude;
+  if (params.longitude !== undefined) backendPayload.longitude = params.longitude;
+  if (params.google_maps_url !== undefined) backendPayload.google_maps_url = params.google_maps_url || null;
   if (params.whatsapp !== undefined) {
     backendPayload.phone = params.whatsapp;
     backendPayload.whatsapp = params.whatsapp;
@@ -426,6 +441,9 @@ export const updateDoctorProfileAPI = async (
       specialty: specialtyValue as any,
       whatsapp: backendData.whatsapp,
       address: backendData.address,
+      latitude: backendData.latitude ?? null,
+      longitude: backendData.longitude ?? null,
+      google_maps_url: backendData.google_maps_url ?? null,
       price: Number(backendData.consultation_fee),
       description: backendData.description,
       experience: backendData.years_of_experience,

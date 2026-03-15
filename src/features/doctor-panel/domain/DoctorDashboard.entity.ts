@@ -34,6 +34,9 @@ export interface DoctorDashboard {
     email: string;
     whatsapp: string;
     address: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    google_maps_url?: string | null;
     price: number;
     description: string;
     experience?: number; 
