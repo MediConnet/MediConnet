@@ -597,18 +597,20 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
               </div>
               <div>
                 <label className="text-sm text-gray-600">Dirección</label>
-                <p className="text-gray-800 font-medium mt-1">
+                <p className="text-gray-800 font-medium mt-1 break-words">
                   {doctor.address}
                 </p>
                 {doctor.google_maps_url && (
-                  <a
-                    href={doctor.google_maps_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-teal-600 hover:text-teal-700 text-sm mt-1 inline-block"
-                  >
-                    Ver en Google Maps →
-                  </a>
+                  <div className="mt-2">
+                    <a
+                      href={doctor.google_maps_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-teal-600 hover:text-teal-700 text-sm inline-block break-all"
+                    >
+                      Ver en Google Maps →
+                    </a>
+                  </div>
                 )}
                 {(doctor.latitude !== null && doctor.latitude !== undefined && 
                   doctor.longitude !== null && doctor.longitude !== undefined) && (
