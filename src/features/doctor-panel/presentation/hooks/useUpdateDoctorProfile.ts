@@ -22,5 +22,8 @@ export const useUpdateDoctorProfile = () => {
       // Invalidar cache del dashboard (puede tener datos del perfil)
       queryClient.invalidateQueries({ queryKey: ['doctors', 'dashboard', user?.id] });
     },
+    onError: (error) => {
+      console.error('Error en useUpdateDoctorProfile:', error);
+    },
   });
 };
