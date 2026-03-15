@@ -76,30 +76,37 @@ const extractCoordinatesFromGoogleMapsUrl = (url: string): { lat: number | null,
   if (!url || url.trim() === "") return { lat: null, lng: null };
   
   try {
-    // Formato 1: https://maps.google.com/?q=lat,lng
-    const qMatch = url.match(/[?&]q=([^&]+)/);
-    if (qMatch) {
-      const coords = qMatch[1].split(',');
-      if (coords.length === 2) {
-        const lat = parseFloat(coords[0]);
-        const lng = parseFloat(coords[1]);
-        if (!isNaN(lat) && !isNaN(lng)) {
-          return { lat, lng };
-        }
+    // Formato 1: https://www.google.com/maps/place/.../@lat,lng,zoom
+    const placeMatch = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+    if (placeMatch) {
+      const lat = parseFloat(placeMatch[1]);
+      const lng = parseFloat(placeMatch[2]);
+      if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+        return { lat, lng };
       }
     }
     
-    // Formato 2: https://www.google.com/maps/place/.../@lat,lng
-    const atMatch = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-    if (atMatch) {
-      const lat = parseFloat(atMatch[1]);
-      const lng = parseFloat(atMatch[2]);
-      if (!isNaN(lat) && !isNaN(lng)) {
+    // Formato 2: https://maps.google.com/?q=lat,lng
+    const qMatch = url.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+    if (qMatch) {
+      const lat = parseFloat(qMatch[1]);
+      const lng = parseFloat(qMatch[2]);
+      if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+        return { lat, lng };
+      }
+    }
+    
+    // Formato 3: https://maps.google.com/?ll=lat,lng
+    const llMatch = url.match(/[?&]ll=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+    if (llMatch) {
+      const lat = parseFloat(llMatch[1]);
+      const lng = parseFloat(llMatch[2]);
+      if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
         return { lat, lng };
       }
     }
   } catch (error) {
-    // Si no se puede extraer, retornar null
+    console.error('Error extrayendo coordenadas de Google Maps URL:', error);
   }
   
   return { lat: null, lng: null };
@@ -143,7 +150,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const authStore = useAuthStore();
   const { user } = authStore;
-  const { updateProfile, loading: saving } = useUpdateDoctorProfile();
+  const { mutateAsync: updateProfile, isPending: saving } = useUpdateDoctorProfile();
 
   // Estado del formulario actual
   const [formData, setFormData] = useState({
@@ -395,15 +402,18 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
       paymentMethods: formData.paymentMethods,
     };
     
-    console.log('📤 Datos que se enviarán al backend:', payload);
+    try {
+      const updatedData = await updateProfile(payload);
 
-    const updatedData = await updateProfile(payload);
-
-    if (updatedData) {
-      setIsEditing(false);
-      setIsUsingDefaultSchedule(false);
-      setInitialFormData(formData);
-      if (onUpdate) onUpdate(updatedData);
+      if (updatedData) {
+        setIsEditing(false);
+        setIsUsingDefaultSchedule(false);
+        setInitialFormData(formData);
+        if (onUpdate) onUpdate(updatedData);
+      }
+    } catch (error: any) {
+      console.error('Error al guardar el perfil:', error);
+      alert(error?.message || 'Error al guardar el perfil. Por favor, intenta de nuevo.');
     }
   };
 
