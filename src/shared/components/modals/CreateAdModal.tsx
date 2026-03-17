@@ -97,17 +97,8 @@ export const CreateAdModal = ({
       setIsSubmitting(true);
       setError("");
       try {
-        // Imagen por defecto
-        const DEFAULT_DOCTOR_IMG =
-          "https://img.freepik.com/free-photo/doctor-nurses-special-equipment_23-2148980721.jpg";
-
-        let imageUrl = DEFAULT_DOCTOR_IMG;
-
-        // Aquí iría la lógica de subida a S3
-        if (selectedImage) {
-          // imageUrl = "URL_DE_S3_TRAS_SUBIDA";
-          imageUrl = DEFAULT_DOCTOR_IMG;
-        }
+        // Solo usar imagen si el usuario subió una
+        const imageUrl = (selectedImage && imagePreview) ? imagePreview : undefined;
 
         // --- LÓGICA DE TIEMPO EXACTO ---
         const now = new Date();

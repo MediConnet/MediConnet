@@ -33,6 +33,30 @@ export interface BankAccountData {
   identificationNumber?: string | null;
 }
 
+/** Normaliza accountType del backend (puede venir en español o inglés) */
+const normalizeAccountType = (type: string): string => {
+  if (!type) return 'checking';
+  const lower = type.toLowerCase();
+  if (lower === 'corriente' || lower === 'checking') return 'checking';
+  if (lower === 'ahorros' || lower === 'savings') return 'savings';
+  return type;
+};
+
+/** Extrae y normaliza datos bancarios de la respuesta del backend */
+const extractBankAccount = (raw: any): BankAccountData | null => {
+  if (!raw) return null;
+  // Manejar doble anidamiento: { data: { bankName: ... } }
+  const data = raw?.data ?? raw;
+  if (!data || !data.bankName) return null;
+  return {
+    bankName: data.bankName,
+    accountNumber: data.accountNumber,
+    accountType: normalizeAccountType(data.accountType),
+    accountHolder: data.accountHolder,
+    identificationNumber: data.identificationNumber ?? null,
+  };
+};
+
 /**
  * API: Obtener datos bancarios del médico
  * Endpoint: GET /api/doctors/bank-account
@@ -42,11 +66,7 @@ export const getDoctorBankAccountAPI = async (): Promise<BankAccountData | null>
     '/doctors/bank-account'
   );
   const extracted = extractData(response);
-  // El backend a veces devuelve { data: {...} } anidado
-  if (extracted && typeof extracted === 'object' && 'data' in extracted) {
-    return (extracted as any).data as BankAccountData | null;
-  }
-  return extracted as BankAccountData | null;
+  return extractBankAccount(extracted);
 };
 
 /**
@@ -59,9 +79,16 @@ export const updateDoctorBankAccountAPI = async (data: {
   accountType: string;
   accountHolder: string;
 }): Promise<BankAccountData> => {
-  const response = await httpClient.put<{ success: boolean; data: BankAccountData }>(
+  const response = await httpClient.put<{ success: boolean; data: any }>(
     '/doctors/bank-account',
     data
   );
-  return extractData(response);
+  const extracted = extractData(response);
+  // Si el backend devuelve null o sin datos tras el update, retornar los datos enviados
+  return extractBankAccount(extracted) ?? {
+    bankName: data.bankName,
+    accountNumber: data.accountNumber,
+    accountType: normalizeAccountType(data.accountType),
+    accountHolder: data.accountHolder,
+  };
 };
