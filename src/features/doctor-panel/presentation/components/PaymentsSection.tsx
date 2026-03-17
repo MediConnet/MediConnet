@@ -63,7 +63,7 @@ const ECUADOR_BANKS = [
 
 export const PaymentsSection = () => {
   const { data, refetch } = useDoctorDashboard();
-  const { updateProfile, loading: savingBank } = useUpdateDoctorProfile();
+  const { mutateAsync: updateProfile, isPending: savingBank } = useUpdateDoctorProfile();
   // not using auth user here for bank updates
   const doctorName = data?.doctor?.name || "Dr. Juan Pérez";
   
