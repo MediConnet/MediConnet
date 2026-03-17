@@ -34,22 +34,8 @@ export const LaboratoryProfileSection = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const objectUrl = URL.createObjectURL(file);
-      const updatedData = {
-        ...data,
-        laboratory: {
-          ...data.laboratory,
-          logoUrl: objectUrl,
-        },
-      };
-      onUpdate(updatedData);
-    }
+    // The real upload happens inside "Editar Perfil".
+    setIsEditOpen(true);
   };
 
   // Colores del tema para laboratorio (morado)
@@ -146,7 +132,7 @@ export const LaboratoryProfileSection = ({
                   accept="image/*"
                   ref={fileInputRef}
                   style={{ display: "none" }}
-                  onChange={handleImageChange}
+                  onChange={() => {}}
                 />
                 {data.laboratory.logoUrl ? (
                   <Avatar
@@ -259,7 +245,7 @@ export const LaboratoryProfileSection = ({
               accept="image/*"
               ref={fileInputRef}
               style={{ display: "none" }}
-              onChange={handleImageChange}
+              onChange={() => {}}
             />
             <Box display="flex" alignItems="center" gap={2} mb={2}>
               <Box
@@ -294,7 +280,7 @@ export const LaboratoryProfileSection = ({
               <Button
                 variant="outlined"
                 startIcon={<CloudUpload />}
-                onClick={handleImageClick}
+                onClick={() => setIsEditOpen(true)}
                 sx={{
                   textTransform: "none",
                   borderRadius: 2,

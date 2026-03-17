@@ -1,5 +1,6 @@
-import { Close, Description, Save } from "@mui/icons-material";
+import { Close, Description, PhotoCamera, Save } from "@mui/icons-material";
 import {
+  Avatar,
   Box,
   Button,
   Dialog,
@@ -14,7 +15,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import type { LaboratoryDashboard } from "../../domain/LaboratoryDashboard.entity";
 import { updateLaboratoryProfileAPI } from "../../infrastructure/laboratories.repository";
 
@@ -37,6 +38,8 @@ export const EditLaboratoryProfileModal = ({
     isPublished: true,
   });
   const [saving, setSaving] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (data) {
@@ -47,6 +50,7 @@ export const EditLaboratoryProfileModal = ({
           data.laboratory.is_published ??
           (data.laboratory.isActive !== false),
       });
+      setLogoPreview(null);
     }
   }, [data, open]);
 
@@ -54,13 +58,30 @@ export const EditLaboratoryProfileModal = ({
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handlePickLogo = () => fileInputRef.current?.click();
+
+  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return;
+    if (file.size > 5 * 1024 * 1024) return; // 5MB
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      setLogoPreview(base64);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
-      await updateLaboratoryProfileAPI({
+      const response = await updateLaboratoryProfileAPI({
         full_name: formData.name,
         description: formData.description,
         is_published: formData.isPublished,
+        ...(logoPreview ? { logo_url: logoPreview } : {}),
       });
 
       const updatedData: LaboratoryDashboard = {
@@ -71,6 +92,7 @@ export const EditLaboratoryProfileModal = ({
           description: formData.description,
           is_published: formData.isPublished,
           isActive: formData.isPublished,
+          logoUrl: response.logo_url ?? data.laboratory.logoUrl,
         },
       };
       onSave(updatedData);
@@ -111,6 +133,40 @@ export const EditLaboratoryProfileModal = ({
 
       <DialogContent dividers>
         <Stack spacing={3} sx={{ mt: 1 }}>
+          {/* Logo */}
+          <Box>
+            <Typography variant="subtitle2" fontWeight={600} mb={1}>
+              Logo del Laboratorio
+            </Typography>
+            <Box display="flex" alignItems="center" gap={2}>
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                onChange={handleLogoChange}
+              />
+              <Avatar
+                src={logoPreview || data?.laboratory?.logoUrl || undefined}
+                variant="rounded"
+                sx={{
+                  width: 96,
+                  height: 96,
+                  borderRadius: 2,
+                  bgcolor: "grey.100",
+                }}
+              >
+                <PhotoCamera />
+              </Avatar>
+              <Button variant="outlined" onClick={handlePickLogo}>
+                {data?.laboratory?.logoUrl || logoPreview ? "Cambiar logo" : "Subir logo"}
+              </Button>
+            </Box>
+            <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+              Se recomienda imagen ligera (máx. 5MB). El logo se guarda al presionar “Guardar Perfil”.
+            </Typography>
+          </Box>
+
           <TextField
             fullWidth
             label="Nombre del Laboratorio"
