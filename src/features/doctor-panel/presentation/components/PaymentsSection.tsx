@@ -75,6 +75,7 @@ export const PaymentsSection = () => {
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [bankDialogOpen, setBankDialogOpen] = useState(false);
+  const [bankError, setBankError] = useState<string | null>(null);
 
   // Datos bancarios desde endpoint dedicado
   const [bankAccount, setBankAccount] = useState<BankAccountData | null>(null);
@@ -112,6 +113,12 @@ export const PaymentsSection = () => {
   }, []);
 
   const handleSaveBankData = async () => {
+    // Validación básica
+    if (bankData.accountNumber.length < 10) {
+      setBankError('El número de cuenta debe tener al menos 10 dígitos');
+      return;
+    }
+    setBankError(null);
     setSavingBank(true);
     try {
       const updated = await updateDoctorBankAccountAPI({
@@ -123,7 +130,7 @@ export const PaymentsSection = () => {
       setBankAccount(updated);
       setBankDialogOpen(false);
     } catch (err: any) {
-      console.error('Error guardando datos bancarios:', err);
+      setBankError(err.message || 'Error al guardar los datos bancarios');
     } finally {
       setSavingBank(false);
     }
