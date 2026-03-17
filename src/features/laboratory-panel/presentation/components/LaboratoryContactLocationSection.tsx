@@ -28,6 +28,11 @@ export const LaboratoryContactLocationSection = ({
   };
 
   const handleLocationClick = () => {
+    if (data.laboratory.google_maps_url) {
+      window.open(data.laboratory.google_maps_url, "_blank");
+      return;
+    }
+
     if (data.laboratory.location) {
       const { latitude, longitude } = data.laboratory.location;
       window.open(
@@ -153,7 +158,7 @@ export const LaboratoryContactLocationSection = ({
                 fullWidth
                 startIcon={<LocationOn />}
                 onClick={handleLocationClick}
-                disabled={!data.laboratory.location}
+                disabled={!data.laboratory.google_maps_url && !data.laboratory.location}
                 sx={{
                   textTransform: "none",
                   fontWeight: 600,

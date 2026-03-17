@@ -244,11 +244,11 @@ export const LaboratoryProfileSection = ({
           <Paper
             elevation={0}
             sx={{
-              p: 3,
+              p: 2,
               borderRadius: 3,
               border: "1px solid",
               borderColor: "grey.200",
-              mb: 3,
+              mb: 2,
             }}
           >
             <Typography variant="h6" fontWeight={700} mb={2}>
@@ -313,7 +313,7 @@ export const LaboratoryProfileSection = ({
           <Paper
             elevation={0}
             sx={{
-              p: 3,
+              p: 2,
               borderRadius: 3,
               border: "1px solid",
               borderColor: "grey.200",
