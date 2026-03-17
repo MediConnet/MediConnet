@@ -135,16 +135,22 @@ export const ContactLocationSection = ({
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
+                minWidth: 0,
               }}
             >
-              <Box>
+              <Box sx={{ minWidth: 0 }}>
                 <Stack direction="row" spacing={2} alignItems="center" mb={2}>
                   <LocationOn sx={{ color: "error.main", fontSize: 32 }} />
                   <Typography variant="h6" fontWeight={600}>
                     Ubicación
                   </Typography>
                 </Stack>
-                <Typography variant="body1" color="text.secondary" mb={2}>
+                <Typography
+                  variant="body1"
+                  color="text.secondary"
+                  mb={2}
+                  sx={{ wordBreak: "break-word", overflowWrap: "break-word" }}
+                >
                   {profile.location?.address || profile.address || "No configurado"}
                 </Typography>
               </Box>

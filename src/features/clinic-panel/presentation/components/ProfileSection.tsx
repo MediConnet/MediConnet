@@ -463,7 +463,7 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
               Puedes obtenerlas desde Google Maps haciendo clic derecho en cualquier ubicación.
             </Typography>
             {profile?.google_maps_url && (
-              <Box sx={{ mt: 2 }}>
+              <Box sx={{ mt: 2, minWidth: 0 }}>
                 <Typography
                   component="a"
                   href={profile.google_maps_url}
@@ -475,7 +475,9 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
                     textDecoration: "none",
                     "&:hover": { textDecoration: "underline" },
                     wordBreak: "break-all",
+                    overflowWrap: "break-word",
                     display: "inline-block",
+                    maxWidth: "100%",
                   }}
                 >
                   Ver en Google Maps →

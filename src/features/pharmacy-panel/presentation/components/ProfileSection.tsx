@@ -448,8 +448,8 @@ export const ProfileSection = ({ profile, onUpdate }: ProfileSectionProps) => {
               <Box sx={{ mt: 1, width: "100%", display: "flex", flexDirection: "column", gap: 1 }}>
                 {/* Dirección */}
                 {profile.address && (
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <LocationOn sx={{ fontSize: 16, color: "text.secondary" }} />
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
+                    <LocationOn sx={{ fontSize: 16, color: "text.secondary", flexShrink: 0 }} />
                     <Typography
                       variant="caption"
                       color="text.secondary"
@@ -457,6 +457,7 @@ export const ProfileSection = ({ profile, onUpdate }: ProfileSectionProps) => {
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         whiteSpace: "nowrap",
+                        minWidth: 0,
                       }}
                     >
                       {profile.address}

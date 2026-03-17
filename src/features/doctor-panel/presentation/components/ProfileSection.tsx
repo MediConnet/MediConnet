@@ -515,7 +515,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* --- COLUMNA IZQUIERDA: Formulario --- */}
-      <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <div className="lg:col-span-2 min-w-0 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-xl font-bold text-gray-800">
@@ -729,20 +729,20 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
               </div>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-6 min-w-0 overflow-visible">
               <label className="text-sm text-gray-600 mb-3 block font-semibold">
                 Horario Laboral
               </label>
 
               {/* --- VISTA: Muestra mensaje si no hay horarios --- */}
               {doctor.workSchedule && doctor.workSchedule.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-2 min-w-0">
                   {doctor.workSchedule.map((schedule: WorkSchedule) => (
                     <div
                       key={schedule.day}
-                      className="flex items-center justify-between py-2 border-b border-gray-100"
+                      className="flex items-center justify-between py-2 border-b border-gray-100 gap-2"
                     >
-                      <span className="text-sm font-medium text-gray-700 w-24">
+                      <span className="text-sm font-medium text-gray-700 w-24 flex-shrink-0">
                         {dayLabels[schedule.day] || schedule.day}
                       </span>
                       {schedule.enabled ? (
@@ -768,21 +768,21 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
             </div>
 
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
+              <div className="min-w-0">
                 <label className="text-sm text-gray-600 mb-1 block flex items-center gap-2">
                   <Phone sx={{ fontSize: 18, color: "#25D366" }} />
                   WhatsApp
                 </label>
-                <p className="text-gray-800 font-medium mt-1">
+                <p className="text-gray-800 font-medium mt-1 break-words">
                   {doctor.whatsapp || "No disponible"}
                 </p>
               </div>
-              <div>
+              <div className="min-w-0">
                 <label className="text-sm text-gray-600 mb-1 block flex items-center gap-2">
                   <LocationOn sx={{ fontSize: 18, color: "#ef4444" }} />
                   Ubicación / Dirección
                 </label>
-                <p className="text-gray-800 font-medium mt-1">
+                <p className="text-gray-800 font-medium mt-1 break-all break-words max-w-full">
                   {doctor.address || "No disponible"}
                 </p>
               </div>
@@ -1086,17 +1086,17 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
               </p>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-6 min-w-0">
               <label className="text-sm text-gray-600 mb-3 block font-semibold">
                 Horario Laboral
               </label>
-              <div className="space-y-3">
+              <div className="space-y-3 min-w-0">
                 {formData.workSchedule.map((schedule: WorkSchedule) => (
                   <div
                     key={schedule.day}
                     className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg"
                   >
-                    <div className="flex items-center gap-2 w-24">
+                    <div className="flex items-center gap-2 w-24 flex-shrink-0">
                       <input
                         type="checkbox"
                         checked={schedule.enabled}

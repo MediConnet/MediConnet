@@ -602,13 +602,18 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   </Typography>
 
                   {/* Info: Dirección */}
-                  <Box display="flex" alignItems="flex-start" gap={1}>
+                  <Box display="flex" alignItems="flex-start" gap={1} sx={{ minWidth: 0 }}>
                     <LocationOn
                       sx={{ fontSize: 18, color: "grey.600", mt: 0.5, flexShrink: 0 }}
                     />
                     <Typography
                       variant="caption"
-                      sx={{ color: "grey.600", lineHeight: 1.4 }}
+                      sx={{
+                        color: "grey.600",
+                        lineHeight: 1.4,
+                        wordBreak: "break-word",
+                        overflowWrap: "break-word",
+                      }}
                     >
                       {supply.address || "Dirección"}
                     </Typography>

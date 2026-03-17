@@ -221,7 +221,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* --- COLUMNA IZQUIERDA: Formulario --- */}
-      <div className="lg:col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+      <div className="lg:col-span-2 min-w-0 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-xl font-bold text-gray-800">
@@ -263,9 +263,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 { label: "Dirección", val: laboratory.address },
                 { label: "Horario", val: displaySchedule }, // Usamos el calculado
               ].map((item, idx) => (
-                <div key={idx}>
+                <div key={idx} className="min-w-0">
                   <label className="text-sm text-gray-600">{item.label}</label>
-                  <p className="text-gray-800 font-medium mt-1">{item.val}</p>
+                  <p className="text-gray-800 font-medium mt-1 break-words break-all">{item.val}</p>
                 </div>
               ))}
             </div>
@@ -278,17 +278,17 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
             </div>
 
             {laboratory.workSchedule && laboratory.workSchedule.length > 0 && (
-              <div className="mt-6">
+              <div className="mt-6 min-w-0 overflow-visible">
                 <label className="text-sm text-gray-600 mb-3 block font-semibold">
                   Horario Laboral
                 </label>
-                <div className="space-y-2">
+                <div className="space-y-2 min-w-0">
                   {laboratory.workSchedule.map((schedule: WorkSchedule) => (
                     <div
                       key={schedule.day}
-                      className="flex items-center justify-between py-2 border-b border-gray-100"
+                      className="flex items-center justify-between py-2 border-b border-gray-100 gap-2"
                     >
-                      <span className="text-sm font-medium text-gray-700 w-24">
+                      <span className="text-sm font-medium text-gray-700 w-24 flex-shrink-0">
                         {dayLabels[schedule.day] || schedule.day}
                       </span>
                       {schedule.isOpen ? (
@@ -382,17 +382,17 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
               <p className="text-xs text-gray-500 mt-1">Letras, números y caracteres especiales</p>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-6 min-w-0">
               <label className="text-sm text-gray-600 mb-3 block font-semibold">
                 Horario Laboral
               </label>
-              <div className="space-y-3">
+              <div className="space-y-3 min-w-0">
                 {formData.workSchedule.map((schedule: WorkSchedule) => (
                   <div
                     key={schedule.day}
                     className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg"
                   >
-                    <div className="flex items-center gap-2 w-24">
+                    <div className="flex items-center gap-2 w-24 flex-shrink-0">
                       <input
                         type="checkbox"
                         checked={schedule.isOpen}
@@ -553,12 +553,12 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 </h4>
 
                 {/* Info: Dirección */}
-                <div className="flex items-start gap-2 text-gray-600">
+                <div className="flex items-start gap-2 text-gray-600 min-w-0">
                   <LocationOn
                     style={{ fontSize: 18 }}
                     className="flex-shrink-0 mt-0.5"
                   />
-                  <span className="text-xs leading-snug">
+                  <span className="text-xs leading-snug break-words break-all">
                     {isEditing
                       ? formData.address || "Dirección"
                       : laboratory.address}
