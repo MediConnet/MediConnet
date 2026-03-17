@@ -38,10 +38,15 @@ export interface BankAccountData {
  * Endpoint: GET /api/doctors/bank-account
  */
 export const getDoctorBankAccountAPI = async (): Promise<BankAccountData | null> => {
-  const response = await httpClient.get<{ success: boolean; data: BankAccountData | null }>(
+  const response = await httpClient.get<{ success: boolean; data: any }>(
     '/doctors/bank-account'
   );
-  return extractData(response);
+  const extracted = extractData(response);
+  // El backend a veces devuelve { data: {...} } anidado
+  if (extracted && typeof extracted === 'object' && 'data' in extracted) {
+    return (extracted as any).data as BankAccountData | null;
+  }
+  return extracted as BankAccountData | null;
 };
 
 /**
