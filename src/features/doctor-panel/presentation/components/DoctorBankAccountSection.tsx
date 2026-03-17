@@ -11,12 +11,14 @@ import {
   Button,
   TextField,
   MenuItem,
+  Snackbar,
 } from '@mui/material';
-import { AccountBalance, Info, Edit, Save, CheckCircle, Warning } from '@mui/icons-material';
+import { AccountBalance, Info, Edit, Save, CheckCircle } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import type { BankAccount } from '../../../clinic-panel/domain/clinic.entity';
+import { useAuthStore } from '../../../../app/store/auth.store';
 
 // Lista de bancos de Ecuador
 const ECUADOR_BANKS = [
@@ -56,10 +58,22 @@ const validationSchema = Yup.object({
 });
 
 export const DoctorBankAccountSection = () => {
+  const { user } = useAuthStore();
   const [bankAccount, setBankAccount] = useState<BankAccount | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error';
+  }>({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
+
+  const storageKey = user?.id ? `doctor_bank_account_${user.id}` : 'doctor_bank_account';
 
   useEffect(() => {
     loadBankAccount();
@@ -67,16 +81,20 @@ export const DoctorBankAccountSection = () => {
 
   const loadBankAccount = () => {
     setLoading(true);
-    // Cargar desde localStorage (mock)
-    const saved = localStorage.getItem('doctor_bank_account');
-    if (saved) {
-      try {
+    try {
+      // Cargar desde localStorage (mock) por doctor
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
         setBankAccount(JSON.parse(saved));
-      } catch {
+      } else {
         setBankAccount(null);
       }
+    } catch (error) {
+      console.error('Error al cargar datos bancarios del médico:', error);
+      setBankAccount(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const formik = useFormik({
@@ -100,15 +118,23 @@ export const DoctorBankAccountSection = () => {
           identificationNumber: values.identificationNumber,
         };
 
-        // Guardar en localStorage (mock)
-        localStorage.setItem('doctor_bank_account', JSON.stringify(newBankAccount));
-        
+        // Guardar en localStorage (mock) usando el ID del médico
+        localStorage.setItem(storageKey, JSON.stringify(newBankAccount));
+
         setBankAccount(newBankAccount);
         setIsEditing(false);
-        alert('Datos bancarios guardados correctamente');
+        setSnackbar({
+          open: true,
+          message: 'Datos bancarios guardados correctamente',
+          severity: 'success',
+        });
       } catch (error) {
         console.error('Error al guardar datos bancarios:', error);
-        alert('Error al guardar los datos bancarios');
+        setSnackbar({
+          open: true,
+          message: 'Error al guardar los datos bancarios',
+          severity: 'error',
+        });
       } finally {
         setSaving(false);
       }
@@ -290,94 +316,98 @@ export const DoctorBankAccountSection = () => {
       ) : (
         <Card>
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                Datos Bancarios Registrados
-              </Typography>
-              <Chip
-                icon={<CheckCircle />}
-                label="Configurado"
-                color="success"
-                size="small"
-              />
-            </Box>
-
-            <Divider sx={{ mb: 3 }} />
-
-            <Grid2 container spacing={3}>
-              <Grid2 size={{ xs: 12, md: 6 }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                    Banco
+            {bankAccount && (
+              <>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    Datos Bancarios Registrados
                   </Typography>
-                  <Typography variant="body1" sx={{ mt: 0.5, fontWeight: 500 }}>
-                    {bankAccount.bankName}
-                  </Typography>
+                  <Chip
+                    icon={<CheckCircle />}
+                    label="Configurado"
+                    color="success"
+                    size="small"
+                  />
                 </Box>
-              </Grid2>
 
-              <Grid2 size={{ xs: 12, md: 6 }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                    Tipo de Cuenta
-                  </Typography>
-                  <Typography variant="body1" sx={{ mt: 0.5, fontWeight: 500 }}>
-                    {accountTypeLabel}
-                  </Typography>
-                </Box>
-              </Grid2>
+                <Divider sx={{ mb: 3 }} />
 
-              <Grid2 size={{ xs: 12, md: 6 }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                    Número de Cuenta
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      mt: 0.5,
-                      fontWeight: 700,
-                      color: '#14b8a6',
-                      letterSpacing: 1,
-                      fontFamily: 'monospace',
-                    }}
-                  >
-                    {bankAccount.accountNumber}
-                  </Typography>
-                </Box>
-              </Grid2>
+                <Grid2 container spacing={3}>
+                  <Grid2 size={{ xs: 12, md: 6 }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                        Banco
+                      </Typography>
+                      <Typography variant="body1" sx={{ mt: 0.5, fontWeight: 500 }}>
+                        {bankAccount.bankName}
+                      </Typography>
+                    </Box>
+                  </Grid2>
 
-              <Grid2 size={{ xs: 12, md: 6 }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                    Titular de la Cuenta
-                  </Typography>
-                  <Typography variant="body1" sx={{ mt: 0.5, fontWeight: 500 }}>
-                    {bankAccount.accountHolder}
-                  </Typography>
-                </Box>
-              </Grid2>
+                  <Grid2 size={{ xs: 12, md: 6 }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                        Tipo de Cuenta
+                      </Typography>
+                      <Typography variant="body1" sx={{ mt: 0.5, fontWeight: 500 }}>
+                        {accountTypeLabel}
+                      </Typography>
+                    </Box>
+                  </Grid2>
 
-              {bankAccount.identificationNumber && (
-                <Grid2 size={{ xs: 12, md: 6 }}>
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                      Cédula / RUC
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      sx={{
-                        mt: 0.5,
-                        fontWeight: 500,
-                        fontFamily: 'monospace',
-                      }}
-                    >
-                      {bankAccount.identificationNumber}
-                    </Typography>
-                  </Box>
+                  <Grid2 size={{ xs: 12, md: 6 }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                        Número de Cuenta
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          mt: 0.5,
+                          fontWeight: 700,
+                          color: '#14b8a6',
+                          letterSpacing: 1,
+                          fontFamily: 'monospace',
+                        }}
+                      >
+                        {bankAccount.accountNumber}
+                      </Typography>
+                    </Box>
+                  </Grid2>
+
+                  <Grid2 size={{ xs: 12, md: 6 }}>
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                        Titular de la Cuenta
+                      </Typography>
+                      <Typography variant="body1" sx={{ mt: 0.5, fontWeight: 500 }}>
+                        {bankAccount.accountHolder}
+                      </Typography>
+                    </Box>
+                  </Grid2>
+
+                  {bankAccount.identificationNumber && (
+                    <Grid2 size={{ xs: 12, md: 6 }}>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                          Cédula / RUC
+                        </Typography>
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            mt: 0.5,
+                            fontWeight: 500,
+                            fontFamily: 'monospace',
+                          }}
+                        >
+                          {bankAccount.identificationNumber}
+                        </Typography>
+                      </Box>
+                    </Grid2>
+                  )}
                 </Grid2>
-              )}
-            </Grid2>
+              </>
+            )}
           </CardContent>
         </Card>
       )}
@@ -391,6 +421,22 @@ export const DoctorBankAccountSection = () => {
           Si cambias de cuenta bancaria, actualiza estos datos inmediatamente.
         </Typography>
       </Alert>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+          variant="filled"
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
