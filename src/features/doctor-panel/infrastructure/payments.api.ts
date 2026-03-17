@@ -48,7 +48,12 @@ export const getDoctorBankAccountAPI = async (): Promise<BankAccountData | null>
  * API: Guardar/actualizar datos bancarios del médico
  * Endpoint: PUT /api/doctors/bank-account
  */
-export const updateDoctorBankAccountAPI = async (data: Omit<BankAccountData, 'identificationNumber'>): Promise<BankAccountData> => {
+export const updateDoctorBankAccountAPI = async (data: {
+  bankName: string;
+  accountNumber: string;
+  accountType: string;
+  accountHolder: string;
+}): Promise<BankAccountData> => {
   const response = await httpClient.put<{ success: boolean; data: BankAccountData }>(
     '/doctors/bank-account',
     data

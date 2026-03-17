@@ -114,11 +114,16 @@ export const PaymentsSection = () => {
   const handleSaveBankData = async () => {
     setSavingBank(true);
     try {
-      const updated = await updateDoctorBankAccountAPI(bankData);
+      const updated = await updateDoctorBankAccountAPI({
+        bankName: bankData.bankName,
+        accountNumber: bankData.accountNumber,
+        accountType: bankData.accountType,
+        accountHolder: bankData.accountHolder,
+      });
       setBankAccount(updated);
       setBankDialogOpen(false);
-    } catch {
-      // error silencioso, el usuario puede reintentar
+    } catch (err: any) {
+      console.error('Error guardando datos bancarios:', err);
     } finally {
       setSavingBank(false);
     }
