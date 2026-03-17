@@ -8,6 +8,7 @@ import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { useDoctorDashboard } from "../hooks/useDoctorDashboard";
 import { useDoctorProfile } from "../hooks/useDoctorProfile";
 import { useClinicAssociatedDoctor } from "../hooks/useClinicAssociatedDoctor";
+import { onRealtimeEvent } from "../../../../shared/realtime/realtimeEvents";
 
 // Componentes de secciones
 import { AdsSection } from "../components/AdsSection";
@@ -130,6 +131,12 @@ export const DoctorDashboardPage = () => {
     };
 
     fetchAppointments();
+    const off = onRealtimeEvent(({ name }) => {
+      if (name === "appointment:created" || name === "appointment:updated") {
+        fetchAppointments();
+      }
+    });
+    return off;
   }, []);
 
   // Usar hook de React Query para especialidades

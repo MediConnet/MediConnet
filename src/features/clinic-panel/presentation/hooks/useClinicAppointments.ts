@@ -3,6 +3,7 @@ import { getClinicAppointmentsUseCase } from '../../application/get-clinic-appoi
 import { updateAppointmentStatusUseCase } from '../../application/update-appointment-status.usecase';
 import { updateReceptionStatusUseCase } from '../../application/update-reception-status.usecase';
 import type { ClinicAppointment, AppointmentStatus } from '../../domain/appointment.entity';
+import { onRealtimeEvent } from '../../../../shared/realtime/realtimeEvents';
 
 export const useClinicAppointments = (
   clinicId: string,
@@ -58,6 +59,16 @@ export const useClinicAppointments = (
     if (clinicId) {
       loadAppointments();
     }
+  }, [clinicId, date, doctorId]);
+
+  // Realtime: recargar agenda si cambia una cita
+  useEffect(() => {
+    if (!clinicId) return;
+    return onRealtimeEvent(({ name }) => {
+      if (name === "appointment:created" || name === "appointment:updated") {
+        loadAppointments();
+      }
+    });
   }, [clinicId, date, doctorId]);
 
   return {

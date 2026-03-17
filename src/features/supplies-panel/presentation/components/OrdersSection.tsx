@@ -23,6 +23,7 @@ import {
 import { useState, useEffect } from "react";
 import { getOrdersAPI, updateOrderStatusAPI } from "../../infrastructure/orders.api";
 import type { SupplyOrder } from "../../domain/Order.entity";
+import { onRealtimeEvent } from "../../../../shared/realtime/realtimeEvents";
 
 export const OrdersSection = () => {
   const [orders, setOrders] = useState<SupplyOrder[]>([]);
@@ -34,6 +35,15 @@ export const OrdersSection = () => {
   // Cargar pedidos al montar el componente
   useEffect(() => {
     loadOrders();
+  }, []);
+
+  // Realtime: recargar pedidos cuando el backend emita cambios
+  useEffect(() => {
+    return onRealtimeEvent(({ name }) => {
+      if (name === "order:updated") {
+        loadOrders();
+      }
+    });
   }, []);
 
   const loadOrders = async () => {

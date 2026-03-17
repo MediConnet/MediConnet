@@ -5,6 +5,7 @@
 
 import { MUIThemeProviderWrapper } from "./providers/MUIThemeProvider";
 import { QueryProvider } from "./providers/QueryProvider";
+import { RealtimeProvider } from "./providers/RealtimeProvider";
 import { AppRouter } from "./router/AppRouter";
 import { LoadingSpinner } from "../shared/components/LoadingSpinner";
 import { useGlobalLoading } from "../shared/hooks/useGlobalLoading";
@@ -24,7 +25,9 @@ export const App = () => {
   return (
     <MUIThemeProviderWrapper>
       <QueryProvider>
-        <AppContent />
+        <RealtimeProvider>
+          <AppContent />
+        </RealtimeProvider>
       </QueryProvider>
     </MUIThemeProviderWrapper>
   );
