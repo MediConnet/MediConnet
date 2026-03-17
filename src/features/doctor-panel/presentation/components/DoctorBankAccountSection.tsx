@@ -46,7 +46,7 @@ export const DoctorBankAccountSection = () => {
     initialValues: {
       bankName: bankAccount?.bankName || '',
       accountNumber: bankAccount?.accountNumber || '',
-      accountType: bankAccount?.accountType || 'Corriente',
+      accountType: bankAccount?.accountType || 'checking',
       accountHolder: bankAccount?.accountHolder || '',
     },
     validationSchema,
@@ -135,8 +135,8 @@ export const DoctorBankAccountSection = () => {
                     value={formik.values.accountType} onChange={formik.handleChange}
                     error={formik.touched.accountType && Boolean(formik.errors.accountType)}
                     helperText={formik.touched.accountType && formik.errors.accountType}>
-                    <MenuItem value="Corriente">Corriente</MenuItem>
-                    <MenuItem value="Ahorros">Ahorros</MenuItem>
+                    <MenuItem value="checking">Corriente</MenuItem>
+                    <MenuItem value="savings">Ahorros</MenuItem>
                   </TextField>
                 </Grid2>
                 <Grid2 size={{ xs: 12, md: 6 }}>
@@ -181,7 +181,7 @@ export const DoctorBankAccountSection = () => {
               </Grid2>
               <Grid2 size={{ xs: 12, md: 6 }}>
                 <Typography variant="caption" color="text.secondary" fontWeight={600}>Tipo de Cuenta</Typography>
-                <Typography variant="body1" sx={{ mt: 0.5, fontWeight: 500 }}>{bankAccount!.accountType}</Typography>
+                <Typography variant="body1" sx={{ mt: 0.5, fontWeight: 500 }}>{bankAccount!.accountType === 'checking' ? 'Corriente' : 'Ahorros'}</Typography>
               </Grid2>
               <Grid2 size={{ xs: 12, md: 6 }}>
                 <Typography variant="caption" color="text.secondary" fontWeight={600}>Número de Cuenta</Typography>

@@ -82,7 +82,7 @@ export const PaymentsSection = () => {
   const [bankData, setBankData] = useState({
     bankName: "",
     accountNumber: "",
-    accountType: "Corriente",
+    accountType: "checking",
     accountHolder: "",
   });
 
@@ -314,7 +314,7 @@ export const PaymentsSection = () => {
               </div>
               <div>
                 <Typography variant="caption" color="text.secondary">Tipo de Cuenta</Typography>
-                <Typography variant="body1" fontWeight={600}>{bankAccount.accountType}</Typography>
+                <Typography variant="body1" fontWeight={600}>{bankAccount.accountType === 'checking' ? 'Corriente' : 'Ahorros'}</Typography>
               </div>
               <div>
                 <Typography variant="caption" color="text.secondary">Titular</Typography>
@@ -483,8 +483,8 @@ export const PaymentsSection = () => {
                 onChange={(e) => setBankData({ ...bankData, accountType: e.target.value })}
                 label="Tipo de Cuenta"
               >
-                <MenuItem value="Corriente">Corriente</MenuItem>
-                <MenuItem value="Ahorros">Ahorros</MenuItem>
+                <MenuItem value="checking">Corriente</MenuItem>
+                <MenuItem value="savings">Ahorros</MenuItem>
               </Select>
             </FormControl>
             <TextField
