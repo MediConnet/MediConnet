@@ -1,4 +1,4 @@
-import { Close, CloudUpload } from "@mui/icons-material";
+import { Close } from "@mui/icons-material";
 import {
   Alert,
   Box,
@@ -12,7 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useFormik } from "formik";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import * as Yup from "yup";
 
 interface Props {
@@ -77,9 +77,6 @@ export const CreateAdModal = ({
   onCreateAd,
   submitButtonText = "Publicar Anuncio",
 }: Props) => {
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -89,6 +86,7 @@ export const CreateAdModal = ({
       discount: "",
       description: "",
       buttonText: "",
+      imageUrl: "",
       startDate: "",
       endDate: "",
     },
@@ -97,8 +95,8 @@ export const CreateAdModal = ({
       setIsSubmitting(true);
       setError("");
       try {
-        // Solo usar imagen si el usuario subió una
-        const imageUrl = (selectedImage && imagePreview) ? imagePreview : undefined;
+        // Solo usar imagen si el usuario ingresó una URL válida
+        const imageUrl = values.imageUrl?.trim() || undefined;
 
         // --- LÓGICA DE TIEMPO EXACTO ---
         const now = new Date();
@@ -120,15 +118,12 @@ export const CreateAdModal = ({
           discount: values.discount,
           description: values.description,
           buttonText: values.buttonText,
-          imageUrl, // Siempre tendrá un valor válido
+          imageUrl,
           startDate: finalStartDate,
           endDate: finalEndDate,
         });
 
-        // Limpiar formulario y cerrar
         formik.resetForm();
-        setSelectedImage(null);
-        setImagePreview(null);
         onClose();
       } catch (err: any) {
         setError(err.message || "Error al crear el anuncio");
@@ -138,22 +133,8 @@ export const CreateAdModal = ({
     },
   });
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleClose = () => {
     formik.resetForm();
-    setSelectedImage(null);
-    setImagePreview(null);
     setError("");
     onClose();
   };
@@ -277,94 +258,29 @@ export const CreateAdModal = ({
             sx={{ mb: 3 }}
           />
 
-          {/* Imagen de profesionales */}
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
-              Imagen de profesionales (opcional)
-            </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ mb: 1, display: "block" }}
-            >
-              Imagen que aparecerá en el lado derecho del banner. Si no subes
-              una, se usará una por defecto.
-            </Typography>
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept="image/*"
-              style={{ display: "none" }}
-              onChange={handleImageSelect}
-            />
-            {!imagePreview ? (
+          {/* URL de imagen */}
+          <TextField
+            fullWidth
+            label="URL de imagen (opcional)"
+            name="imageUrl"
+            placeholder="https://ejemplo.com/imagen.jpg"
+            value={formik.values.imageUrl}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            helperText="Pega la URL de la imagen que aparecerá en el banner"
+            sx={{ mb: 3 }}
+          />
+          {formik.values.imageUrl?.trim() && (
+            <Box sx={{ mb: 3, textAlign: "center" }}>
               <Box
-                onClick={() => fileInputRef.current?.click()}
-                sx={{
-                  border: "2px dashed #d1fae5",
-                  borderRadius: 3,
-                  p: 4,
-                  textAlign: "center",
-                  backgroundColor: "#f8fffd",
-                  cursor: "pointer",
-                  transition: "all 0.3s ease",
-                  "&:hover": {
-                    borderColor: "#14b8a6",
-                    backgroundColor: "#f0fdfa",
-                  },
-                }}
-              >
-                <CloudUpload sx={{ fontSize: 40, color: "#94a3b8", mb: 1 }} />
-                <Typography variant="body2" sx={{ mb: 0.5 }}>
-                  Haz clic para subir una imagen
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  JPG, PNG o GIF (máx. 5MB)
-                </Typography>
-              </Box>
-            ) : (
-              <Box
-                sx={{
-                  position: "relative",
-                  width: "100%",
-                  maxWidth: 400,
-                  mx: "auto",
-                }}
-              >
-                <Box
-                  component="img"
-                  src={imagePreview}
-                  alt="Preview"
-                  sx={{
-                    width: "100%",
-                    height: 200,
-                    objectFit: "cover",
-                    borderRadius: 2,
-                    border: "1px solid #e5e7eb",
-                  }}
-                />
-                <IconButton
-                  onClick={() => {
-                    setSelectedImage(null);
-                    setImagePreview(null);
-                  }}
-                  sx={{
-                    position: "absolute",
-                    top: 8,
-                    right: 8,
-                    bgcolor: "rgba(0,0,0,0.5)",
-                    color: "white",
-                    "&:hover": {
-                      bgcolor: "rgba(0,0,0,0.7)",
-                    },
-                  }}
-                  size="small"
-                >
-                  <Close />
-                </IconButton>
-              </Box>
-            )}
-          </Box>
+                component="img"
+                src={formik.values.imageUrl}
+                alt="Preview"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                sx={{ maxHeight: 150, borderRadius: 2, border: "1px solid #e5e7eb", objectFit: "cover" }}
+              />
+            </Box>
+          )}
 
           {/* Fechas */}
           <Box
