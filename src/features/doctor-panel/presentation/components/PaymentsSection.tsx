@@ -29,11 +29,10 @@ import {
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
 import { useState, useMemo, useEffect } from "react";
-import { getDoctorPaymentsAPI } from "../../infrastructure/payments.api";
+import { getDoctorPaymentsAPI, getDoctorBankAccountAPI, updateDoctorBankAccountAPI, type BankAccountData } from "../../infrastructure/payments.api";
 import type { Payment } from "../../domain/Payment.entity";
 import { formatMoney } from "../../../../shared/lib/formatMoney";
 import { useDoctorDashboard } from "../hooks/useDoctorDashboard";
-import { useUpdateDoctorProfile } from "../hooks/useUpdateDoctorProfile";
 
 import { handleLetterInput, handleNumberInput } from "../../../../shared/lib/inputValidation";
 
@@ -62,17 +61,13 @@ const ECUADOR_BANKS = [
 ];
 
 export const PaymentsSection = () => {
-  const { data, refetch } = useDoctorDashboard();
-  const { mutateAsync: updateProfile, isPending: savingBank } = useUpdateDoctorProfile();
-  // not using auth user here for bank updates
+  const { data } = useDoctorDashboard();
   const doctorName = data?.doctor?.name || "Dr. Juan Pérez";
   
-  // Detectar si el médico es independiente o está asociado a una clínica
   const isClinicAssociated = (data as any)?.doctor?.clinicId ? true : false;
   const clinicName = (data as any)?.doctor?.clinicName || '';
   const paymentSource = isClinicAssociated ? 'clinic' : 'admin';
   
-  // Obtener pagos del doctor desde la API
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loadingPayments, setLoadingPayments] = useState(true);
   const [paymentsError, setPaymentsError] = useState<string | null>(null);
@@ -81,40 +76,52 @@ export const PaymentsSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [bankDialogOpen, setBankDialogOpen] = useState(false);
 
-  // Cargar pagos desde la API
-  useEffect(() => {
-    const loadPayments = async () => {
-      try {
-        setLoadingPayments(true);
-        setPaymentsError(null);
-        const data = await getDoctorPaymentsAPI();
-        setPayments(data);
-      } catch (err: any) {
-        setPaymentsError(err.message || 'Error al cargar pagos');
-      } finally {
-        setLoadingPayments(false);
-      }
-    };
-    loadPayments();
-  }, []);
-
+  // Datos bancarios desde endpoint dedicado
+  const [bankAccount, setBankAccount] = useState<BankAccountData | null>(null);
+  const [savingBank, setSavingBank] = useState(false);
   const [bankData, setBankData] = useState({
     bankName: "",
     accountNumber: "",
-    accountType: "checking",
+    accountType: "Corriente",
     accountHolder: "",
   });
 
+  // Cargar pagos
   useEffect(() => {
-    if ((data as any)?.doctor?.bankAccount) {
-      setBankData((data as any).doctor.bankAccount);
-    }
-  }, [data]);
+    getDoctorPaymentsAPI()
+      .then(setPayments)
+      .catch((err) => setPaymentsError(err.message || 'Error al cargar pagos'))
+      .finally(() => setLoadingPayments(false));
+  }, []);
+
+  // Cargar datos bancarios desde endpoint dedicado
+  useEffect(() => {
+    getDoctorBankAccountAPI()
+      .then((data) => {
+        setBankAccount(data);
+        if (data) {
+          setBankData({
+            bankName: data.bankName,
+            accountNumber: data.accountNumber,
+            accountType: data.accountType,
+            accountHolder: data.accountHolder,
+          });
+        }
+      })
+      .catch(() => setBankAccount(null));
+  }, []);
 
   const handleSaveBankData = async () => {
-    await updateProfile({ bankAccount: bankData } as any);
-    setBankDialogOpen(false);
-    refetch();
+    setSavingBank(true);
+    try {
+      const updated = await updateDoctorBankAccountAPI(bankData);
+      setBankAccount(updated);
+      setBankDialogOpen(false);
+    } catch {
+      // error silencioso, el usuario puede reintentar
+    } finally {
+      setSavingBank(false);
+    }
   };
 
   const filteredPayments = useMemo(() => {
@@ -286,43 +293,27 @@ export const PaymentsSection = () => {
                 onClick={() => setBankDialogOpen(true)}
                 sx={{ textTransform: "none" }}
               >
-                {(data as any)?.doctor?.bankAccount ? "Editar" : "Agregar"}
+                {bankAccount ? "Editar" : "Agregar"}
               </Button>
           </div>
 
-          {(data as any)?.doctor?.bankAccount ? (
+          {bankAccount ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Typography variant="caption" color="text.secondary">
-                  Banco
-                </Typography>
-                <Typography variant="body1" fontWeight={600}>
-                  {(data as any).doctor.bankAccount.bankName}
-                </Typography>
+                <Typography variant="caption" color="text.secondary">Banco</Typography>
+                <Typography variant="body1" fontWeight={600}>{bankAccount.bankName}</Typography>
               </div>
               <div>
-                <Typography variant="caption" color="text.secondary">
-                  Número de Cuenta
-                </Typography>
-                <Typography variant="body1" fontWeight={600}>
-                  {(data as any).doctor.bankAccount.accountNumber}
-                </Typography>
+                <Typography variant="caption" color="text.secondary">Número de Cuenta</Typography>
+                <Typography variant="body1" fontWeight={600}>{bankAccount.accountNumber}</Typography>
               </div>
               <div>
-                <Typography variant="caption" color="text.secondary">
-                  Tipo de Cuenta
-                </Typography>
-                <Typography variant="body1" fontWeight={600}>
-                  {(data as any).doctor.bankAccount.accountType === "checking" ? "Corriente" : "Ahorros"}
-                </Typography>
+                <Typography variant="caption" color="text.secondary">Tipo de Cuenta</Typography>
+                <Typography variant="body1" fontWeight={600}>{bankAccount.accountType}</Typography>
               </div>
               <div>
-                <Typography variant="caption" color="text.secondary">
-                  Titular
-                </Typography>
-                <Typography variant="body1" fontWeight={600}>
-                  {(data as any).doctor.bankAccount.accountHolder}
-                </Typography>
+                <Typography variant="caption" color="text.secondary">Titular</Typography>
+                <Typography variant="body1" fontWeight={600}>{bankAccount.accountHolder}</Typography>
               </div>
             </div>
           ) : (
@@ -487,8 +478,8 @@ export const PaymentsSection = () => {
                 onChange={(e) => setBankData({ ...bankData, accountType: e.target.value })}
                 label="Tipo de Cuenta"
               >
-                <MenuItem value="checking">Corriente</MenuItem>
-                <MenuItem value="savings">Ahorros</MenuItem>
+                <MenuItem value="Corriente">Corriente</MenuItem>
+                <MenuItem value="Ahorros">Ahorros</MenuItem>
               </Select>
             </FormControl>
             <TextField
