@@ -11,9 +11,17 @@ import {
   Stack,
   TextField,
   Typography,
+  Switch,
+  FormControlLabel,
 } from "@mui/material";
 import { useState, useEffect } from "react";
 import type { LaboratoryStudy } from "../../domain/LaboratoryDashboard.entity";
+import {
+  createLaboratoryExamAPI,
+  deleteLaboratoryExamAPI,
+  updateLaboratoryExamAPI,
+} from "../../infrastructure/laboratories.repository";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface EditServicesModalProps {
   open: boolean;
@@ -29,12 +37,17 @@ export const EditServicesModal = ({
   onSave,
 }: EditServicesModalProps) => {
   const [formData, setFormData] = useState<LaboratoryStudy[]>([]);
+  const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
+  const [initialIds, setInitialIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (studies && studies.length > 0) {
       setFormData([...studies]);
+      setInitialIds(studies.map((s) => s.id));
     } else {
       setFormData([]);
+      setInitialIds([]);
     }
   }, [studies, open]);
 
@@ -42,9 +55,12 @@ export const EditServicesModal = ({
     setFormData([
       ...formData,
       {
-        id: `study-${Date.now()}`,
+        id: `temp-${Date.now()}`,
         name: "",
+        description: "",
         preparation: "",
+        price: 0,
+        is_available: true,
       },
     ]);
   };
@@ -59,13 +75,66 @@ export const EditServicesModal = ({
     setFormData((prev) => prev.filter((item) => item.id !== id));
   };
 
-  const handleSave = () => {
-    // Filtrar estudios vacíos
-    const validStudies = formData.filter(
-      (study) => study.name.trim() !== ""
-    );
-    onSave(validStudies);
-    onClose();
+  const handleSave = async () => {
+    const validStudies = formData.filter((study) => study.name.trim() !== "");
+    const currentIds = new Set(validStudies.map((s) => s.id));
+    const removed = initialIds.filter((id) => !currentIds.has(id) && !id.startsWith("temp-"));
+
+    try {
+      setSaving(true);
+
+      // Delete removed
+      await Promise.all(removed.map((id) => deleteLaboratoryExamAPI(id)));
+
+      // Upsert current
+      const saved: LaboratoryStudy[] = [];
+      for (const s of validStudies) {
+        if (s.id.startsWith("temp-")) {
+          const created = await createLaboratoryExamAPI({
+            name: s.name,
+            description: s.description || undefined,
+            preparation: s.preparation || undefined,
+            price: typeof s.price === "number" ? s.price : 0,
+            is_available: s.is_available !== false,
+          });
+          saved.push({
+            id: created.id,
+            name: created.name,
+            description: created.description,
+            preparation: created.preparation,
+            price: created.price,
+            is_available: created.is_available,
+            type: created.type,
+          });
+        } else {
+          const updated = await updateLaboratoryExamAPI(s.id, {
+            name: s.name,
+            description: s.description || undefined,
+            preparation: s.preparation || undefined,
+            price: typeof s.price === "number" ? s.price : 0,
+            is_available: s.is_available !== false,
+          });
+          saved.push({
+            id: updated.id,
+            name: updated.name,
+            description: updated.description,
+            preparation: updated.preparation,
+            price: updated.price,
+            is_available: updated.is_available,
+            type: updated.type,
+          });
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["laboratories", "exams"] });
+
+      onSave(saved);
+      onClose();
+    } catch (e) {
+      console.error("Error guardando exámenes:", e);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -160,14 +229,58 @@ export const EditServicesModal = ({
                     />
                     <TextField
                       fullWidth
+                      label="Descripción"
+                      placeholder="Descripción (opcional)"
+                      value={study.description || ""}
+                      onChange={(e) =>
+                        handleChange(study.id, "description", e.target.value)
+                      }
+                      multiline
+                      rows={2}
+                    />
+                    <TextField
+                      fullWidth
                       label="Preparación Básica"
                       placeholder="Ej: Ayuno de 8 horas requerido"
-                      value={study.preparation}
+                      value={study.preparation || ""}
                       onChange={(e) =>
                         handleChange(study.id, "preparation", e.target.value)
                       }
                       multiline
                       rows={2}
+                    />
+                    <TextField
+                      fullWidth
+                      label="Precio"
+                      type="number"
+                      value={typeof study.price === "number" ? study.price : 0}
+                      onChange={(e) =>
+                        setFormData((prev) =>
+                          prev.map((item) =>
+                            item.id === study.id
+                              ? { ...item, price: Number(e.target.value) }
+                              : item,
+                          ),
+                        )
+                      }
+                      InputLabelProps={{ shrink: true }}
+                    />
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={study.is_available !== false}
+                          onChange={(e) =>
+                            setFormData((prev) =>
+                              prev.map((item) =>
+                                item.id === study.id
+                                  ? { ...item, is_available: e.target.checked }
+                                  : item,
+                              ),
+                            )
+                          }
+                        />
+                      }
+                      label={study.is_available === false ? "No disponible" : "Disponible"}
                     />
                   </Stack>
                 </Box>
@@ -194,6 +307,7 @@ export const EditServicesModal = ({
           variant="contained"
           onClick={handleSave}
           startIcon={<Save />}
+          disabled={saving}
           sx={{
             borderRadius: 2,
             px: 3,
@@ -202,7 +316,7 @@ export const EditServicesModal = ({
             boxShadow: "none",
           }}
         >
-          Guardar Exámenes
+          {saving ? "Guardando..." : "Guardar Exámenes"}
         </Button>
       </DialogActions>
     </Dialog>

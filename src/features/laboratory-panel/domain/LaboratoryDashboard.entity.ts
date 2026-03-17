@@ -8,7 +8,11 @@ export interface WorkSchedule {
 export interface LaboratoryStudy {
   id: string;
   name: string; // Tipo de examen
-  preparation: string; // Preparación básica
+  description?: string | null;
+  preparation?: string | null; // Preparación básica
+  price?: number;
+  is_available?: boolean;
+  type?: string | null;
 }
 
 export interface LaboratoryDashboard {
@@ -26,7 +30,10 @@ export interface LaboratoryDashboard {
     description: string;
     schedule: string;
     workSchedule?: WorkSchedule[]; // Horario laboral
-    studies?: LaboratoryStudy[]; // Tipos de exámenes
+    studies?: LaboratoryStudy[]; // Tipos de exámenes (compat UI)
+    phone?: string | null;
+    google_maps_url?: string | null;
+    is_published?: boolean;
     location?: {
       latitude: number;
       longitude: number;

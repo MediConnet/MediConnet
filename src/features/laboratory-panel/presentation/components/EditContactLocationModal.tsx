@@ -15,6 +15,7 @@ import {
 import Grid2 from "@mui/material/Grid2";
 import { useState, useEffect } from "react";
 import type { LaboratoryDashboard } from "../../domain/LaboratoryDashboard.entity";
+import { updateLaboratoryProfileAPI } from "../../infrastructure/laboratories.repository";
 
 interface EditContactLocationModalProps {
   open: boolean;
@@ -31,18 +32,22 @@ export const EditContactLocationModal = ({
 }: EditContactLocationModalProps) => {
   const [formData, setFormData] = useState({
     whatsapp: "",
+    phone: "",
     address: "",
     latitude: "",
     longitude: "",
+    google_maps_url: "",
   });
 
   useEffect(() => {
     if (data) {
       setFormData({
         whatsapp: data.laboratory.whatsapp || "",
+        phone: data.laboratory.phone || "",
         address: data.laboratory.address || "",
         latitude: data.laboratory.location?.latitude?.toString() || "",
         longitude: data.laboratory.location?.longitude?.toString() || "",
+        google_maps_url: data.laboratory.google_maps_url || "",
       });
     }
   }, [data, open]);
@@ -51,13 +56,28 @@ export const EditContactLocationModal = ({
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    try {
+      await updateLaboratoryProfileAPI({
+        whatsapp: formData.whatsapp,
+        phone: formData.phone,
+        address: formData.address,
+        latitude: formData.latitude ? Number(formData.latitude) : undefined,
+        longitude: formData.longitude ? Number(formData.longitude) : undefined,
+        google_maps_url: formData.google_maps_url,
+      });
+    } catch (e) {
+      console.error("Error guardando contacto/ubicación laboratorio:", e);
+    }
+
     const updatedData: LaboratoryDashboard = {
       ...data,
       laboratory: {
         ...data.laboratory,
         whatsapp: formData.whatsapp,
+        phone: formData.phone,
         address: formData.address,
+        google_maps_url: formData.google_maps_url,
         location:
           formData.latitude && formData.longitude
             ? {
@@ -118,6 +138,16 @@ export const EditContactLocationModal = ({
             helperText="Número de WhatsApp para contacto directo"
           />
 
+          {/* Teléfono */}
+          <TextField
+            fullWidth
+            label="Teléfono"
+            placeholder="(02) 123-4567"
+            value={formData.phone}
+            onChange={(e) => handleChange("phone", e.target.value)}
+            helperText="Teléfono de contacto (opcional)"
+          />
+
           {/* Dirección */}
           <TextField
             fullWidth
@@ -169,6 +199,16 @@ export const EditContactLocationModal = ({
               Las coordenadas se utilizan para mostrar la ubicación en el mapa
             </Typography>
           </Box>
+
+          {/* Google Maps URL (Opcional) */}
+          <TextField
+            fullWidth
+            label="Link de Google Maps (opcional)"
+            placeholder="https://maps.app.goo.gl/..."
+            value={formData.google_maps_url}
+            onChange={(e) => handleChange("google_maps_url", e.target.value)}
+            helperText="Si lo incluyes, se mostrará como enlace en tu perfil"
+          />
         </Stack>
       </DialogContent>
 

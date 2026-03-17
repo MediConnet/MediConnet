@@ -15,6 +15,8 @@ import {
 import { useState } from "react";
 import type { LaboratoryDashboard, LaboratoryStudy } from "../../domain/LaboratoryDashboard.entity";
 import { EditServicesModal } from "./EditServicesModal";
+import { getLaboratoryExamsAPI } from "../../infrastructure/laboratories.repository";
+import { useQuery } from "@tanstack/react-query";
 
 interface ServicesSectionProps {
   data: LaboratoryDashboard;
@@ -27,7 +29,21 @@ export const ServicesSection = ({
 }: ServicesSectionProps) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
 
-  const studies = data.laboratory.studies || [];
+  const { data: examsResp } = useQuery({
+    queryKey: ["laboratories", "exams"],
+    queryFn: () => getLaboratoryExamsAPI(),
+  });
+
+  const studies: LaboratoryStudy[] =
+    (examsResp?.exams || data.laboratory.studies || []).map((e: any) => ({
+      id: e.id,
+      name: e.name,
+      description: e.description,
+      preparation: e.preparation,
+      price: e.price,
+      is_available: e.is_available,
+      type: e.type,
+    }));
 
   return (
     <Box>
@@ -73,7 +89,8 @@ export const ServicesSection = ({
             <TableHead>
               <TableRow sx={{ bgcolor: "grey.50" }}>
                 <TableCell sx={{ fontWeight: 600 }}>Tipo de Examen</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Preparación Básica</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Precio</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Disponibilidad</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -90,14 +107,19 @@ export const ServicesSection = ({
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" color="text.secondary">
-                        {study.preparation || "Sin preparación especificada"}
+                        {typeof study.price === "number" ? `$${study.price.toFixed(2)}` : "—"}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" color="text.secondary">
+                        {study.is_available === false ? "No disponible" : "Disponible"}
                       </Typography>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={2} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={3} align="center" sx={{ py: 4 }}>
                     <Stack spacing={2} alignItems="center">
                       <Science sx={{ fontSize: 48, color: "grey.400" }} />
                       <Typography variant="body2" color="text.secondary">

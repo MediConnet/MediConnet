@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { useState, useEffect } from "react";
 import type { LaboratoryDashboard } from "../../domain/LaboratoryDashboard.entity";
+import { updateLaboratoryProfileAPI } from "../../infrastructure/laboratories.repository";
 
 interface EditLaboratoryProfileModalProps {
   open: boolean;
@@ -33,15 +34,18 @@ export const EditLaboratoryProfileModal = ({
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    isActive: true,
+    isPublished: true,
   });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (data) {
       setFormData({
         name: data.laboratory.name || "",
         description: data.laboratory.description || "",
-        isActive: data.laboratory.isActive !== false,
+        isPublished:
+          data.laboratory.is_published ??
+          (data.laboratory.isActive !== false),
       });
     }
   }, [data, open]);
@@ -50,17 +54,32 @@ export const EditLaboratoryProfileModal = ({
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = () => {
-    const updatedData: LaboratoryDashboard = {
-      ...data,
-      laboratory: {
-        ...data.laboratory,
-        name: formData.name,
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      await updateLaboratoryProfileAPI({
+        full_name: formData.name,
         description: formData.description,
-      },
-    };
-    onSave(updatedData);
-    onClose();
+        is_published: formData.isPublished,
+      });
+
+      const updatedData: LaboratoryDashboard = {
+        ...data,
+        laboratory: {
+          ...data.laboratory,
+          name: formData.name,
+          description: formData.description,
+          is_published: formData.isPublished,
+          isActive: formData.isPublished,
+        },
+      };
+      onSave(updatedData);
+      onClose();
+    } catch (e) {
+      console.error("Error guardando perfil de laboratorio:", e);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -134,21 +153,21 @@ export const EditLaboratoryProfileModal = ({
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.isActive}
+                  checked={formData.isPublished}
                   onChange={(e) =>
-                    setFormData({ ...formData, isActive: e.target.checked })
+                    setFormData({ ...formData, isPublished: e.target.checked })
                   }
                   color="primary"
                 />
               }
               label={
-                formData.isActive
+                formData.isPublished
                   ? "Servicio Activo (visible en la app)"
                   : "Servicio Inactivo (oculto en la app)"
               }
             />
             <Typography variant="caption" color="text.secondary" mt={1} display="block">
-              {formData.isActive
+              {formData.isPublished
                 ? "Tu servicio está visible y disponible para los usuarios"
                 : "Tu servicio está oculto y no aparecerá en la búsqueda"}
             </Typography>
@@ -164,7 +183,7 @@ export const EditLaboratoryProfileModal = ({
           variant="contained"
           onClick={handleSave}
           startIcon={<Save />}
-          disabled={!formData.name.trim()}
+          disabled={!formData.name.trim() || saving}
           sx={{
             borderRadius: 2,
             px: 3,
@@ -173,7 +192,7 @@ export const EditLaboratoryProfileModal = ({
             boxShadow: "none",
           }}
         >
-          Guardar Perfil
+          {saving ? "Guardando..." : "Guardar Perfil"}
         </Button>
       </DialogActions>
     </Dialog>

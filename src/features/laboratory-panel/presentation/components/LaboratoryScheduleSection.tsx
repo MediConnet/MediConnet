@@ -16,6 +16,7 @@ import {
 import { useState } from "react";
 import type { LaboratoryDashboard, WorkSchedule } from "../../domain/LaboratoryDashboard.entity";
 import { EditScheduleModal } from "./EditScheduleModal";
+import { updateLaboratoryProfileAPI } from "../../infrastructure/laboratories.repository";
 
 interface LaboratoryScheduleSectionProps {
   data: LaboratoryDashboard;
@@ -139,7 +140,27 @@ export const LaboratoryScheduleSection = ({
         open={isEditOpen}
         onClose={() => setIsEditOpen(false)}
         schedule={schedule}
-        onSave={(updatedSchedule) => {
+        onSave={async (updatedSchedule) => {
+          try {
+            await updateLaboratoryProfileAPI({
+              workSchedule: updatedSchedule.map((s) => ({
+                day: s.day as
+                  | "monday"
+                  | "tuesday"
+                  | "wednesday"
+                  | "thursday"
+                  | "friday"
+                  | "saturday"
+                  | "sunday",
+                enabled: !!s.isOpen,
+                startTime: s.startTime,
+                endTime: s.endTime,
+              })),
+            });
+          } catch (e) {
+            console.error("Error guardando horarios laboratorio:", e);
+          }
+
           const updatedData = {
             ...data,
             laboratory: {

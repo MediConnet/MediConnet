@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { LaboratoryDashboard } from "../../domain/LaboratoryDashboard.entity";
 import { getLaboratoryDashboardUseCase } from "../../application/get-laboratory-dashboard.usecase";
 import { useAuthStore } from "../../../../app/store/auth.store";
@@ -9,6 +9,7 @@ import { useAuthStore } from "../../../../app/store/auth.store";
  */
 export const useLaboratoryDashboard = () => {
   const { user } = useAuthStore();
+  const queryClient = useQueryClient();
 
   const {
     data,
@@ -22,5 +23,10 @@ export const useLaboratoryDashboard = () => {
     staleTime: 1 * 60 * 1000, // 1 minuto
   });
 
-  return { data: data || null, loading, error, refetch, setData: () => {} };
+  const setData = (updatedData: LaboratoryDashboard) => {
+    if (!user?.id) return;
+    queryClient.setQueryData(['laboratories', 'dashboard', user.id], updatedData);
+  };
+
+  return { data: data || null, loading, error, refetch, setData };
 };
