@@ -31,12 +31,17 @@ interface CreateAdPayload {
  */
 export const createAdAPI = async (params: CreateAdParams): Promise<void> => {
   // Mapeo: Frontend -> Backend
+  // Nota: base64 no se envía al backend (demasiado pesado), solo URLs externas
+  const imageUrlForBackend = params.imageUrl && !params.imageUrl.startsWith('data:')
+    ? params.imageUrl
+    : null;
+
   const payload: CreateAdPayload = {
     badge_text: params.label,
     discount_title: params.discount,
     description: params.description,
     button_text: params.buttonText,
-    image_url: params.imageUrl || null,
+    image_url: imageUrlForBackend,
     start_date: params.startDate,
     end_date: params.endDate || undefined,
   };
