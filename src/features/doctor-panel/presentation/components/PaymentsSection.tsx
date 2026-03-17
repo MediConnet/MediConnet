@@ -295,7 +295,17 @@ export const PaymentsSection = () => {
               <Button
                 variant="outlined"
                 startIcon={<Edit />}
-                onClick={() => setBankDialogOpen(true)}
+                onClick={() => {
+                  if (bankAccount) {
+                    setBankData({
+                      bankName: bankAccount.bankName,
+                      accountNumber: bankAccount.accountNumber,
+                      accountType: bankAccount.accountType === 'Corriente' ? 'checking' : bankAccount.accountType === 'Ahorros' ? 'savings' : bankAccount.accountType,
+                      accountHolder: bankAccount.accountHolder,
+                    });
+                  }
+                  setBankDialogOpen(true);
+                }}
                 sx={{ textTransform: "none" }}
               >
                 {bankAccount ? "Editar" : "Agregar"}
@@ -314,7 +324,9 @@ export const PaymentsSection = () => {
               </div>
               <div>
                 <Typography variant="caption" color="text.secondary">Tipo de Cuenta</Typography>
-                <Typography variant="body1" fontWeight={600}>{bankAccount.accountType === 'checking' ? 'Corriente' : 'Ahorros'}</Typography>
+                <Typography variant="body1" fontWeight={600}>
+                  {bankAccount.accountType === 'checking' || bankAccount.accountType === 'Corriente' ? 'Corriente' : 'Ahorros'}
+                </Typography>
               </div>
               <div>
                 <Typography variant="caption" color="text.secondary">Titular</Typography>
