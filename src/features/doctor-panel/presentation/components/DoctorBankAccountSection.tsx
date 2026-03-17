@@ -17,9 +17,261 @@ import { AccountBalance, Info, Edit, Save, CheckCircle } from '@mui/icons-materi
 import { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
-import type { BankAccount } from '../../../clinic-panel/domain/clinic.entity';
-import { useDoctorDashboard } from "../hooks/useDoctorDashboard";
-import { useUpdateDoctorProfile } from "../hooks/useUpdateDoctorProfile";
+import { getDoctorBankAccountAPI, updateDoctorBankAccountAPI, type BankAccountData } from '../../infrastructure/payments.api';
+
+// Lista de bancos de Ecuador
+const ECUADOR_BANKS = [
+  'Banco Pichincha',
+  'Banco del Pacífico',
+  'Banco de Guayaquil',
+  'Produbanco',
+  'Banco Bolivariano',
+  'Banco Internacional',
+  'Banco del Austro',
+  'Banco General Rumiñahui',
+  'Banco ProCredit',
+  'Banco Solidario',
+  'Banco Comercial de Manabí',
+  'Banco Coopnacional',
+  'Banco Capital',
+  'Banco Finca',
+  'Banco D-MIRO',
+  'Banco Diners Club',
+];
+
+const validationSchema = Yup.object({
+  bankName: Yup.string().required('El banco es requerido'),
+  accountNumber: Yup.string()
+    .required('El número de cuenta es requerido')
+    .min(10, 'El número de cuenta debe tener al menos 10 dígitos')
+    .matches(/^\d+$/, 'Solo se permiten números'),
+  accountType: Yup.string()
+    .required('El tipo de cuenta es requerido'),
+  accountHolder: Yup.string().required('El titular de la cuenta es requerido'),
+});
+
+export const DoctorBankAccountSection = () => {
+  const [bankAccount, setBankAccount] = useState<BankAccountData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error';
+  }>({ open: false, message: '', severity: 'success' });
+
+  useEffect(() => {
+    getDoctorBankAccountAPI()
+      .then((data) => setBankAccount(data))
+      .catch(() => setBankAccount(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const formik = useFormik({
+    initialValues: {
+      bankName: bankAccount?.bankName || '',
+      accountNumber: bankAccount?.accountNumber || '',
+      accountType: bankAccount?.accountType || 'Corriente',
+      accountHolder: bankAccount?.accountHolder || '',
+    },
+    validationSchema,
+    enableReinitialize: true,
+    onSubmit: async (values) => {
+      setSaving(true);
+      try {
+        const updated = await updateDoctorBankAccountAPI(values);
+        setBankAccount(updated);
+        setIsEditing(false);
+        setSnackbar({ open: true, message: 'Datos bancarios guardados correctamente', severity: 'success' });
+      } catch {
+        setSnackbar({ open: true, message: 'Error al guardar los datos bancarios', severity: 'error' });
+      } finally {
+        setSaving(false);
+      }
+    },
+  });
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+        <AccountBalance sx={{ fontSize: 32, color: '#14b8a6' }} />
+        <Box sx={{ flex: 1 }}>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>
+            Mi Cuenta Bancaria
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Datos para recibir pagos
+          </Typography>
+        </Box>
+        {bankAccount && !isEditing && (
+          <Button
+            variant="outlined"
+            startIcon={<Edit />}
+            onClick={() => setIsEditing(true)}
+            sx={{ borderColor: '#14b8a6', color: '#14b8a6' }}
+          >
+            Editar
+          </Button>
+        )}
+      </Box>
+
+      <Alert severity="info" icon={<Info />} sx={{ mb: 3 }}>
+        <Typography variant="body2" fontWeight={600}>Información Importante</Typography>
+        <Typography variant="body2" sx={{ mt: 0.5 }}>
+          Estos datos bancarios serán utilizados para realizar los depósitos de tus pagos.
+          Asegúrate de que la información sea correcta y esté actualizada.
+        </Typography>
+      </Alert>
+
+      {!bankAccount && !isEditing ? (
+        <Card>
+          <CardContent sx={{ textAlign: 'center', py: 6 }}>
+            <AccountBalance sx={{ fontSize: 64, color: '#e5e7eb', mb: 2 }} />
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+              No has configurado tu cuenta bancaria
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Agrega tus datos bancarios para recibir pagos
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<AccountBalance />}
+              onClick={() => setIsEditing(true)}
+              sx={{ backgroundColor: '#14b8a6', '&:hover': { backgroundColor: '#0d9488' } }}
+            >
+              Agregar Cuenta Bancaria
+            </Button>
+          </CardContent>
+        </Card>
+      ) : isEditing ? (
+        <Card>
+          <CardContent>
+            <form onSubmit={formik.handleSubmit}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
+                {bankAccount ? 'Editar Datos Bancarios' : 'Agregar Datos Bancarios'}
+              </Typography>
+
+              <Grid2 container spacing={3}>
+                <Grid2 size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    fullWidth select label="Banco *" name="bankName"
+                    value={formik.values.bankName} onChange={formik.handleChange}
+                    error={formik.touched.bankName && Boolean(formik.errors.bankName)}
+                    helperText={formik.touched.bankName && formik.errors.bankName}
+                  >
+                    {ECUADOR_BANKS.map((bank) => (
+                      <MenuItem key={bank} value={bank}>{bank}</MenuItem>
+                    ))}
+                  </TextField>
+                </Grid2>
+
+                <Grid2 size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    fullWidth select label="Tipo de Cuenta *" name="accountType"
+                    value={formik.values.accountType} onChange={formik.handleChange}
+                    error={formik.touched.accountType && Boolean(formik.errors.accountType)}
+                    helperText={formik.touched.accountType && formik.errors.accountType}
+                  >
+                    <MenuItem value="Corriente">Corriente</MenuItem>
+                    <MenuItem value="Ahorros">Ahorros</MenuItem>
+                  </TextField>
+                </Grid2>
+
+                <Grid2 size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    fullWidth label="Número de Cuenta *" name="accountNumber"
+                    value={formik.values.accountNumber} onChange={formik.handleChange}
+                    error={formik.touched.accountNumber && Boolean(formik.errors.accountNumber)}
+                    helperText={formik.touched.accountNumber && formik.errors.accountNumber}
+                    placeholder="1234567890"
+                  />
+                </Grid2>
+
+                <Grid2 size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    fullWidth label="Titular de la Cuenta *" name="accountHolder"
+                    value={formik.values.accountHolder} onChange={formik.handleChange}
+                    error={formik.touched.accountHolder && Boolean(formik.errors.accountHolder)}
+                    helperText={formik.touched.accountHolder && formik.errors.accountHolder}
+                    placeholder="Juan Pérez"
+                  />
+                </Grid2>
+              </Grid2>
+
+              <Box sx={{ display: 'flex', gap: 2, mt: 4 }}>
+                <Button variant="outlined" onClick={() => { setIsEditing(false); formik.resetForm(); }} disabled={saving}>
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit" variant="contained" startIcon={<Save />} disabled={saving}
+                  sx={{ backgroundColor: '#14b8a6', '&:hover': { backgroundColor: '#0d9488' } }}
+                >
+                  {saving ? 'Guardando...' : 'Guardar Datos'}
+                </Button>
+              </Box>
+            </form>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>Datos Bancarios Registrados</Typography>
+              <Chip icon={<CheckCircle />} label="Configurado" color="success" size="small" />
+            </Box>
+            <Divider sx={{ mb: 3 }} />
+            <Grid2 container spacing={3}>
+              <Grid2 size={{ xs: 12, md: 6 }}>
+                <Typography variant="caption" color="text.secondary" fontWeight={600}>Banco</Typography>
+                <Typography variant="body1" sx={{ mt: 0.5, fontWeight: 500 }}>{bankAccount!.bankName}</Typography>
+              </Grid2>
+              <Grid2 size={{ xs: 12, md: 6 }}>
+                <Typography variant="caption" color="text.secondary" fontWeight={600}>Tipo de Cuenta</Typography>
+                <Typography variant="body1" sx={{ mt: 0.5, fontWeight: 500 }}>{bankAccount!.accountType}</Typography>
+              </Grid2>
+              <Grid2 size={{ xs: 12, md: 6 }}>
+                <Typography variant="caption" color="text.secondary" fontWeight={600}>Número de Cuenta</Typography>
+                <Typography variant="h6" sx={{ mt: 0.5, fontWeight: 700, color: '#14b8a6', letterSpacing: 1, fontFamily: 'monospace' }}>
+                  {bankAccount!.accountNumber}
+                </Typography>
+              </Grid2>
+              <Grid2 size={{ xs: 12, md: 6 }}>
+                <Typography variant="caption" color="text.secondary" fontWeight={600}>Titular de la Cuenta</Typography>
+                <Typography variant="body1" sx={{ mt: 0.5, fontWeight: 500 }}>{bankAccount!.accountHolder}</Typography>
+              </Grid2>
+            </Grid2>
+          </CardContent>
+        </Card>
+      )}
+
+      <Alert severity="warning" sx={{ mt: 3 }}>
+        <Typography variant="body2" fontWeight={600}>Mantén tus datos actualizados</Typography>
+        <Typography variant="body2" sx={{ mt: 0.5 }}>
+          Si cambias de cuenta bancaria, actualiza estos datos inmediatamente para evitar retrasos en tus pagos.
+        </Typography>
+      </Alert>
+
+      <Snackbar
+        open={snackbar.open} autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%' }} variant="filled">
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Box>
+  );
+};
 
 // Lista de bancos de Ecuador
 const ECUADOR_BANKS = [
