@@ -76,6 +76,8 @@ export interface UpdateDoctorProfileParams {
     accountNumber: string;
     accountType: string;
     accountHolder: string;
+    // identificationNumber es opcional mientras el backend lo soporta
+    identificationNumber?: string;
   };
 }
 
@@ -392,6 +394,17 @@ export const updateDoctorProfileAPI = async (
   }
   if (params.paymentMethods !== undefined) {
     backendPayload.payment_methods = mapFrontendPaymentsToBackend(params.paymentMethods);
+  }
+
+  // Datos bancarios del doctor (para pagos desde admin/clinica)
+  if (params.bankAccount !== undefined) {
+    backendPayload.bankAccount = {
+      bankName: params.bankAccount.bankName,
+      accountNumber: params.bankAccount.accountNumber,
+      accountType: params.bankAccount.accountType,
+      accountHolder: params.bankAccount.accountHolder,
+      identificationNumber: params.bankAccount.identificationNumber ?? null,
+    };
   }
 
   // ✅ Backend ahora acepta workSchedule (incluye breakStart/breakEnd) por /doctors/profile

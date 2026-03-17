@@ -18,7 +18,8 @@ import { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import type { BankAccount } from '../../../clinic-panel/domain/clinic.entity';
-import { useAuthStore } from '../../../../app/store/auth.store';
+import { useDoctorDashboard } from "../hooks/useDoctorDashboard";
+import { useUpdateDoctorProfile } from "../hooks/useUpdateDoctorProfile";
 
 // Lista de bancos de Ecuador
 const ECUADOR_BANKS = [
@@ -58,7 +59,8 @@ const validationSchema = Yup.object({
 });
 
 export const DoctorBankAccountSection = () => {
-  const { user } = useAuthStore();
+  const { data: dashboardData, refetch } = useDoctorDashboard();
+  const { mutateAsync: updateProfile } = useUpdateDoctorProfile();
   const [bankAccount, setBankAccount] = useState<BankAccount | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -73,29 +75,15 @@ export const DoctorBankAccountSection = () => {
     severity: 'success',
   });
 
-  const storageKey = user?.id ? `doctor_bank_account_${user.id}` : 'doctor_bank_account';
-
   useEffect(() => {
-    loadBankAccount();
-  }, []);
-
-  const loadBankAccount = () => {
-    setLoading(true);
-    try {
-      // Cargar desde localStorage (mock) por doctor
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        setBankAccount(JSON.parse(saved));
-      } else {
-        setBankAccount(null);
-      }
-    } catch (error) {
-      console.error('Error al cargar datos bancarios del médico:', error);
+    // Cargar datos bancarios desde el dashboard (si el backend los provee)
+    if ((dashboardData as any)?.doctor?.bankAccount) {
+      setBankAccount((dashboardData as any).doctor.bankAccount);
+    } else {
       setBankAccount(null);
-    } finally {
-      setLoading(false);
     }
-  };
+    setLoading(false);
+  }, [dashboardData]);
 
   const formik = useFormik({
     initialValues: {
@@ -118,11 +106,21 @@ export const DoctorBankAccountSection = () => {
           identificationNumber: values.identificationNumber,
         };
 
-        // Guardar en localStorage (mock) usando el ID del médico
-        localStorage.setItem(storageKey, JSON.stringify(newBankAccount));
+        // Llamar API de actualización de perfil con los datos bancarios
+        await updateProfile({
+          bankAccount: {
+            bankName: values.bankName,
+            accountNumber: values.accountNumber,
+            accountType: values.accountType,
+            accountHolder: values.accountHolder,
+            identificationNumber: values.identificationNumber,
+          },
+        } as any);
 
         setBankAccount(newBankAccount);
         setIsEditing(false);
+        // Refrescar dashboard para que otras secciones vean el cambio
+        refetch();
         setSnackbar({
           open: true,
           message: 'Datos bancarios guardados correctamente',

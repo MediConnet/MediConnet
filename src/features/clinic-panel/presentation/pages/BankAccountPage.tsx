@@ -1,46 +1,27 @@
-import { Box, Snackbar, Alert } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { Box, Snackbar, Alert, CircularProgress } from '@mui/material';
+import { useState } from 'react';
 import { BankAccountSection } from '../components/BankAccountSection';
 import type { BankAccount } from '../../domain/clinic.entity';
+import { useClinicProfile, useUpdateClinicProfile } from '../hooks/useClinicProfile';
 
 interface BankAccountPageProps {
   clinicId: string;
 }
 
 export const BankAccountPage = ({ clinicId }: BankAccountPageProps) => {
-  // Inicia vacío: si es una clínica nueva, no debe mostrar datos precargados.
-  // Si existen datos guardados (mock), se cargan desde localStorage.
-  const [bankAccount, setBankAccount] = useState<BankAccount | undefined>(undefined);
+  const { profile, loading: loadingProfile } = useClinicProfile();
+  const { mutateAsync: updateProfile } = useUpdateClinicProfile();
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
     message: '',
     severity: 'success'
   });
 
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(`clinic_bank_account_${clinicId}`);
-      if (saved) {
-        setBankAccount(JSON.parse(saved) as BankAccount);
-      } else {
-        setBankAccount(undefined);
-      }
-    } catch {
-      setBankAccount(undefined);
-    }
-  }, [clinicId]);
+  const bankAccount = profile?.bankAccount;
 
   const handleUpdateBankAccount = async (newBankAccount: BankAccount) => {
     try {
-      // Aquí llamarías a la API para actualizar la cuenta bancaria
-      // await updateClinicBankAccountAPI(clinicId, newBankAccount);
-      
-      // Por ahora solo actualizamos el estado local
-      setBankAccount(newBankAccount);
-      
-      // Guardar en localStorage para persistencia
-      localStorage.setItem(`clinic_bank_account_${clinicId}`, JSON.stringify(newBankAccount));
-      
+      await updateProfile({ bankAccount: newBankAccount });
       setSnackbar({
         open: true,
         message: 'Cuenta bancaria actualizada correctamente',
@@ -56,6 +37,14 @@ export const BankAccountPage = ({ clinicId }: BankAccountPageProps) => {
       throw error;
     }
   };
+
+  if (loadingProfile) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '40vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box>

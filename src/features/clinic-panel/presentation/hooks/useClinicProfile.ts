@@ -34,7 +34,7 @@ export const useUpdateClinicProfile = () => {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
 
-  return useMutation<ClinicProfile, Error, ClinicProfile>({
+  return useMutation<ClinicProfile, Error, Partial<ClinicProfile>>({
     mutationFn: updateClinicProfileUseCase,
     onSuccess: (data) => {
       // Invalidar cache del perfil
