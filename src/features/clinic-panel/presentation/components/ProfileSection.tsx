@@ -165,12 +165,8 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
         // Mostrar preview inmediatamente
         setLogoPreview(base64String);
 
-        // ⭐ Enviar directamente en el perfil con Base64 comprimido
-        // El backend acepta: { "logoUrl": "data:image/jpeg;base64,..." }
-        await updateProfile({
-          ...(profile as ClinicProfile),
-          logoUrl: base64String,
-        } as ClinicProfile);
+        // ⭐ Enviar solo el logoUrl — no enviar el perfil completo
+        await updateProfile({ logoUrl: base64String } as Partial<ClinicProfile>);
         setSnackbar({ open: true, message: "Logo actualizado correctamente.", severity: 'success' });
       } catch (error) {
         console.error("Error procesando logo:", error);
@@ -200,15 +196,20 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
     onSubmit: async (values) => {
       if (!profile) return;
       try {
-        await updateProfile({
-          ...(profile as ClinicProfile),
-          ...values,
+        // Solo enviar los campos que este formulario maneja
+        const payload: Partial<ClinicProfile> = {
+          name: values.name,
+          address: values.address,
+          phone: values.phone,
+          whatsapp: values.whatsapp,
+          description: values.description,
           logoUrl: logoPreview || profile.logoUrl,
+          specialties: selectedSpecialties.length > 0 ? selectedSpecialties : (profile.specialties || []),
           latitude: values.latitude && values.latitude !== "" ? Number(values.latitude) : undefined,
           longitude: values.longitude && values.longitude !== "" ? Number(values.longitude) : undefined,
           google_maps_url: values.google_maps_url || null,
-          specialties: selectedSpecialties.length > 0 ? selectedSpecialties : (profile.specialties || []),
-        } as ClinicProfile);
+        };
+        await updateProfile(payload);
         setSnackbar({ open: true, message: "Perfil actualizado correctamente.", severity: 'success' });
       } catch (error: any) {
         console.error("Error al guardar perfil:", error);
