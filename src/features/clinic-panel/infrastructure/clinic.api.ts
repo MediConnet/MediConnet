@@ -123,11 +123,9 @@ export const updateClinicScheduleAPI = async (schedule: ClinicSchedule): Promise
  * Endpoint: PUT /api/clinics/profile
  */
 export const updateClinicProfileAPI = async (profile: Partial<ClinicProfile>): Promise<ClinicProfile> => {
-  // Asegurar que generalSchedule esté normalizado antes de enviar
-  const profileToSend = { ...profile };
-  if (profileToSend.generalSchedule) {
-    profileToSend.generalSchedule = normalizeSchedule(profileToSend.generalSchedule);
-  }
+  // Excluir generalSchedule, createdAt, updatedAt — campos que no deben ir en este endpoint
+  // generalSchedule tiene su propio endpoint PUT /api/clinics/schedule
+  const { generalSchedule: _gs, createdAt: _ca, updatedAt: _ua, id: _id, ...profileToSend } = profile as any;
   
   const response = await httpClient.put<{ success: boolean; data: any }>(
     '/clinics/profile',
