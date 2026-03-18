@@ -5,7 +5,7 @@ import type { ClinicProfile } from "../../domain/clinic.entity";
 import { useClinicProfile, useUpdateClinicProfile } from "../hooks/useClinicProfile";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-// ⭐ Ya no necesitamos uploadClinicLogoAPI - enviamos Base64 directamente en updateProfile
+import { uploadClinicLogoAPI } from "../../infrastructure/clinic.api";
 import { Map } from "../../../../shared/ui/Map";
 import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner";
 
@@ -165,8 +165,8 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
         // Mostrar preview inmediatamente
         setLogoPreview(base64String);
 
-        // ⭐ Enviar solo el logoUrl — no enviar el perfil completo
-        await updateProfile({ logoUrl: base64String } as Partial<ClinicProfile>);
+        // Usar el endpoint dedicado para logo — evita problemas con el schema Zod del perfil
+        await uploadClinicLogoAPI(base64String);
         setSnackbar({ open: true, message: "Logo actualizado correctamente.", severity: 'success' });
       } catch (error) {
         console.error("Error procesando logo:", error);
@@ -196,14 +196,13 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
     onSubmit: async (values) => {
       if (!profile) return;
       try {
-        // Solo enviar los campos que este formulario maneja
+        // Solo enviar los campos que este formulario maneja — sin logo (tiene su propio endpoint)
         const payload: Partial<ClinicProfile> = {
           name: values.name,
           address: values.address,
           phone: values.phone,
           whatsapp: values.whatsapp,
           description: values.description,
-          logoUrl: logoPreview || profile.logoUrl,
           specialties: selectedSpecialties.length > 0 ? selectedSpecialties : (profile.specialties || []),
           latitude: values.latitude && values.latitude !== "" ? Number(values.latitude) : undefined,
           longitude: values.longitude && values.longitude !== "" ? Number(values.longitude) : undefined,

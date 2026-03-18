@@ -148,19 +148,12 @@ export const updateClinicProfileAPI = async (profile: Partial<ClinicProfile>): P
 /**
  * API: Subir logo de la clínica
  * Endpoint: POST /api/clinics/upload-logo
+ * Acepta base64 directamente como JSON
  */
-export const uploadClinicLogoAPI = async (logoFile: File): Promise<{ logoUrl: string }> => {
-  const formData = new FormData();
-  formData.append('logo', logoFile);
-  
+export const uploadClinicLogoAPI = async (base64: string): Promise<{ logoUrl: string }> => {
   const response = await httpClient.post<{ success: boolean; data: { logoUrl: string } }>(
     '/clinics/upload-logo',
-    formData,
-    {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    }
+    { logoUrl: base64 }
   );
   return extractData(response);
 };
