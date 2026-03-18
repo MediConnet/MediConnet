@@ -49,7 +49,7 @@ const validationSchema = Yup.object({
 
 export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => {
   const { profile, loading } = useClinicProfile();
-  const { mutateAsync: updateProfile, isPending: isUpdating } = useUpdateClinicProfile();
+  const { mutateAsync: updateProfile } = useUpdateClinicProfile();
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -171,6 +171,7 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
           ...(profile as ClinicProfile),
           logoUrl: base64String,
         } as ClinicProfile);
+        setSnackbar({ open: true, message: "Logo actualizado correctamente.", severity: 'success' });
       } catch (error) {
         console.error("Error procesando logo:", error);
         setSnackbar({
@@ -198,14 +199,21 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
     enableReinitialize: !!profile, // Solo reinicializar cuando profile esté disponible
     onSubmit: async (values) => {
       if (!profile) return;
-      await updateProfile({
-        ...(profile as ClinicProfile),
-        ...values,
-        latitude: values.latitude && values.latitude !== "" ? Number(values.latitude) : undefined,
-        longitude: values.longitude && values.longitude !== "" ? Number(values.longitude) : undefined,
-        google_maps_url: values.google_maps_url || null,
-        specialties: selectedSpecialties.length > 0 ? selectedSpecialties : (profile.specialties || []),
-      } as ClinicProfile);
+      try {
+        await updateProfile({
+          ...(profile as ClinicProfile),
+          ...values,
+          logoUrl: logoPreview || profile.logoUrl,
+          latitude: values.latitude && values.latitude !== "" ? Number(values.latitude) : undefined,
+          longitude: values.longitude && values.longitude !== "" ? Number(values.longitude) : undefined,
+          google_maps_url: values.google_maps_url || null,
+          specialties: selectedSpecialties.length > 0 ? selectedSpecialties : (profile.specialties || []),
+        } as ClinicProfile);
+        setSnackbar({ open: true, message: "Perfil actualizado correctamente.", severity: 'success' });
+      } catch (error: any) {
+        console.error("Error al guardar perfil:", error);
+        setSnackbar({ open: true, message: error?.message || "Error al guardar el perfil.", severity: 'error' });
+      }
     },
   });
 
