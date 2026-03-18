@@ -54,6 +54,13 @@ type BackendPharmacyProfile = {
   google_maps_url?: string | null;
 
   schedule?: WorkSchedule[];
+  schedules?: Array<{
+    day_id?: number;
+    day?: string;
+    start?: any;
+    end?: any;
+    is_active?: boolean;
+  }>;
   stats?: {
     profile_views?: number;
     contact_clicks?: number;
@@ -134,11 +141,52 @@ const mapBackendToFrontend = (backend: BackendPharmacyProfile): PharmacyProfile 
     chainLogo,
     chainDescription,
 
-    location: backend.location,
+    location: backend.location ?? (
+      backend.latitude && backend.longitude
+        ? { latitude: backend.latitude, longitude: backend.longitude, address: backend.address || '' }
+        : undefined
+    ),
     latitude: backend.latitude ?? backend.location?.latitude ?? null,
     longitude: backend.longitude ?? backend.location?.longitude ?? null,
     google_maps_url: backend.google_maps_url ?? null,
-    schedule: backend.schedule || [],
+    schedule: (() => {
+      // El backend devuelve "schedules" con { day_id, day, start, end, is_active }
+      // El frontend espera "schedule" con { day, isOpen, startTime, endTime }
+      const DAY_MAP: Record<number, string> = { 0: 'sunday', 1: 'monday', 2: 'tuesday', 3: 'wednesday', 4: 'thursday', 5: 'friday', 6: 'saturday' };
+      const ALL_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+      if (backend.schedules && backend.schedules.length > 0) {
+        const openDays = new Set(backend.schedules.map(s => {
+          if (s.day && typeof s.day === 'string') return s.day.toLowerCase();
+          if (s.day_id !== undefined) return DAY_MAP[s.day_id] || '';
+          return '';
+        }));
+
+        return ALL_DAYS.map(day => {
+          const found = backend.schedules!.find(s => {
+            const sDay = s.day ? s.day.toLowerCase() : (s.day_id !== undefined ? DAY_MAP[s.day_id] : '');
+            return sDay === day;
+          });
+          const extractTime = (t: any): string => {
+            if (!t) return '09:00';
+            const str = String(t);
+            const match = str.match(/(\d{2}:\d{2})/);
+            return match ? match[1] : '09:00';
+          };
+          return {
+            day,
+            isOpen: openDays.has(day),
+            startTime: found ? extractTime(found.start) : '09:00',
+            endTime: found ? extractTime(found.end) : '18:00',
+          };
+        });
+      }
+
+      // Fallback: si viene en formato WorkSchedule directo
+      if (backend.schedule && backend.schedule.length > 0) return backend.schedule;
+
+      return [];
+    })(),
     stats: {
       profileViews: stats.profile_views ?? stats.profileViews ?? 0,
       contactClicks: stats.contact_clicks ?? stats.contactClicks ?? 0,
