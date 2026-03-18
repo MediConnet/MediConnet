@@ -22,6 +22,7 @@ interface EditScheduleModalProps {
   onClose: () => void;
   schedule: WorkSchedule[];
   onSave: (schedule: WorkSchedule[]) => void;
+  isSaving?: boolean;
 }
 
 const DAYS_LABELS: Record<string, string> = {
@@ -49,6 +50,7 @@ export const EditScheduleModal = ({
   onClose,
   schedule,
   onSave,
+  isSaving = false,
 }: EditScheduleModalProps) => {
   const [formData, setFormData] = useState<WorkSchedule[]>([]);
 
@@ -82,7 +84,6 @@ export const EditScheduleModal = ({
 
   const handleSave = () => {
     onSave(formData);
-    onClose();
   };
 
   return (
@@ -199,6 +200,7 @@ export const EditScheduleModal = ({
           variant="contained"
           onClick={handleSave}
           startIcon={<Save />}
+          disabled={isSaving}
           sx={{
             borderRadius: 2,
             px: 3,

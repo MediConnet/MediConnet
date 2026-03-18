@@ -197,6 +197,16 @@ export const updatePharmacyProfileAPI = async (
     ...(payload.longitude !== undefined && { longitude: payload.longitude }),
     ...(payload.google_maps_url !== undefined && { google_maps_url: payload.google_maps_url || null }),
   };
+
+  // Mapear schedule del frontend (WorkSchedule[]) al formato del backend (workSchedule)
+  if (payload.schedule && Array.isArray(payload.schedule)) {
+    backendPayload.workSchedule = payload.schedule.map((s: any) => ({
+      day: s.day,
+      enabled: s.isOpen ?? s.enabled ?? false,
+      startTime: s.startTime || '09:00',
+      endTime: s.endTime || '18:00',
+    }));
+  }
   
   // ⭐ Solo incluir full_name, profile_picture_url y description si NO es miembro de cadena
   if (!data.isChainMember) {

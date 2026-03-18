@@ -10,6 +10,7 @@ import Grid2 from "@mui/material/Grid2";
 import { useState } from "react";
 import type { PharmacyProfile } from "../../domain/pharmacy-profile.entity";
 import { EditContactLocationModal } from "./EditContactLocationModal";
+import { useUpdatePharmacyProfile } from "../hooks/usePharmacyProfile";
 
 interface ContactLocationSectionProps {
   profile: PharmacyProfile;
@@ -21,6 +22,19 @@ export const ContactLocationSection = ({
   onUpdate,
 }: ContactLocationSectionProps) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [snackMsg, setSnackMsg] = useState<string | null>(null);
+  const { mutateAsync: updateProfile, isPending } = useUpdatePharmacyProfile();
+
+  const handleSave = async (updatedFields: Partial<PharmacyProfile>) => {
+    try {
+      const updated = await updateProfile({ ...profile, ...updatedFields });
+      onUpdate(updated);
+      setIsEditOpen(false);
+      setSnackMsg("Contacto y ubicación guardados correctamente.");
+    } catch (err: any) {
+      setSnackMsg(err?.message || "Error al guardar.");
+    }
+  };
 
   const handleWhatsAppClick = () => {
     const phoneNumber = profile.whatsapp.replace(/\s+/g, "").replace("+", "");
@@ -177,11 +191,15 @@ export const ContactLocationSection = ({
         open={isEditOpen}
         onClose={() => setIsEditOpen(false)}
         profile={profile}
-        onSave={(updatedFields) => {
-          const updatedProfile = { ...profile, ...updatedFields };
-          onUpdate(updatedProfile);
-        }}
+        onSave={handleSave}
+        isSaving={isPending}
       />
+      {snackMsg && (
+        <Box sx={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, bgcolor: snackMsg.includes('Error') ? 'error.main' : 'success.main', color: 'white', px: 3, py: 1.5, borderRadius: 2, boxShadow: 3 }}>
+          {snackMsg}
+          <Button size="small" sx={{ color: 'white', ml: 1 }} onClick={() => setSnackMsg(null)}>✕</Button>
+        </Box>
+      )}
     </Box>
   );
 };

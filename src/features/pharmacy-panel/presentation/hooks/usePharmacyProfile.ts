@@ -1,12 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../../../app/store/auth.store";
 import { getPharmacyProfileUseCase } from "../../application/get-pharmacy-profile.usecase";
+import { updatePharmacyProfileAPI } from "../../infrastructure/pharmacy.api";
 import type { PharmacyProfile } from "../../domain/pharmacy-profile.entity";
 import { getPharmacyChains } from "../../../../shared/lib/pharmacy-chains";
 
 /**
  * Hook: Obtener perfil de la farmacia
- * Migrado a React Query
  */
 export const usePharmacyProfile = () => {
   const { user } = useAuthStore();
@@ -20,7 +20,6 @@ export const usePharmacyProfile = () => {
     queryFn: async () => {
       const data = await getPharmacyProfileUseCase();
 
-      // Si el backend no trae datos completos de cadena, intentamos completarlos por chainId
       if (
         data?.chainId &&
         (!data.chainName || !data.chainLogo || !data.chainDescription)
@@ -40,13 +39,29 @@ export const usePharmacyProfile = () => {
       return data;
     },
     enabled: !!user?.id,
-    staleTime: 2 * 60 * 1000, // 2 minutos
+    staleTime: 2 * 60 * 1000,
   });
 
   return {
     profile: profile || null,
     isLoading,
     error: error ? "Error al cargar el perfil de la farmacia." : null,
-    setProfile: () => {}, // Mantener compatibilidad
+    setProfile: () => {},
   };
+};
+
+/**
+ * Hook: Actualizar perfil de la farmacia
+ */
+export const useUpdatePharmacyProfile = () => {
+  const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+
+  return useMutation<PharmacyProfile, Error, Partial<PharmacyProfile>>({
+    mutationFn: updatePharmacyProfileAPI,
+    onSuccess: (data) => {
+      queryClient.setQueryData(['pharmacies', 'profile', user?.id], data);
+      queryClient.invalidateQueries({ queryKey: ['pharmacies', 'profile', user?.id] });
+    },
+  });
 };

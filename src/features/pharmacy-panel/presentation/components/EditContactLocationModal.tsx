@@ -21,6 +21,7 @@ interface EditContactLocationModalProps {
   onClose: () => void;
   profile: PharmacyProfile;
   onSave: (updatedFields: Partial<PharmacyProfile>) => void;
+  isSaving?: boolean;
 }
 
 export const EditContactLocationModal = ({
@@ -28,6 +29,7 @@ export const EditContactLocationModal = ({
   onClose,
   profile,
   onSave,
+  isSaving = false,
 }: EditContactLocationModalProps) => {
   const [formData, setFormData] = useState({
     whatsapp: "",
@@ -70,7 +72,6 @@ export const EditContactLocationModal = ({
           : undefined,
     };
     onSave(updatedFields);
-    onClose();
   };
 
   return (
@@ -192,6 +193,7 @@ export const EditContactLocationModal = ({
           variant="contained"
           onClick={handleSave}
           startIcon={<Save />}
+          disabled={isSaving}
           sx={{
             borderRadius: 2,
             px: 3,
@@ -200,7 +202,7 @@ export const EditContactLocationModal = ({
             boxShadow: "none",
           }}
         >
-          Guardar
+          {isSaving ? "Guardando..." : "Guardar"}
         </Button>
       </DialogActions>
     </Dialog>
