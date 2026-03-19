@@ -98,9 +98,18 @@ export const EditProfileModal = ({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && formData) {
-      const objectUrl = URL.createObjectURL(file);
-      setFormData({ ...formData, bannerUrl: objectUrl });
-      setHasNewImage(true);
+      if (!file.type.startsWith("image/")) return;
+      if (file.size > 5 * 1024 * 1024) {
+        alert("La imagen debe ser menor a 5MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setFormData({ ...formData, bannerUrl: base64 });
+        setHasNewImage(true);
+      };
+      reader.readAsDataURL(file);
     }
   };
 

@@ -259,7 +259,7 @@ export const updatePharmacyProfileAPI = async (
   // ⭐ Solo incluir full_name, profile_picture_url y description si NO es miembro de cadena
   if (!data.isChainMember) {
     if (payload.commercialName) backendPayload.full_name = payload.commercialName;
-    if (payload.logoUrl) backendPayload.profile_picture_url = payload.logoUrl;
+    if (payload.logoUrl) backendPayload.imageUrl = payload.logoUrl; // base64 → Cloudinary en backend
     if (payload.description) backendPayload.description = payload.description;
   }
   

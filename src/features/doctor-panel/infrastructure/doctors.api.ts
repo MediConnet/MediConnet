@@ -71,12 +71,12 @@ export interface UpdateDoctorProfileParams {
   paymentMethods?: PaymentMethod;
   consultationDuration?: number;
   blockedDates?: string[];
+  imageUrl?: string | null;
   bankAccount?: {
     bankName: string;
     accountNumber: string;
     accountType: string;
     accountHolder: string;
-    // identificationNumber es opcional mientras el backend lo soporta
     identificationNumber?: string;
   };
 }
@@ -351,7 +351,8 @@ export const getDoctorProfileAPI = async (): Promise<DoctorDashboard> => {
       profileStatus: backendData.is_published ? 'published' : 'draft',
       
       paymentMethods: mapBackendPaymentsToFrontend(backendData.payment_methods || []),
-      workSchedule: mapBackendScheduleToFrontend(backendData.schedules || [])
+      workSchedule: mapBackendScheduleToFrontend(backendData.schedules || []),
+      imageUrl: (backendData as any).imageUrl || backendData.profile_picture_url || null,
     },
     // ⭐ Información de clínica si el médico está asociado
     clinic: (backendData as any).clinic ? {
@@ -394,6 +395,11 @@ export const updateDoctorProfileAPI = async (
   }
   if (params.paymentMethods !== undefined) {
     backendPayload.payment_methods = mapFrontendPaymentsToBackend(params.paymentMethods);
+  }
+
+  // Imagen de perfil (base64 → Cloudinary en el backend)
+  if (params.imageUrl !== undefined) {
+    backendPayload.imageUrl = params.imageUrl;
   }
 
   // Datos bancarios del doctor (para pagos desde admin/clinica)

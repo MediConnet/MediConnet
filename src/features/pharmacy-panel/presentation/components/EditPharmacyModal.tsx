@@ -230,9 +230,18 @@ export const EditPharmacyModal = ({
     
     const file = event.target.files?.[0];
     if (file) {
-      const objectUrl = URL.createObjectURL(file);
-      setFormData((prev) => ({ ...prev, logoUrl: objectUrl }));
-      setHasNewImage(true);
+      if (!file.type.startsWith("image/")) return;
+      if (file.size > 5 * 1024 * 1024) {
+        alert("La imagen debe ser menor a 5MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setFormData((prev) => ({ ...prev, logoUrl: base64 }));
+        setHasNewImage(true);
+      };
+      reader.readAsDataURL(file);
     }
   };
 

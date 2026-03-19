@@ -140,6 +140,7 @@ const validateLocationData = (data: { latitude?: string; longitude?: string; goo
 export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [newImageBase64, setNewImageBase64] = useState<string | null>(null);
 
   // Usar hook de React Query para especialidades
   const { data: specialtiesList = [], isLoading: loadingSpecialties } = useSpecialties();
@@ -239,17 +240,13 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     }
   }, [data]);
 
-  // Cargar imagen guardada localmente
+  // Cargar imagen desde el backend (imageUrl del doctor)
   useEffect(() => {
-    if (user?.id) {
-      const savedImage = localStorage.getItem(
-        `doctor-profile-image-${user.id}`,
-      );
-      if (savedImage) {
-        setProfileImage(savedImage);
-      }
+    if (data?.doctor) {
+      const imgUrl = (data.doctor as any).imageUrl || (data.doctor as any).profile_picture_url || null;
+      if (imgUrl) setProfileImage(imgUrl);
     }
-  }, [user?.id]);
+  }, [data]);
 
   // --- LÓGICA DE DETECCIÓN DE CAMBIOS ---
   const isModified = useMemo(() => {
@@ -293,6 +290,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
   const handleCancel = () => {
     setIsEditing(false);
+    setNewImageBase64(null);
     if (initialFormData) {
       setFormData(initialFormData);
     }
@@ -384,7 +382,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
       }
     }
 
-    // 🔍 DEBUG: Ver qué datos se están enviando
     const payload = {
       name: formData.name,
       specialties: formData.specialty,
@@ -400,6 +397,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
       workSchedule: formData.workSchedule,
       profileStatus: formData.profileStatus,
       paymentMethods: formData.paymentMethods,
+      ...(newImageBase64 ? { imageUrl: newImageBase64 } : {}),
     };
     
     try {
@@ -409,6 +407,10 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
         setIsEditing(false);
         setIsUsingDefaultSchedule(false);
         setInitialFormData(formData);
+        setNewImageBase64(null);
+        // Actualizar imagen mostrada con la URL de Cloudinary si el backend la retorna
+        const returnedImage = (updatedData.doctor as any)?.imageUrl || (updatedData.doctor as any)?.profile_picture_url;
+        if (returnedImage) setProfileImage(returnedImage);
         if (onUpdate) onUpdate(updatedData);
       }
     } catch (error: any) {
@@ -488,9 +490,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
       reader.onloadend = () => {
         const base64String = reader.result as string;
         setProfileImage(base64String);
-        if (user?.id) {
-          localStorage.setItem(`doctor-profile-image-${user.id}`, base64String);
-        }
+        setNewImageBase64(base64String);
       };
       reader.readAsDataURL(file);
     }
@@ -796,6 +796,39 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
               handleSave();
             }}
           >
+            {/* Campo de imagen dentro del formulario */}
+            <div className="mt-6 mb-4">
+              <label className="text-sm text-gray-600 mb-2 block font-medium">
+                Imagen de perfil
+              </label>
+              <div className="flex items-center gap-4">
+                <div
+                  className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200 flex items-center justify-center bg-gray-100 cursor-pointer hover:border-teal-400 transition-colors"
+                  onClick={handleImageClick}
+                >
+                  {profileImage ? (
+                    <img src={profileImage} alt="Perfil" className="w-full h-full object-cover" />
+                  ) : (
+                    <PhotoCamera style={{ fontSize: 32, color: "#9ca3af" }} />
+                  )}
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={handleImageClick}
+                    className="px-3 py-1.5 text-sm border border-teal-500 text-teal-600 rounded-lg hover:bg-teal-50 transition-colors flex items-center gap-1"
+                  >
+                    <CloudUpload style={{ fontSize: 16 }} />
+                    {profileImage ? "Cambiar imagen" : "Subir imagen"}
+                  </button>
+                  <p className="text-xs text-gray-400 mt-1">JPG, PNG. Máx 5MB</p>
+                  {newImageBase64 && (
+                    <p className="text-xs text-teal-600 mt-1">✓ Nueva imagen lista para guardar</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               <div>
                 <label className="text-sm text-gray-600 mb-1 block">

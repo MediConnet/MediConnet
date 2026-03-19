@@ -387,6 +387,51 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 rows={4}
                 required
               />
+              {/* Imagen dentro del formulario de edición */}
+              <Box>
+                <Typography variant="subtitle2" fontWeight={600} mb={1}>
+                  Imagen de perfil
+                </Typography>
+                <Box display="flex" alignItems="center" gap={2}>
+                  <Box
+                    sx={{
+                      width: 72,
+                      height: 72,
+                      borderRadius: 2,
+                      overflow: "hidden",
+                      border: "2px dashed",
+                      borderColor: "grey.300",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      bgcolor: "grey.100",
+                      cursor: "pointer",
+                      "&:hover": { borderColor: "#f97316" },
+                    }}
+                    onClick={handleImageClick}
+                  >
+                    {profileImage ? (
+                      <Box component="img" src={profileImage} alt="Logo" sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      <CloudUpload sx={{ color: "grey.400" }} />
+                    )}
+                  </Box>
+                  <Box>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<CloudUpload />}
+                      onClick={handleImageClick}
+                      sx={{ textTransform: "none", borderColor: "#f97316", color: "#f97316", "&:hover": { borderColor: "#ea580c", bgcolor: "#fff7ed" } }}
+                    >
+                      {profileImage ? "Cambiar imagen" : "Subir imagen"}
+                    </Button>
+                    <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
+                      JPG, PNG. Máx 5MB
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
               <Box
                 sx={{
                   p: 2,

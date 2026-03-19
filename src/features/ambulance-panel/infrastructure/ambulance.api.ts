@@ -68,9 +68,26 @@ export const getAmbulanceProfileAPI = async (): Promise<AmbulanceProfile> => {
 export const updateAmbulanceProfileAPI = async (
   profile: Partial<AmbulanceProfile>
 ): Promise<AmbulanceProfile> => {
+  const payload: any = {
+    name: profile.commercialName,
+    description: profile.shortDescription,
+    phone: profile.emergencyPhone,
+    whatsapp: profile.whatsappContact,
+    address: profile.address,
+    latitude: profile.latitude,
+    longitude: profile.longitude,
+    google_maps_url: profile.google_maps_url,
+    is_active: profile.isActive,
+  };
+
+  // Enviar imagen como base64 si es nueva (el backend la sube a Cloudinary)
+  if (profile.bannerUrl && profile.bannerUrl.startsWith('data:image/')) {
+    payload.imageUrl = profile.bannerUrl;
+  }
+
   const response = await httpClient.put<{ success: boolean; data: BackendAmbulanceProfile }>(
     '/ambulances/profile',
-    profile
+    payload
   );
   const data = extractData(response);
   return mapBackendToFrontend(data);
