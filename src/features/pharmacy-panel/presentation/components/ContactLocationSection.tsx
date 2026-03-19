@@ -42,12 +42,13 @@ export const ContactLocationSection = ({
   };
 
   const handleLocationClick = () => {
+    if (profile.google_maps_url) {
+      window.open(profile.google_maps_url, "_blank");
+      return;
+    }
     if (profile.location) {
       const { latitude, longitude } = profile.location;
-      window.open(
-        `https://www.google.com/maps?q=${latitude},${longitude}`,
-        "_blank"
-      );
+      window.open(`https://www.google.com/maps?q=${latitude},${longitude}`, "_blank");
     }
   };
 
@@ -173,7 +174,7 @@ export const ContactLocationSection = ({
                 fullWidth
                 startIcon={<LocationOn />}
                 onClick={handleLocationClick}
-                disabled={!profile.location}
+                disabled={!profile.google_maps_url && !profile.location}
                 sx={{
                   textTransform: "none",
                   fontWeight: 600,
