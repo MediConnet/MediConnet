@@ -282,7 +282,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     return false;
   }, [formData, initialFormData]);
 
-  const isSaveDisabled = saving || (!isModified && !isUsingDefaultSchedule);
+  const isSaveDisabled = saving || (!isModified && !isUsingDefaultSchedule && !newImageBase64);
 
   const handleEdit = () => {
     setIsEditing(true);
