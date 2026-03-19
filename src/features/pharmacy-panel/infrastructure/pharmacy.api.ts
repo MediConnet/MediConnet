@@ -150,41 +150,41 @@ const mapBackendToFrontend = (backend: BackendPharmacyProfile): PharmacyProfile 
     longitude: backend.longitude ?? backend.location?.longitude ?? null,
     google_maps_url: backend.google_maps_url ?? null,
     schedule: (() => {
-      // El backend devuelve "schedules" con { day_id, day, start, end, is_active }
-      // El frontend espera "schedule" con { day, isOpen, startTime, endTime }
       const DAY_MAP: Record<number, string> = { 0: 'sunday', 1: 'monday', 2: 'tuesday', 3: 'wednesday', 4: 'thursday', 5: 'friday', 6: 'saturday' };
       const ALL_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
       if (backend.schedules && backend.schedules.length > 0) {
-        const openDays = new Set(backend.schedules.map(s => {
-          if (s.day && typeof s.day === 'string') return s.day.toLowerCase();
-          if (s.day_id !== undefined) return DAY_MAP[s.day_id] || '';
-          return '';
-        }));
+        // Construir mapa de días abiertos usando day_id (número) — evita problemas de idioma
+        const openByDayKey = new Map<string, { start: any; end: any }>();
+        for (const s of backend.schedules) {
+          let dayKey: string | undefined;
+          if (s.day_id !== undefined) {
+            dayKey = DAY_MAP[s.day_id];
+          }
+          if (dayKey) {
+            openByDayKey.set(dayKey, { start: s.start, end: s.end });
+          }
+        }
+
+        const extractTime = (t: any): string => {
+          if (!t) return '09:00';
+          const str = String(t);
+          const match = str.match(/(\d{2}:\d{2})/);
+          return match ? match[1] : '09:00';
+        };
 
         return ALL_DAYS.map(day => {
-          const found = backend.schedules!.find(s => {
-            const sDay = s.day ? s.day.toLowerCase() : (s.day_id !== undefined ? DAY_MAP[s.day_id] : '');
-            return sDay === day;
-          });
-          const extractTime = (t: any): string => {
-            if (!t) return '09:00';
-            const str = String(t);
-            const match = str.match(/(\d{2}:\d{2})/);
-            return match ? match[1] : '09:00';
-          };
+          const found = openByDayKey.get(day);
           return {
             day,
-            isOpen: openDays.has(day),
+            isOpen: !!found,
             startTime: found ? extractTime(found.start) : '09:00',
             endTime: found ? extractTime(found.end) : '18:00',
           };
         });
       }
 
-      // Fallback: si viene en formato WorkSchedule directo
       if (backend.schedule && backend.schedule.length > 0) return backend.schedule;
-
       return [];
     })(),
     stats: {
