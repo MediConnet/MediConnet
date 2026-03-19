@@ -1,4 +1,4 @@
-import { Close } from "@mui/icons-material";
+import { Close, CloudUpload, CheckCircle } from "@mui/icons-material";
 import {
   Alert,
   Box,
@@ -8,11 +8,12 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  Stack,
   TextField,
   Typography,
 } from "@mui/material";
 import { useFormik } from "formik";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import * as Yup from "yup";
 
 interface Props {
@@ -79,6 +80,9 @@ export const CreateAdModal = ({
 }: Props) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formik = useFormik({
     initialValues: {
@@ -95,8 +99,8 @@ export const CreateAdModal = ({
       setIsSubmitting(true);
       setError("");
       try {
-        // Solo usar imagen si el usuario ingresó una URL válida
-        const imageUrl = values.imageUrl?.trim() || undefined;
+        // Prioridad: base64 subido > URL pegada
+        const imageUrl = imageBase64 || values.imageUrl?.trim() || undefined;
 
         // --- LÓGICA DE TIEMPO EXACTO ---
         const now = new Date();
@@ -124,6 +128,8 @@ export const CreateAdModal = ({
         });
 
         formik.resetForm();
+        setImagePreview(null);
+        setImageBase64(null);
         onClose();
       } catch (err: any) {
         setError(err.message || "Error al crear el anuncio");
@@ -133,9 +139,33 @@ export const CreateAdModal = ({
     },
   });
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Por favor selecciona un archivo de imagen");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("La imagen debe ser menor a 5MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      setImageBase64(base64);
+      setImagePreview(base64);
+      // Limpiar el campo URL si se sube archivo
+      formik.setFieldValue("imageUrl", "");
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleClose = () => {
     formik.resetForm();
     setError("");
+    setImagePreview(null);
+    setImageBase64(null);
     onClose();
   };
 
@@ -258,29 +288,81 @@ export const CreateAdModal = ({
             sx={{ mb: 3 }}
           />
 
-          {/* URL de imagen */}
-          <TextField
-            fullWidth
-            label="URL de imagen (opcional)"
-            name="imageUrl"
-            placeholder="https://ejemplo.com/imagen.jpg"
-            value={formik.values.imageUrl}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            helperText="Pega la URL de la imagen que aparecerá en el banner"
-            sx={{ mb: 3 }}
-          />
-          {formik.values.imageUrl?.trim() && (
-            <Box sx={{ mb: 3, textAlign: "center" }}>
-              <Box
-                component="img"
-                src={formik.values.imageUrl}
-                alt="Preview"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                sx={{ maxHeight: 150, borderRadius: 2, border: "1px solid #e5e7eb", objectFit: "cover" }}
-              />
+          {/* Imagen del anuncio */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" fontWeight={600} mb={1}>
+              Imagen del anuncio (opcional)
+            </Typography>
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              onChange={handleFileChange}
+            />
+            {/* Zona de subida */}
+            <Box
+              onClick={() => fileInputRef.current?.click()}
+              sx={{
+                border: "2px dashed",
+                borderColor: imagePreview ? "success.main" : "grey.300",
+                borderRadius: 2,
+                p: 2,
+                textAlign: "center",
+                cursor: "pointer",
+                bgcolor: imagePreview ? "success.50" : "grey.50",
+                "&:hover": { borderColor: "primary.main", bgcolor: "primary.50" },
+                mb: 1,
+              }}
+            >
+              {imagePreview ? (
+                <Stack alignItems="center" spacing={1}>
+                  <Box
+                    component="img"
+                    src={imagePreview}
+                    alt="Preview"
+                    sx={{ maxHeight: 120, borderRadius: 1, objectFit: "cover" }}
+                  />
+                  <Stack direction="row" alignItems="center" spacing={0.5} color="success.main">
+                    <CheckCircle fontSize="small" />
+                    <Typography variant="caption" fontWeight={600}>
+                      Imagen lista — click para cambiar
+                    </Typography>
+                  </Stack>
+                </Stack>
+              ) : (
+                <Stack alignItems="center" spacing={0.5}>
+                  <CloudUpload sx={{ fontSize: 32, color: "grey.400" }} />
+                  <Typography variant="body2" color="text.secondary">
+                    Click para subir imagen
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    JPG, PNG. Máx 5MB
+                  </Typography>
+                </Stack>
+              )}
             </Box>
-          )}
+            {/* O pegar URL */}
+            <TextField
+              fullWidth
+              size="small"
+              label="O pega una URL de imagen"
+              name="imageUrl"
+              placeholder="https://ejemplo.com/imagen.jpg"
+              value={formik.values.imageUrl}
+              onChange={(e) => {
+                formik.handleChange(e);
+                if (e.target.value) {
+                  setImageBase64(null);
+                  setImagePreview(e.target.value);
+                } else {
+                  setImagePreview(null);
+                }
+              }}
+              disabled={!!imageBase64}
+              helperText={imageBase64 ? "Usando imagen subida (borra la imagen para usar URL)" : ""}
+            />
+          </Box>
 
           {/* Fechas */}
           <Box

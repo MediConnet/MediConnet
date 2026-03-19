@@ -30,18 +30,13 @@ interface CreateAdPayload {
  * Mapea los datos de CamelCase (Frontend) a SnakeCase (Backend).
  */
 export const createAdAPI = async (params: CreateAdParams): Promise<void> => {
-  // Mapeo: Frontend -> Backend
-  // Nota: base64 no se envía al backend (demasiado pesado), solo URLs externas
-  const imageUrlForBackend = params.imageUrl && !params.imageUrl.startsWith('data:')
-    ? params.imageUrl
-    : null;
-
+  // Enviar imagen tal cual — si es base64, el backend la sube a Cloudinary
   const payload: CreateAdPayload = {
     badge_text: params.label,
     discount_title: params.discount,
     description: params.description,
     button_text: params.buttonText,
-    image_url: imageUrlForBackend,
+    image_url: params.imageUrl || null,
     start_date: params.startDate,
     end_date: params.endDate || undefined,
   };
