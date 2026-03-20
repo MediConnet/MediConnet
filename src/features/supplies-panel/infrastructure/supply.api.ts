@@ -63,12 +63,22 @@ export const getSupplyPanelReviewsAPI = async (): Promise<{
   const response = await httpClient.get<{
     success: boolean;
     data: {
-      reviews: Review[];
+      reviews: any[];
       averageRating: number;
       totalReviews: number;
     };
   }>('/supplies/reviews');
-  return extractData(response);
+  const raw = extractData(response);
+  return {
+    ...raw,
+    reviews: (raw.reviews || []).map((r: any): Review => ({
+      id: r.id,
+      rating: r.rating ?? 0,
+      comment: r.comment ?? '',
+      userName: r.userName ?? r.patientName ?? r.patient?.fullName ?? 'Usuario',
+      createdAt: r.createdAt ?? r.date ?? new Date().toISOString(),
+    })),
+  };
 };
 
 /**

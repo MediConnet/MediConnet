@@ -1,7 +1,9 @@
 export interface LaboratoryReview {
-    nombre: string;
-    rating: number;
-    comentario: string;
-    fecha: string;
-  }
-  
+  id: string;
+  patientName: string;
+  rating: number;
+  comment: string | null;
+  date: string;
+  profilePictureUrl: string | null;
+  branchName: string | null;
+}

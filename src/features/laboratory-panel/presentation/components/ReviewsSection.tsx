@@ -72,7 +72,7 @@ export const ReviewsSection = () => {
             >
               <div className="flex items-start justify-between mb-2">
                 <div>
-                  <p className="font-medium text-gray-800">{review.nombre || 'Usuario'}</p>
+                  <p className="font-medium text-gray-800">{review.patientName || 'Usuario'}</p>
                   <div className="flex items-center gap-1 mt-1">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <Star
@@ -87,11 +87,11 @@ export const ReviewsSection = () => {
                   </div>
                 </div>
                 <span className="text-xs text-gray-500">
-                  {new Date(review.fecha).toLocaleDateString('es-MX')}
+                  {review.date ? new Date(review.date).toLocaleDateString('es-MX') : ''}
                 </span>
               </div>
-              {review.comentario && (
-                <p className="text-sm text-gray-700 mt-2">{review.comentario}</p>
+              {review.comment && (
+                <p className="text-sm text-gray-700 mt-2">{review.comment}</p>
               )}
             </div>
           ))}
