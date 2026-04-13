@@ -149,10 +149,10 @@ export const EditContactLocationModal = ({
                   fullWidth
                   label="Latitud"
                   placeholder="-0.1807"
-                  type="number"
                   value={formData.latitude}
-                  onChange={(e) => handleChange("latitude", e.target.value)}
+                  onChange={(e) => handleChange("latitude", e.target.value.replace(',', '.'))}
                   InputLabelProps={{ shrink: true }}
+                  helperText="Usa punto como separador decimal (ej: -0.1807)"
                 />
               </Grid2>
               <Grid2 size={{ xs: 12, sm: 6 }}>
@@ -160,10 +160,10 @@ export const EditContactLocationModal = ({
                   fullWidth
                   label="Longitud"
                   placeholder="-78.4678"
-                  type="number"
                   value={formData.longitude}
-                  onChange={(e) => handleChange("longitude", e.target.value)}
+                  onChange={(e) => handleChange("longitude", e.target.value.replace(',', '.'))}
                   InputLabelProps={{ shrink: true }}
+                  helperText="Usa punto como separador decimal (ej: -78.4678)"
                 />
               </Grid2>
             </Grid2>

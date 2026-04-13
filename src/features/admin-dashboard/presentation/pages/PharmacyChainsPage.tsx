@@ -53,6 +53,7 @@ export const PharmacyChainsPage = () => {
   const [formData, setFormData] = useState({
     name: "",
     logoUrl: "",
+    description: "",
     isActive: true,
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -64,7 +65,7 @@ export const PharmacyChainsPage = () => {
 
   const handleCreate = () => {
     setEditingChain(null);
-    setFormData({ name: "", logoUrl: "", isActive: true });
+    setFormData({ name: "", logoUrl: "", description: "", isActive: true });
     setIsModalOpen(true);
   };
 
@@ -73,6 +74,7 @@ export const PharmacyChainsPage = () => {
     setFormData({
       name: chain.name,
       logoUrl: chain.logoUrl,
+      description: chain.description || "",
       isActive: chain.isActive,
     });
     setIsModalOpen(true);
@@ -137,6 +139,7 @@ export const PharmacyChainsPage = () => {
         await updateChain(editingChain.id, {
           name: formData.name,
           logoUrl: formData.logoUrl,
+          description: formData.description,
           isActive: formData.isActive,
         });
         setSnackbar({
@@ -149,6 +152,7 @@ export const PharmacyChainsPage = () => {
         await createChain({
           name: formData.name,
           logoUrl: formData.logoUrl,
+          description: formData.description,
           isActive: formData.isActive,
         });
         setSnackbar({
@@ -332,6 +336,16 @@ export const PharmacyChainsPage = () => {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
+              />
+
+              <TextField
+                fullWidth
+                label="Descripción"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Ej: Cadena de farmacias con más de 50 años de experiencia"
+                multiline
+                rows={3}
               />
 
               <Box>

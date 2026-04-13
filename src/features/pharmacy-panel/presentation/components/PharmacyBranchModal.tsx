@@ -447,6 +447,43 @@ export const PharmacyBranchModal = ({
             </Typography>
           </Box>
 
+          {/* Coordenadas y Link de Ubicación */}
+          <Box>
+            <Typography variant="subtitle2" fontWeight={600} mb={2}>
+              Ubicación (Opcional)
+            </Typography>
+            <Grid2 container spacing={2} mb={2}>
+              <Grid2 size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Latitud"
+                  placeholder="-0.1807"
+                  value={formData.latitude || ""}
+                  onChange={(e) => handleChange("latitude", e.target.value.replace(',', '.'))}
+                  helperText="Ej: -0.1807"
+                />
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Longitud"
+                  placeholder="-78.4678"
+                  value={formData.longitude || ""}
+                  onChange={(e) => handleChange("longitude", e.target.value.replace(',', '.'))}
+                  helperText="Ej: -78.4678"
+                />
+              </Grid2>
+            </Grid2>
+            <TextField
+              fullWidth
+              label="Link de Google Maps (opcional)"
+              placeholder="https://maps.app.goo.gl/..."
+              value={formData.google_maps_url || ""}
+              onChange={(e) => handleChange("google_maps_url", e.target.value)}
+              helperText="Pega el link de Google Maps para compartir la ubicación exacta"
+            />
+          </Box>
+
           {/* Switches */}
           <Box display="flex" gap={4} flexWrap="wrap">
             <FormControlLabel
