@@ -7,6 +7,7 @@ export interface PharmacyBranch {
   whatsapp: string;
   hasHomeDelivery: boolean; 
   isActive: boolean;
+  imageUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   google_maps_url?: string | null;

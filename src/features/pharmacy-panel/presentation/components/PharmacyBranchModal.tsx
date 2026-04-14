@@ -128,11 +128,13 @@ export const PharmacyBranchModal = ({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Crear URL temporal para previsualización
-      const objectUrl = URL.createObjectURL(file);
-      setImagePreview(objectUrl);
-      // Guardar el archivo o la URL en el formData (según lógica de backend)
-      handleChange("imageUrl", objectUrl);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setImagePreview(base64);
+        handleChange("imageUrl", base64); // base64 que el backend puede procesar con Cloudinary
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -150,10 +152,15 @@ export const PharmacyBranchModal = ({
 
   const handleSubmit = () => {
     const finalHours = `${scheduleState.startDay} - ${scheduleState.endDay} ${scheduleState.startTime} - ${scheduleState.endTime}`;
+    
+    // Nunca enviar blob URLs al backend — solo base64 o URLs de Cloudinary
+    const imageUrl = formData.imageUrl;
+    const safeImageUrl = imageUrl && imageUrl.startsWith('blob:') ? (branchToEdit?.imageUrl ?? null) : imageUrl;
+    
     const dataToSave = {
       ...formData,
       openingHours: finalHours,
-      // imageUrl ya está en formData
+      imageUrl: safeImageUrl,
     };
     onSave(dataToSave);
     onClose();
