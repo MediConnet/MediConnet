@@ -48,6 +48,11 @@ export const ADMIN_MENU: MenuItem[] = [
     path: "/admin/ad-requests",
   },
   {
+    icon: <Campaign />,
+    label: "Anuncios",
+    path: "/admin/ads",
+  },
+  {
     icon: <MedicalServices />,
     label: "Servicios Aprobados",
     path: "/admin/services",

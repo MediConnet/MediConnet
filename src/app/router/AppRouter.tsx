@@ -39,6 +39,7 @@ import { RequestsPage } from "../../features/admin-dashboard/presentation/pages/
 import { ServicesDashboardPage } from "../../features/admin-dashboard/presentation/pages/ServicesDashboardPage";
 import { SettingsPage } from "../../features/admin-dashboard/presentation/pages/SettingsPage";
 import { UsersPage } from "../../features/admin-dashboard/presentation/pages/UsersPage";
+import { AdsManagementPage } from "../../features/admin-dashboard/presentation/pages/AdsManagementPage";
 import { SendEmailPage } from "../../features/email/presentation/pages/SendEmailPage";
 
 // Pages - Doctor
@@ -126,6 +127,7 @@ export const AppRouter = () => {
           <Route path="pharmacy-chains" element={<PharmacyChainsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="send-email" element={<SendEmailPage />} />
+          <Route path="ads" element={<AdsManagementPage />} />
         </Route>
 
         {/* --- Panel de Doctor (Root level path) --- */}
