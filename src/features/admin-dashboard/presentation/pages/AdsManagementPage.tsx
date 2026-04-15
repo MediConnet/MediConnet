@@ -245,19 +245,15 @@ export const AdsManagementPage = () => {
       sortable: false,
       renderCell: (p: GridRenderCellParams<AdminAd>) => (
         <Stack direction="row" spacing={0.5} alignItems="center" sx={{ height: '100%' }}>
-          <Tooltip title="Editar">
-            <span>
-              <IconButton size="small" onClick={() => openEdit(p.row)} disabled={!p.row.isAdminAd}>
-                <Edit fontSize="small" />
-              </IconButton>
-            </span>
+            <Tooltip title="Editar">
+            <IconButton size="small" onClick={() => openEdit(p.row)}>
+              <Edit fontSize="small" />
+            </IconButton>
           </Tooltip>
-          <Tooltip title={p.row.isAdminAd ? 'Eliminar' : 'Solo se pueden eliminar anuncios del admin'}>
-            <span>
-              <IconButton size="small" color="error" onClick={() => handleDelete(p.row)} disabled={!p.row.isAdminAd}>
-                <Delete fontSize="small" />
-              </IconButton>
-            </span>
+          <Tooltip title="Eliminar">
+            <IconButton size="small" color="error" onClick={() => handleDelete(p.row)}>
+              <Delete fontSize="small" />
+            </IconButton>
           </Tooltip>
         </Stack>
       ),
