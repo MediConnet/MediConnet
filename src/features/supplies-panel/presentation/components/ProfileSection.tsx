@@ -427,7 +427,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                       {profileImage ? "Cambiar imagen" : "Subir imagen"}
                     </Button>
                     <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
-                      JPG, PNG. Máx 5MB
+                      JPG, PNG. Mín. 800x180px (proporción 4:1). En la app se muestra como banner de ancho completo. Máx. 5MB.
                     </Typography>
                   </Box>
                 </Box>

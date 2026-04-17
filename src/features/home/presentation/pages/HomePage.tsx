@@ -1,5 +1,6 @@
 import { Box, Typography, Button, Card, CardContent, Grid, Chip, Link } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { 
   LocalHospital, 
   LocalPharmacy, 
@@ -27,6 +28,7 @@ import {
   Shield,
 } from '@mui/icons-material';
 import { ROUTES } from '../../../../app/config/constants';
+import { TermsModal } from '../../../../shared/components/TermsModal';
 
 // App Store Icon Component (Apple Logo)
 const AppStoreIcon = () => (
@@ -48,6 +50,7 @@ const GooglePlayIcon = () => (
 
 export const HomePage = () => {
   const navigate = useNavigate();
+  const [showTerms, setShowTerms] = useState(false);
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -906,11 +909,13 @@ export const HomePage = () => {
                   <Link
                     key={link}
                     href="#"
+                    onClick={link === 'Términos y condiciones' ? (e) => { e.preventDefault(); setShowTerms(true); } : undefined}
                     sx={{
                       color: 'rgba(255, 255, 255, 0.7)',
                       fontSize: '0.875rem',
                       textDecoration: 'none',
                       transition: 'color 0.3s',
+                      cursor: 'pointer',
                       '&:hover': {
                         color: 'white',
                       },
@@ -1004,6 +1009,8 @@ export const HomePage = () => {
           </Box>
         </Box>
       </Box>
+
+      <TermsModal open={showTerms} onClose={() => setShowTerms(false)} />
     </Box>
   );
 };

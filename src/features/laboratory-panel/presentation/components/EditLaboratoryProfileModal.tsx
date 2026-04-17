@@ -163,7 +163,7 @@ export const EditLaboratoryProfileModal = ({
               </Button>
             </Box>
             <Typography variant="caption" color="text.secondary" display="block" mt={1}>
-              Se recomienda imagen ligera (máx. 5MB). El logo se guarda al presionar “Guardar Perfil”.
+              Se recomienda imagen rectangular de al menos 800x180px (proporción 4:1). En la app se muestra como banner de ancho completo. Máx. 5MB. El logo se guarda al presionar "Guardar Perfil".
             </Typography>
           </Box>
 

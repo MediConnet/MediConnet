@@ -211,7 +211,7 @@ export const EditProfileModal = ({
                 Click para subir imagen
               </Typography>
               <Typography variant="body2" color="text.secondary" mb={1}>
-                SVG, PNG, JPG (Max. 800x400px)
+                PNG, JPG (mín. 800x180px, proporción 4:1). En la app se muestra como banner de ancho completo. Máx. 5MB.
               </Typography>
 
               {hasNewImage && (

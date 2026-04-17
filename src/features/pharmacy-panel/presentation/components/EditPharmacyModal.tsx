@@ -473,6 +473,9 @@ export const EditPharmacyModal = ({
                     ? "Click para cambiar logo"
                     : "Subir Logo de la Farmacia"}
                 </Typography>
+                <Typography variant="caption" color="text.secondary" mt={0.5} display="block" textAlign="center">
+                  Logo cuadrado mín. 500x500px. En la app se muestra en tarjeta 80x80px. Máx. 5MB.
+                </Typography>
                 {hasNewImage && (
                   <Stack
                     direction="row"

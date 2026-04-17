@@ -301,7 +301,7 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
                     {logoPreview ? "Cambiar Logo" : "Subir Logo"}
                   </Button>
                   <Typography variant="caption" color="text.secondary" textAlign="center">
-                    Haz clic en el círculo o en el botón para subir el logo de la clínica
+                    Logo cuadrado (mín. 500x500px) o banner rectangular (mín. 800x180px). En la app se muestra como banner de ancho completo. Máx. 10MB.
                   </Typography>
                 </Box>
               </Grid2>

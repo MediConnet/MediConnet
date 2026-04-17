@@ -821,7 +821,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                     <CloudUpload style={{ fontSize: 16 }} />
                     {profileImage ? "Cambiar imagen" : "Subir imagen"}
                   </button>
-                  <p className="text-xs text-gray-400 mt-1">JPG, PNG. Máx 5MB</p>
+                  <p className="text-xs text-gray-400 mt-1">JPG, PNG. Mín. 800x220px (proporción 4:1). En la app se muestra como banner de ancho completo. Máx. 5MB.</p>
                   {newImageBase64 && (
                     <p className="text-xs text-teal-600 mt-1">✓ Nueva imagen lista para guardar</p>
                   )}
@@ -1290,7 +1290,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
             </Button>
           </div>
           <p className="text-xs text-gray-500 mt-3">
-            Se recomienda una imagen cuadrada de al menos 500x500px. Máximo 5MB.
+            Se recomienda imagen rectangular de al menos 800x220px (proporción 4:1). En la app se muestra como banner de ancho completo. Máximo 5MB.
           </p>
         </div>
 
