@@ -15,6 +15,7 @@ import {
 import Grid2 from "@mui/material/Grid2";
 import { useState, useEffect } from "react";
 import type { SupplyDashboard } from "../../domain/SupplyDashboard.entity";
+import { parseCoordinate } from "../../../../shared/lib/parseCoordinate";
 
 interface EditContactLocationModalProps {
   open: boolean;
@@ -59,8 +60,8 @@ export const EditContactLocationModal = ({
       await updateSupplyProfileAPI({
         whatsapp: formData.whatsapp,
         address: formData.address,
-        latitude: formData.latitude ? parseFloat(formData.latitude) : null,
-        longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+        latitude: formData.latitude ? parseCoordinate(formData.latitude) : null,
+        longitude: formData.longitude ? parseCoordinate(formData.longitude) : null,
         google_maps_url: formData.google_maps_url || null,
       });
       
@@ -70,8 +71,8 @@ export const EditContactLocationModal = ({
           ...data.supply,
           whatsapp: formData.whatsapp,
           address: formData.address,
-          latitude: formData.latitude ? parseFloat(formData.latitude) : null,
-          longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+          latitude: formData.latitude ? parseCoordinate(formData.latitude) : null,
+          longitude: formData.longitude ? parseCoordinate(formData.longitude) : null,
           google_maps_url: formData.google_maps_url || null,
         },
       };
@@ -158,26 +159,22 @@ export const EditContactLocationModal = ({
                 <TextField
                   fullWidth
                   label="Latitud"
-                  placeholder="-0.1807"
-                  type="number"
-                  step="any"
+                  placeholder="-0.1807 o 0,23524° S"
                   value={formData.latitude}
                   onChange={(e) => handleChange("latitude", e.target.value)}
                   InputLabelProps={{ shrink: true }}
-                  helperText="Entre -90 y 90"
+                  helperText="Ej: -0.1807 o 0,23524° S"
                 />
               </Grid2>
               <Grid2 size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   label="Longitud"
-                  placeholder="-78.4678"
-                  type="number"
-                  step="any"
+                  placeholder="-78.4678 o 79,18234° O"
                   value={formData.longitude}
                   onChange={(e) => handleChange("longitude", e.target.value)}
                   InputLabelProps={{ shrink: true }}
-                  helperText="Entre -180 y 180"
+                  helperText="Ej: -78.4678 o 79,18234° O"
                 />
               </Grid2>
             </Grid2>

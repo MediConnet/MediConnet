@@ -7,6 +7,7 @@ interface BackendPatient {
   id: string;
   full_name: string;
   phone: string;
+  email?: string | null;
   profile_picture_url: string | null;
 }
 
@@ -56,6 +57,7 @@ const mapBackendToFrontend = (appt: BackendAppointment): DoctorAppointment => {
     // Aplanamos el objeto patients
     patientName: appt.patients?.full_name || 'Paciente Desconocido',
     patientPhone: appt.patients?.phone || '',
+    patientEmail: appt.patients?.email || undefined,
     patientAvatar: appt.patients?.profile_picture_url || undefined,
     
     date: date,

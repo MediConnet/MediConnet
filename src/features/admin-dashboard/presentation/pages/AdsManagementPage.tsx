@@ -336,10 +336,18 @@ export const AdsManagementPage = () => {
                 >
                   <Campaign />
                 </Avatar>
-                <Button variant="outlined" component="label" size="small" sx={{ textTransform: 'none' }}>
-                  Subir imagen
-                  <input type="file" hidden accept="image/*" onChange={handleImageUpload} />
-                </Button>
+                <Box>
+                  <Button variant="outlined" component="label" size="small" sx={{ textTransform: 'none' }}>
+                    Subir imagen
+                    <input type="file" hidden accept="image/*" onChange={handleImageUpload} />
+                  </Button>
+                  <Typography variant="caption" display="block" color="text.secondary" mt={0.5}>
+                    Recomendado: 1200 × 500 px (proporción 12:5)
+                  </Typography>
+                  <Typography variant="caption" display="block" color="text.secondary">
+                    Formatos: JPG, PNG · Máx. 2MB
+                  </Typography>
+                </Box>
               </Stack>
             </Box>
 

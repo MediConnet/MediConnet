@@ -15,6 +15,7 @@ import {
 import Grid2 from "@mui/material/Grid2";
 import { useState, useEffect } from "react";
 import type { PharmacyProfile } from "../../domain/pharmacy-profile.entity";
+import { parseCoordinate } from "../../../../shared/lib/parseCoordinate";
 
 interface EditContactLocationModalProps {
   open: boolean;
@@ -56,20 +57,15 @@ export const EditContactLocationModal = ({
   };
 
   const handleSave = () => {
+    const lat = formData.latitude ? parseCoordinate(formData.latitude) : null;
+    const lng = formData.longitude ? parseCoordinate(formData.longitude) : null;
     const updatedFields: Partial<PharmacyProfile> = {
       whatsapp: formData.whatsapp,
       address: formData.address,
-      latitude: formData.latitude ? parseFloat(formData.latitude) : null,
-      longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+      latitude: lat,
+      longitude: lng,
       google_maps_url: formData.google_maps_url || null,
-      location:
-        formData.latitude && formData.longitude
-          ? {
-              latitude: parseFloat(formData.latitude),
-              longitude: parseFloat(formData.longitude),
-              address: formData.address,
-            }
-          : undefined,
+      location: lat && lng ? { latitude: lat, longitude: lng, address: formData.address } : undefined,
     };
     onSave(updatedFields);
   };
@@ -148,22 +144,22 @@ export const EditContactLocationModal = ({
                 <TextField
                   fullWidth
                   label="Latitud"
-                  placeholder="-0.1807"
+                  placeholder="-0.1807 o 0,23524° S"
                   value={formData.latitude}
-                  onChange={(e) => handleChange("latitude", e.target.value.replace(',', '.'))}
+                  onChange={(e) => handleChange("latitude", e.target.value)}
                   InputLabelProps={{ shrink: true }}
-                  helperText="Usa punto como separador decimal (ej: -0.1807)"
+                  helperText="Ej: -0.1807 o 0,23524° S"
                 />
               </Grid2>
               <Grid2 size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   label="Longitud"
-                  placeholder="-78.4678"
+                  placeholder="-78.4678 o 79,18234° O"
                   value={formData.longitude}
-                  onChange={(e) => handleChange("longitude", e.target.value.replace(',', '.'))}
+                  onChange={(e) => handleChange("longitude", e.target.value)}
                   InputLabelProps={{ shrink: true }}
-                  helperText="Usa punto como separador decimal (ej: -78.4678)"
+                  helperText="Ej: -78.4678 o 79,18234° O"
                 />
               </Grid2>
             </Grid2>

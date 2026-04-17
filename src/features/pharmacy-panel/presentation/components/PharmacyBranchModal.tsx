@@ -28,6 +28,7 @@ import {
 import Grid2 from "@mui/material/Grid2";
 import { useEffect, useRef, useState } from "react";
 import type { PharmacyBranch } from "../../domain/pharmacy-branch.entity";
+import { parseCoordinate } from "../../../../shared/lib/parseCoordinate";
 
 interface Props {
   open: boolean;
@@ -153,7 +154,6 @@ export const PharmacyBranchModal = ({
   const handleSubmit = () => {
     const finalHours = `${scheduleState.startDay} - ${scheduleState.endDay} ${scheduleState.startTime} - ${scheduleState.endTime}`;
     
-    // Nunca enviar blob URLs al backend — solo base64 o URLs de Cloudinary
     const imageUrl = formData.imageUrl;
     const safeImageUrl = imageUrl && imageUrl.startsWith('blob:') ? (branchToEdit?.imageUrl ?? null) : imageUrl;
     
@@ -161,6 +161,8 @@ export const PharmacyBranchModal = ({
       ...formData,
       openingHours: finalHours,
       imageUrl: safeImageUrl,
+      latitude: formData.latitude ? parseCoordinate(String(formData.latitude)) : null,
+      longitude: formData.longitude ? parseCoordinate(String(formData.longitude)) : null,
     };
     onSave(dataToSave);
     onClose();
@@ -464,20 +466,20 @@ export const PharmacyBranchModal = ({
                 <TextField
                   fullWidth
                   label="Latitud"
-                  placeholder="-0.1807"
+                  placeholder="-0.1807 o 0,23524° S"
                   value={formData.latitude || ""}
-                  onChange={(e) => handleChange("latitude", e.target.value.replace(',', '.'))}
-                  helperText="Ej: -0.1807"
+                  onChange={(e) => handleChange("latitude", e.target.value)}
+                  helperText="Ej: -0.1807 o 0,23524° S"
                 />
               </Grid2>
               <Grid2 size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   label="Longitud"
-                  placeholder="-78.4678"
+                  placeholder="-78.4678 o 79,18234° O"
                   value={formData.longitude || ""}
-                  onChange={(e) => handleChange("longitude", e.target.value.replace(',', '.'))}
-                  helperText="Ej: -78.4678"
+                  onChange={(e) => handleChange("longitude", e.target.value)}
+                  helperText="Ej: -78.4678 o 79,18234° O"
                 />
               </Grid2>
             </Grid2>
