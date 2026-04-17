@@ -378,7 +378,7 @@ export const updateDoctorProfileAPI = async (
   const backendPayload: any = {};
   
   if (params.name !== undefined) backendPayload.full_name = params.name;
-  if (params.description !== undefined) backendPayload.description = params.description;
+  if (params.description !== undefined) backendPayload.bio = params.description;
   if (params.address !== undefined) backendPayload.address = params.address;
   if (params.latitude !== undefined) backendPayload.latitude = params.latitude;
   if (params.longitude !== undefined) backendPayload.longitude = params.longitude;
