@@ -181,7 +181,7 @@ export const AppointmentDetailModal = ({
               Motivo de la consulta
             </h4>
             <p className="text-gray-700 leading-relaxed">
-              {appointment.reason}
+              {appointment.reason || <span className="text-gray-400 italic">No especificado</span>}
             </p>
           </div>
 
