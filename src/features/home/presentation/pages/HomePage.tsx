@@ -29,6 +29,7 @@ import {
 } from '@mui/icons-material';
 import { ROUTES } from '../../../../app/config/constants';
 import { TermsModal } from '../../../../shared/components/TermsModal';
+import { PrivacyModal, type PrivacyModalType } from '../../../../shared/components/PrivacyModal';
 
 // App Store Icon Component (Apple Logo)
 const AppStoreIcon = () => (
@@ -51,6 +52,7 @@ const GooglePlayIcon = () => (
 export const HomePage = () => {
   const navigate = useNavigate();
   const [showTerms, setShowTerms] = useState(false);
+  const [privacyModal, setPrivacyModal] = useState<PrivacyModalType | null>(null);
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -909,7 +911,11 @@ export const HomePage = () => {
                   <Link
                     key={link}
                     href="#"
-                    onClick={link === 'Términos y condiciones' ? (e) => { e.preventDefault(); setShowTerms(true); } : undefined}
+                    onClick={link === 'Términos y condiciones' ? (e) => { e.preventDefault(); setShowTerms(true); }
+                      : link === 'Política de privacidad' ? (e) => { e.preventDefault(); setPrivacyModal('privacy'); }
+                      : link === 'Política de cookies' ? (e) => { e.preventDefault(); setPrivacyModal('cookies'); }
+                      : link === 'Aviso legal' ? (e) => { e.preventDefault(); setPrivacyModal('legal'); }
+                      : undefined}
                     sx={{
                       color: 'rgba(255, 255, 255, 0.7)',
                       fontSize: '0.875rem',
@@ -1011,6 +1017,13 @@ export const HomePage = () => {
       </Box>
 
       <TermsModal open={showTerms} onClose={() => setShowTerms(false)} />
+      {privacyModal && (
+        <PrivacyModal
+          open={!!privacyModal}
+          onClose={() => setPrivacyModal(null)}
+          type={privacyModal}
+        />
+      )}
     </Box>
   );
 };
