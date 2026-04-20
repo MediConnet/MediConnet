@@ -337,7 +337,7 @@ export const CreateAdModal = ({
                     Click para subir imagen
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    JPG, PNG. Máx 5MB
+                    JPG, PNG. Mín. 1200x400px (proporción 3:1). En la app se muestra como banner horizontal de ancho completo. Máx. 5MB.
                   </Typography>
                 </Stack>
               )}

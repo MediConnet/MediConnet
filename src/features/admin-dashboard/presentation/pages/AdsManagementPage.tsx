@@ -345,7 +345,7 @@ export const AdsManagementPage = () => {
                     Recomendado: 1200 × 500 px (proporción 12:5)
                   </Typography>
                   <Typography variant="caption" display="block" color="text.secondary">
-                    Formatos: JPG, PNG · Máx. 2MB
+                    Formatos: JPG, PNG · Mín. 1200x400px (proporción 3:1) · Máx. 5MB
                   </Typography>
                 </Box>
               </Stack>
