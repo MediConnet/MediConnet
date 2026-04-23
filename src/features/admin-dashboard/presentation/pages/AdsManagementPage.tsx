@@ -219,14 +219,6 @@ export const AdsManagementPage = () => {
       ),
     },
     {
-      field: 'priorityOrder',
-      headerName: 'Prioridad',
-      width: 90,
-      renderCell: (p: GridRenderCellParams<AdminAd>) => (
-        <Chip label={`#${p.row.priorityOrder}`} size="small" variant="outlined" />
-      ),
-    },
-    {
       field: 'isActive',
       headerName: 'Activo',
       width: 90,
@@ -360,15 +352,6 @@ export const AdsManagementPage = () => {
                 fullWidth
                 placeholder="Ej: OFERTA"
               />
-              <TextField
-                label="Prioridad"
-                type="number"
-                value={form.priority_order}
-                onChange={(e) => setForm((f) => ({ ...f, priority_order: Number(e.target.value) }))}
-                size="small"
-                sx={{ width: 110 }}
-                inputProps={{ min: 1, max: 99 }}
-              />
             </Stack>
 
             <TextField
@@ -419,28 +402,6 @@ export const AdsManagementPage = () => {
                 InputLabelProps={{ shrink: true }}
               />
             </Stack>
-
-            <FormControl size="small" fullWidth>
-              <InputLabel>Pantalla destino *</InputLabel>
-              <Select
-                value={form.target_screen}
-                label="Pantalla destino *"
-                onChange={(e) => setForm((f) => ({ ...f, target_screen: e.target.value }))}
-              >
-                {TARGET_SCREENS.map((s) => (
-                  <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <TextField
-              label="ID destino (opcional)"
-              value={form.target_id}
-              onChange={(e) => setForm((f) => ({ ...f, target_id: e.target.value }))}
-              size="small"
-              fullWidth
-              placeholder="ID del médico, farmacia, etc."
-            />
 
             <Stack direction="row" spacing={2}>
               <Box flex={1}>
