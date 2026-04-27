@@ -984,8 +984,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   Latitud (opcional)
                 </label>
                 <input
-                  type="number"
-                  step="any"
+                  type="text"
                   value={formData.latitude}
                   onChange={(e) => handleChange("latitude", e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
@@ -1001,8 +1000,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   Longitud (opcional)
                 </label>
                 <input
-                  type="number"
-                  step="any"
+                  type="text"
                   value={formData.longitude}
                   onChange={(e) => handleChange("longitude", e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"

@@ -301,8 +301,7 @@ export const EditProfileModal = ({
             <Grid2 size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
-                type="number"
-                step="any"
+                type="text"
                 label="Latitud (opcional)"
                 value={formData.latitude?.toString() || ""}
                 onChange={(e) => handleChange("latitude", e.target.value ? parseFloat(e.target.value) : null)}
@@ -313,8 +312,7 @@ export const EditProfileModal = ({
             <Grid2 size={{ xs: 12, md: 6 }}>
               <TextField
                 fullWidth
-                type="number"
-                step="any"
+                type="text"
                 label="Longitud (opcional)"
                 value={formData.longitude?.toString() || ""}
                 onChange={(e) => handleChange("longitude", e.target.value ? parseFloat(e.target.value) : null)}

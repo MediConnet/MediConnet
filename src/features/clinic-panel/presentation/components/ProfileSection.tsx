@@ -356,28 +356,26 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
               <Grid2 size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
-                  type="number"
+                  type="text"
                   label="Latitud (opcional)"
                   name="latitude"
                   value={formik.values.latitude}
                   onChange={formik.handleChange}
                   error={formik.touched.latitude && Boolean(formik.errors.latitude)}
                   helperText={(formik.touched.latitude && formik.errors.latitude) || "Ejemplo: -0.180653"}
-                  inputProps={{ step: "any" }}
                 />
               </Grid2>
 
               <Grid2 size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
-                  type="number"
+                  type="text"
                   label="Longitud (opcional)"
                   name="longitude"
                   value={formik.values.longitude}
                   onChange={formik.handleChange}
                   error={formik.touched.longitude && Boolean(formik.errors.longitude)}
                   helperText={(formik.touched.longitude && formik.errors.longitude) || "Ejemplo: -78.467834"}
-                  inputProps={{ step: "any" }}
                 />
               </Grid2>
 

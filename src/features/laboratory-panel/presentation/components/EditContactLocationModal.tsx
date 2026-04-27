@@ -177,7 +177,7 @@ export const EditContactLocationModal = ({
                   fullWidth
                   label="Latitud"
                   placeholder="-0.1807"
-                  type="number"
+                  type="text"
                   value={formData.latitude}
                   onChange={(e) => handleChange("latitude", e.target.value)}
                   InputLabelProps={{ shrink: true }}
@@ -188,7 +188,7 @@ export const EditContactLocationModal = ({
                   fullWidth
                   label="Longitud"
                   placeholder="-78.4678"
-                  type="number"
+                  type="text"
                   value={formData.longitude}
                   onChange={(e) => handleChange("longitude", e.target.value)}
                   InputLabelProps={{ shrink: true }}

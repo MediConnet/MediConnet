@@ -440,7 +440,7 @@ export const ProfileSection = ({ profile, onUpdate }: ProfileSectionProps) => {
                     overflow: "hidden",
                   }}
                 >
-                  {profile.description || "Descripción de la farmacia..."}
+                  {displayDescription || "Descripción de la farmacia..."}
                 </Typography>
               </Box>
 
