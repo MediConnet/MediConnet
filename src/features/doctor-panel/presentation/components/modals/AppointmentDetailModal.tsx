@@ -67,11 +67,6 @@ export const AppointmentDetailModal = ({
   };
 
   const handleOpenLocation = () => {
-    const mapsUrl = appointment.locationGoogleMapsUrl;
-    if (mapsUrl) {
-      window.open(mapsUrl, "_blank", "noopener,noreferrer");
-      return;
-    }
     if (
       typeof appointment.locationLatitude === "number" &&
       typeof appointment.locationLongitude === "number"
@@ -81,6 +76,12 @@ export const AppointmentDetailModal = ({
         "_blank",
         "noopener,noreferrer",
       );
+      return;
+    }
+
+    const mapsUrl = appointment.locationGoogleMapsUrl;
+    if (mapsUrl) {
+      window.open(mapsUrl, "_blank", "noopener,noreferrer");
     }
   };
 
