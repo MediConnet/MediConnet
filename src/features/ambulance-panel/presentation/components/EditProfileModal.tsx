@@ -22,6 +22,7 @@ import {
 import Grid2 from "@mui/material/Grid2";
 import { useEffect, useRef, useState } from "react";
 import type { AmbulanceProfile } from "../../domain/ambulance-profile.entity";
+import { parseCoordinate } from "../../../../shared/lib/parseCoordinate";
 
 interface Props {
   open: boolean;
@@ -304,7 +305,12 @@ export const EditProfileModal = ({
                 type="text"
                 label="Latitud (opcional)"
                 value={formData.latitude?.toString() || ""}
-                onChange={(e) => handleChange("latitude", e.target.value ? parseFloat(e.target.value) : null)}
+                onChange={(e) =>
+                  handleChange(
+                    "latitude",
+                    e.target.value ? parseCoordinate(e.target.value) : null,
+                  )
+                }
                 placeholder="Ejemplo: -0.180653"
                 helperText="Entre -90 y 90"
               />
@@ -315,7 +321,12 @@ export const EditProfileModal = ({
                 type="text"
                 label="Longitud (opcional)"
                 value={formData.longitude?.toString() || ""}
-                onChange={(e) => handleChange("longitude", e.target.value ? parseFloat(e.target.value) : null)}
+                onChange={(e) =>
+                  handleChange(
+                    "longitude",
+                    e.target.value ? parseCoordinate(e.target.value) : null,
+                  )
+                }
                 placeholder="Ejemplo: -78.467834"
                 helperText="Entre -180 y 180"
               />

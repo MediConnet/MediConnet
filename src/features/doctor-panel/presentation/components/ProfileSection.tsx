@@ -33,6 +33,7 @@ import {
   handleNumberInput,
   handlePhoneInput,
 } from "../../../../shared/lib/inputValidation";
+import { parseCoordinate } from "../../../../shared/lib/parseCoordinate";
 import type {
   DoctorDashboard,
   PaymentMethod,
@@ -115,15 +116,15 @@ const extractCoordinatesFromGoogleMapsUrl = (url: string): { lat: number | null,
 // Función de validación
 const validateLocationData = (data: { latitude?: string; longitude?: string; google_maps_url?: string }) => {
   if (data.latitude !== undefined && data.latitude !== "" && data.latitude !== null) {
-    const lat = parseFloat(data.latitude);
-    if (isNaN(lat) || lat < -90 || lat > 90) {
+    const lat = parseCoordinate(data.latitude);
+    if (lat === null || lat < -90 || lat > 90) {
       throw new Error("Latitud debe estar entre -90 y 90");
     }
   }
   
   if (data.longitude !== undefined && data.longitude !== "" && data.longitude !== null) {
-    const lng = parseFloat(data.longitude);
-    if (isNaN(lng) || lng < -180 || lng > 180) {
+    const lng = parseCoordinate(data.longitude);
+    if (lng === null || lng < -180 || lng > 180) {
       throw new Error("Longitud debe estar entre -180 y 180");
     }
   }
@@ -371,12 +372,12 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     }
 
     // Extraer coordenadas automáticamente si hay Google Maps URL y no hay coordenadas
-    let finalLatitude = formData.latitude ? parseFloat(formData.latitude) : null;
-    let finalLongitude = formData.longitude ? parseFloat(formData.longitude) : null;
+    let finalLatitude = formData.latitude ? parseCoordinate(formData.latitude) : null;
+    let finalLongitude = formData.longitude ? parseCoordinate(formData.longitude) : null;
     
-    if (formData.google_maps_url && (!finalLatitude || !finalLongitude)) {
+    if (formData.google_maps_url && (finalLatitude === null || finalLongitude === null)) {
       const extracted = extractCoordinatesFromGoogleMapsUrl(formData.google_maps_url);
-      if (extracted.lat && extracted.lng) {
+      if (extracted.lat !== null && extracted.lng !== null) {
         finalLatitude = extracted.lat;
         finalLongitude = extracted.lng;
       }
@@ -962,7 +963,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                     // Intentar extraer coordenadas automáticamente
                     if (e.target.value) {
                       const coords = extractCoordinatesFromGoogleMapsUrl(e.target.value);
-                      if (coords.lat && coords.lng) {
+                      if (coords.lat !== null && coords.lng !== null) {
                         setFormData(prev => ({
                           ...prev,
                           latitude: coords.lat?.toString() || "",

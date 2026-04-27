@@ -8,6 +8,7 @@ import * as Yup from "yup";
 import { uploadClinicLogoAPI } from "../../infrastructure/clinic.api";
 import { Map } from "../../../../shared/ui/Map";
 import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner";
+import { parseCoordinate } from "../../../../shared/lib/parseCoordinate";
 
 interface ProfileSectionProps {
   clinicId: string;
@@ -39,8 +40,20 @@ const medicalSpecialties = [
 const validationSchema = Yup.object({
   name: Yup.string().required("El nombre es requerido"),
   address: Yup.string().required("La dirección es requerida"),
-  latitude: Yup.number().nullable().min(-90).max(90),
-  longitude: Yup.number().nullable().min(-180).max(180),
+  latitude: Yup.string()
+    .nullable()
+    .test("valid-latitude", "Latitud inválida", (value) => {
+      if (!value || value.trim() === "") return true;
+      const parsed = parseCoordinate(value);
+      return parsed !== null && parsed >= -90 && parsed <= 90;
+    }),
+  longitude: Yup.string()
+    .nullable()
+    .test("valid-longitude", "Longitud inválida", (value) => {
+      if (!value || value.trim() === "") return true;
+      const parsed = parseCoordinate(value);
+      return parsed !== null && parsed >= -180 && parsed <= 180;
+    }),
   google_maps_url: Yup.string().nullable().url("Debe ser una URL válida"),
   phone: Yup.string().matches(/^\d{10}$/, "El teléfono debe tener 10 dígitos").required("El teléfono es requerido"),
   whatsapp: Yup.string().matches(/^\d{10}$/, "El WhatsApp debe tener 10 dígitos").required("El WhatsApp es requerido"),
@@ -204,8 +217,8 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
           whatsapp: values.whatsapp,
           description: values.description,
           specialties: selectedSpecialties.length > 0 ? selectedSpecialties : (profile.specialties || []),
-          latitude: values.latitude && values.latitude !== "" ? Number(values.latitude) : undefined,
-          longitude: values.longitude && values.longitude !== "" ? Number(values.longitude) : undefined,
+          latitude: values.latitude && values.latitude !== "" ? (parseCoordinate(values.latitude) ?? undefined) : undefined,
+          longitude: values.longitude && values.longitude !== "" ? (parseCoordinate(values.longitude) ?? undefined) : undefined,
           google_maps_url: values.google_maps_url || null,
         };
         await updateProfile(payload);

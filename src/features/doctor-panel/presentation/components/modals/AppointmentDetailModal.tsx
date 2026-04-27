@@ -4,6 +4,7 @@ import {
   CheckCircle,
   Close,
   Email,
+  LocationOn,
   Payment,
   Person,
   Phone,
@@ -63,6 +64,24 @@ export const AppointmentDetailModal = ({
     setCurrentStatus(newStatus);
 
     onStatusChange(appointment.id, newStatus);
+  };
+
+  const handleOpenLocation = () => {
+    const mapsUrl = appointment.locationGoogleMapsUrl;
+    if (mapsUrl) {
+      window.open(mapsUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+    if (
+      typeof appointment.locationLatitude === "number" &&
+      typeof appointment.locationLongitude === "number"
+    ) {
+      window.open(
+        `https://www.google.com/maps?q=${appointment.locationLatitude},${appointment.locationLongitude}`,
+        "_blank",
+        "noopener,noreferrer",
+      );
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -183,6 +202,14 @@ export const AppointmentDetailModal = ({
             <p className="text-gray-700 leading-relaxed">
               {appointment.reason || <span className="text-gray-400 italic">No especificado</span>}
             </p>
+            {appointment.notes && (
+              <div className="mt-4">
+                <h5 className="text-sm font-semibold text-gray-900 mb-1">
+                  Observaciones
+                </h5>
+                <p className="text-gray-700 leading-relaxed">{appointment.notes}</p>
+              </div>
+            )}
           </div>
 
           {/* Información de Pago */}
@@ -241,6 +268,18 @@ export const AppointmentDetailModal = ({
                 </>
               )}
             </button>
+
+            {(appointment.locationGoogleMapsUrl ||
+              (typeof appointment.locationLatitude === "number" &&
+                typeof appointment.locationLongitude === "number")) && (
+              <button
+                onClick={handleOpenLocation}
+                className="w-full mt-3 flex items-center justify-center gap-3 p-3 rounded-lg border-2 border-blue-500 text-blue-600 hover:bg-blue-50 transition-all font-bold cursor-pointer shadow-sm"
+              >
+                <LocationOn fontSize="small" />
+                Ver ubicación del médico
+              </button>
+            )}
 
             <p className="text-xs text-gray-400 mt-2 text-center">
               {currentStatus === "COMPLETED"

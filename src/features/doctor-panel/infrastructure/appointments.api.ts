@@ -23,10 +23,19 @@ interface BackendAppointment {
   scheduled_for: string; // ISO String "2026-01-27T15:00:00.000Z"
   status: AppointmentStatus;
   reason: string;
+  notes?: string | null;
   payment_method: 'CASH' | 'CARD';
   cost: string | number;
   is_paid: boolean;
   patients: BackendPatient | null;
+  provider_branch?: {
+    id: string;
+    name?: string | null;
+    address?: string | null;
+    google_maps_url?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+  } | null;
   payment_details: BackendPaymentDetails;
 }
 
@@ -42,13 +51,22 @@ interface AppointmentsResponse {
 // --- Mapper: Convierte Backend -> Frontend ---
 const mapBackendToFrontend = (appt: BackendAppointment): DoctorAppointment => {
   const dateObj = new Date(appt.scheduled_for);
-  
-  // Extraer fecha YYYY-MM-DD
-  const date = dateObj.toISOString().split('T')[0];
-  
-  // Extraer hora HH:mm (Asegúrate de manejar la zona horaria si es necesario)
-  // Opción simple usando métodos UTC o locales según tu necesidad:
-  const time = dateObj.toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const dateParts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Guayaquil",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(dateObj);
+  const year = dateParts.find((p) => p.type === "year")?.value || "1970";
+  const month = dateParts.find((p) => p.type === "month")?.value || "01";
+  const day = dateParts.find((p) => p.type === "day")?.value || "01";
+  const ecuadorDate = `${year}-${month}-${day}`;
+  const time = new Intl.DateTimeFormat("es-EC", {
+    timeZone: "America/Guayaquil",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(dateObj);
 
   return {
     id: appt.id,
@@ -60,10 +78,11 @@ const mapBackendToFrontend = (appt: BackendAppointment): DoctorAppointment => {
     patientEmail: appt.patients?.email || undefined,
     patientAvatar: appt.patients?.profile_picture_url || undefined,
     
-    date: date,
+    date: ecuadorDate,
     time: time, // Ojo: verifica que esto coincida con la hora local de tu usuario
     
     reason: appt.reason,
+    notes: appt.notes || undefined,
     status: appt.status,
     
     // Usamos payment_details que ya viene calculado del backend
@@ -71,7 +90,11 @@ const mapBackendToFrontend = (appt: BackendAppointment): DoctorAppointment => {
     paymentMethodRaw: appt.payment_method, // "CASH" / "CARD"
     
     price: appt.payment_details.amount,
-    isPaid: appt.payment_details.is_paid
+    isPaid: appt.payment_details.is_paid,
+    locationAddress: appt.provider_branch?.address || undefined,
+    locationGoogleMapsUrl: appt.provider_branch?.google_maps_url || undefined,
+    locationLatitude: appt.provider_branch?.latitude ?? undefined,
+    locationLongitude: appt.provider_branch?.longitude ?? undefined,
   };
 };
 

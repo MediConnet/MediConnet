@@ -14,6 +14,10 @@ export interface DoctorAppointment {
   
   reason: string;
   notes?: string; // Si añades notas en el futuro
+  locationAddress?: string;
+  locationGoogleMapsUrl?: string;
+  locationLatitude?: number;
+  locationLongitude?: number;
   
   status: AppointmentStatus;
   
