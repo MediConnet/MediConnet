@@ -1233,19 +1233,21 @@ export const PaymentsPage = () => {
                   Cancelar
                 </Button>
                 <Button
-                  onClick={() => {
-                    if (clinicToPay) {
-                      setClinicPayments(prev => {
-                        const updated = prev.map(p => 
-                          p.id === clinicToPay.id 
-                            ? { ...p, status: 'paid' as const, paymentDate: new Date().toISOString() }
+                  onClick={async () => {
+                    if (!clinicToPay) return;
+                    try {
+                      await markClinicPaymentAsPaidAPI(clinicToPay.id);
+                      setClinicPayments((prev) =>
+                        prev.map((p) =>
+                          p.id === clinicToPay.id
+                            ? { ...p, status: "paid" as const, paymentDate: new Date().toISOString() }
                             : p
-                        );
-                        localStorage.setItem("admin_clinic_payments", JSON.stringify(updated));
-                        return updated;
-                      });
+                        )
+                      );
                       setIsClinicPaymentConfirmDialogOpen(false);
                       setClinicToPay(null);
+                    } catch (err: any) {
+                      alert(err.message || "Error al marcar pago de clínica como pagado");
                     }
                   }}
                   variant="contained"
