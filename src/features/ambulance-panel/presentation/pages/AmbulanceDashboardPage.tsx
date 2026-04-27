@@ -396,11 +396,20 @@ export const AmbulanceDashboardPage = () => {
                     <Typography variant="body1" fontWeight={500} mt={0.5} sx={{ wordBreak: "break-word" }}>
                       {profile.address}
                     </Typography>
-                    {profile.google_maps_url && (
+                    {((
+                      typeof profile.latitude === "number" &&
+                      typeof profile.longitude === "number"
+                    ) ||
+                      !!profile.google_maps_url) && (
                       <Box mt={1}>
                         <Typography
                           component="a"
-                          href={profile.google_maps_url}
+                          href={
+                            typeof profile.latitude === "number" &&
+                            typeof profile.longitude === "number"
+                              ? `https://www.google.com/maps?q=${profile.latitude},${profile.longitude}`
+                              : (profile.google_maps_url as string)
+                          }
                           target="_blank"
                           rel="noopener noreferrer"
                           variant="body2"

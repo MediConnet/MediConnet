@@ -15,7 +15,10 @@ import {
 import Grid2 from "@mui/material/Grid2";
 import { useState, useEffect } from "react";
 import type { PharmacyProfile } from "../../domain/pharmacy-profile.entity";
-import { parseCoordinate } from "../../../../shared/lib/parseCoordinate";
+import {
+  formatCoordinateForInput,
+  parseCoordinate,
+} from "../../../../shared/lib/parseCoordinate";
 
 interface EditContactLocationModalProps {
   open: boolean;
@@ -45,8 +48,16 @@ export const EditContactLocationModal = ({
       setFormData({
         whatsapp: profile.whatsapp || "",
         address: profile.address || "",
-        latitude: profile.latitude?.toString() || profile.location?.latitude?.toString() || "",
-        longitude: profile.longitude?.toString() || profile.location?.longitude?.toString() || "",
+        latitude:
+          formatCoordinateForInput(
+            profile.latitude ?? profile.location?.latitude ?? null,
+            "lat",
+          ) || "",
+        longitude:
+          formatCoordinateForInput(
+            profile.longitude ?? profile.location?.longitude ?? null,
+            "lng",
+          ) || "",
         google_maps_url: profile.google_maps_url || "",
       });
     }

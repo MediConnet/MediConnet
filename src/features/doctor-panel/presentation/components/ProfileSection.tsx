@@ -33,7 +33,10 @@ import {
   handleNumberInput,
   handlePhoneInput,
 } from "../../../../shared/lib/inputValidation";
-import { parseCoordinate } from "../../../../shared/lib/parseCoordinate";
+import {
+  formatCoordinateForInput,
+  parseCoordinate,
+} from "../../../../shared/lib/parseCoordinate";
 import type {
   DoctorDashboard,
   PaymentMethod,
@@ -222,8 +225,8 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
         email: data.doctor.email || "",
         whatsapp: data.doctor.whatsapp || "",
         address: data.doctor.address || "",
-        latitude: data.doctor.latitude?.toString() || "",
-        longitude: data.doctor.longitude?.toString() || "",
+        latitude: formatCoordinateForInput(data.doctor.latitude, "lat") || "",
+        longitude: formatCoordinateForInput(data.doctor.longitude, "lng") || "",
         google_maps_url: data.doctor.google_maps_url || "",
         price: (data.doctor.price || 0).toString(),
         experience: (data.doctor.experience || 0).toString(),

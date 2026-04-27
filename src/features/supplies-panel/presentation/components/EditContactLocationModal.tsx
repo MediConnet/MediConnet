@@ -15,7 +15,10 @@ import {
 import Grid2 from "@mui/material/Grid2";
 import { useState, useEffect } from "react";
 import type { SupplyDashboard } from "../../domain/SupplyDashboard.entity";
-import { parseCoordinate } from "../../../../shared/lib/parseCoordinate";
+import {
+  formatCoordinateForInput,
+  parseCoordinate,
+} from "../../../../shared/lib/parseCoordinate";
 
 interface EditContactLocationModalProps {
   open: boolean;
@@ -43,8 +46,8 @@ export const EditContactLocationModal = ({
       setFormData({
         whatsapp: data.supply.whatsapp || "",
         address: data.supply.address || "",
-        latitude: data.supply.latitude?.toString() || "",
-        longitude: data.supply.longitude?.toString() || "",
+        latitude: formatCoordinateForInput(data.supply.latitude, "lat") || "",
+        longitude: formatCoordinateForInput(data.supply.longitude, "lng") || "",
         google_maps_url: data.supply.google_maps_url || "",
       });
     }

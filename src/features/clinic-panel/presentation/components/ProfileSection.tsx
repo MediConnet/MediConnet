@@ -8,7 +8,10 @@ import * as Yup from "yup";
 import { uploadClinicLogoAPI } from "../../infrastructure/clinic.api";
 import { Map } from "../../../../shared/ui/Map";
 import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner";
-import { parseCoordinate } from "../../../../shared/lib/parseCoordinate";
+import {
+  formatCoordinateForInput,
+  parseCoordinate,
+} from "../../../../shared/lib/parseCoordinate";
 
 interface ProfileSectionProps {
   clinicId: string;
@@ -197,8 +200,8 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
     initialValues: {
       name: profile?.name || "",
       address: profile?.address || "",
-      latitude: profile?.latitude?.toString() || "",
-      longitude: profile?.longitude?.toString() || "",
+      latitude: formatCoordinateForInput(profile?.latitude, "lat") || "",
+      longitude: formatCoordinateForInput(profile?.longitude, "lng") || "",
       google_maps_url: profile?.google_maps_url || "",
       phone: profile?.phone || "",
       whatsapp: profile?.whatsapp || "",

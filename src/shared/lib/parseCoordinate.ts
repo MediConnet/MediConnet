@@ -47,3 +47,20 @@ export function parseCoordinatePair(value: string): { lat: number; lng: number }
 
   return null;
 }
+
+/**
+ * Formatea coordenadas decimales para mostrarlas en inputs con orientación.
+ * Ejemplos:
+ *  - lat -0.180653 => "0.180653° S"
+ *  - lng -78.479243 => "78.479243° O"
+ */
+export function formatCoordinateForInput(
+  value: number | null | undefined,
+  kind: "lat" | "lng",
+): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return "";
+  const absValue = Math.abs(value);
+  const direction =
+    kind === "lat" ? (value < 0 ? "S" : "N") : (value < 0 ? "O" : "E");
+  return `${absValue.toFixed(6)}° ${direction}`;
+}

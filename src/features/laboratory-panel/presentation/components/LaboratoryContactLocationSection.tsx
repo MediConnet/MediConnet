@@ -28,17 +28,17 @@ export const LaboratoryContactLocationSection = ({
   };
 
   const handleLocationClick = () => {
-    if (data.laboratory.google_maps_url) {
-      window.open(data.laboratory.google_maps_url, "_blank");
-      return;
-    }
-
     if (data.laboratory.location) {
       const { latitude, longitude } = data.laboratory.location;
       window.open(
         `https://www.google.com/maps?q=${latitude},${longitude}`,
         "_blank"
       );
+      return;
+    }
+
+    if (data.laboratory.google_maps_url) {
+      window.open(data.laboratory.google_maps_url, "_blank");
     }
   };
 

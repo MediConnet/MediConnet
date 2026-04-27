@@ -28,9 +28,25 @@ export const SuppliesContactLocationSection = ({
   };
 
   const handleLocationClick = () => {
-    // Abrir Google Maps con la dirección
+    if (
+      typeof data.supply.latitude === "number" &&
+      typeof data.supply.longitude === "number"
+    ) {
+      window.open(
+        `https://www.google.com/maps?q=${data.supply.latitude},${data.supply.longitude}`,
+        "_blank",
+      );
+      return;
+    }
+    if (data.supply.google_maps_url) {
+      window.open(data.supply.google_maps_url, "_blank");
+      return;
+    }
     const address = encodeURIComponent(data.supply.address);
-    window.open(`https://www.google.com/maps/search/?api=1&query=${address}`, "_blank");
+    window.open(
+      `https://www.google.com/maps/search/?api=1&query=${address}`,
+      "_blank",
+    );
   };
 
   return (

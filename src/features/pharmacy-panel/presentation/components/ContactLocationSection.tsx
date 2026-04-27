@@ -42,13 +42,23 @@ export const ContactLocationSection = ({
   };
 
   const handleLocationClick = () => {
-    if (profile.google_maps_url) {
-      window.open(profile.google_maps_url, "_blank");
-      return;
-    }
     if (profile.location) {
       const { latitude, longitude } = profile.location;
       window.open(`https://www.google.com/maps?q=${latitude},${longitude}`, "_blank");
+      return;
+    }
+    if (
+      typeof profile.latitude === "number" &&
+      typeof profile.longitude === "number"
+    ) {
+      window.open(
+        `https://www.google.com/maps?q=${profile.latitude},${profile.longitude}`,
+        "_blank",
+      );
+      return;
+    }
+    if (profile.google_maps_url) {
+      window.open(profile.google_maps_url, "_blank");
     }
   };
 

@@ -16,7 +16,10 @@ import Grid2 from "@mui/material/Grid2";
 import { useState, useEffect } from "react";
 import type { LaboratoryDashboard } from "../../domain/LaboratoryDashboard.entity";
 import { updateLaboratoryProfileAPI } from "../../infrastructure/laboratories.repository";
-import { parseCoordinate } from "../../../../shared/lib/parseCoordinate";
+import {
+  formatCoordinateForInput,
+  parseCoordinate,
+} from "../../../../shared/lib/parseCoordinate";
 
 interface EditContactLocationModalProps {
   open: boolean;
@@ -46,8 +49,12 @@ export const EditContactLocationModal = ({
         whatsapp: data.laboratory.whatsapp || "",
         phone: data.laboratory.phone || "",
         address: data.laboratory.address || "",
-        latitude: data.laboratory.location?.latitude?.toString() || "",
-        longitude: data.laboratory.location?.longitude?.toString() || "",
+        latitude:
+          formatCoordinateForInput(data.laboratory.location?.latitude, "lat") ||
+          "",
+        longitude:
+          formatCoordinateForInput(data.laboratory.location?.longitude, "lng") ||
+          "",
         google_maps_url: data.laboratory.google_maps_url || "",
       });
     }
