@@ -40,7 +40,7 @@ const validationSchema = Yup.object({
     .required("El descuento es requerido"),
   description: Yup.string()
     .min(10, "La descripción debe tener al menos 10 caracteres")
-    .max(50, "La descripción es muy larga (máximo 50 caracteres)")
+    .max(200, "La descripción es muy larga (máximo 200 caracteres)")
     .required("La descripción es requerida"),
   buttonText: Yup.string()
     .min(2, "El texto del botón debe tener al menos 2 caracteres")
@@ -262,8 +262,9 @@ export const CreateAdModal = ({
             }
             helperText={
               (formik.touched.description && formik.errors.description) ||
-              `${formik.values.description.length}/50 caracteres`
+              `${formik.values.description.length}/200 caracteres`
             }
+            inputProps={{ maxLength: 200 }}
             required
             sx={{ mb: 3 }}
           />
