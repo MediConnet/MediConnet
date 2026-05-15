@@ -47,6 +47,28 @@ export const AppLayout = () => {
     { label: 'Para profesionales', action: () => navigate(ROUTES.REGISTER), isActive: false },
   ];
 
+  const getDashboardPath = () => {
+    if (!user) return ROUTES.HOME;
+
+    const role = user.role?.toUpperCase();
+    const tipo = user.tipo?.toLowerCase();
+
+    if (role === 'ADMIN') return '/admin/dashboard';
+    
+    // Si es Provider, depende del tipo
+    if (role === 'PROVIDER') {
+      if (tipo === 'doctor') return '/doctor/dashboard';
+      if (tipo === 'laboratory') return '/laboratory/dashboard';
+      if (tipo === 'clinic') return '/clinic/dashboard';
+      if (tipo === 'pharmacy') return '/provider/pharmacy/dashboard';
+      if (tipo === 'ambulance') return '/provider/ambulance/dashboard';
+      if (tipo === 'supplies') return '/supply/dashboard';
+      return '/doctor/dashboard'; // Default fallback
+    }
+
+    return ROUTES.HOME;
+  };
+
   return (
     <Box
       sx={{
@@ -270,9 +292,30 @@ export const AppLayout = () => {
                     </>
                   )}
                   
-                  {/* Botón Cerrar Sesión en móvil - solo si está autenticado */}
+                  {/* Botón Mi Panel y Cerrar Sesión en móvil - solo si está autenticado */}
                   {user && (
                     <Box sx={{ px: 3, py: 1.5, borderTop: '1px solid #e5e7eb', mt: 1 }}>
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        onClick={() => {
+                          navigate(getDashboardPath());
+                          setMobileMenuOpen(false);
+                        }}
+                        sx={{
+                          textTransform: 'none',
+                          backgroundColor: '#06b6d4',
+                          color: 'white',
+                          fontWeight: 600,
+                          py: 1.25,
+                          mb: 2,
+                          '&:hover': {
+                            backgroundColor: '#0891b2',
+                          },
+                        }}
+                      >
+                        Mi Panel
+                      </Button>
                       <Button
                         fullWidth
                         variant="outlined"
@@ -358,23 +401,44 @@ export const AppLayout = () => {
                   </Button>
                 </>
               ) : (
-                // Header con usuario: solo Cerrar sesión
-                <Button
-                  onClick={handleLogout}
-                  sx={{
-                    textTransform: 'none',
-                    color: '#1f2937',
-                    fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '0.9375rem' },
-                    fontWeight: 500,
-                    px: { xs: 1.5, sm: 2 },
-                    py: { xs: 0.5, sm: 0.75 },
-                    '&:hover': {
-                      backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                    },
-                  }}
-                >
-                  Cerrar sesión
-                </Button>
+                // Header con usuario: Mi Panel y Cerrar sesión
+                <>
+                  <Button
+                    onClick={() => navigate(getDashboardPath())}
+                    sx={{
+                      textTransform: 'none',
+                      color: '#06b6d4',
+                      fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '0.9375rem' },
+                      fontWeight: 600,
+                      px: { xs: 1.5, sm: 2 },
+                      py: { xs: 0.5, sm: 0.75 },
+                      mr: 1,
+                      border: '1px solid #06b6d4',
+                      borderRadius: 1,
+                      '&:hover': {
+                        backgroundColor: 'rgba(6, 182, 212, 0.04)',
+                      },
+                    }}
+                  >
+                    Mi Panel
+                  </Button>
+                  <Button
+                    onClick={handleLogout}
+                    sx={{
+                      textTransform: 'none',
+                      color: '#6b7280',
+                      fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '0.9375rem' },
+                      fontWeight: 500,
+                      px: { xs: 1.5, sm: 2 },
+                      py: { xs: 0.5, sm: 0.75 },
+                      '&:hover': {
+                        backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                      },
+                    }}
+                  >
+                    Cerrar sesión
+                  </Button>
+                </>
               )}
             </Box>
           </Box>
