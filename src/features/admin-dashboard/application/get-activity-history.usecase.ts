@@ -1,6 +1,6 @@
 import type { ActivityHistory } from "../domain/activity-history.entity";
-import { getActivityHistoryMock } from "../infrastructure/activity.mock";
+import { getActivityHistoryAPI } from "../infrastructure/dashboard.api";
 
 export const getActivityHistoryUseCase = async (): Promise<ActivityHistory[]> => {
-  return await getActivityHistoryMock();
+  return await getActivityHistoryAPI();
 };

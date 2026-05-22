@@ -1,6 +1,8 @@
 import { httpClient, extractData } from '../../../shared/lib/http';
 import type { DashboardStats } from '../domain/dashboard-stats.entity';
 import type { AdminSettings } from '../domain/admin-settings.entity';
+import type { ActivityHistory } from '../domain/activity-history.entity';
+import type { ActiveService } from '../domain/service-stats.entity';
 
 /**
  * API: Obtener estadísticas del dashboard de administración
@@ -42,4 +44,32 @@ export const updateAdminSettingsAPI = async (settings: Partial<AdminSettings>): 
   const data = extractData(response);
   console.log("🌐 updateAdminSettingsAPI: Datos extraídos:", data);
   return data;
+};
+
+/**
+ * API: Obtener historial de actividad real de la plataforma
+ * Endpoint: GET /api/admin/activity
+ */
+export const getActivityHistoryAPI = async (): Promise<ActivityHistory[]> => {
+  const response = await httpClient.get<{ success: boolean; data: ActivityHistory[] }>(
+    '/admin/activity'
+  );
+  return extractData(response);
+};
+
+/**
+ * API: Obtener lista de servicios activos aprobados mapeados al frontend
+ * Endpoint: GET /api/admin/history?status=APPROVED
+ */
+export const getActiveServicesAPI = async (): Promise<ActiveService[]> => {
+  const response = await httpClient.get<{ success: boolean; data: any[] }>(
+    '/admin/history?status=APPROVED'
+  );
+  const data = extractData(response);
+  return data.map((item: any) => ({
+    id: item.id,
+    name: item.providerName,
+    location: item.city,
+    type: item.serviceType as "ambulance" | "doctor" | "pharmacy" | "laboratory" | "supplies",
+  }));
 };

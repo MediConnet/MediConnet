@@ -10,7 +10,7 @@ import Grid2 from "@mui/material/Grid2";
 import { useEffect, useState } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import type { ActiveService } from "../../domain/service-stats.entity";
-import { getActiveServicesMock } from "../../infrastructure/stats.mock";
+import { getActiveServicesUseCase } from "../../application/get-active-services.usecase";
 import { ActiveServicesList } from "../components/ActiveServicesList";
 import { ServiceStatCard } from "../components/ServiceStatCard";
 import { useServiceStats } from "../hooks/useServiceStats";
@@ -28,7 +28,9 @@ export const ServicesDashboardPage = () => {
 
   // Cargamos los datos de la lista al montar el componente
   useEffect(() => {
-    getActiveServicesMock().then((data) => setActiveServices(data));
+    getActiveServicesUseCase()
+      .then((data) => setActiveServices(data))
+      .catch((err) => console.error("Error al cargar servicios activos:", err));
   }, []);
 
   const themeColors = {
