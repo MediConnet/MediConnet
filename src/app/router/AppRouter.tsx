@@ -41,6 +41,7 @@ import { SettingsPage } from "../../features/admin-dashboard/presentation/pages/
 import { UsersPage } from "../../features/admin-dashboard/presentation/pages/UsersPage";
 import { AdsManagementPage } from "../../features/admin-dashboard/presentation/pages/AdsManagementPage";
 import { SendEmailPage } from "../../features/email/presentation/pages/SendEmailPage";
+import { SpecialtiesPage } from "../../features/admin-dashboard/presentation/pages/SpecialtiesPage";
 
 // Pages - Doctor
 import { DoctorDashboardPage } from "../../features/doctor-panel/presentation/pages/DoctorDashboardPage";
@@ -125,6 +126,7 @@ export const AppRouter = () => {
           <Route path="services" element={<ServicesDashboardPage />} />
           <Route path="activity" element={<ActivityPage />} />
           <Route path="pharmacy-chains" element={<PharmacyChainsPage />} />
+          <Route path="specialties" element={<SpecialtiesPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="send-email" element={<SendEmailPage />} />
           <Route path="ads" element={<AdsManagementPage />} />

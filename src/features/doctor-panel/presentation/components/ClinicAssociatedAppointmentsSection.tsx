@@ -27,10 +27,6 @@ import {
   getClinicAssociatedAppointmentsAPI,
   updateClinicAppointmentStatusAPI,
 } from "../../infrastructure/clinic-associated.api";
-import {
-  getClinicAssociatedAppointmentsMock,
-  saveClinicAssociatedAppointmentsMock,
-} from "../../infrastructure/clinic-associated.mock";
 import { useClinicAssociatedDoctor } from "../hooks/useClinicAssociatedDoctor";
 import { CreateDiagnosisModal } from "./modals/CreateDiagnosisModal";
 
@@ -47,15 +43,8 @@ export const ClinicAssociatedAppointmentsSection = () => {
   const loadAppointments = async () => {
     setLoading(true);
     try {
-      try {
-        const data = await getClinicAssociatedAppointmentsAPI();
-        setAppointments(data);
-      } catch (error) {
-        // Fallback a mocks
-        console.warn("Usando mocks para citas");
-        const data = await getClinicAssociatedAppointmentsMock();
-        setAppointments(data);
-      }
+      const data = await getClinicAssociatedAppointmentsAPI();
+      setAppointments(data);
     } catch (error) {
       console.error("Error cargando citas:", error);
     } finally {
@@ -76,43 +65,16 @@ export const ClinicAssociatedAppointmentsSection = () => {
     if (!selectedAppointment) return;
     setUpdatingStatus(true);
     try {
-      try {
-        const updated = await updateClinicAppointmentStatusAPI(selectedAppointment.id, status);
-        setAppointments((prev) =>
-          prev.map((apt) => (apt.id === updated.id ? updated : apt))
-        );
-        // Actualizar en mocks también
-        const updatedAppointments = appointments.map((apt) =>
-          apt.id === updated.id ? updated : apt
-        );
-        await saveClinicAssociatedAppointmentsMock(updatedAppointments);
-        
-        // Si se marca como atendida, abrir modal de diagnóstico
-        if (status === "COMPLETED") {
-          setIsDetailModalOpen(false);
-          setIsDiagnosisModalOpen(true);
-        } else {
-          setIsDetailModalOpen(false);
-          setSelectedAppointment(null);
-        }
-      } catch (error) {
-        // Fallback a mocks
-        console.warn("Usando mocks para actualizar estado");
-        const updated = { ...selectedAppointment, status };
-        setAppointments((prev) =>
-          prev.map((apt) => (apt.id === updated.id ? updated : apt))
-        );
-        await saveClinicAssociatedAppointmentsMock(
-          appointments.map((apt) => (apt.id === updated.id ? updated : apt))
-        );
-        
-        if (status === "COMPLETED") {
-          setIsDetailModalOpen(false);
-          setIsDiagnosisModalOpen(true);
-        } else {
-          setIsDetailModalOpen(false);
-          setSelectedAppointment(null);
-        }
+      const updated = await updateClinicAppointmentStatusAPI(selectedAppointment.id, status);
+      setAppointments((prev) =>
+        prev.map((apt) => (apt.id === updated.id ? updated : apt))
+      );
+      if (status === "COMPLETED") {
+        setIsDetailModalOpen(false);
+        setIsDiagnosisModalOpen(true);
+      } else {
+        setIsDetailModalOpen(false);
+        setSelectedAppointment(null);
       }
     } catch (error) {
       console.error("Error actualizando estado:", error);

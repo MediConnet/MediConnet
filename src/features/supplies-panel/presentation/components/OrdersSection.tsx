@@ -24,6 +24,7 @@ import { useState, useEffect } from "react";
 import { getOrdersAPI, updateOrderStatusAPI } from "../../infrastructure/orders.api";
 import type { SupplyOrder } from "../../domain/Order.entity";
 import { onRealtimeEvent } from "../../../../shared/realtime/realtimeEvents";
+import { SUPPLY_ORDER_STATUS_LABELS } from "../../../../shared/config/domain.constants";
 
 export const OrdersSection = () => {
   const [orders, setOrders] = useState<SupplyOrder[]>([]);
@@ -225,12 +226,9 @@ export const OrdersSection = () => {
                               },
                             }}
                           >
-                            <MenuItem value="pending">Pendiente</MenuItem>
-                            <MenuItem value="confirmed">Confirmado</MenuItem>
-                            <MenuItem value="preparing">En Proceso</MenuItem>
-                            <MenuItem value="shipped">Enviado</MenuItem>
-                            <MenuItem value="delivered">Entregado</MenuItem>
-                            <MenuItem value="cancelled">Cancelado</MenuItem>
+                            {(Object.keys(SUPPLY_ORDER_STATUS_LABELS) as Array<keyof typeof SUPPLY_ORDER_STATUS_LABELS>).map((status) => (
+                              <MenuItem key={status} value={status}>{SUPPLY_ORDER_STATUS_LABELS[status]}</MenuItem>
+                            ))}
                           </Select>
                         </FormControl>
                         {isUpdating && (

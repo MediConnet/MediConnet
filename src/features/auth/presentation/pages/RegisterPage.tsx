@@ -169,7 +169,7 @@ export const RegisterPage = () => {
     whatsapp: Yup.string()
       .matches(/^\d{10}$/, "Debe tener 10 dígitos")
       .required("Requerido"),
-    password: Yup.string().min(6, "Mínimo 6 caracteres").required("Requerido"),
+    password: Yup.string().min(8, "Mínimo 8 caracteres").max(20, "Máximo 20 caracteres").required("Requerido"),
     confirmPassword: Yup.string()
       .oneOf([Yup.ref("password")], "Las contraseñas no coinciden")
       .required("Requerido"),
@@ -736,6 +736,7 @@ export const RegisterPage = () => {
                   }
                   helperText={formik.touched.password && formik.errors.password}
                   slotProps={{
+                    htmlInput: { maxLength: 20 },
                     input: {
                       startAdornment: (
                         <InputAdornment position="start">
@@ -763,6 +764,7 @@ export const RegisterPage = () => {
                     formik.errors.confirmPassword
                   }
                   slotProps={{
+                    htmlInput: { maxLength: 20 },
                     input: {
                       startAdornment: (
                         <InputAdornment position="start">

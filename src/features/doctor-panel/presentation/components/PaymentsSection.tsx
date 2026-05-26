@@ -35,30 +35,7 @@ import { formatMoney } from "../../../../shared/lib/formatMoney";
 import { useDoctorDashboard } from "../hooks/useDoctorDashboard";
 
 import { handleLetterInput, handleNumberInput } from "../../../../shared/lib/inputValidation";
-
-// Lista de bancos de Ecuador
-const ECUADOR_BANKS = [
-  "Banco Pichincha",
-  "Banco de Guayaquil",
-  "Banco del Pacífico",
-  "Banco Internacional",
-  "Banco Produbanco",
-  "Banco Bolivariano",
-  "Banco General Rumiñahui",
-  "Banco de Loja",
-  "Banco Solidario",
-  "Banco del Austro",
-  "Banco Comercial de Manabí",
-  "Banco D-Miro",
-  "Banco Finca",
-  "Banco ProCredit",
-  "Banco Coopnacional",
-  "Banco Amazonas",
-  "Banco Capital",
-  "Banco Litoral",
-  "Banco Machala",
-  "Banco Unión",
-];
+import { ECUADOR_BANKS } from "../../../../shared/config/domain.constants";
 
 export const PaymentsSection = () => {
   const { data } = useDoctorDashboard();
