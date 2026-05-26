@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect, MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import type { MouseEvent as ReactMouseEvent, TouchEvent as ReactTouchEvent } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -252,7 +253,7 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
           <ZoomOut color="action" />
           <Slider
             value={zoom}
-            min={1}
+            min={0.2}
             max={4}
             step={0.05}
             onChange={(_, val) => setZoom(val as number)}

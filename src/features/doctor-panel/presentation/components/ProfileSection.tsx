@@ -10,6 +10,7 @@ import {
   Phone,
   PhotoCamera,
   Publish,
+  Save,
   Visibility,
   VisibilityOff,
   WorkOutline,
@@ -154,6 +155,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const [cropperSrc, setCropperSrc] = useState<string | null>(null);
   const [cropperMode, setCropperMode] = useState<"avatar" | "gallery">("avatar");
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const [savingImages, setSavingImages] = useState(false);
 
   // Usar hook de React Query para especialidades
   const { data: specialtiesList = [], isLoading: loadingSpecialties } = useSpecialties();
@@ -1421,6 +1423,73 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
             className="hidden"
           />
         </div>
+
+        {/* BOTÓN GUARDAR FOTOS — visible cuando hay cambios de imagen sin guardar */}
+        {(newImageBase64 || previewImagesModified) && (
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-teal-200">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2 text-teal-700">
+                <Save style={{ fontSize: 18 }} />
+                <span className="text-sm font-semibold">Cambios de imagen sin guardar</span>
+              </div>
+              <p className="text-xs text-gray-500">
+                {newImageBase64 && previewImagesModified
+                  ? "Has actualizado tu foto de perfil y la galería."
+                  : newImageBase64
+                    ? "Has actualizado tu foto de perfil."
+                    : "Has actualizado la galería de imágenes."}
+              </p>
+              <button
+                type="button"
+                disabled={savingImages}
+                onClick={async () => {
+                  if (!user?.id) return;
+                  setSavingImages(true);
+                  try {
+                    const payload: Record<string, any> = {};
+                    if (newImageBase64) payload.profile_picture_url = newImageBase64;
+                    if (previewImagesModified) payload.preview_images = previewImages;
+
+                    const updatedData = await updateProfile(payload);
+                    if (updatedData) {
+                      // Actualizar imagen de perfil con la URL de Cloudinary retornada
+                      const returnedImage = (updatedData.doctor as any)?.profile_picture_url;
+                      if (returnedImage) setProfileImage(returnedImage);
+                      setNewImageBase64(null);
+                      // Actualizar galería con URLs de Cloudinary retornadas
+                      const returnedPreviews: string[] = (updatedData.doctor as any)?.preview_images || previewImages;
+                      setPreviewImages(returnedPreviews);
+                      setInitialPreviewImages(returnedPreviews);
+                      if (onUpdate) onUpdate(updatedData);
+                    }
+                  } catch (error: any) {
+                    console.error('Error al guardar imágenes:', error);
+                    alert(error?.message || 'Error al guardar las imágenes. Por favor, intenta de nuevo.');
+                  } finally {
+                    setSavingImages(false);
+                  }
+                }}
+                className={`w-full px-4 py-2.5 text-sm rounded-lg flex items-center justify-center gap-2 transition-colors font-semibold ${
+                  savingImages
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-teal-600 text-white hover:bg-teal-700 shadow-sm"
+                }`}
+              >
+                {savingImages ? (
+                  <>
+                    <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <Save style={{ fontSize: 18 }} />
+                    Guardar fotos
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* 3. VISTA PREVIA EN APP */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
