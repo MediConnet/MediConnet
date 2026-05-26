@@ -44,6 +44,9 @@ interface BackendProfileResponse {
   status: string; // "APPROVED", "PENDING"
   is_published: boolean;
   schedules: BackendSchedule[];
+  imageUrl?: string | null; // Imagen de portada/sucursal
+  profile_picture_url?: string | null; // Avatar del doctor
+  preview_images?: string[]; // Galería de vista previa
 }
 
 // Interface para la lista de especialidades disponibles (Select)
@@ -72,6 +75,8 @@ export interface UpdateDoctorProfileParams {
   consultationDuration?: number;
   blockedDates?: string[];
   imageUrl?: string | null;
+  profile_picture_url?: string | null;
+  preview_images?: string[];
   bankAccount?: {
     bankName: string;
     accountNumber: string;
@@ -352,7 +357,9 @@ export const getDoctorProfileAPI = async (): Promise<DoctorDashboard> => {
       
       paymentMethods: mapBackendPaymentsToFrontend(backendData.payment_methods || []),
       workSchedule: mapBackendScheduleToFrontend(backendData.schedules || []),
-      imageUrl: (backendData as any).imageUrl || backendData.profile_picture_url || null,
+      imageUrl: (backendData as any).imageUrl || null,
+      profile_picture_url: backendData.profile_picture_url || null,
+      preview_images: (backendData as any).preview_images || [],
     },
     // ⭐ Información de clínica si el médico está asociado
     clinic: (backendData as any).clinic ? {
@@ -400,6 +407,14 @@ export const updateDoctorProfileAPI = async (
   // Imagen de perfil (base64 → Cloudinary en el backend)
   if (params.imageUrl !== undefined) {
     backendPayload.imageUrl = params.imageUrl;
+  }
+
+  if (params.profile_picture_url !== undefined) {
+    backendPayload.profile_picture_url = params.profile_picture_url;
+  }
+
+  if (params.preview_images !== undefined) {
+    backendPayload.preview_images = params.preview_images;
   }
 
   // Datos bancarios del doctor (para pagos desde admin/clinica)
@@ -469,7 +484,10 @@ export const updateDoctorProfileAPI = async (
       isActive: backendData.status === 'APPROVED',
       profileStatus: backendData.is_published ? 'published' : 'draft',
       paymentMethods: mapBackendPaymentsToFrontend(backendData.payment_methods || []),
-      workSchedule: mapBackendScheduleToFrontend(backendData.schedules || [])
+      workSchedule: mapBackendScheduleToFrontend(backendData.schedules || []),
+      imageUrl: (backendData as any).imageUrl || null,
+      profile_picture_url: backendData.profile_picture_url || null,
+      preview_images: (backendData as any).preview_images || [],
     }
   };
 };
