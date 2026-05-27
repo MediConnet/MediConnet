@@ -2,6 +2,16 @@ import { extractData, httpClient } from '../../../shared/lib/http';
 import type { DoctorDashboard, PaymentMethod, ProfileStatus, WorkSchedule } from '../domain/DoctorDashboard.entity';
 import { PAYMENT_METHOD_BACKEND } from '../../../shared/config/domain.constants';
 
+export interface BlockedSlot {
+  id: string;
+  branchId: string;
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  reason?: string;
+  createdAt?: string;
+}
+
 // --- INTERFACES INTERNAS (Lo que devuelve el Backend realmente) ---
 
 interface BackendSchedule {
@@ -20,6 +30,7 @@ interface BackendSchedule {
   break_end?: string | null;
   breakStart?: string | null;
   breakEnd?: string | null;
+  blockedHours?: string[];
 
   is_active?: boolean;
   enabled?: boolean;
@@ -207,6 +218,9 @@ const mapBackendScheduleToFrontend = (backendSchedules: BackendSchedule[]): Work
         endTime,
         breakStart,
         breakEnd,
+        blockedHours: Array.isArray((found as any).blockedHours)
+          ? (found as any).blockedHours.filter((h: unknown) => typeof h === "string")
+          : [],
       };
     } else {
       // CASO B: El día NO vino del backend (hueco). Lo rellenamos como "Cerrado".
@@ -218,6 +232,7 @@ const mapBackendScheduleToFrontend = (backendSchedules: BackendSchedule[]): Work
         endTime: "17:00",
         breakStart: null,
         breakEnd: null,
+        blockedHours: [],
       };
     }
   });
@@ -438,6 +453,7 @@ export const updateDoctorProfileAPI = async (
         endTime: s.enabled ? s.endTime : null,
         breakStart: s.enabled && hasBreak ? (s.breakStart as string) : null,
         breakEnd: s.enabled && hasBreak ? (s.breakEnd as string) : null,
+        blockedHours: Array.isArray(s.blockedHours) ? s.blockedHours : [],
       };
     });
   }
@@ -553,4 +569,44 @@ export const updateDoctorScheduleAPI = async (
   );
   const data = extractData(response);
   return mapBackendScheduleToFrontend(data);
+};
+
+/**
+ * API: Obtener horarios bloqueados (médico independiente)
+ * Endpoint: GET /api/doctors/blocked-slots
+ */
+export const getDoctorBlockedSlotsAPI = async (): Promise<BlockedSlot[]> => {
+  const response = await httpClient.get<{ success: boolean; data: BlockedSlot[] }>(
+    '/doctors/blocked-slots'
+  );
+  const data = extractData(response) as any;
+  return Array.isArray(data) ? (data as BlockedSlot[]) : [];
+};
+
+/**
+ * API: Crear horario bloqueado (médico independiente)
+ * Endpoint: POST /api/doctors/blocked-slots
+ */
+export const createDoctorBlockedSlotAPI = async (params: {
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  reason?: string;
+}): Promise<BlockedSlot> => {
+  const response = await httpClient.post<{ success: boolean; data: BlockedSlot }>(
+    '/doctors/blocked-slots',
+    params
+  );
+  return extractData(response) as any;
+};
+
+/**
+ * API: Eliminar horario bloqueado (médico independiente)
+ * Endpoint: DELETE /api/doctors/blocked-slots/:id
+ */
+export const deleteDoctorBlockedSlotAPI = async (slotId: string): Promise<{ message?: string }> => {
+  const response = await httpClient.delete<{ success: boolean; data: { message?: string } }>(
+    `/doctors/blocked-slots/${slotId}`
+  );
+  return extractData(response) as any;
 };
