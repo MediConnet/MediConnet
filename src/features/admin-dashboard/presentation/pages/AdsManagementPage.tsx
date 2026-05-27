@@ -195,12 +195,12 @@ export const AdsManagementPage = () => {
               <Chip
                 label={p.row.badgeText}
                 size="small"
-                sx={{ mb: 0.3, bgcolor: p.row.accentColorHex, color: '#fff', fontSize: 10, fontWeight: 700 }}
+                sx={{ mb: 0.3, bgcolor: p.row.accentColorHex, color: '#fff', fontSize: 12, fontWeight: 700,marginTop:5 }}
               />
             )}
             <Typography variant="body2" fontWeight={600} noWrap>{p.row.title}</Typography>
             {p.row.subtitle && (
-              <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 200, display: 'block' }}>
+              <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 200, display: 'block',padding:2}}>
                 {p.row.subtitle}
               </Typography>
             )}
