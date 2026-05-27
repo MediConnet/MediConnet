@@ -12,33 +12,11 @@ import {
   formatCoordinateForInput,
   parseCoordinate,
 } from "../../../../shared/lib/parseCoordinate";
+import { useSpecialties } from "../../../auth/presentation/hooks/useSpecialties";
 
 interface ProfileSectionProps {
   clinicId: string;
 }
-
-const medicalSpecialties = [
-  "Medicina General",
-  "Cardiología",
-  "Dermatología",
-  "Ginecología",
-  "Pediatría",
-  "Oftalmología",
-  "Traumatología",
-  "Neurología",
-  "Psiquiatría",
-  "Urología",
-  "Endocrinología",
-  "Gastroenterología",
-  "Neumología",
-  "Otorrinolaringología",
-  "Oncología",
-  "Reumatología",
-  "Nefrología",
-  "Cirugía General",
-  "Anestesiología",
-  "Odontología",
-];
 
 const validationSchema = Yup.object({
   name: Yup.string().required("El nombre es requerido"),
@@ -66,6 +44,7 @@ const validationSchema = Yup.object({
 export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => {
   const { profile, loading } = useClinicProfile();
   const { mutateAsync: updateProfile } = useUpdateClinicProfile();
+  const { data: specialties = [] } = useSpecialties();
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -339,19 +318,19 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
                   Especialidades que ofrece la clínica
                 </Typography>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
-                  {medicalSpecialties.map((specialty) => (
+                  {specialties.map((specialty) => (
                     <Chip
-                      key={specialty}
-                      label={specialty}
+                      key={specialty.id}
+                      label={specialty.name}
                       onClick={() => {
-                        if (selectedSpecialties.includes(specialty)) {
-                          setSelectedSpecialties(selectedSpecialties.filter((s) => s !== specialty));
+                        if (selectedSpecialties.includes(specialty.name)) {
+                          setSelectedSpecialties(selectedSpecialties.filter((s) => s !== specialty.name));
                         } else {
-                          setSelectedSpecialties([...selectedSpecialties, specialty]);
+                          setSelectedSpecialties([...selectedSpecialties, specialty.name]);
                         }
                       }}
-                      color={selectedSpecialties.includes(specialty) ? "primary" : "default"}
-                      variant={selectedSpecialties.includes(specialty) ? "filled" : "outlined"}
+                      color={selectedSpecialties.includes(specialty.name) ? "primary" : "default"}
+                      variant={selectedSpecialties.includes(specialty.name) ? "filled" : "outlined"}
                     />
                   ))}
                 </Box>

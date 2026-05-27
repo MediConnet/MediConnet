@@ -46,14 +46,18 @@ export const ForgotPasswordPage = () => {
         setSuccess(true);
       } catch (err: any) {
         console.error("Error sending reset link:", err);
-        
+
+        if (err?.code === "ERR_NETWORK") {
+          alert("Página no disponible");
+          return;
+        }
+
         let errorMessage = "Ocurrió un error. Verifica tu conexión o intenta más tarde.";
-        
-        // Si el backend devuelve 404, significa que el correo no existe
+
         if (err.response?.status === 404) {
           errorMessage = "El correo electrónico no está registrado.";
         }
-        
+
         formik.setFieldError("email", errorMessage);
       }
     },

@@ -67,6 +67,11 @@ export const ADMIN_MENU: MenuItem[] = [
     label: "Cadenas de Farmacias",
     path: "/admin/pharmacy-chains",
   },
+  {
+    icon: <LocalHospital />,
+    label: "Especialidades",
+    path: "/admin/specialties",
+  },
   { icon: <Settings />, label: "Configuración", path: "/admin/settings" },
 ];
 

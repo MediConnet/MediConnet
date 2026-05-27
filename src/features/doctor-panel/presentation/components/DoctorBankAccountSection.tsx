@@ -7,14 +7,7 @@ import { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { getDoctorBankAccountAPI, updateDoctorBankAccountAPI, type BankAccountData } from '../../infrastructure/payments.api';
-
-const ECUADOR_BANKS = [
-  'Banco Pichincha', 'Banco del Pacífico', 'Banco de Guayaquil', 'Produbanco',
-  'Banco Bolivariano', 'Banco Internacional', 'Banco del Austro',
-  'Banco General Rumiñahui', 'Banco ProCredit', 'Banco Solidario',
-  'Banco Comercial de Manabí', 'Banco Coopnacional', 'Banco Capital',
-  'Banco Finca', 'Banco D-MIRO', 'Banco Diners Club',
-];
+import { ECUADOR_BANKS } from '../../../../shared/config/domain.constants';
 
 const validationSchema = Yup.object({
   bankName: Yup.string().required('El banco es requerido'),

@@ -76,10 +76,13 @@ export const useClinicDoctors = (clinicId: string) => {
   const updateConsultationFee = async (doctorId: string, consultationFee: number) => {
     setError(null);
     try {
-      // Por ahora usamos el mock directamente
-      const { updateDoctorConsultationFeeMock } = await import('../../infrastructure/doctors.mock');
-      await updateDoctorConsultationFeeMock(clinicId, doctorId, consultationFee);
-      await loadDoctors(); // Recargar lista
+      const response = await fetch(`/api/clinics/${clinicId}/doctors/${doctorId}/consultation-fee`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ consultationFee }),
+      });
+      if (!response.ok) throw new Error('Error al actualizar precio');
+      await loadDoctors();
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Error al actualizar precio');
       setError(error);

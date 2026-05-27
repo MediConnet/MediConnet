@@ -23,6 +23,7 @@ import * as Yup from "yup";
 import type { ClinicAssociatedDoctorProfile } from "../../domain/ClinicAssociatedDoctor.entity";
 import { useClinicAssociatedDoctor } from "../hooks/useClinicAssociatedDoctor";
 import { updateClinicAssociatedProfileAPI } from "../../infrastructure/clinic-associated.api";
+import { useSpecialties } from "../../../auth/presentation/hooks/useSpecialties";
 
 interface ClinicAssociatedProfileSectionProps {
   clinicId: string;
@@ -35,34 +36,12 @@ const validationSchema = Yup.object({
   bio: Yup.string().max(500, "La descripción debe tener máximo 500 caracteres"),
 });
 
-const medicalSpecialties = [
-  "Medicina General",
-  "Cardiología",
-  "Dermatología",
-  "Ginecología",
-  "Pediatría",
-  "Oftalmología",
-  "Traumatología",
-  "Neurología",
-  "Psiquiatría",
-  "Urología",
-  "Endocrinología",
-  "Gastroenterología",
-  "Neumología",
-  "Otorrinolaringología",
-  "Oncología",
-  "Reumatología",
-  "Nefrología",
-  "Cirugía General",
-  "Anestesiología",
-  "Odontología",
-];
-
 export const ClinicAssociatedProfileSection = ({
   clinicId: _clinicId,
   clinicName,
 }: ClinicAssociatedProfileSectionProps) => {
   const { profile, loading, clinicInfo: _clinicInfo } = useClinicAssociatedDoctor();
+  const { data: specialties = [] } = useSpecialties();
   const [saving, setSaving] = useState(false);
   const [educationItems, setEducationItems] = useState<Array<{ text: string; fileUrl?: string; fileName?: string }>>([]);
   const [certificationItems, setCertificationItems] = useState<Array<{ text: string; fileUrl?: string; fileName?: string }>>([]);
@@ -278,7 +257,7 @@ export const ClinicAssociatedProfileSection = ({
                     <MenuItem value="">
                       <em>Selecciona una especialidad</em>
                     </MenuItem>
-                    {medicalSpecialties.map((spec) => (
+                    {specialties.map((spec) => (
                       <MenuItem key={spec} value={spec}>
                         {spec}
                       </MenuItem>

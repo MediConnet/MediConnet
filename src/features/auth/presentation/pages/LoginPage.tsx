@@ -22,7 +22,6 @@ import { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import { ROUTES } from "../../../../app/config/constants";
-import { env } from "../../../../app/config/env";
 import { useAuthStore } from "../../../../app/store/auth.store";
 import { loginAPI } from "../../infrastructure/auth.api";
 import { logger } from "../../../../shared/lib/logger";
@@ -32,7 +31,8 @@ const loginValidationSchema = Yup.object({
     .email("Correo electrónico inválido")
     .required("El correo electrónico es requerido"),
   password: Yup.string()
-    .min(6, "La contraseña debe tener al menos 6 caracteres")
+    .min(8, "La contraseña debe tener al menos 8 caracteres")
+    .max(20, "La contraseña no puede exceder 20 caracteres")
     .required("La contraseña es requerida"),
 });
 
@@ -137,12 +137,15 @@ export const LoginPage = () => {
       } catch (error: any) {
         logger.error("❌ Error al iniciar sesión:", error);
 
+        if (error?.code === "ERR_NETWORK") {
+          alert("Página no disponible");
+          return;
+        }
+
         let errorMessage =
           "Error al iniciar sesión. Verifica tus credenciales.";
 
-        if (error?.code === "ERR_NETWORK") {
-          errorMessage = `No se pudo conectar al servidor (${env.API_URL})`;
-        } else if (error?.response?.status === 401) {
+        if (error?.response?.status === 401) {
           errorMessage = "Credenciales incorrectas.";
         } else if (error?.message) {
           errorMessage = error.message;
@@ -321,6 +324,7 @@ export const LoginPage = () => {
                   helperText={formik.touched.password && formik.errors.password}
                   size="small"
                   slotProps={{
+                    htmlInput: { maxLength: 20 },
                     input: {
                       startAdornment: (
                         <InputAdornment position="start">

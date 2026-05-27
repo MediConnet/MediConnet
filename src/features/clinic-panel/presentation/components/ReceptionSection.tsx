@@ -30,6 +30,7 @@ import { getTodayReceptionAppointmentsAPI } from "../../infrastructure/clinic-ap
 import type { ClinicAppointment } from "../../domain/appointment.entity";
 import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner";
 import { ReceptionMessagesSection } from "./ReceptionMessagesSection";
+import { RECEPTION_STATUS_LABELS } from "../../../../shared/config/domain.constants";
 
 interface ReceptionSectionProps {
   clinicId: string;
@@ -208,9 +209,9 @@ export const ReceptionSection = ({ clinicId }: ReceptionSectionProps) => {
               label="Estado"
               onChange={(e) => setReceptionStatus(e.target.value as any)}
             >
-              <MenuItem value="arrived">Llegó</MenuItem>
-              <MenuItem value="not_arrived">No llegó</MenuItem>
-              <MenuItem value="attended">Atendido</MenuItem>
+              {(Object.keys(RECEPTION_STATUS_LABELS) as Array<keyof typeof RECEPTION_STATUS_LABELS>).map((status) => (
+                <MenuItem key={status} value={status}>{RECEPTION_STATUS_LABELS[status]}</MenuItem>
+              ))}
             </Select>
           </FormControl>
           <TextField

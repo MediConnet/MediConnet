@@ -1,15 +1,5 @@
-export const RequestStatus = {
-  PENDING: 'PENDING',
-  APPROVED: 'APPROVED',
-  REJECTED: 'REJECTED',
-} as const;
+import { REQUEST_STATUS, REQUEST_STATUS_LABEL } from "../../../shared/config/domain.constants";
 
-// Tipo derivado de las llaves
-export type RequestStatusType = keyof typeof RequestStatus;
-
-// Helper para textos en español
-export const RequestStatusLabel: Record<RequestStatusType, string> = {
-  PENDING: 'Pendiente',
-  APPROVED: 'Aprobado',
-  REJECTED: 'Rechazado',
-};
+export const RequestStatus = REQUEST_STATUS;
+export type RequestStatusType = keyof typeof REQUEST_STATUS;
+export const RequestStatusLabel = REQUEST_STATUS_LABEL;

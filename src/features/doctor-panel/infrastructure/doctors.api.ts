@@ -1,5 +1,6 @@
 import { extractData, httpClient } from '../../../shared/lib/http';
 import type { DoctorDashboard, PaymentMethod, ProfileStatus, WorkSchedule } from '../domain/DoctorDashboard.entity';
+import { PAYMENT_METHOD_BACKEND } from '../../../shared/config/domain.constants';
 
 // --- INTERFACES INTERNAS (Lo que devuelve el Backend realmente) ---
 
@@ -28,8 +29,8 @@ interface BackendProfileResponse {
   id: string;
   full_name: string;
   email: string;
-  specialty?: string; // String formateado "Cardiología, Pediatría"
-  specialties_list?: string[]; // Array crudo ["Cardiología", "Pediatría"]
+  specialty?: string;
+  specialties_list?: string[];
   category: string;
   years_of_experience: number;
   consultation_fee: number;
@@ -137,21 +138,18 @@ export const getDoctorPanelReviewsAPI = async (): Promise<{
  */
 const mapBackendPaymentsToFrontend = (methods: string[]): PaymentMethod => {
   if (!methods) return 'cash';
-  const hasCash = methods.some(m => m.toLowerCase().includes('efectivo'));
-  const hasCard = methods.some(m => m.toLowerCase().includes('tarjeta'));
-  
+  const hasCash = methods.some(m => m.toLowerCase().includes(PAYMENT_METHOD_BACKEND.CASH.toLowerCase()));
+  const hasCard = methods.some(m => m.toLowerCase().includes(PAYMENT_METHOD_BACKEND.CARD.toLowerCase()));
+
   if (hasCash && hasCard) return 'both';
   if (hasCard) return 'card';
-  return 'cash'; 
+  return 'cash';
 };
 
-/**
- * Convierte Frontend 'both' | 'card' | 'cash' -> Array del Backend
- */
 const mapFrontendPaymentsToBackend = (method: PaymentMethod): string[] => {
-  if (method === 'both') return ["Efectivo", "Tarjeta de Crédito"];
-  if (method === 'card') return ["Tarjeta de Crédito"];
-  return ["Efectivo"];
+  if (method === 'both') return [PAYMENT_METHOD_BACKEND.CASH, PAYMENT_METHOD_BACKEND.CARD];
+  if (method === 'card') return [PAYMENT_METHOD_BACKEND.CARD];
+  return [PAYMENT_METHOD_BACKEND.CASH];
 };
 
 /**
@@ -321,7 +319,7 @@ export const getDoctorProfileAPI = async (): Promise<DoctorDashboard> => {
   if (backendData.specialties_list && backendData.specialties_list.length > 0) {
       specialtyValue = backendData.specialties_list;
   } else if (backendData.specialty) {
-      specialtyValue = backendData.specialty; // Puede ser un string "Cardiología, Pediatría"
+      specialtyValue = backendData.specialty;
   }
 
   return {

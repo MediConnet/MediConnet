@@ -31,6 +31,7 @@ import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { getUsersAPI, toggleUserStatusAPI, updateUserAPI, deleteUserAPI } from "../../infrastructure/users.api";
 import type { User } from "../../domain/user.entity";
 import { useAdminNotificationsLayout } from "../hooks/useAdminNotificationsLayout";
+import { PROVIDER_TYPE_LABELS } from "../../../../shared/config/domain.constants";
 
 const CURRENT_ADMIN = {
   name: "Admin General",
@@ -416,11 +417,11 @@ export const UsersPage = () => {
                         setSelectedUser({ ...selectedUser, tipo: e.target.value as "doctor" | "lab" | "supplies" | "pharmacy" | "ambulance" | undefined })
                       }
                     >
-                      <MenuItem value="doctor">Médico</MenuItem>
-                      <MenuItem value="pharmacy">Farmacia</MenuItem>
-                      <MenuItem value="lab">Laboratorio</MenuItem>
-                      <MenuItem value="ambulance">Ambulancia</MenuItem>
-                      <MenuItem value="supplies">Insumos Médicos</MenuItem>
+                      {(Object.keys(PROVIDER_TYPE_LABELS) as Array<keyof typeof PROVIDER_TYPE_LABELS>)
+                        .filter((k) => k !== "clinic")
+                        .map((type) => (
+                          <MenuItem key={type} value={type}>{PROVIDER_TYPE_LABELS[type]}</MenuItem>
+                        ))}
                     </Select>
                   </FormControl>
                 )}

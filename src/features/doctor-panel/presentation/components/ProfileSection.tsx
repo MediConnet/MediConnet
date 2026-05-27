@@ -48,6 +48,7 @@ import type {
 } from "../../domain/DoctorDashboard.entity";
 import type { Specialty } from "../../infrastructure/doctors.api";
 import { useUpdateDoctorProfile } from "../hooks/useUpdateDoctorProfile";
+import { PAYMENT_METHOD_BACKEND, PROFILE_STATUS_LABELS } from "../../../../shared/config/domain.constants";
 import { useSpecialties } from "../../../auth/presentation/hooks/useSpecialties";
 import { ImageCropperModal } from "../../../../shared/components/ImageCropperModal";
 
@@ -188,6 +189,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     paymentMethods: "both" as PaymentMethod,
   });
 
+  // Estado para errores de validación por campo
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
   // Estado para guardar los datos originales y comparar cambios
   const [initialFormData, setInitialFormData] = useState<
     typeof formData | null
@@ -302,8 +306,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     return false;
   }, [formData, initialFormData]);
 
+  const hasErrors = Object.keys(formErrors).length > 0;
   const previewImagesModified = JSON.stringify(previewImages) !== JSON.stringify(initialPreviewImages);
-  const isSaveDisabled = saving || (!isModified && !isUsingDefaultSchedule && !newImageBase64 && !previewImagesModified);
+  const isSaveDisabled = saving || hasErrors || (!isModified && !isUsingDefaultSchedule && !newImageBase64 && !previewImagesModified);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -314,6 +319,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     setNewImageBase64(null);
     setPreviewImages(initialPreviewImages);
     setCarouselIndex(0);
+    setFormErrors({});
     if (initialFormData) {
       setFormData(initialFormData);
     }
@@ -341,57 +347,106 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const handleSave = async () => {
     if (!user?.id) return;
 
-    // Validación de horario + almuerzo (break time)
-    const timeLessThan = (a: string, b: string) => a < b; // HH:mm funciona lexicográficamente
+    const errors: Record<string, string> = {};
+
+    // Validar nombre
+    const nameTrimmed = formData.name.trim();
+    if (!nameTrimmed) errors.name = 'El nombre es obligatorio';
+    else if (nameTrimmed.length < 3) errors.name = 'El nombre debe tener al menos 3 caracteres';
+    else if (nameTrimmed.length > 100) errors.name = 'El nombre no puede exceder 100 caracteres';
+
+    // Validar especialidad
+    if (!formData.specialty || formData.specialty.length === 0) {
+      errors.specialty = 'Selecciona al menos una especialidad';
+    }
+
+    // Validar email
+    const emailTrimmed = formData.email.trim();
+    if (!emailTrimmed) errors.email = 'El email es obligatorio';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed)) errors.email = 'Formato de email inválido';
+    else if (emailTrimmed.length > 255) errors.email = 'El email no puede exceder 255 caracteres';
+
+    // Validar WhatsApp
+    const whatsTrimmed = formData.whatsapp.trim();
+    if (!whatsTrimmed) errors.whatsapp = 'El WhatsApp es obligatorio';
+    else if (whatsTrimmed.replace(/\D/g, '').length < 10) errors.whatsapp = 'El WhatsApp debe tener exactamente 10 dígitos';
+    else if (whatsTrimmed.replace(/\D/g, '').length > 10) errors.whatsapp = 'El WhatsApp debe tener exactamente 10 dígitos';
+
+    // Validar dirección
+    const addrTrimmed = formData.address.trim();
+    if (!addrTrimmed) errors.address = 'La dirección es obligatoria';
+    else if (addrTrimmed.length < 5) errors.address = 'La dirección debe tener al menos 5 caracteres';
+    else if (addrTrimmed.length > 200) errors.address = 'La dirección no puede exceder 200 caracteres';
+
+    // Validar precio
+    const priceNum = parseFloat(formData.price);
+    if (isNaN(priceNum) || priceNum < 0) errors.price = 'Ingresa un precio válido (0 o más)';
+    else if (priceNum > 999999.99) errors.price = 'El precio no puede exceder 999,999.99';
+    else if (formData.price.replace(/[^0-9.]/g, '').length > 10) errors.price = 'El precio tiene demasiados dígitos';
+
+    // Validar experiencia
+    const expNum = parseInt(formData.experience);
+    if (isNaN(expNum) || expNum < 0) errors.experience = 'Ingresa un número válido de años';
+    else if (expNum > 99) errors.experience = 'La experiencia no puede ser mayor a 99 años';
+    else if (formData.experience.replace(/\D/g, '').length > 2) errors.experience = 'Máximo 2 dígitos';
+
+    // Validar descripción
+    const descTrimmed = formData.description.trim();
+    if (!descTrimmed) errors.description = 'La descripción es obligatoria';
+    else if (descTrimmed.length < 10) errors.description = 'La descripción debe tener al menos 10 caracteres';
+    else if (descTrimmed.length > 2000) errors.description = 'La descripción no puede exceder 2000 caracteres';
+
+    // Validar coordenadas
+    if (formData.latitude) {
+      const lat = parseCoordinate(formData.latitude);
+      if (lat === null || lat < -90 || lat > 90) errors.latitude = 'La latitud debe estar entre -90 y 90';
+    }
+    if (formData.longitude) {
+      const lng = parseCoordinate(formData.longitude);
+      if (lng === null || lng < -180 || lng > 180) errors.longitude = 'La longitud debe estar entre -180 y 180';
+    }
+
+    // Validar horario + almuerzo
+    const timeLessThan = (a: string, b: string) => a < b;
     for (const s of formData.workSchedule) {
       if (!s.enabled) continue;
-
       if (!s.startTime || !s.endTime) {
-        alert(`Completa el horario de ${dayLabels[s.day] || s.day}`);
-        return;
+        errors[`schedule_${s.day}`] = `Completa el horario de ${dayLabels[s.day] || s.day}`;
+        break;
       }
-
       if (!timeLessThan(s.startTime, s.endTime)) {
-        alert(`El horario de ${dayLabels[s.day] || s.day} es inválido: inicio debe ser menor que fin.`);
-        return;
+        errors[`schedule_${s.day}`] = `El horario de ${dayLabels[s.day] || s.day} debe terminar después de iniciar`;
+        break;
       }
-
       const hasBreakStart = Boolean(s.breakStart);
       const hasBreakEnd = Boolean(s.breakEnd);
-
       if (hasBreakStart !== hasBreakEnd) {
-        alert(`Almuerzo incompleto en ${dayLabels[s.day] || s.day}: selecciona inicio y fin, o elige "Sin almuerzo".`);
-        return;
+        errors[`schedule_${s.day}`] = `Almuerzo incompleto en ${dayLabels[s.day] || s.day}`;
+        break;
       }
-
       if (hasBreakStart && hasBreakEnd) {
         const bs = s.breakStart as string;
         const be = s.breakEnd as string;
-
         if (!timeLessThan(bs, be)) {
-          alert(`Almuerzo inválido en ${dayLabels[s.day] || s.day}: inicio debe ser menor que fin.`);
-          return;
+          errors[`schedule_${s.day}`] = `El almuerzo de ${dayLabels[s.day] || s.day} debe terminar después de iniciar`;
+          break;
         }
-
-        // Recomendado: break dentro del rango laboral
         if (!(timeLessThan(s.startTime, bs) && timeLessThan(be, s.endTime))) {
-          alert(`El almuerzo de ${dayLabels[s.day] || s.day} debe estar dentro del horario laboral.`);
-          return;
+          errors[`schedule_${s.day}`] = `El almuerzo de ${dayLabels[s.day] || s.day} debe estar dentro del horario laboral`;
+          break;
         }
       }
     }
 
-    // Validar datos de ubicación
-    try {
-      validateLocationData({
-        latitude: formData.latitude,
-        longitude: formData.longitude,
-        google_maps_url: formData.google_maps_url,
-      });
-    } catch (error: any) {
-      alert(error.message);
+    // Si hay errores, mostrar el primero como alerta y marcar todos
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      const firstError = Object.values(errors)[0];
+      alert(firstError);
       return;
     }
+
+    setFormErrors({});
 
     // Extraer coordenadas automáticamente si hay Google Maps URL y no hay coordenadas
     let finalLatitude = formData.latitude ? parseCoordinate(formData.latitude) : null;
@@ -449,6 +504,13 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
   const handleChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    if (formErrors[field]) {
+      setFormErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
   };
 
   const handleSpecialtyChange = (event: SelectChangeEvent<string[]>) => {
@@ -876,12 +938,19 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   onChange={(e) =>
                     handleLetterInput(e, (value) => handleChange("name", value))
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  maxLength={100}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                    formErrors.name ? "border-red-400 bg-red-50" : "border-gray-300"
+                  }`}
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Solo letras y espacios
-                </p>
+                {formErrors.name ? (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.name}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Solo letras y espacios — Máx. 100 caracteres
+                  </p>
+                )}
               </div>
 
               <div>
@@ -938,12 +1007,19 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   onChange={(e) =>
                     handleEmailInput(e, (value) => handleChange("email", value))
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  maxLength={255}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                    formErrors.email ? "border-red-400 bg-red-50" : "border-gray-300"
+                  }`}
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Formato: ejemplo@correo.com
-                </p>
+                {formErrors.email ? (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.email}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Formato: ejemplo@correo.com — Máx. 255 caracteres
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600 mb-1 block">
@@ -957,13 +1033,20 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                       handleChange("whatsapp", value),
                     )
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  placeholder="+593 99 123 4567"
+                  maxLength={10}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                    formErrors.whatsapp ? "border-red-400 bg-red-50" : "border-gray-300"
+                  }`}
+                  placeholder="0991234567"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Solo números, espacios, guiones y paréntesis
-                </p>
+                {formErrors.whatsapp ? (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.whatsapp}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Exactamente 10 dígitos
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600 mb-1 block">
@@ -977,12 +1060,19 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                       handleChange("address", value),
                     )
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  maxLength={200}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                    formErrors.address ? "border-red-400 bg-red-50" : "border-gray-300"
+                  }`}
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Letras, números y caracteres especiales
-                </p>
+                {formErrors.address ? (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.address}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Dirección del consultorio — Máx. 200 caracteres
+                  </p>
+                )}
               </div>
 
               {/* Campos de ubicación */}
@@ -995,7 +1085,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   value={formData.google_maps_url}
                   onChange={(e) => {
                     handleChange("google_maps_url", e.target.value);
-                    // Intentar extraer coordenadas automáticamente
                     if (e.target.value) {
                       const coords = extractCoordinatesFromGoogleMapsUrl(e.target.value);
                       if (coords.lat !== null && coords.lng !== null) {
@@ -1007,12 +1096,19 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                       }
                     }
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  maxLength={500}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                    formErrors.google_maps_url ? "border-red-400 bg-red-50" : "border-gray-300"
+                  }`}
                   placeholder="https://maps.app.goo.gl/..."
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Si pegas un link de Google Maps, las coordenadas se extraerán automáticamente
-                </p>
+                {formErrors.google_maps_url ? (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.google_maps_url}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Las coordenadas se extraerán automáticamente — Máx. 500 caracteres
+                  </p>
+                )}
               </div>
 
               <div>
@@ -1023,12 +1119,17 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   type="text"
                   value={formData.latitude}
                   onChange={(e) => handleChange("latitude", e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  maxLength={20}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                    formErrors.latitude ? "border-red-400 bg-red-50" : "border-gray-300"
+                  }`}
                   placeholder="Ejemplo: -0.180653"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Entre -90 y 90
-                </p>
+                {formErrors.latitude ? (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.latitude}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">Entre -90 y 90</p>
+                )}
               </div>
 
               <div>
@@ -1039,12 +1140,17 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   type="text"
                   value={formData.longitude}
                   onChange={(e) => handleChange("longitude", e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  maxLength={20}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                    formErrors.longitude ? "border-red-400 bg-red-50" : "border-gray-300"
+                  }`}
                   placeholder="Ejemplo: -78.467834"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Entre -180 y 180
-                </p>
+                {formErrors.longitude ? (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.longitude}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">Entre -180 y 180</p>
+                )}
               </div>
 
               <div>
@@ -1059,13 +1165,20 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                       handleChange("price", value),
                     )
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  maxLength={10}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                    formErrors.price ? "border-red-400 bg-red-50" : "border-gray-300"
+                  }`}
                   placeholder="0.00"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Solo números y punto decimal
-                </p>
+                {formErrors.price ? (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.price}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Solo números — Máx. $999,999.99
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600 mb-1 block">
@@ -1079,11 +1192,18 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                       handleChange("experience", value),
                     )
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  maxLength={2}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                    formErrors.experience ? "border-red-400 bg-red-50" : "border-gray-300"
+                  }`}
                   placeholder="0"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">Solo números</p>
+                {formErrors.experience ? (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.experience}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">Máx. 99 años</p>
+                )}
               </div>
             </div>
 
@@ -1099,12 +1219,17 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   )
                 }
                 rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+                maxLength={2000}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none ${
+                  formErrors.description ? "border-red-400 bg-red-50" : "border-gray-300"
+                }`}
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Letras, números y caracteres especiales
-              </p>
+              {formErrors.description ? (
+                <p className="text-xs text-red-500 mt-1">{formErrors.description}</p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">Máx. 2000 caracteres</p>
+              )}
             </div>
 
             <div className="mt-6">
@@ -1119,9 +1244,11 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   }
                   className="w-full"
                 >
-                  <MenuItem value="card">Solo Tarjeta</MenuItem>
-                  <MenuItem value="cash">Solo Presencial</MenuItem>
-                  <MenuItem value="both">Tarjeta y Presencial</MenuItem>
+                  {(['card', 'cash', 'both'] as const).map((method) => (
+                    <MenuItem key={method} value={method}>
+                      {method === 'card' ? 'Solo Tarjeta' : method === 'cash' ? 'Solo Presencial' : 'Tarjeta y Presencial'}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </div>
@@ -1138,9 +1265,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   }
                   className="w-full"
                 >
-                  <MenuItem value="draft">Borrador</MenuItem>
-                  <MenuItem value="published">Publicado</MenuItem>
-                  <MenuItem value="suspended">Suspendido</MenuItem>
+                  {(Object.keys(PROFILE_STATUS_LABELS) as Array<keyof typeof PROFILE_STATUS_LABELS>).map((status) => (
+                    <MenuItem key={status} value={status}>{PROFILE_STATUS_LABELS[status]}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
               <p className="text-xs text-gray-500 mt-2">
