@@ -61,3 +61,48 @@ export const getMyAdAPI = async (): Promise<Ad | null> => {
     return null;
   }
 };
+
+export interface MyAdsFilters {
+  status?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+/**
+ * Obtiene el listado completo de anuncios del proveedor actual con filtros.
+ */
+/**
+ * Actualiza un anuncio propio (solo si está en estado PENDING).
+ */
+export const updateAdAPI = async (
+  id: string,
+  params: Partial<CreateAdParams>
+): Promise<void> => {
+  const payload: Record<string, any> = {};
+  if (params.label !== undefined) payload.badge_text = params.label;
+  if (params.discount !== undefined) payload.discount_title = params.discount;
+  if (params.description !== undefined) payload.description = params.description;
+  if (params.buttonText !== undefined) payload.button_text = params.buttonText;
+  if (params.imageUrl !== undefined) payload.image_url = params.imageUrl;
+  if (params.startDate !== undefined) payload.start_date = params.startDate;
+  if (params.endDate !== undefined) payload.end_date = params.endDate;
+
+  await httpClient.put(`/ads/${id}`, payload);
+};
+
+export const getMyAdsAPI = async (filters?: MyAdsFilters): Promise<Ad[]> => {
+  try {
+    const params = new URLSearchParams();
+    params.set("mode", "all");
+    if (filters?.status) params.set("status", filters.status);
+    if (filters?.dateFrom) params.set("dateFrom", filters.dateFrom);
+    if (filters?.dateTo) params.set("dateTo", filters.dateTo);
+
+    const response = await httpClient.get<any>(`/ads?${params.toString()}`);
+    const data = response.data?.data || response.data;
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.warn("No se pudieron obtener los anuncios:", error);
+    return [];
+  }
+};

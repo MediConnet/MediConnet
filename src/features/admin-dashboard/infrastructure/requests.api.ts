@@ -5,9 +5,19 @@ import type { ProviderRequest } from '../domain/provider-request.entity';
  * API: Obtener solicitudes de proveedores
  * Endpoint: GET /api/admin/requests
  */
-export const getProviderRequestsAPI = async (): Promise<ProviderRequest[]> => {
+export const getProviderRequestsAPI = async (params?: {
+  status?: "all" | "PENDING" | "APPROVED" | "REJECTED";
+  dateFrom?: string; // YYYY-MM-DD
+}): Promise<ProviderRequest[]> => {
+  const searchParams = new URLSearchParams();
+  searchParams.set("status", params?.status || "all");
+  searchParams.set("limit", "500");
+  if (params?.dateFrom) {
+    searchParams.set("dateFrom", params.dateFrom);
+  }
+
   const response = await httpClient.get<{ success: boolean; data: ProviderRequest[] }>(
-    '/admin/requests'
+    `/admin/requests?${searchParams.toString()}`
   );
   return extractData(response);
 };

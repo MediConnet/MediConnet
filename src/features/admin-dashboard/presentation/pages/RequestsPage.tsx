@@ -47,7 +47,12 @@ const CURRENT_ADMIN = {
 };
 
 export const RequestsPage = () => {
-  const { data: initialData, isLoading } = useProviderRequests();
+  const [serverStatusFilter, setServerStatusFilter] = useState<"all" | "PENDING" | "APPROVED" | "REJECTED">("all");
+  const [serverDateFilter, setServerDateFilter] = useState("");
+  const { data: initialData, isLoading } = useProviderRequests({
+    status: serverStatusFilter,
+    dateFrom: serverDateFilter || undefined,
+  });
   const queryClient = useQueryClient();
   const { appointments: adminAppointments, notificationsViewAllPath } = useAdminNotificationsLayout();
 
@@ -59,7 +64,7 @@ export const RequestsPage = () => {
     setDateFilter,
     approveRequest,
     rejectRequest,
-  } = useRequestFiltering(initialData, "PENDING"); // Filtrar solo PENDING por defecto
+  } = useRequestFiltering(initialData, "all"); // Cargar y mostrar todas por defecto
 
   const [selectedRequest, setSelectedRequest] =
     useState<ProviderRequest | null>(null);
@@ -71,6 +76,16 @@ export const RequestsPage = () => {
     message: '',
     severity: 'info'
   });
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    setServerStatusFilter((value as "all" | "PENDING" | "APPROVED" | "REJECTED") || "all");
+  };
+
+  const handleDateFilterChange = (value: string) => {
+    setDateFilter(value);
+    setServerDateFilter(value);
+  };
 
   // --- Handlers UI ---
   const handleViewRequest = (request: ProviderRequest) => {
@@ -426,7 +441,7 @@ export const RequestsPage = () => {
             label="Estado"
             size="small"
             value={filters.statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => handleStatusFilterChange(e.target.value)}
             sx={{ minWidth: 150 }}
           >
             <MenuItem value="all">Todos</MenuItem>
@@ -441,7 +456,7 @@ export const RequestsPage = () => {
             slotProps={{ inputLabel: { shrink: true } }}
             label="Desde fecha"
             value={filters.dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
+            onChange={(e) => handleDateFilterChange(e.target.value)}
           />
         </Stack>
 

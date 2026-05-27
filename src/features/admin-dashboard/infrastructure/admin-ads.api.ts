@@ -15,6 +15,7 @@ export interface AdminAd {
   endDate?: string;
   isActive: boolean;
   priorityOrder: number;
+  status: string;
   isAdminAd: boolean;
   providerName: string;
 }

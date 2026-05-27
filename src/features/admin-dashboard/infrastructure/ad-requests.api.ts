@@ -15,11 +15,13 @@ const mapAdRequest = (raw: any): AdRequest => ({
 
 /**
  * API: Obtener solicitudes de anuncios
- * Endpoint: GET /api/admin/ad-requests
+ * Endpoint: GET /api/admin/ad-requests?status=PENDING
+ * @param status - Filtro por estado: 'PENDING', 'APPROVED', 'REJECTED', 'all' (por defecto 'PENDING')
  */
-export const getAdRequestsAPI = async (): Promise<AdRequest[]> => {
+export const getAdRequestsAPI = async (status?: string): Promise<AdRequest[]> => {
+  const params = status ? `?status=${status}` : '';
   const response = await httpClient.get<{ success: boolean; data: AdRequest[] }>(
-    '/admin/ad-requests'
+    `/admin/ad-requests${params}`
   );
   const data = extractData(response);
   return Array.isArray(data) ? data.map(mapAdRequest) : [];

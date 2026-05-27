@@ -36,6 +36,18 @@ import { useAdminNotificationsLayout } from '../hooks/useAdminNotificationsLayou
 
 const CURRENT_ADMIN = { name: 'Admin General', roleLabel: 'Super Admin', initials: 'AG' };
 
+const STATUS_COLORS: Record<string, 'warning' | 'success' | 'error' | 'default'> = {
+  PENDING: 'warning',
+  APPROVED: 'success',
+  REJECTED: 'error',
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: 'Pendiente',
+  APPROVED: 'Aprobado',
+  REJECTED: 'Rechazado',
+};
+
 const TARGET_SCREENS = [
   { value: 'Home', label: 'Inicio' },
   { value: 'DoctorDetail', label: 'Detalle Médico' },
@@ -168,9 +180,9 @@ export const AdsManagementPage = () => {
     {
       field: 'title',
       headerName: 'Anuncio',
-      width: 280,
+      width: 320,
       renderCell: (p: GridRenderCellParams<AdminAd>) => (
-        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ height: '100%' }}>
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ height: '100%', px: 1 }}>
           <Avatar
             src={p.row.imageUrl}
             variant="rounded"
@@ -179,10 +191,33 @@ export const AdsManagementPage = () => {
             <Campaign />
           </Avatar>
           <Box sx={{ minWidth: 0 }}>
+            {p.row.badgeText && (
+              <Chip
+                label={p.row.badgeText}
+                size="small"
+                sx={{ mb: 0.3, bgcolor: p.row.accentColorHex, color: '#fff', fontSize: 10, fontWeight: 700 }}
+              />
+            )}
             <Typography variant="body2" fontWeight={600} noWrap>{p.row.title}</Typography>
-            <Chip label={p.row.badgeText} size="small" sx={{ mt: 0.5, bgcolor: p.row.accentColorHex, color: '#fff', fontSize: 10 }} />
+            {p.row.subtitle && (
+              <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 200, display: 'block' }}>
+                {p.row.subtitle}
+              </Typography>
+            )}
           </Box>
         </Stack>
+      ),
+    },
+    {
+      field: 'status',
+      headerName: 'Estado',
+      width: 120,
+      renderCell: (p: GridRenderCellParams<AdminAd>) => (
+        <Chip
+          label={STATUS_LABELS[p.row.status] || p.row.status}
+          color={STATUS_COLORS[p.row.status] || 'default'}
+          size="small"
+        />
       ),
     },
     {
@@ -208,7 +243,7 @@ export const AdsManagementPage = () => {
     {
       field: 'startDate',
       headerName: 'Fechas',
-      width: 160,
+      width: 170,
       renderCell: (p: GridRenderCellParams<AdminAd>) => (
         <Box>
           <Typography variant="caption" display="block">Inicio: {p.row.startDate}</Typography>
@@ -221,7 +256,7 @@ export const AdsManagementPage = () => {
     {
       field: 'isActive',
       headerName: 'Activo',
-      width: 90,
+      width: 80,
       renderCell: (p: GridRenderCellParams<AdminAd>) => (
         <Tooltip title={p.row.isActive ? 'Desactivar' : 'Activar'}>
           <IconButton size="small" onClick={() => handleToggle(p.row)} color={p.row.isActive ? 'success' : 'default'}>
@@ -233,11 +268,11 @@ export const AdsManagementPage = () => {
     {
       field: 'actions',
       headerName: 'Acciones',
-      width: 120,
+      width: 110,
       sortable: false,
       renderCell: (p: GridRenderCellParams<AdminAd>) => (
         <Stack direction="row" spacing={0.5} alignItems="center" sx={{ height: '100%' }}>
-            <Tooltip title="Editar">
+          <Tooltip title="Editar">
             <IconButton size="small" onClick={() => openEdit(p.row)}>
               <Edit fontSize="small" />
             </IconButton>
@@ -260,7 +295,7 @@ export const AdsManagementPage = () => {
       notificationsVariant="professional"
       notificationsViewAllPath={notificationsViewAllPath}
     >
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ px: 5, py: 4 }}>
         {/* Header */}
         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
           <Stack direction="row" spacing={2} alignItems="center">
@@ -278,7 +313,7 @@ export const AdsManagementPage = () => {
         </Stack>
 
         {/* Filtro */}
-        <Stack direction="row" spacing={1} mb={2}>
+        <Stack direction="row" spacing={1} mb={1.5}>
           {(['all', 'active', 'inactive'] as const).map((f) => (
             <Chip
               key={f}
@@ -296,15 +331,21 @@ export const AdsManagementPage = () => {
             rows={filtered}
             columns={columns}
             loading={isLoading}
-            rowHeight={72}
+            rowHeight={80}
             initialState={{ pagination: { paginationModel: { page: 0, pageSize: 10 } } }}
             pageSizeOptions={[10, 20, 50]}
             disableColumnResize
             disableRowSelectionOnClick
             sx={{
               border: 'none',
-              '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
+              '& .MuiDataGrid-cell': {
+                display: 'flex',
+                alignItems: 'center',
+                px: 1.5,
+              },
               '& .MuiDataGrid-cell:focus': { outline: 'none' },
+              '& .MuiDataGrid-columnHeader': { px: 1.5 },
+              '& .MuiDataGrid-columnHeaderTitle': { fontWeight: 700 },
             }}
           />
         </Box>
