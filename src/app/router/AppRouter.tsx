@@ -14,6 +14,7 @@ import { ClinicRoute } from "./ClinicRoute";
 import { DoctorRoute } from "./DoctorRoute";
 import { LaboratoryRoute } from "./LaboratoryRoute";
 import { SupplyRoute } from "./SupplyRoute";
+import { RoleRoute } from "./RoleRoute";
 
 // Layouts
 import { AppLayout } from "../../shared/layouts/AppLayout";
@@ -115,7 +116,14 @@ export const AppRouter = () => {
         </Route>
 
         {/* --- Panel de Administrador --- */}
-        <Route path="/admin" element={<Outlet />}>
+        <Route 
+          path="/admin" 
+          element={
+            <RoleRoute allowedRoles={["admin"]}>
+              <Outlet />
+            </RoleRoute>
+          }
+        >
           <Route path="dashboard" element={<AdminDashboardPage />} />
           <Route path="requests" element={<RequestsPage />} />
           <Route path="ad-requests" element={<AdRequestsPage />} />
@@ -181,7 +189,14 @@ export const AppRouter = () => {
         </Route>
 
         {/* --- RUTAS DE PROVEEDORES (Estructura Anidada) --- */}
-        <Route path="/provider" element={<Outlet />}>
+        <Route 
+          path="/provider" 
+          element={
+            <RoleRoute allowedRoles={["provider", "patient", "profesional"]}>
+              <Outlet />
+            </RoleRoute>
+          }
+        >
           {/* 1. Panel Ambulancia */}
           <Route path="ambulance">
             <Route path="dashboard" element={<AmbulanceDashboardPage />} />
