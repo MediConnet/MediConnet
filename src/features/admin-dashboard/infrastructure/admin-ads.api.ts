@@ -55,6 +55,6 @@ export const deleteAdminAdAPI = async (id: string): Promise<void> => {
 };
 
 export const toggleAdminAdAPI = async (id: string): Promise<boolean> => {
-  const res = await httpClient.patch<{ success: boolean; data: { isActive: boolean } }>(`/admin/ads/${id}/toggle`);
+  const res = await httpClient.put<{ success: boolean; data: { isActive: boolean } }>(`/admin/ads/${id}/toggle`);
   return extractData(res).isActive;
 };
