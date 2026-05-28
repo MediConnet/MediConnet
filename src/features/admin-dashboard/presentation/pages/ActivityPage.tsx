@@ -67,11 +67,29 @@ export const ActivityPage = () => {
             <Avatar sx={{ bgcolor: config.colorBg, color: config.colorText, width: 36, height: 36 }}>
               {config.icon}
             </Avatar>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography variant="body2" fontWeight={500} noWrap>
+            <Box
+              sx={{
+                minWidth: 0,
+                px: '5px',
+                py: '5px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '5px',
+              }}
+            >
+              <Typography
+                variant="body2"
+                fontWeight={500}
+                noWrap
+              >
                 {params.row.title}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                noWrap
+              >
                 Por: {params.row.actor} &bull; {params.row.date}
               </Typography>
             </Box>

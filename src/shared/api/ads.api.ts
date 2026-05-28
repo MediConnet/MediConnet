@@ -1,5 +1,6 @@
 import type { Ad } from "../domain/Ad.entity";
-import { httpClient } from "../lib/http";
+import type { PaginatedResponse } from "../types/pagination";
+import { httpClient, extractData } from "../lib/http";
 
 export interface CreateAdParams {
   label: string;
@@ -88,6 +89,42 @@ export const updateAdAPI = async (
   if (params.endDate !== undefined) payload.end_date = params.endDate;
 
   await httpClient.put(`/ads/${id}`, payload);
+};
+
+export const getMyPaginatedAdsAPI = async (
+  params?: { page?: number; limit?: number; status?: string }
+): Promise<PaginatedResponse<Ad>> => {
+  const searchParams = new URLSearchParams();
+  searchParams.set("mode", "all");
+  if (params?.page) searchParams.set("page", String(params.page));
+  if (params?.limit) searchParams.set("limit", String(params.limit));
+  if (params?.status) searchParams.set("status", params.status);
+
+  const response = await httpClient.get<any>(`/ads?${searchParams.toString()}`);
+  const raw = extractData(response);
+
+  // Normalize: el backend puede devolver { data: [...], pagination } o un array plano
+  if (Array.isArray(raw)) {
+    return {
+      data: raw,
+      pagination: {
+        total: raw.length,
+        page: params?.page ?? 1,
+        limit: params?.limit ?? (raw.length || 10),
+        totalPages: Math.ceil(raw.length / (params?.limit ?? (raw.length || 10))),
+      },
+    };
+  }
+
+  return {
+    data: raw?.data ?? [],
+    pagination: raw?.pagination ?? {
+      total: 0,
+      page: params?.page ?? 1,
+      limit: params?.limit ?? 10,
+      totalPages: 0,
+    },
+  };
 };
 
 export const getMyAdsAPI = async (filters?: MyAdsFilters): Promise<Ad[]> => {

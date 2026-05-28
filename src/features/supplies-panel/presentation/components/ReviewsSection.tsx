@@ -3,7 +3,7 @@ import { useSupplyPanelReviews } from "../hooks/useSupply";
 import { Box, Typography, CircularProgress, Alert } from "@mui/material";
 
 export const ReviewsSection = () => {
-  const { reviews, loading } = useSupplyPanelReviews();
+  const { reviews = [], loading } = useSupplyPanelReviews();
 
   if (loading) {
     return (

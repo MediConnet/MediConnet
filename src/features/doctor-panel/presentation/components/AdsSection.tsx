@@ -5,10 +5,10 @@ import {
   HourglassEmpty,
   Send,
 } from "@mui/icons-material";
-import { Alert, Snackbar } from "@mui/material";
-import { useEffect, useState } from "react";
+import { Alert, Snackbar, Box, Typography, Chip } from "@mui/material";
+import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import { useState } from "react";
 
-// --- RECURSOS COMPARTIDOS ---
 import {
   createAdAPI,
   type CreateAdParams,
@@ -17,6 +17,12 @@ import { AdsEmptyState } from "../../../../shared/components/AdsEmptyState";
 import { CreateAdModal } from "../../../../shared/components/modals/CreateAdModal";
 import { PromotionalBanner } from "../../../../shared/components/PromotionalBanner";
 import { useAdRequest } from "../../../../shared/hooks/useAdRequest";
+
+const STATUS_LABELS: Record<string, { label: string; color: "success" | "warning" | "error" | "default" }> = {
+  APPROVED: { label: "Aprobado", color: "success" },
+  PENDING: { label: "Pendiente", color: "warning" },
+  REJECTED: { label: "Rechazado", color: "error" },
+};
 
 export const AdsSection = () => {
   const {
@@ -36,21 +42,8 @@ export const AdsSection = () => {
     message: string;
   } | null>(null);
 
-  useEffect(() => {
-    if (!activeAd || !activeAd.endDate) return;
+  const adsList = activeAd ? [activeAd] : [];
 
-    const checkExpiration = () => {
-      const now = new Date().getTime();
-      const endDate = new Date(activeAd.endDate!).getTime();
-      if (endDate < now) refetch();
-    };
-
-    const interval = setInterval(checkExpiration, 60000);
-    checkExpiration();
-    return () => clearInterval(interval);
-  }, [activeAd?.endDate, refetch]);
-
-  // --- MANEJADOR DE CREACIÓN (Adaptado a Props del Modal) ---
   const handleRequestPermission = async (adData: {
     label: string;
     discount: string;
@@ -62,7 +55,6 @@ export const AdsSection = () => {
   }) => {
     setIsCreating(true);
     try {
-      // Mapeo de datos
       const apiPayload: CreateAdParams = {
         label: adData.label,
         discount: adData.discount,
@@ -94,7 +86,56 @@ export const AdsSection = () => {
 
   const handleCloseFeedback = () => setFeedback(null);
 
-  const adsList = activeAd ? [activeAd] : [];
+  const columns: GridColDef[] = [
+    {
+      field: "badge_text",
+      headerName: "Título",
+      flex: 1,
+      minWidth: 150,
+      renderCell: (params) => <Typography fontWeight={600}>{params.value || params.row.label || "—"}</Typography>,
+    },
+    {
+      field: "title",
+      headerName: "Descuento",
+      width: 130,
+      renderCell: (params) => <Typography color="success.main" fontWeight={600}>{params.value || params.row.discount || "—"}</Typography>,
+    },
+    {
+      field: "subtitle",
+      headerName: "Descripción",
+      flex: 1.5,
+      minWidth: 200,
+    },
+    {
+      field: "status",
+      headerName: "Estado",
+      width: 130,
+      align: "center",
+      renderCell: (params) => {
+        const status = params.value as string;
+        const config = STATUS_LABELS[status] || { label: status, color: "default" as const };
+        return <Chip label={config.label} color={config.color} size="small" />;
+      },
+    },
+    {
+      field: "start_date",
+      headerName: "Inicio",
+      width: 110,
+      valueGetter: (_value, row) => {
+        const d = row.start_date || row.startDate;
+        return d ? new Date(d).toLocaleDateString("es-ES") : "—";
+      },
+    },
+    {
+      field: "end_date",
+      headerName: "Fin",
+      width: 110,
+      valueGetter: (_value, row) => {
+        const d = row.end_date || row.endDate;
+        return d ? new Date(d).toLocaleDateString("es-ES") : "—";
+      },
+    },
+  ];
 
   if (isLoading) {
     return (
@@ -109,7 +150,6 @@ export const AdsSection = () => {
   return (
     <>
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        {/* HEADER: Siempre visible */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="text-xl font-bold text-gray-800">
@@ -120,7 +160,6 @@ export const AdsSection = () => {
             </p>
           </div>
 
-          {/* BOTÓN: Lógica unificada */}
           <button
             onClick={() => setIsCreateAdModalOpen(true)}
             disabled={!!hasActiveAd || !!pendingRequest || isCreating}
@@ -153,9 +192,6 @@ export const AdsSection = () => {
           </button>
         </div>
 
-        {/* --- ALERTAS DE ESTADO --- */}
-
-        {/* Alerta: Solicitud Pendiente */}
         {pendingRequest && (
           <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
             <HourglassEmpty className="text-amber-600 mt-0.5" />
@@ -164,14 +200,12 @@ export const AdsSection = () => {
                 Solicitud pendiente de aprobación
               </h4>
               <p className="text-sm text-amber-700 mt-1">
-                Tu solicitud para crear un anuncio está siendo revisada por el
-                administrador.
+                Tu solicitud para crear un anuncio está siendo revisada por el administrador.
               </p>
             </div>
           </div>
         )}
 
-        {/* Alerta: Anuncio Activo */}
         {hasActiveAd && (
           <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex items-start gap-3">
             <CheckCircle className="text-emerald-600 mt-0.5" />
@@ -186,33 +220,46 @@ export const AdsSection = () => {
           </div>
         )}
 
-        {/* --- CONTENIDO PRINCIPAL (Lista o Empty State) --- */}
-
-        {adsList.length === 0 && !hasActiveAd && !pendingRequest ? (
+        {adsList.length === 0 && !isLoading ? (
           <div className="mt-2">
             <AdsEmptyState />
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {adsList.map((ad) => (
-              <div key={ad.id} className="w-full">
-                <PromotionalBanner
-                  label={ad.label || ad.badge_text || ""}
-                  discount={ad.discount || ad.title || ""}
-                  description={ad.description || ad.subtitle || ""}
-                  buttonText={ad.buttonText || ad.action_text || ""}
-                  imageUrl={ad.imageUrl || ad.image_url || undefined}
-                  endDate={ad.endDate || ad.end_date || undefined}
-                  backgroundColor={ad.bg_color_hex}
-                  accentColor={ad.accent_color_hex}
-                />
-              </div>
-            ))}
+          <Box sx={{ height: 400, width: "100%" }}>
+            <DataGrid
+              rows={adsList}
+              columns={columns}
+              loading={isLoading}
+              pageSizeOptions={[5]}
+              disableRowSelectionOnClick
+              getRowId={(row) => row.id}
+              sx={{ border: "none" }}
+              hideFooterPagination
+            />
+          </Box>
+        )}
+
+        {hasActiveAd && adsList[0] && (
+          <div className="mt-6">
+            <Typography variant="h6" fontWeight={600} sx={{ mb: 2, fontSize: "0.95rem" }}>
+              Vista previa
+            </Typography>
+            <div className="max-w-md">
+              <PromotionalBanner
+                label={adsList[0].label || adsList[0].badge_text || ""}
+                discount={adsList[0].discount || adsList[0].title || ""}
+                description={adsList[0].description || adsList[0].subtitle || ""}
+                buttonText={adsList[0].buttonText || adsList[0].action_text || ""}
+                imageUrl={adsList[0].imageUrl || adsList[0].image_url || undefined}
+                endDate={adsList[0].endDate || adsList[0].end_date || undefined}
+                backgroundColor={adsList[0].bg_color_hex}
+                accentColor={adsList[0].accent_color_hex}
+              />
+            </div>
           </div>
         )}
       </div>
 
-      {/* Modal */}
       <CreateAdModal
         open={isCreateAdModalOpen}
         onClose={() => setIsCreateAdModalOpen(false)}
@@ -220,7 +267,6 @@ export const AdsSection = () => {
         submitButtonText="Enviar solicitud"
       />
 
-      {/* Feedback Snackbar */}
       <Snackbar
         open={!!feedback}
         autoHideDuration={6000}

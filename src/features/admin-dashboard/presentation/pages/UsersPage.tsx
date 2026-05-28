@@ -203,13 +203,32 @@ export const UsersPage = () => {
           <Avatar sx={{ bgcolor: "primary.light", width: 40, height: 40, flexShrink: 0 }}>
             {getUserDisplayName(params.row).charAt(0)}
           </Avatar>
-          <Box sx={{ minWidth: 0 }}>
-            <Typography variant="body2" fontWeight={600} noWrap>
+          <Box
+            sx={{
+              minWidth: 0,
+              px: '5px', // separación izquierda y derecha
+              py: '5px', // separación arriba y abajo (opcional)
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '5px', // separación entre los Typography
+            }}
+          >
+            <Typography
+              variant="body2"
+              fontWeight={600}
+              noWrap
+            >
               {getUserDisplayName(params.row)}
             </Typography>
+
             {(params.row.tipo || params.row.additionalInfo) && (
-              <Typography variant="caption" color="text.secondary" noWrap>
-                {params.row.additionalInfo || getRoleLabel(params.row.role, params.row.tipo)}
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                noWrap
+              >
+                {params.row.additionalInfo ||
+                  getRoleLabel(params.row.role, params.row.tipo)}
               </Typography>
             )}
           </Box>
@@ -275,8 +294,8 @@ export const UsersPage = () => {
   ];
 
   return (
-    <DashboardLayout 
-      role="ADMIN" 
+    <DashboardLayout
+      role="ADMIN"
       userProfile={CURRENT_ADMIN}
       appointments={adminAppointments}
       notificationsVariant="professional"
@@ -466,7 +485,7 @@ export const UsersPage = () => {
             )}
           </DialogContent>
           <DialogActions>
-            <Button 
+            <Button
               onClick={() => {
                 setIsDeleteModalOpen(false);
                 setUserToDelete(null);
@@ -474,8 +493,8 @@ export const UsersPage = () => {
             >
               Cancelar
             </Button>
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               color="error"
               onClick={handleConfirmDelete}
               startIcon={<Delete />}

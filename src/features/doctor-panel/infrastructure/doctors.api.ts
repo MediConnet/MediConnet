@@ -122,19 +122,19 @@ export const getDoctorPanelReviewsAPI = async (
 ): Promise<PaginatedResponse<DoctorReview>> => {
   const response = await httpClient.get<{
     success: boolean;
-    data: { reviews: DoctorReview[]; averageRating?: number; totalReviews?: number } & PaginatedResponse<DoctorReview>;
+    data: PaginatedResponse<DoctorReview>;
   }>('/doctors/reviews', { params });
 
   const data = extractData(response) as any;
-  const reviews = Array.isArray(data?.reviews) ? (data.reviews as DoctorReview[]) : [];
+  const reviews = Array.isArray(data?.data) ? (data.data as DoctorReview[]) : [];
 
   return {
     data: reviews,
-    pagination: {
-      total: data?.pagination?.total ?? reviews.length,
-      page: data?.pagination?.page ?? 1,
-      limit: data?.pagination?.limit ?? 10,
-      totalPages: data?.pagination?.totalPages ?? Math.ceil((data?.pagination?.total ?? reviews.length) / 10),
+    pagination: data?.pagination ?? {
+      total: reviews.length,
+      page: params?.page ?? 1,
+      limit: params?.limit ?? 10,
+      totalPages: Math.ceil(reviews.length / (params?.limit ?? 10)),
     },
   };
 };

@@ -39,8 +39,8 @@ export const AppointmentsSection = () => {
   // 1. Cargar citas desde el Backend
   const fetchAppointments = async () => {
     try {
-      const data = await getAppointmentsAPI();
-      setAppointments(data);
+      const result = await getAppointmentsAPI();
+      setAppointments(result.data ?? []);
     } catch (error) {
       console.error("Error cargando citas:", error);
     } finally {

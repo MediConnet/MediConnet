@@ -4,15 +4,8 @@ import {
   Card,
   CardContent,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
   Button,
+  Chip,
   Alert,
   CircularProgress,
 } from '@mui/material';
@@ -21,6 +14,7 @@ import {
   CheckCircle,
   HourglassEmpty,
 } from '@mui/icons-material';
+import { DataGrid, type GridColDef, type GridPaginationModel } from '@mui/x-data-grid';
 import Grid2 from '@mui/material/Grid2';
 import { useState, useMemo } from 'react';
 import { useClinicPayments } from '../hooks/useClinicPayments';
@@ -35,14 +29,14 @@ interface ClinicPaymentsSectionProps {
 }
 
 export const ClinicPaymentsSection = ({ clinicId }: ClinicPaymentsSectionProps) => {
-  const { clinicPayments, doctorPayments, loading, error, distributePayment, payDoctor } =
+  const { clinicPayments, doctorPayments, loading, error, clinicTotal, page, setPage, limit, setLimit, distributePayment, payDoctor } =
     useClinicPayments(clinicId);
   const { doctors } = useClinicDoctors(clinicId);
 
   const [distributionModalOpen, setDistributionModalOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<ClinicPayment | null>(null);
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: limit });
 
-  // Calcular totales
   const totals = useMemo(() => {
     const totalReceived = clinicPayments.reduce((sum, p) => sum + p.netAmount, 0);
     const totalPending = clinicPayments
@@ -51,7 +45,6 @@ export const ClinicPaymentsSection = ({ clinicId }: ClinicPaymentsSectionProps) 
     const totalPaid = clinicPayments
       .filter((p) => p.status === 'paid')
       .reduce((sum, p) => sum + p.netAmount, 0);
-
     return { totalReceived, totalPending, totalPaid };
   }, [clinicPayments]);
 
@@ -66,6 +59,71 @@ export const ClinicPaymentsSection = ({ clinicId }: ClinicPaymentsSectionProps) 
     setDistributionModalOpen(false);
     setSelectedPayment(null);
   };
+
+  const handlePaginationChange = (model: GridPaginationModel) => {
+    setPaginationModel(model);
+    setPage(model.page + 1);
+    setLimit(model.pageSize);
+  };
+
+  const columns: GridColDef[] = [
+    {
+      field: "createdAt",
+      headerName: "Fecha",
+      width: 120,
+      valueGetter: (_value, row) => new Date(row.createdAt).toLocaleDateString('es-ES'),
+    },
+    {
+      field: "totalAmount",
+      headerName: "Total Cobrado",
+      width: 140,
+      align: "right",
+      renderCell: (params) => <Typography fontWeight={600}>{formatMoney(params.value)}</Typography>,
+    },
+    {
+      field: "appCommission",
+      headerName: "Comisión App",
+      width: 130,
+      align: "right",
+      renderCell: (params) => <Typography color="text.secondary">{formatMoney(params.value)}</Typography>,
+    },
+    {
+      field: "netAmount",
+      headerName: "Total Neto",
+      width: 130,
+      align: "right",
+      renderCell: (params) => <Typography fontWeight={600} color="#10b981">{formatMoney(params.value)}</Typography>,
+    },
+    {
+      field: "status",
+      headerName: "Estado",
+      width: 120,
+      align: "center",
+      renderCell: (params) => (
+        <Chip
+          label={params.value === 'paid' ? 'Pagado' : 'Pendiente'}
+          color={params.value === 'paid' ? 'success' : 'warning'}
+          size="small"
+        />
+      ),
+    },
+    {
+      field: "actions",
+      headerName: "Acciones",
+      width: 130,
+      align: "center",
+      sortable: false,
+      renderCell: (params) => (
+        !params.row.isDistributed ? (
+          <Button variant="contained" size="small" onClick={() => handleDistributeClick(params.row)} sx={{ textTransform: 'none' }}>
+            Distribuir
+          </Button>
+        ) : (
+          <Chip label="Distribuido" color="success" size="small" />
+        )
+      ),
+    },
+  ];
 
   if (loading) {
     return (
@@ -85,7 +143,6 @@ export const ClinicPaymentsSection = ({ clinicId }: ClinicPaymentsSectionProps) 
 
   return (
     <Box>
-      {/* Header */}
       <Box mb={3}>
         <Typography variant="h5" fontWeight={700} mb={1}>
           Gestión de Pagos
@@ -95,7 +152,6 @@ export const ClinicPaymentsSection = ({ clinicId }: ClinicPaymentsSectionProps) 
         </Typography>
       </Box>
 
-      {/* Resumen de Totales */}
       <Grid2 container spacing={3} mb={4}>
         <Grid2 size={{ xs: 12, sm: 4 }}>
           <Card elevation={0} sx={{ bgcolor: '#f0fdfa', border: '1px solid #d1fae5' }}>
@@ -103,12 +159,8 @@ export const ClinicPaymentsSection = ({ clinicId }: ClinicPaymentsSectionProps) 
               <Stack direction="row" spacing={2} alignItems="center">
                 <AttachMoney sx={{ color: '#14b8a6', fontSize: 32 }} />
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Total Recibido
-                  </Typography>
-                  <Typography variant="h6" fontWeight={700} color="#14b8a6">
-                    {formatMoney(totals.totalReceived)}
-                  </Typography>
+                  <Typography variant="caption" color="text.secondary">Total Recibido</Typography>
+                  <Typography variant="h6" fontWeight={700} color="#14b8a6">{formatMoney(totals.totalReceived)}</Typography>
                 </Box>
               </Stack>
             </CardContent>
@@ -120,12 +172,8 @@ export const ClinicPaymentsSection = ({ clinicId }: ClinicPaymentsSectionProps) 
               <Stack direction="row" spacing={2} alignItems="center">
                 <HourglassEmpty sx={{ color: '#f59e0b', fontSize: 32 }} />
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Pendiente
-                  </Typography>
-                  <Typography variant="h6" fontWeight={700} color="#f59e0b">
-                    {formatMoney(totals.totalPending)}
-                  </Typography>
+                  <Typography variant="caption" color="text.secondary">Pendiente</Typography>
+                  <Typography variant="h6" fontWeight={700} color="#f59e0b">{formatMoney(totals.totalPending)}</Typography>
                 </Box>
               </Stack>
             </CardContent>
@@ -137,12 +185,8 @@ export const ClinicPaymentsSection = ({ clinicId }: ClinicPaymentsSectionProps) 
               <Stack direction="row" spacing={2} alignItems="center">
                 <CheckCircle sx={{ color: '#10b981', fontSize: 32 }} />
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Pagado
-                  </Typography>
-                  <Typography variant="h6" fontWeight={700} color="#10b981">
-                    {formatMoney(totals.totalPaid)}
-                  </Typography>
+                  <Typography variant="caption" color="text.secondary">Pagado</Typography>
+                  <Typography variant="h6" fontWeight={700} color="#10b981">{formatMoney(totals.totalPaid)}</Typography>
                 </Box>
               </Stack>
             </CardContent>
@@ -150,105 +194,32 @@ export const ClinicPaymentsSection = ({ clinicId }: ClinicPaymentsSectionProps) 
         </Grid2>
       </Grid2>
 
-      {/* Pagos Recibidos del Administrador */}
       <Box mb={4}>
         <Typography variant="h6" fontWeight={700} mb={2}>
           Pagos Recibidos del Administrador
         </Typography>
-
-        <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #e5e7eb' }}>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: '#f9fafb' }}>
-                <TableCell sx={{ fontWeight: 600 }}>Fecha</TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="right">
-                  Total Cobrado
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="right">
-                  Comisión App
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="right">
-                  Total Neto
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="center">
-                  Estado
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="center">
-                  Acciones
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {clinicPayments.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                    <Typography color="text.secondary">
-                      No hay pagos registrados
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                clinicPayments.map((payment) => (
-                  <TableRow key={payment.id} hover>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {new Date(payment.createdAt).toLocaleDateString('es-ES')}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Typography fontWeight={600}>
-                        {formatMoney(payment.totalAmount)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Typography color="text.secondary">
-                        {formatMoney(payment.appCommission)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Typography fontWeight={600} color="#10b981">
-                        {formatMoney(payment.netAmount)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="center">
-                      <Chip
-                        label={payment.status === 'paid' ? 'Pagado' : 'Pendiente'}
-                        color={payment.status === 'paid' ? 'success' : 'warning'}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      {!payment.isDistributed ? (
-                        <Button
-                          variant="contained"
-                          size="small"
-                          onClick={() => handleDistributeClick(payment)}
-                          sx={{ textTransform: 'none' }}
-                        >
-                          Distribuir
-                        </Button>
-                      ) : (
-                        <Chip label="Distribuido" color="success" size="small" />
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <Box sx={{ height: 500, width: "100%" }}>
+          <DataGrid
+            rows={clinicPayments}
+            columns={columns}
+            loading={loading}
+            paginationMode="server"
+            rowCount={clinicTotal}
+            paginationModel={paginationModel}
+            onPaginationModelChange={handlePaginationChange}
+            pageSizeOptions={[5, 10, 20]}
+            disableRowSelectionOnClick
+            getRowId={(row) => row.id}
+            sx={{ border: "1px solid #e5e7eb" }}
+          />
+        </Box>
       </Box>
 
-      {/* Pagos a Médicos */}
       <DoctorPaymentsList payments={doctorPayments} onPayDoctor={payDoctor} />
 
-      {/* Modal de Distribución */}
       <PaymentDistributionModal
         open={distributionModalOpen}
-        onClose={() => {
-          setDistributionModalOpen(false);
-          setSelectedPayment(null);
-        }}
+        onClose={() => { setDistributionModalOpen(false); setSelectedPayment(null); }}
         payment={selectedPayment}
         doctors={doctors}
         onDistribute={handleDistribute}
