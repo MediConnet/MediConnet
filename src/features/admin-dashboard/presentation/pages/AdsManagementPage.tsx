@@ -27,8 +27,8 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { DataGrid, type GridColDef, type GridRenderCellParams } from '@mui/x-data-grid';
-import { useState } from 'react';
+import { DataGrid, type GridColDef, type GridRenderCellParams, type GridPaginationModel } from '@mui/x-data-grid';
+import { useState, useMemo } from 'react';
 import { DashboardLayout } from '../../../../shared/layouts/DashboardLayout';
 import type { CreateAdminAdPayload, AdminAd } from '../../infrastructure/admin-ads.api';
 import { useAdminAds } from '../hooks/useAdminAds';
@@ -81,7 +81,13 @@ function toBase64(file: File): Promise<string> {
 }
 
 export const AdsManagementPage = () => {
-  const { ads, isLoading, createAd, updateAd, deleteAd, toggleAd } = useAdminAds();
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
+  const { ads, pagination, isLoading, createAd, updateAd, deleteAd, toggleAd, refetch } = useAdminAds();
+
+  const handlePaginationChange = (newModel: GridPaginationModel) => {
+    setPaginationModel(newModel);
+    refetch(newModel.page + 1, newModel.pageSize);
+  };
   const { appointments, notificationsViewAllPath } = useAdminNotificationsLayout();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -332,7 +338,10 @@ export const AdsManagementPage = () => {
             columns={columns}
             loading={isLoading}
             rowHeight={80}
-            initialState={{ pagination: { paginationModel: { page: 0, pageSize: 10 } } }}
+            paginationMode="server"
+            rowCount={pagination.total}
+            paginationModel={paginationModel}
+            onPaginationModelChange={handlePaginationChange}
             pageSizeOptions={[10, 20, 50]}
             disableColumnResize
             disableRowSelectionOnClick

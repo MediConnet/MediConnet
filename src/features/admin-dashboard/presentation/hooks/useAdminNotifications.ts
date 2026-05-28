@@ -13,8 +13,11 @@ export interface AdminNotification {
 }
 
 export const useAdminNotifications = () => {
-  const { data: providerRequests = [], isLoading: loadingRequests } = useProviderRequests();
-  const { data: adRequests = [], isLoading: loadingAds } = useAdRequests();
+  const { data: providerResult, isLoading: loadingRequests } = useProviderRequests({ status: "PENDING", limit: 50 });
+  const { data: adResult, isLoading: loadingAds } = useAdRequests({ status: "PENDING", limit: 50 });
+
+  const providerRequests = providerResult?.data ?? [];
+  const adRequests = adResult?.data ?? [];
 
   const notifications = useMemo(() => {
     const notifs: AdminNotification[] = [];

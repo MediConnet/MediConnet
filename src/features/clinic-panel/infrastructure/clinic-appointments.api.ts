@@ -1,4 +1,5 @@
 import { httpClient, extractData } from '../../../shared/lib/http';
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 import type { ClinicAppointment, AppointmentStatus } from '../domain/appointment.entity';
 
 /**
@@ -6,16 +7,9 @@ import type { ClinicAppointment, AppointmentStatus } from '../domain/appointment
  * Endpoint: GET /api/clinics/appointments
  */
 export const getClinicAppointmentsAPI = async (
-  date?: string,
-  doctorId?: string,
-  status?: AppointmentStatus
-): Promise<ClinicAppointment[]> => {
-  const params: any = {};
-  if (date) params.date = date;
-  if (doctorId) params.doctorId = doctorId;
-  if (status) params.status = status;
-
-  const response = await httpClient.get<{ success: boolean; data: ClinicAppointment[] }>(
+  params?: { page?: number; limit?: number; date?: string; doctorId?: string; status?: AppointmentStatus }
+): Promise<PaginatedResponse<ClinicAppointment>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<ClinicAppointment> }>(
     '/clinics/appointments',
     { params }
   );
@@ -41,9 +35,12 @@ export const updateAppointmentStatusAPI = async (
  * API: Obtener citas del día para recepción
  * Endpoint: GET /api/clinics/reception/today
  */
-export const getTodayReceptionAppointmentsAPI = async (): Promise<ClinicAppointment[]> => {
-  const response = await httpClient.get<{ success: boolean; data: ClinicAppointment[] }>(
-    '/clinics/reception/today'
+export const getTodayReceptionAppointmentsAPI = async (
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<ClinicAppointment>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<ClinicAppointment> }>(
+    '/clinics/reception/today',
+    { params }
   );
   return extractData(response);
 };

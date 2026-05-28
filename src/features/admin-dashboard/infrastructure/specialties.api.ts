@@ -1,9 +1,11 @@
 import { httpClient, extractData } from '../../../shared/lib/http';
 import type { Specialty } from '../domain/specialty.entity';
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 
-export const getSpecialtiesAPI = async (): Promise<Specialty[]> => {
-  const response = await httpClient.get<{ success: boolean; data: Specialty[] }>(
-    '/admin/specialties'
+export const getSpecialtiesAPI = async (params?: { page?: number; limit?: number }): Promise<PaginatedResponse<Specialty>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<Specialty> }>(
+    '/admin/specialties',
+    { params }
   );
   return extractData(response);
 };

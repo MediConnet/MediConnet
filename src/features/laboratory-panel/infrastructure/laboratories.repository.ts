@@ -1,4 +1,5 @@
 import { httpClient, extractData } from '../../../shared/lib/http';
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 import type { LaboratoryDashboard } from "../domain/LaboratoryDashboard.entity";
 import type { LaboratoryReview } from "../domain/LaboratoryReview.entity";
 
@@ -18,19 +19,13 @@ export const getLaboratoryDashboardAPI = async (userId: string): Promise<Laborat
  * Endpoint: GET /api/laboratories/reviews
  * Requiere: Bearer token
  */
-export const getLaboratoryPanelReviewsAPI = async (): Promise<{
-  reviews: LaboratoryReview[];
-  averageRating: number;
-  totalReviews: number;
-}> => {
+export const getLaboratoryPanelReviewsAPI = async (
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<LaboratoryReview>> => {
   const response = await httpClient.get<{
     success: boolean;
-    data: {
-      reviews: LaboratoryReview[];
-      averageRating: number;
-      totalReviews: number;
-    };
-  }>('/laboratories/reviews');
+    data: PaginatedResponse<LaboratoryReview>;
+  }>('/laboratories/reviews', { params });
   return extractData(response);
 };
 

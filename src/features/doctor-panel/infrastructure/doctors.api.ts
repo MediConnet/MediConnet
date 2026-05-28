@@ -1,4 +1,5 @@
 import { extractData, httpClient } from '../../../shared/lib/http';
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 import type { DoctorDashboard, PaymentMethod, ProfileStatus, WorkSchedule } from '../domain/DoctorDashboard.entity';
 import { PAYMENT_METHOD_BACKEND } from '../../../shared/config/domain.constants';
 
@@ -115,30 +116,26 @@ export interface DoctorReview {
  * API: Obtener reseñas del doctor (panel profesional)
  * Endpoint: GET /api/doctors/reviews
  * Requiere: Bearer token
- *
- * Nota: backend puede responder placeholder con { reviews: [] }.
  */
-export const getDoctorPanelReviewsAPI = async (): Promise<{
-  reviews: DoctorReview[];
-  averageRating: number;
-  totalReviews: number;
-}> => {
+export const getDoctorPanelReviewsAPI = async (
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<DoctorReview>> => {
   const response = await httpClient.get<{
     success: boolean;
-    data: {
-      reviews: DoctorReview[];
-      averageRating?: number;
-      totalReviews?: number;
-    };
-  }>('/doctors/reviews');
+    data: { reviews: DoctorReview[]; averageRating?: number; totalReviews?: number } & PaginatedResponse<DoctorReview>;
+  }>('/doctors/reviews', { params });
 
   const data = extractData(response) as any;
   const reviews = Array.isArray(data?.reviews) ? (data.reviews as DoctorReview[]) : [];
 
   return {
-    reviews,
-    averageRating: Number(data?.averageRating ?? 0),
-    totalReviews: Number(data?.totalReviews ?? reviews.length),
+    data: reviews,
+    pagination: {
+      total: data?.pagination?.total ?? reviews.length,
+      page: data?.pagination?.page ?? 1,
+      limit: data?.pagination?.limit ?? 10,
+      totalPages: data?.pagination?.totalPages ?? Math.ceil((data?.pagination?.total ?? reviews.length) / 10),
+    },
   };
 };
 

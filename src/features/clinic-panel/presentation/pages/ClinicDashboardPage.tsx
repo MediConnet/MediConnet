@@ -91,8 +91,8 @@ export const ClinicDashboardPage = () => {
     const loadAgendaNotifications = async () => {
       try {
         if (!clinic?.id) return;
-        const appts = await getClinicAppointmentsUseCase(clinic.id, today);
-        setAgendaAppointments(Array.isArray(appts) ? appts : []);
+        const result = await getClinicAppointmentsUseCase(clinic.id, { page: 1, limit: 50, date: today });
+        setAgendaAppointments(result?.data ?? []);
       } catch (e) {
         // No bloquear UI por notificaciones
         setAgendaAppointments([]);

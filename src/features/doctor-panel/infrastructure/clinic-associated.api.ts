@@ -1,4 +1,5 @@
 import { httpClient, extractData } from '../../../shared/lib/http';
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 import type { 
   ClinicInfo, 
   ClinicAssociatedDoctorProfile,
@@ -61,9 +62,12 @@ export const updateClinicAssociatedProfileAPI = async (
  * API: Obtener mensajes con recepción
  * Endpoint: GET /api/doctors/clinic/reception/messages
  */
-export const getReceptionMessagesAPI = async (): Promise<ReceptionMessage[]> => {
-  const response = await httpClient.get<{ success: boolean; data: ReceptionMessage[] }>(
-    '/doctors/clinic/reception/messages'
+export const getReceptionMessagesAPI = async (
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<ReceptionMessage>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<ReceptionMessage> }>(
+    '/doctors/clinic/reception/messages',
+    { params }
   );
   return extractData(response);
 };
@@ -97,9 +101,12 @@ export const markMessagesAsReadAPI = async (messageIds: string[]): Promise<void>
  * API: Obtener solicitudes de bloqueo de fecha
  * Endpoint: GET /api/doctors/clinic/date-blocks
  */
-export const getDateBlockRequestsAPI = async (): Promise<DateBlockRequest[]> => {
-  const response = await httpClient.get<{ success: boolean; data: DateBlockRequest[] }>(
-    '/doctors/clinic/date-blocks'
+export const getDateBlockRequestsAPI = async (
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<DateBlockRequest>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<DateBlockRequest> }>(
+    '/doctors/clinic/date-blocks',
+    { params }
   );
   return extractData(response);
 };
@@ -124,9 +131,12 @@ export const requestDateBlockAPI = async (
  * API: Obtener citas del médico asociado (solo confirmadas)
  * Endpoint: GET /api/doctors/clinic/appointments
  */
-export const getClinicAssociatedAppointmentsAPI = async (): Promise<ClinicAssociatedAppointment[]> => {
-  const response = await httpClient.get<{ success: boolean; data: ClinicAssociatedAppointment[] }>(
-    '/doctors/clinic/appointments'
+export const getClinicAssociatedAppointmentsAPI = async (
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<ClinicAssociatedAppointment>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<ClinicAssociatedAppointment> }>(
+    '/doctors/clinic/appointments',
+    { params }
   );
   return extractData(response);
 };

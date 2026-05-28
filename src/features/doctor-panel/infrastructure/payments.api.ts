@@ -1,13 +1,17 @@
 import { httpClient, extractData } from '../../../shared/lib/http';
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 import type { Payment } from '../domain/Payment.entity';
 
 /**
  * API: Obtener pagos del médico (pendientes y pagados)
  * Endpoint: GET /api/doctors/payments
  */
-export const getDoctorPaymentsAPI = async (): Promise<Payment[]> => {
-  const response = await httpClient.get<{ success: boolean; data: Payment[] }>(
-    '/doctors/payments'
+export const getDoctorPaymentsAPI = async (
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<Payment>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<Payment> }>(
+    '/doctors/payments',
+    { params }
   );
   return extractData(response);
 };

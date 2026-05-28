@@ -52,8 +52,8 @@ export const ReceptionSection = ({ clinicId }: ReceptionSectionProps) => {
   useEffect(() => {
     const loadReceptionAppointments = async () => {
       try {
-        const data = await getTodayReceptionAppointmentsAPI();
-        setReceptionAppointments(data);
+        const result = await getTodayReceptionAppointmentsAPI();
+        setReceptionAppointments(result.data);
       } catch (error) {
         // Si falla, usar las citas normales filtradas por fecha
         console.warn('Error cargando citas de recepción, usando citas normales');

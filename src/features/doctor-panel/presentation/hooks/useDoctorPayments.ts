@@ -1,17 +1,42 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect, useCallback } from "react";
 import { useAuthStore } from "../../../../app/store/auth.store";
-import { getDoctorPaymentsAPI } from "../../infrastructure/doctors.api";
+import { getDoctorPaymentsAPI } from "../../infrastructure/payments.api";
+import type { Payment } from "../../domain/Payment.entity";
 
-/**
- * Hook: Obtener pagos del doctor
- */
 export const useDoctorPayments = () => {
   const { user } = useAuthStore();
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
-  return useQuery({
-    queryKey: ['doctors', 'payments', user?.id],
-    queryFn: getDoctorPaymentsAPI,
-    enabled: !!user?.id,
-    staleTime: 2 * 60 * 1000, // 2 minutos
-  });
+  const loadData = useCallback(async () => {
+    if (!user?.id) return;
+    setLoading(true);
+    try {
+      const result = await getDoctorPaymentsAPI({ page, limit });
+      setPayments(result.data);
+      setTotal(result.pagination.total);
+    } catch (error) {
+      console.error("Error cargando pagos:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id, page, limit]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  return {
+    payments,
+    loading,
+    total,
+    page,
+    setPage,
+    limit,
+    setLimit,
+    refetch: loadData,
+  };
 };

@@ -67,9 +67,11 @@ const SERVICE_COLORS: Record<string, string> = {
 };
 
 export const HistoryPage = () => {
-  // Usar el endpoint optimizado GET /api/admin/history para historial de proveedores
-  const { data: historyRequests, isLoading: isLoadingProviders } = useHistoryRequests();
-  const { data: allAdRequests, isLoading: isLoadingAds } = useAdRequests();
+  const { data: historyResult, isLoading: isLoadingProviders } = useHistoryRequests({ limit: 500 });
+  const { data: adResult, isLoading: isLoadingAds } = useAdRequests({ limit: 500 });
+
+  const historyRequests = historyResult?.data ?? [];
+  const allAdRequests = adResult?.data ?? [];
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "APPROVED" | "REJECTED" | "PENDING">("all");
   const [activeTab, setActiveTab] = useState<"providers" | "ads">("providers");

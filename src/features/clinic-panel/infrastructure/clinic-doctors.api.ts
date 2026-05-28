@@ -1,4 +1,5 @@
 import { httpClient, extractData } from '../../../shared/lib/http';
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 import type { ClinicDoctor, DoctorInvitation } from '../domain/doctor.entity';
 import type { DoctorSchedule } from '../domain/doctor-schedule.entity';
 
@@ -6,9 +7,10 @@ import type { DoctorSchedule } from '../domain/doctor-schedule.entity';
  * API: Obtener lista de médicos de la clínica
  * Endpoint: GET /api/clinics/doctors
  */
-export const getClinicDoctorsAPI = async (status?: 'active' | 'inactive' | 'all'): Promise<ClinicDoctor[]> => {
-  const params = status ? { status } : {};
-  const response = await httpClient.get<{ success: boolean; data: ClinicDoctor[] }>(
+export const getClinicDoctorsAPI = async (
+  params?: { page?: number; limit?: number; status?: 'active' | 'inactive' | 'all' }
+): Promise<PaginatedResponse<ClinicDoctor>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<ClinicDoctor> }>(
     '/clinics/doctors',
     { params }
   );

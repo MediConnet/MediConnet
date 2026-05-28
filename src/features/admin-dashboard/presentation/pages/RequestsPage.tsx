@@ -25,8 +25,9 @@ import {
   DataGrid,
   type GridColDef,
   type GridRenderCellParams,
+  type GridPaginationModel,
 } from "@mui/x-data-grid";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import type {
   ProviderRequest,
@@ -47,24 +48,30 @@ const CURRENT_ADMIN = {
 };
 
 export const RequestsPage = () => {
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
   const [serverStatusFilter, setServerStatusFilter] = useState<"all" | "PENDING" | "APPROVED" | "REJECTED">("all");
   const [serverDateFilter, setServerDateFilter] = useState("");
-  const { data: initialData, isLoading } = useProviderRequests({
+  const { data: result, isLoading } = useProviderRequests({
     status: serverStatusFilter,
     dateFrom: serverDateFilter || undefined,
+    page: paginationModel.page + 1,
+    limit: paginationModel.pageSize,
   });
+
+  const requests = useMemo(() => result?.data ?? [], [result]);
+  const pagination = useMemo(() => result?.pagination ?? { total: 0, page: 1, limit: 10, totalPages: 0 }, [result]);
+
   const queryClient = useQueryClient();
   const { appointments: adminAppointments, notificationsViewAllPath } = useAdminNotificationsLayout();
 
   const {
-    requests,
     filters,
     setSearchText,
     setStatusFilter,
     setDateFilter,
     approveRequest,
     rejectRequest,
-  } = useRequestFiltering(initialData, "all"); // Cargar y mostrar todas por defecto
+  } = useRequestFiltering(requests, "all");
 
   const [selectedRequest, setSelectedRequest] =
     useState<ProviderRequest | null>(null);
@@ -80,11 +87,13 @@ export const RequestsPage = () => {
   const handleStatusFilterChange = (value: string) => {
     setStatusFilter(value);
     setServerStatusFilter((value as "all" | "PENDING" | "APPROVED" | "REJECTED") || "all");
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
   };
 
   const handleDateFilterChange = (value: string) => {
     setDateFilter(value);
     setServerDateFilter(value);
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
   };
 
   // --- Handlers UI ---
@@ -475,9 +484,10 @@ export const RequestsPage = () => {
             columns={columns}
             loading={isLoading}
             rowHeight={80}
-            initialState={{
-              pagination: { paginationModel: { page: 0, pageSize: 10 } },
-            }}
+            paginationMode="server"
+            rowCount={pagination.total}
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
             pageSizeOptions={[5, 10, 20]}
             disableColumnResize
             disableRowSelectionOnClick

@@ -343,6 +343,11 @@ export const CLINIC_MENU: MenuItem[] = [
     path: "/clinic/dashboard?tab=bankAccount",
   },
   {
+    icon: <Campaign />,
+    label: "Anuncios",
+    path: "/clinic/ads",
+  },
+  {
     icon: <Settings />,
     label: "Configuración de Horarios",
     path: "/clinic/dashboard?tab=schedules",

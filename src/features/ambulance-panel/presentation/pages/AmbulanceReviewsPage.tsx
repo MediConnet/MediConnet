@@ -13,7 +13,7 @@ export const AmbulanceReviewsPage = () => {
   // 1. Hook del perfil para los KPIs
   const { profile, isLoading: isLoadingProfile } = useAmbulanceProfile();
   // 2. Hook de reseñas para la lista
-  const { reviews, isLoading: isLoadingReviews } = useAmbulanceReviews();
+  const { reviews, loading: isLoadingReviews } = useAmbulanceReviews();
   const userHeaderProfile = buildAmbulanceUserHeaderProfile(profile);
   const headerReviews = reviews.map((r) => ({
     id: r.id,

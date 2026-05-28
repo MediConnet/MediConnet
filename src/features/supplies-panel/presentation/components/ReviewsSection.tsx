@@ -3,9 +3,9 @@ import { useSupplyPanelReviews } from "../hooks/useSupply";
 import { Box, Typography, CircularProgress, Alert } from "@mui/material";
 
 export const ReviewsSection = () => {
-  const { data, isLoading, error } = useSupplyPanelReviews();
+  const { reviews, loading } = useSupplyPanelReviews();
 
-  if (isLoading) {
+  if (loading) {
     return (
       <Box className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex justify-center items-center min-h-[200px]">
         <CircularProgress />
@@ -13,19 +13,10 @@ export const ReviewsSection = () => {
     );
   }
 
-  if (error) {
-    return (
-      <Box className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <Alert severity="error">
-          Error al cargar las reseñas. Por favor, intenta de nuevo más tarde.
-        </Alert>
-      </Box>
-    );
-  }
-
-  const reviews = data?.reviews || [];
-  const averageRating = data?.averageRating || 0;
-  const totalReviews = data?.totalReviews || 0;
+  const averageRating = reviews.length > 0
+    ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+    : 0;
+  const totalReviews = reviews.length;
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">

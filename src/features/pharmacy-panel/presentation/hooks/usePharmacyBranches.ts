@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useCallback } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../../../app/store/auth.store";
 import { getPharmacyBranchesUseCase } from "../../application/get-pharmacy-branches.usecase";
 import type { PharmacyBranch } from "../../domain/pharmacy-branch.entity";
@@ -8,24 +9,33 @@ import {
   updatePharmacyBranchAPI,
 } from "../../infrastructure/pharmacy.api";
 
-/**
- * Hook: Obtener sucursales de la farmacia
- * Migrado a React Query
- */
 export const usePharmacyBranches = () => {
   const { user } = useAuthStore();
+  const [branches, setBranches] = useState<PharmacyBranch[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
-  const {
-    data: branches = [],
-    isLoading,
-  } = useQuery<PharmacyBranch[]>({
-    queryKey: ['pharmacies', 'branches', user?.id],
-    queryFn: getPharmacyBranchesUseCase,
-    enabled: !!user?.id,
-    staleTime: 2 * 60 * 1000, // 2 minutos
-  });
+  const loadData = useCallback(async () => {
+    if (!user?.id) return;
+    setLoading(true);
+    try {
+      const result = await getPharmacyBranchesUseCase({ page, limit });
+      setBranches(result.data);
+      setTotal(result.pagination.total);
+    } catch (error) {
+      console.error("Error cargando sucursales:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id, page, limit]);
 
-  return { branches, isLoading };
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  return { branches, loading, total, page, setPage, limit, setLimit, refetch: loadData };
 };
 
 /**

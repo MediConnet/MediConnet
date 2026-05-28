@@ -1,9 +1,10 @@
 import { getProviderHistoryAPI } from '../infrastructure/requests.api';
 
-/**
- * Caso de uso: Obtener historial de solicitudes (aprobadas y rechazadas)
- * Usa el endpoint optimizado GET /api/admin/history
- */
-export const getHistoryUseCase = async () => {
-  return await getProviderHistoryAPI();
+export const getHistoryUseCase = async (params?: {
+  status?: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+}) => {
+  return await getProviderHistoryAPI(params);
 };

@@ -1,5 +1,6 @@
 import { httpClient, extractData } from '../../../shared/lib/http';
 import type { AdRequest } from '../domain/ad-request.entity';
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 
 /** Normaliza los campos snake_case del backend a camelCase */
 const mapAdRequest = (raw: any): AdRequest => ({
@@ -15,16 +16,26 @@ const mapAdRequest = (raw: any): AdRequest => ({
 
 /**
  * API: Obtener solicitudes de anuncios
- * Endpoint: GET /api/admin/ad-requests?status=PENDING
- * @param status - Filtro por estado: 'PENDING', 'APPROVED', 'REJECTED', 'all' (por defecto 'PENDING')
+ * Endpoint: GET /api/admin/ad-requests
  */
-export const getAdRequestsAPI = async (status?: string): Promise<AdRequest[]> => {
-  const params = status ? `?status=${status}` : '';
-  const response = await httpClient.get<{ success: boolean; data: AdRequest[] }>(
-    `/admin/ad-requests${params}`
+export const getAdRequestsAPI = async (params?: {
+  status?: string;
+  page?: number;
+  limit?: number;
+}): Promise<PaginatedResponse<AdRequest>> => {
+  const searchParams = new URLSearchParams();
+  searchParams.set("page", String(params?.page || 1));
+  searchParams.set("limit", String(params?.limit || 20));
+  if (params?.status) searchParams.set("status", params.status);
+
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<AdRequest> }>(
+    `/admin/ad-requests?${searchParams.toString()}`
   );
-  const data = extractData(response);
-  return Array.isArray(data) ? data.map(mapAdRequest) : [];
+  const result = extractData(response);
+  return {
+    data: result.data.map(mapAdRequest),
+    pagination: result.pagination,
+  };
 };
 
 /**

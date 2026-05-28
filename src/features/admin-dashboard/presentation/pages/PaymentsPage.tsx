@@ -76,11 +76,11 @@ export const PaymentsPage = () => {
         setLoading(true);
         setError(null);
         const [doctorPaymentsData, clinicPaymentsData] = await Promise.all([
-          getAdminDoctorPaymentsAPI(),
-          getAdminClinicPaymentsAPI()
+          getAdminDoctorPaymentsAPI({ page: 1, limit: 1000 }),
+          getAdminClinicPaymentsAPI({ page: 1, limit: 1000 })
         ]);
-        setPayments(doctorPaymentsData);
-        setClinicPayments(clinicPaymentsData);
+        setPayments(doctorPaymentsData.data);
+        setClinicPayments(clinicPaymentsData.data);
       } catch (err: any) {
         setError(err.message || 'Error al cargar pagos');
       } finally {

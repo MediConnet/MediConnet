@@ -1,14 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { getHistoryUseCase } from "../../application/get-history.usecase";
 
-/**
- * Hook: Obtener historial de solicitudes (aprobadas y rechazadas)
- * Usa GET /api/admin/history para mejor rendimiento
- */
-export const useHistoryRequests = () => {
+export const useHistoryRequests = (params?: {
+  status?: string;
+  page?: number;
+  limit?: number;
+  search?: string;
+}) => {
   return useQuery({
-    queryKey: ['provider-history-list'],
-    queryFn: getHistoryUseCase,
-    staleTime: 1000 * 60 * 5, // Los datos se consideran frescos por 5 minutos
+    queryKey: ['provider-history-list', params?.status || '', params?.page || 1, params?.limit || 20, params?.search || ''],
+    queryFn: () => getHistoryUseCase(params),
+    staleTime: 1000 * 60 * 5,
   });
 };

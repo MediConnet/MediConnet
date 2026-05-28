@@ -9,24 +9,22 @@ import {
   MenuItem,
   Select,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
-  Paper,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  CircularProgress,
   Alert,
   Snackbar,
 } from "@mui/material";
-import { useState, useMemo, useEffect } from "react";
+import {
+  DataGrid,
+  type GridColDef,
+  type GridRenderCellParams,
+  type GridPaginationModel,
+} from "@mui/x-data-grid";
+import { useState, useEffect, useCallback } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { getUsersAPI, toggleUserStatusAPI, updateUserAPI, deleteUserAPI } from "../../infrastructure/users.api";
 import type { User } from "../../domain/user.entity";
@@ -41,6 +39,8 @@ const CURRENT_ADMIN = {
 
 export const UsersPage = () => {
   const [users, setUsers] = useState<User[]>([]);
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 20 });
+  const [total, setTotal] = useState(0);
   const [roleFilter, setRoleFilter] = useState<"all" | "admin" | "provider" | "clinic">("all");
   const [searchText, setSearchText] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -56,53 +56,38 @@ export const UsersPage = () => {
     severity: 'info'
   });
 
-  // Cargar usuarios desde la API
-  useEffect(() => {
-    const loadUsers = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await getUsersAPI();
-        setUsers(data);
-      } catch (err: any) {
-        setError(err.message || 'Error al cargar usuarios');
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadUsers();
+  const loadUsers = useCallback(async (page: number, limit: number, role: string, search: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await getUsersAPI({
+        page,
+        limit,
+        role: role === "all" ? undefined : role,
+        search: search || undefined,
+      });
+      setUsers(result.data);
+      setTotal(result.pagination.total);
+    } catch (err: any) {
+      setError(err.message || 'Error al cargar usuarios');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const filteredUsers = useMemo(() => {
-    let filtered = users;
+  useEffect(() => {
+    loadUsers(paginationModel.page + 1, paginationModel.pageSize, roleFilter, searchText);
+  }, [paginationModel, roleFilter, searchText, loadUsers]);
 
-    if (roleFilter !== "all") {
-      filtered = filtered.filter((u) => {
-        const userRole = u.role.toLowerCase();
-        if (roleFilter === "admin") {
-          return userRole === "admin";
-        } else if (roleFilter === "provider") {
-          return userRole === "provider" || u.provider !== undefined;
-        } else if (roleFilter === "clinic") {
-          return userRole === "clinic" || u.clinic !== undefined;
-        }
-        return true;
-      });
-    }
+  const handleRoleFilterChange = (newRole: string) => {
+    setRoleFilter(newRole as any);
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+  };
 
-    if (searchText) {
-      const searchLower = searchText.toLowerCase();
-      filtered = filtered.filter(
-        (u) =>
-          (u.name || u.displayName || '').toLowerCase().includes(searchLower) ||
-          u.email.toLowerCase().includes(searchLower) ||
-          (u.clinic?.name || '').toLowerCase().includes(searchLower) ||
-          (u.provider?.commercialName || '').toLowerCase().includes(searchLower)
-      );
-    }
-
-    return filtered;
-  }, [users, roleFilter, searchText]);
+  const handleSearchChange = (value: string) => {
+    setSearchText(value);
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+  };
 
   const handleToggleStatus = async (userId: string) => {
     const user = users.find(u => u.id === userId);
@@ -208,6 +193,87 @@ export const UsersPage = () => {
     return user.displayName || user.name || user.clinic?.name || user.provider?.commercialName || 'Sin nombre';
   };
 
+  const columns: GridColDef<User>[] = [
+    {
+      field: "displayName",
+      headerName: "Usuario",
+      width: 300,
+      renderCell: (params: GridRenderCellParams<User>) => (
+        <Stack direction="row" spacing={2} alignItems="center" sx={{ height: "100%", py: 1 }}>
+          <Avatar sx={{ bgcolor: "primary.light", width: 40, height: 40, flexShrink: 0 }}>
+            {getUserDisplayName(params.row).charAt(0)}
+          </Avatar>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="body2" fontWeight={600} noWrap>
+              {getUserDisplayName(params.row)}
+            </Typography>
+            {(params.row.tipo || params.row.additionalInfo) && (
+              <Typography variant="caption" color="text.secondary" noWrap>
+                {params.row.additionalInfo || getRoleLabel(params.row.role, params.row.tipo)}
+              </Typography>
+            )}
+          </Box>
+        </Stack>
+      ),
+    },
+    {
+      field: "role",
+      headerName: "Rol",
+      width: 160,
+      renderCell: (params: GridRenderCellParams<User>) => (
+        <Chip
+          label={getRoleLabel(params.row.role, params.row.tipo)}
+          color={params.row.role.toLowerCase() === "admin" ? "primary" : "default"}
+          size="small"
+        />
+      ),
+    },
+    { field: "email", headerName: "Email", width: 250 },
+    {
+      field: "isActive",
+      headerName: "Estado",
+      width: 120,
+      renderCell: (params: GridRenderCellParams<User>) => (
+        <Chip
+          icon={params.row.isActive ? <CheckCircle /> : <Block />}
+          label={params.row.isActive ? "Activo" : "Inactivo"}
+          color={params.row.isActive ? "success" : "default"}
+          size="small"
+        />
+      ),
+    },
+    {
+      field: "actions",
+      headerName: "Acciones",
+      width: 300,
+      sortable: false,
+      renderCell: (params: GridRenderCellParams<User>) => (
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ height: "100%" }}>
+          <Button size="small" variant="outlined" onClick={() => handleEdit(params.row)}>
+            Editar
+          </Button>
+          <Button
+            size="small"
+            variant={params.row.isActive ? "outlined" : "contained"}
+            color={params.row.isActive ? "error" : "success"}
+            onClick={() => handleToggleStatus(params.row.id)}
+          >
+            {params.row.isActive ? "Desactivar" : "Activar"}
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            color="error"
+            onClick={() => handleDeleteClick(params.row)}
+            startIcon={<Delete />}
+          >
+            Eliminar
+          </Button>
+        </Stack>
+      ),
+    },
+  ];
+
   return (
     <DashboardLayout 
       role="ADMIN" 
@@ -243,7 +309,7 @@ export const UsersPage = () => {
               fullWidth
               placeholder="Buscar por nombre o email..."
               value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               sx={{ flex: 1 }}
               disabled={loading}
             />
@@ -252,7 +318,7 @@ export const UsersPage = () => {
               <Select
                 value={roleFilter}
                 label="Tipo de Usuario"
-                onChange={(e) => setRoleFilter(e.target.value as any)}
+                onChange={(e) => handleRoleFilterChange(e.target.value)}
                 disabled={loading}
               >
                 <MenuItem value="all">Todos</MenuItem>
@@ -264,103 +330,28 @@ export const UsersPage = () => {
           </Stack>
         </Box>
 
-        {/* Tabla de usuarios */}
-        <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #e5e7eb" }}>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: "#f9fafb" }}>
-                <TableCell sx={{ fontWeight: 600 }}>Usuario</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Rol</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Estado</TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="center">
-                  Acciones
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                    <CircularProgress />
-                  </TableCell>
-                </TableRow>
-              ) : filteredUsers.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                    <Typography color="text.secondary">
-                      No se encontraron usuarios
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredUsers.map((user) => (
-                  <TableRow key={user.id} hover>
-                    <TableCell>
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <Avatar sx={{ bgcolor: "primary.light", width: 40, height: 40 }}>
-                          {getUserDisplayName(user).charAt(0)}
-                        </Avatar>
-                        <Box>
-                          <Typography fontWeight={600}>{getUserDisplayName(user)}</Typography>
-                          {(user.tipo || user.additionalInfo) && (
-                            <Typography variant="caption" color="text.secondary">
-                              {user.additionalInfo || getRoleLabel(user.role, user.tipo)}
-                            </Typography>
-                          )}
-                        </Box>
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={getRoleLabel(user.role, user.tipo)}
-                        color={user.role.toLowerCase() === "admin" ? "primary" : "default"}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>
-                      <Chip
-                        icon={user.isActive ? <CheckCircle /> : <Block />}
-                        label={user.isActive ? "Activo" : "Inactivo"}
-                        color={user.isActive ? "success" : "default"}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Stack direction="row" spacing={1} justifyContent="center">
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => handleEdit(user)}
-                        >
-                          Editar
-                        </Button>
-                        <Button
-                          size="small"
-                          variant={user.isActive ? "outlined" : "contained"}
-                          color={user.isActive ? "error" : "success"}
-                          onClick={() => handleToggleStatus(user.id)}
-                        >
-                          {user.isActive ? "Desactivar" : "Activar"}
-                        </Button>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          color="error"
-                          onClick={() => handleDeleteClick(user)}
-                          startIcon={<Delete />}
-                        >
-                          Eliminar
-                        </Button>
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        {/* DataGrid */}
+        <Box sx={{ height: 600, width: "100%", bgcolor: "white", borderRadius: 2, boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+          <DataGrid
+            rows={users}
+            columns={columns}
+            getRowId={(row) => row.id}
+            loading={loading}
+            rowHeight={72}
+            paginationMode="server"
+            rowCount={total}
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
+            pageSizeOptions={[10, 20, 50]}
+            disableRowSelectionOnClick
+            sx={{
+              border: "none",
+              "& .MuiDataGrid-cell": { display: "flex", alignItems: "center" },
+              "& .MuiDataGrid-cell:focus": { outline: "none" },
+              "& .MuiDataGrid-columnHeader:focus": { outline: "none" },
+            }}
+          />
+        </Box>
 
         {/* Modal de edición */}
         <Dialog
