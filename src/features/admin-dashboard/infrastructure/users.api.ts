@@ -1,16 +1,27 @@
 import { httpClient, extractData } from '../../../shared/lib/http';
 import type { User } from '../domain/user.entity';
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 
 /**
  * API: Obtener lista de usuarios (admins, providers, clinics, patients)
  * Endpoint: GET /api/admin/users
  */
-export const getUsersAPI = async (): Promise<User[]> => {
-  const response = await httpClient.get<{ success: boolean; data: { users: User[] } }>(
-    '/admin/users'
+export const getUsersAPI = async (params?: {
+  role?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}): Promise<PaginatedResponse<User>> => {
+  const searchParams = new URLSearchParams();
+  searchParams.set("page", String(params?.page || 1));
+  searchParams.set("limit", String(params?.limit || 20));
+  if (params?.role) searchParams.set("role", params.role);
+  if (params?.search) searchParams.set("search", params.search);
+
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<User> }>(
+    `/admin/users?${searchParams.toString()}`
   );
-  const data = extractData(response);
-  return data.users;
+  return extractData(response);
 };
 
 /**

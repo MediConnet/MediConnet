@@ -1,11 +1,16 @@
 import { Delete, Edit, WhatsApp } from "@mui/icons-material";
 import { Box, Chip, IconButton, Stack, Typography } from "@mui/material";
-import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import { DataGrid, type GridColDef, type GridPaginationModel } from "@mui/x-data-grid";
 import type { PharmacyBranch } from "../../domain/pharmacy-branch.entity";
 
 interface Props {
   branches: PharmacyBranch[];
   isLoading: boolean;
+  total: number;
+  page: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
   onEdit: (branch: PharmacyBranch) => void;
   onDelete: (id: string) => void;
 }
@@ -13,9 +18,18 @@ interface Props {
 export const PharmacyBranchesTable = ({
   branches,
   isLoading,
+  total,
+  page,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
   onEdit,
   onDelete,
 }: Props) => {
+  const handlePaginationChange = (model: GridPaginationModel) => {
+    onPageChange(model.page + 1);
+    onPageSizeChange(model.pageSize);
+  };
   const columns: GridColDef<PharmacyBranch>[] = [
     {
       field: "name",
@@ -235,9 +249,10 @@ export const PharmacyBranchesTable = ({
         loading={isLoading}
         rowHeight={90}
         disableColumnResize={true}
-        initialState={{
-          pagination: { paginationModel: { page: 0, pageSize: 5 } },
-        }}
+        paginationMode="server"
+        rowCount={total}
+        paginationModel={{ page: page - 1, pageSize }}
+        onPaginationModelChange={handlePaginationChange}
         pageSizeOptions={[5, 10, 20]}
         disableRowSelectionOnClick
         sx={{

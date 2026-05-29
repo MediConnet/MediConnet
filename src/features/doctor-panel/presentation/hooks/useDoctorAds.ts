@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuthStore } from "../../../../app/store/auth.store";
-import { getDoctorPanelReviewsAPI } from "../../infrastructure/doctors.api";
-import type { DoctorReview } from "../../infrastructure/doctors.api";
+import { getMyPaginatedAdsAPI } from "../../../../shared/api/ads.api";
+import type { Ad } from "../../../../shared/domain/Ad.entity";
 
-export const useDoctorReviews = () => {
+export const useDoctorAds = () => {
   const { user } = useAuthStore();
-  const [reviews, setReviews] = useState<DoctorReview[]>([]);
+  const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -15,11 +15,13 @@ export const useDoctorReviews = () => {
     if (!user?.id) return;
     setLoading(true);
     try {
-      const result = await getDoctorPanelReviewsAPI({ page, limit });
-      setReviews(result.data);
+      const result = await getMyPaginatedAdsAPI({ page, limit });
+      setAds(result.data);
       setTotal(result.pagination.total);
-    } catch (error) {
-      console.error("Error cargando reseñas:", error);
+    } catch (error: any) {
+      console.error("Error cargando anuncios:", error);
+      const msg = error?.response?.data?.message || error?.message || "Error desconocido";
+      console.error("Detalle del error:", msg);
     } finally {
       setLoading(false);
     }
@@ -30,7 +32,7 @@ export const useDoctorReviews = () => {
   }, [loadData]);
 
   return {
-    reviews,
+    ads,
     loading,
     total,
     page,

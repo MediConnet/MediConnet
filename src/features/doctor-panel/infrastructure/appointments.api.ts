@@ -1,4 +1,5 @@
 import { extractData, httpClient } from '../../../shared/lib/http';
+import type { PaginatedResponse, PaginationMeta } from '../../../shared/types/pagination';
 import type { DoctorAppointment } from '../domain/Appointment.entity';
 import type { AppointmentStatus } from '../domain/Patient.entity';
 
@@ -100,18 +101,31 @@ const mapBackendToFrontend = (appt: BackendAppointment): DoctorAppointment => {
 
 // --- API Functions ---
 
-export const getAppointmentsAPI = async (status?: string): Promise<DoctorAppointment[]> => {
-  // Construimos la URL con query params si existen
-  const url = status 
-    ? `/doctors/appointments?status=${status}&limit=100` 
-    : '/doctors/appointments?limit=100';
+export const getAppointmentsAPI = async (
+  status?: string,
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<DoctorAppointment>> => {
+  const queryParams: Record<string, any> = { ...params };
+  if (status) queryParams.status = status;
 
-  const response = await httpClient.get<{ success: boolean; data: AppointmentsResponse }>(url);
-  
-  // Extraemos la data y mapeamos
-  const backendData = extractData(response); // Esto devuelve el objeto { appointments: [], pagination: {} }
-  
-  return backendData.appointments.map(mapBackendToFrontend);
+  const response = await httpClient.get<{ success: boolean; data: AppointmentsResponse }>(
+    '/doctors/appointments',
+    { params: queryParams }
+  );
+
+  const result = extractData(response);
+  const rawAppointments = result.data ?? result.appointments ?? [];
+  const data = rawAppointments.map(mapBackendToFrontend);
+
+  const pag: any = result.pagination || { total: rawAppointments.length, limit: 50, offset: 0 };
+  const pagination: PaginationMeta = {
+    total: pag.total,
+    limit: pag.limit,
+    page: Math.floor((pag.offset || 0) / pag.limit) + 1,
+    totalPages: Math.ceil(pag.total / pag.limit),
+  };
+
+  return { data, pagination };
 };
 
 export const updateAppointmentStatusAPI = async (

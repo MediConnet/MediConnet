@@ -8,18 +8,21 @@ import {
   type AdminAd,
   type CreateAdminAdPayload,
 } from '../../infrastructure/admin-ads.api';
+import type { PaginationMeta } from '../../../shared/types/pagination';
 
 export const useAdminAds = () => {
   const [ads, setAds] = useState<AdminAd[]>([]);
+  const [pagination, setPagination] = useState<PaginationMeta>({ total: 0, page: 1, limit: 20, totalPages: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (page?: number, limit?: number) => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getAdminAdsAPI();
-      setAds(data);
+      const result = await getAdminAdsAPI({ page: page || 1, limit: limit || 20 });
+      setAds(result.data);
+      setPagination(result.pagination);
     } catch (e: any) {
       setError(e.message || 'Error al cargar anuncios');
     } finally {
@@ -51,5 +54,5 @@ export const useAdminAds = () => {
     setAds((prev) => prev.map((a) => (a.id === id ? { ...a, isActive } : a)));
   };
 
-  return { ads, isLoading, error, refetch: load, createAd, updateAd, deleteAd, toggleAd };
+  return { ads, pagination, isLoading, error, refetch: load, createAd, updateAd, deleteAd, toggleAd };
 };

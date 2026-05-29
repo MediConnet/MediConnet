@@ -1,39 +1,15 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getAdRequestsUseCase } from "../../application/get-ad-requests.usecase";
-import type { AdRequest } from "../../domain/ad-request.entity";
 
-export const useAdRequests = () => {
-  const [data, setData] = useState<AdRequest[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const requests = await getAdRequestsUseCase();
-        setData(requests);
-      } catch (error) {
-        console.error("Error loading ad requests:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  const refetch = async () => {
-    setIsLoading(true);
-    try {
-      const requests = await getAdRequestsUseCase();
-      setData(requests);
-    } catch (error) {
-      console.error("Error loading ad requests:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return { data, isLoading, refetch };
+export const useAdRequests = (params?: {
+  status?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  return useQuery({
+    queryKey: ['ad-requests-list', params?.status || 'PENDING', params?.page || 1, params?.limit || 20],
+    queryFn: () => getAdRequestsUseCase(params),
+    staleTime: 1000 * 60 * 5,
+  });
 };
 

@@ -25,8 +25,9 @@ import {
   DataGrid,
   type GridColDef,
   type GridRenderCellParams,
+  type GridPaginationModel,
 } from "@mui/x-data-grid";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import type {
   ProviderRequest,
@@ -47,19 +48,30 @@ const CURRENT_ADMIN = {
 };
 
 export const RequestsPage = () => {
-  const { data: initialData, isLoading } = useProviderRequests();
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
+  const [serverStatusFilter, setServerStatusFilter] = useState<"all" | "PENDING" | "APPROVED" | "REJECTED">("all");
+  const [serverDateFilter, setServerDateFilter] = useState("");
+  const { data: result, isLoading } = useProviderRequests({
+    status: serverStatusFilter,
+    dateFrom: serverDateFilter || undefined,
+    page: paginationModel.page + 1,
+    limit: paginationModel.pageSize,
+  });
+
+  const requests = useMemo(() => result?.data ?? [], [result]);
+  const pagination = useMemo(() => result?.pagination ?? { total: 0, page: 1, limit: 10, totalPages: 0 }, [result]);
+
   const queryClient = useQueryClient();
   const { appointments: adminAppointments, notificationsViewAllPath } = useAdminNotificationsLayout();
 
   const {
-    requests,
     filters,
     setSearchText,
     setStatusFilter,
     setDateFilter,
     approveRequest,
     rejectRequest,
-  } = useRequestFiltering(initialData, "PENDING"); // Filtrar solo PENDING por defecto
+  } = useRequestFiltering(requests, "all");
 
   const [selectedRequest, setSelectedRequest] =
     useState<ProviderRequest | null>(null);
@@ -71,6 +83,18 @@ export const RequestsPage = () => {
     message: '',
     severity: 'info'
   });
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    setServerStatusFilter((value as "all" | "PENDING" | "APPROVED" | "REJECTED") || "all");
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+  };
+
+  const handleDateFilterChange = (value: string) => {
+    setDateFilter(value);
+    setServerDateFilter(value);
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+  };
 
   // --- Handlers UI ---
   const handleViewRequest = (request: ProviderRequest) => {
@@ -426,7 +450,7 @@ export const RequestsPage = () => {
             label="Estado"
             size="small"
             value={filters.statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => handleStatusFilterChange(e.target.value)}
             sx={{ minWidth: 150 }}
           >
             <MenuItem value="all">Todos</MenuItem>
@@ -441,7 +465,7 @@ export const RequestsPage = () => {
             slotProps={{ inputLabel: { shrink: true } }}
             label="Desde fecha"
             value={filters.dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
+            onChange={(e) => handleDateFilterChange(e.target.value)}
           />
         </Stack>
 
@@ -460,9 +484,10 @@ export const RequestsPage = () => {
             columns={columns}
             loading={isLoading}
             rowHeight={80}
-            initialState={{
-              pagination: { paginationModel: { page: 0, pageSize: 10 } },
-            }}
+            paginationMode="server"
+            rowCount={pagination.total}
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
             pageSizeOptions={[5, 10, 20]}
             disableColumnResize
             disableRowSelectionOnClick

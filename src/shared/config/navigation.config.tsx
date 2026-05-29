@@ -92,7 +92,7 @@ export const DOCTOR_MENU: MenuItem[] = [
     label: "Tarifas de Consulta",
     path: "/doctor/dashboard?tab=consultation-prices",
   },
-  { icon: <Campaign />, label: "Anuncios", path: "/doctor/dashboard?tab=ads" },
+  { icon: <Campaign />, label: "Anuncios", path: "/doctor/ads" },
   {
     icon: <StarRate />,
     label: "Reseñas",
@@ -252,7 +252,7 @@ export const LAB_MENU: MenuItem[] = [
   {
     icon: <Campaign />,
     label: "Anuncios",
-    path: "/laboratory/dashboard?tab=ads",
+    path: "/laboratory/ads",
   },
   {
     icon: <StarRate />,
@@ -281,7 +281,7 @@ export const SUPPLIES_MENU: MenuItem[] = [
   {
     icon: <Campaign />,
     label: "Anuncios",
-    path: "/supply/dashboard?tab=ads",
+    path: "/supply/ads",
   },
   {
     icon: <StarRate />,
@@ -341,6 +341,11 @@ export const CLINIC_MENU: MenuItem[] = [
     icon: <Business />,
     label: "Datos Bancarios",
     path: "/clinic/dashboard?tab=bankAccount",
+  },
+  {
+    icon: <Campaign />,
+    label: "Anuncios",
+    path: "/clinic/ads",
   },
   {
     icon: <Settings />,

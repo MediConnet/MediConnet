@@ -1,23 +1,11 @@
-/**
- * Tipos para paginación
- */
-
-export interface PaginationParams {
-  page: number;
-  limit: number;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
+export interface PaginationMeta {
   total: number;
   page: number;
   limit: number;
   totalPages: number;
 }
 
-
-
-
-
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: PaginationMeta;
+}

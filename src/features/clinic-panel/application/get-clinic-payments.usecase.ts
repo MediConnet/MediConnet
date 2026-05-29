@@ -1,9 +1,10 @@
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 import type { ClinicPayment } from '../domain/clinic-payment.entity';
 import { getClinicPaymentsAPI } from '../infrastructure/clinic-payments.api';
 
-/**
- * Caso de uso: Obtener pagos recibidos del administrador
- */
-export const getClinicPaymentsUseCase = async (clinicId: string): Promise<ClinicPayment[]> => {
-  return await getClinicPaymentsAPI();
+export const getClinicPaymentsUseCase = async (
+  _clinicId: string,
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<ClinicPayment>> => {
+  return await getClinicPaymentsAPI(params);
 };

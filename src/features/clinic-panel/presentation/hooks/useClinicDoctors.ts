@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getClinicDoctorsUseCase } from '../../application/get-clinic-doctors.usecase';
 import { inviteDoctorUseCase } from '../../application/invite-doctor.usecase';
 import { toggleDoctorStatusUseCase } from '../../application/toggle-doctor-status.usecase';
@@ -10,25 +10,30 @@ export const useClinicDoctors = (clinicId: string) => {
   const [doctors, setDoctors] = useState<ClinicDoctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
-  const loadDoctors = async () => {
+  const loadDoctors = useCallback(async () => {
+    if (!clinicId) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await getClinicDoctorsUseCase(clinicId);
-      setDoctors(data);
+      const result = await getClinicDoctorsUseCase(clinicId, { page, limit });
+      setDoctors(result.data);
+      setTotal(result.pagination.total);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Error al cargar médicos'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [clinicId, page, limit]);
 
   const inviteDoctor = async (email: string): Promise<DoctorInvitation> => {
     setError(null);
     try {
       const invitation = await inviteDoctorUseCase(clinicId, email);
-      await loadDoctors(); // Recargar lista
+      await loadDoctors();
       return invitation;
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Error al invitar médico');
@@ -41,7 +46,7 @@ export const useClinicDoctors = (clinicId: string) => {
     setError(null);
     try {
       await toggleDoctorStatusUseCase(clinicId, doctorId);
-      await loadDoctors(); // Recargar lista
+      await loadDoctors();
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Error al cambiar estado');
       setError(error);
@@ -53,7 +58,7 @@ export const useClinicDoctors = (clinicId: string) => {
     setError(null);
     try {
       await assignOfficeUseCase(clinicId, doctorId, officeNumber);
-      await loadDoctors(); // Recargar lista
+      await loadDoctors();
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Error al asignar consultorio');
       setError(error);
@@ -65,7 +70,7 @@ export const useClinicDoctors = (clinicId: string) => {
     setError(null);
     try {
       await deleteDoctorUseCase(clinicId, doctorId);
-      await loadDoctors(); // Recargar lista
+      await loadDoctors();
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Error al eliminar médico');
       setError(error);
@@ -94,12 +99,17 @@ export const useClinicDoctors = (clinicId: string) => {
     if (clinicId) {
       loadDoctors();
     }
-  }, [clinicId]);
+  }, [clinicId, page, limit]);
 
   return {
     doctors,
     loading,
     error,
+    total,
+    page,
+    setPage,
+    limit,
+    setLimit,
     inviteDoctor,
     toggleStatus,
     assignOffice,

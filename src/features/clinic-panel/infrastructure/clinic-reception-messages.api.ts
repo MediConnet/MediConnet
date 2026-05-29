@@ -1,13 +1,15 @@
 import { httpClient, extractData } from '../../../shared/lib/http';
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 import type { ReceptionMessage } from '../domain/reception-message.entity';
 
 /**
  * API: Obtener mensajes con un médico específico
- * Endpoint: GET /api/clinics/reception/messages?doctorId=uuid
+ * Endpoint: GET /api/clinics/reception/messages
  */
-export const getReceptionMessagesAPI = async (doctorId?: string): Promise<ReceptionMessage[]> => {
-  const params = doctorId ? { doctorId } : {};
-  const response = await httpClient.get<{ success: boolean; data: ReceptionMessage[] }>(
+export const getReceptionMessagesAPI = async (
+  params?: { page?: number; limit?: number; doctorId?: string }
+): Promise<PaginatedResponse<ReceptionMessage>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<ReceptionMessage> }>(
     '/clinics/reception/messages',
     { params }
   );

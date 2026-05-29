@@ -10,13 +10,14 @@ export const useSpecialties = () => {
   return useQuery<Specialty[]>({
     queryKey: ['specialties'],
     queryFn: async () => {
-      // Usar endpoint público que no requiere autenticación
-      const response = await httpClient.get<{ success: boolean; data: Specialty[] }>(
+      const response = await httpClient.get<{ success: boolean; data: any }>(
         '/public/specialties'
       );
-      return extractData(response);
+      const result = extractData(response);
+      // endpoint ahora usa paginatedResponse, extraer array interno
+      return result.data ?? result;
     },
-    staleTime: 30 * 60 * 1000, // 30 minutos - datos estáticos
-    gcTime: 60 * 60 * 1000, // 1 hora en caché
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
   });
 };

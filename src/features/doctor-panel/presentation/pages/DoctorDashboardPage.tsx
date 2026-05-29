@@ -112,7 +112,8 @@ export const DoctorDashboardPage = () => {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const allAppointments = await getAppointmentsAPI();
+        const result = await getAppointmentsAPI();
+        const allAppointments = result.data ?? [];
         const upcoming = allAppointments
           .filter((a) => a.status === "CONFIRMED" || a.status === "PENDING")
           .slice(0, 5)

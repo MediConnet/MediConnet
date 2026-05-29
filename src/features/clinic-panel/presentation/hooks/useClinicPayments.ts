@@ -11,23 +11,29 @@ export const useClinicPayments = (clinicId: string) => {
   const [doctorPayments, setDoctorPayments] = useState<ClinicToDoctorPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [clinicTotal, setClinicTotal] = useState(0);
+  const [doctorTotal, setDoctorTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
   const loadPayments = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const [clinic, doctors] = await Promise.all([
-        getClinicPaymentsUseCase(clinicId),
-        getClinicToDoctorPaymentsUseCase(clinicId),
+        getClinicPaymentsUseCase(clinicId, { page, limit }),
+        getClinicToDoctorPaymentsUseCase(clinicId, { page, limit }),
       ]);
-      setClinicPayments(clinic);
-      setDoctorPayments(doctors);
+      setClinicPayments(clinic.data);
+      setDoctorPayments(doctors.data);
+      setClinicTotal(clinic.pagination.total);
+      setDoctorTotal(doctors.pagination.total);
     } catch (err: any) {
       setError(err.message || 'Error al cargar pagos');
     } finally {
       setLoading(false);
     }
-  }, [clinicId]);
+  }, [clinicId, page, limit]);
 
   useEffect(() => {
     loadPayments();
@@ -59,6 +65,12 @@ export const useClinicPayments = (clinicId: string) => {
     doctorPayments,
     loading,
     error,
+    clinicTotal,
+    doctorTotal,
+    page,
+    setPage,
+    limit,
+    setLimit,
     distributePayment,
     payDoctor,
     refetch: loadPayments,

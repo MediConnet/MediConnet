@@ -1,24 +1,48 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useCallback } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import { getAppointmentsAPI } from "../../infrastructure/appointments.api";
 import {
-  getDoctorAppointmentsAPI,
   updateAppointmentStatusAPI,
 } from "../../infrastructure/doctors.api";
+import type { DoctorAppointment } from "../../domain/Appointment.entity";
 
-/**
- * Hook: Obtener citas del doctor
- * Con refetch automático para mantener datos actualizados
- */
 export const useDoctorAppointments = () => {
   const { user } = useAuthStore();
+  const [appointments, setAppointments] = useState<DoctorAppointment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
-  return useQuery({
-    queryKey: ['doctors', 'appointments', user?.id],
-    queryFn: getDoctorAppointmentsAPI,
-    enabled: !!user?.id,
-    staleTime: 30 * 1000, // 30 segundos (cambian frecuentemente)
-    refetchInterval: 60 * 1000, // Refrescar cada minuto
-  });
+  const loadData = useCallback(async () => {
+    if (!user?.id) return;
+    setLoading(true);
+    try {
+      const result = await getAppointmentsAPI(undefined, { page, limit });
+      setAppointments(result.data);
+      setTotal(result.pagination.total);
+    } catch (error) {
+      console.error("Error cargando citas:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id, page, limit]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  return {
+    appointments,
+    loading,
+    total,
+    page,
+    setPage,
+    limit,
+    setLimit,
+    refetch: loadData,
+  };
 };
 
 /**

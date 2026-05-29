@@ -3,6 +3,7 @@ import type { DashboardStats } from '../domain/dashboard-stats.entity';
 import type { AdminSettings } from '../domain/admin-settings.entity';
 import type { ActivityHistory } from '../domain/activity-history.entity';
 import type { ActiveService } from '../domain/service-stats.entity';
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 
 /**
  * API: Obtener estadísticas del dashboard de administración
@@ -50,9 +51,10 @@ export const updateAdminSettingsAPI = async (settings: Partial<AdminSettings>): 
  * API: Obtener historial de actividad real de la plataforma
  * Endpoint: GET /api/admin/activity
  */
-export const getActivityHistoryAPI = async (): Promise<ActivityHistory[]> => {
-  const response = await httpClient.get<{ success: boolean; data: ActivityHistory[] }>(
-    '/admin/activity'
+export const getActivityHistoryAPI = async (params?: { page?: number; limit?: number }): Promise<PaginatedResponse<ActivityHistory>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<ActivityHistory> }>(
+    '/admin/activity',
+    { params }
   );
   return extractData(response);
 };

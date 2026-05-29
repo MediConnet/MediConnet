@@ -36,7 +36,7 @@ export const PharmacyBranchesPage = () => {
     isActive: true,
   };
   // 1. Hook para obtener sucursales
-  const { branches, isLoading } = usePharmacyBranches();
+  const { branches, isLoading, total, page, setPage, limit, setLimit } = usePharmacyBranches();
   
   // 2. Hooks de mutations con optimistic updates
   const { mutateAsync: addBranch } = useCreatePharmacyBranch();
@@ -140,6 +140,11 @@ export const PharmacyBranchesPage = () => {
         <PharmacyBranchesTable
           branches={branches}
           isLoading={isLoading}
+          total={total}
+          page={page}
+          pageSize={limit}
+          onPageChange={setPage}
+          onPageSizeChange={setLimit}
           onEdit={handleEdit}
           onDelete={handleDelete}
         />

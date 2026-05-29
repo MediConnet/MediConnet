@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   getPharmacyChainsAPI,
   createPharmacyChainAPI,
@@ -11,13 +11,17 @@ export const usePharmacyChains = () => {
   const [chains, setChains] = useState<PharmacyChain[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
-  const loadChains = async () => {
+  const loadChains = useCallback(async (p: number, ps: number) => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getPharmacyChainsAPI();
-      setChains(data);
+      const result = await getPharmacyChainsAPI({ page: p, limit: ps });
+      setChains(result.data);
+      setTotal(result.pagination.total);
     } catch (err: any) {
       console.error('Error loading pharmacy chains:', err);
       setError(err?.response?.data?.message || 'Error al cargar las cadenas de farmacias');
@@ -25,7 +29,7 @@ export const usePharmacyChains = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const createChain = async (
     data: Omit<PharmacyChain, 'id' | 'createdAt' | 'updatedAt'>
@@ -33,7 +37,7 @@ export const usePharmacyChains = () => {
     try {
       setError(null);
       const newChain = await createPharmacyChainAPI(data);
-      await loadChains(); // Recargar lista
+      await loadChains(page, pageSize);
       return newChain;
     } catch (err: any) {
       const errorMessage = err?.response?.data?.message || 'Error al crear la cadena';
@@ -49,7 +53,7 @@ export const usePharmacyChains = () => {
     try {
       setError(null);
       const updatedChain = await updatePharmacyChainAPI(id, data);
-      await loadChains(); // Recargar lista
+      await loadChains(page, pageSize);
       return updatedChain;
     } catch (err: any) {
       const errorMessage = err?.response?.data?.message || 'Error al actualizar la cadena';
@@ -62,13 +66,11 @@ export const usePharmacyChains = () => {
     try {
       setError(null);
       await deletePharmacyChainAPI(id);
-      await loadChains(); // Recargar lista
+      await loadChains(page, pageSize);
     } catch (err: any) {
-      // El interceptor de httpClient convierte el error en Error con el mensaje
-      // También puede venir como AxiosError con response.data.message
-      const errorMessage = 
-        err?.message || 
-        err?.response?.data?.message || 
+      const errorMessage =
+        err?.message ||
+        err?.response?.data?.message ||
         'Error al eliminar la cadena';
       setError(errorMessage);
       throw new Error(errorMessage);
@@ -76,8 +78,8 @@ export const usePharmacyChains = () => {
   };
 
   useEffect(() => {
-    loadChains();
-  }, []);
+    loadChains(page, pageSize);
+  }, [page, pageSize, loadChains]);
 
   const clearError = () => {
     setError(null);
@@ -87,6 +89,11 @@ export const usePharmacyChains = () => {
     chains,
     loading,
     error,
+    total,
+    page,
+    pageSize,
+    setPage,
+    setPageSize,
     loadChains,
     createChain,
     updateChain,

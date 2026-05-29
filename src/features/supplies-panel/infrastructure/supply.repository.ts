@@ -1,14 +1,11 @@
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 import type { SupplyStore } from '../domain/SupplyStore.entity';
 import type { Review } from '../domain/Review.entity';
 import { getSuppliesAPI, getSupplyAPI, getSupplyReviewsAPI, createReviewAPI } from './supply.api';
 
-/**
- * Repository pattern para Supply Stores
- * Abstrae la lógica de acceso a datos
- */
 export class SupplyRepository {
-  async getSupplies(): Promise<SupplyStore[]> {
-    return await getSuppliesAPI();
+  async getSupplies(params?: { page?: number; limit?: number }): Promise<PaginatedResponse<SupplyStore>> {
+    return await getSuppliesAPI(params);
   }
 
   async getSupply(id: string): Promise<SupplyStore> {

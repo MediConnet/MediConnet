@@ -27,8 +27,9 @@ import {
   DataGrid,
   type GridColDef,
   type GridRenderCellParams,
+  type GridPaginationModel,
 } from "@mui/x-data-grid";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import type { AdRequest } from "../../domain/ad-request.entity";
 import { RejectAdRequestModal } from "../components/RejectAdRequestModal";
@@ -56,11 +57,19 @@ const SERVICE_ICONS: Record<string, React.ReactNode> = {
 };
 
 export const AdRequestsPage = () => {
-  const { data: initialData, isLoading, refetch } = useAdRequests();
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
+  const [statusFilter, setStatusFilter] = useState("PENDING");
+  const { data: result, isLoading, refetch } = useAdRequests({
+    status: statusFilter === "all" ? undefined : statusFilter,
+    page: paginationModel.page + 1,
+    limit: paginationModel.pageSize,
+  });
   const { appointments: adminAppointments, notificationsViewAllPath } = useAdminNotificationsLayout();
 
+  const requests = useMemo(() => result?.data ?? [], [result]);
+  const pagination = useMemo(() => result?.pagination ?? { total: 0, page: 1, limit: 10, totalPages: 0 }, [result]);
+
   const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState("PENDING"); // Filtrar solo PENDING por defecto
   const [selectedRequest, setSelectedRequest] = useState<AdRequest | null>(null);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -71,20 +80,16 @@ export const AdRequestsPage = () => {
   });
 
   const filteredRequests = useMemo(() => {
-    if (!initialData) return [];
+    if (!requests.length) return [];
 
-    return initialData.filter((req) => {
+    return requests.filter((req) => {
       const searchLower = searchText.toLowerCase();
       const matchesSearch =
         req.providerName.toLowerCase().includes(searchLower) ||
         req.providerEmail.toLowerCase().includes(searchLower);
-
-      const matchesStatus =
-        statusFilter === "all" || req.status === statusFilter;
-
-      return matchesSearch && matchesStatus;
+      return matchesSearch;
     });
-  }, [initialData, searchText, statusFilter]);
+  }, [requests, searchText]);
 
   const handleApprove = async (id: string) => {
     try {
@@ -389,9 +394,10 @@ export const AdRequestsPage = () => {
             columns={columns}
             loading={isLoading}
             rowHeight={80}
-            initialState={{
-              pagination: { paginationModel: { page: 0, pageSize: 10 } },
-            }}
+            paginationMode="server"
+            rowCount={pagination.total}
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
             pageSizeOptions={[5, 10, 20]}
             disableColumnResize
             disableRowSelectionOnClick
