@@ -12,22 +12,21 @@ import {
   Avatar,
   Box,
   Chip,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
-  TextField,
   Typography,
   Paper,
   Tabs,
   Tab,
+  Card,
+  CardContent,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
-import {
-  DataGrid,
-  type GridColDef,
-} from "@mui/x-data-grid";
+import { DataGrid, type GridColDef, type GridPaginationModel } from "@mui/x-data-grid";
 import { useState, useMemo } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import type { ProviderRequest } from "../../domain/provider-request.entity";
@@ -72,9 +71,13 @@ export const HistoryPage = () => {
 
   const historyRequests = historyResult?.data ?? [];
   const allAdRequests = adResult?.data ?? [];
+  const historyTotal = historyResult?.total ?? 0;
+  const adTotal = adResult?.total ?? 0;
+  
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "APPROVED" | "REJECTED" | "PENDING">("all");
   const [activeTab, setActiveTab] = useState<"providers" | "ads">("providers");
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
 
   // Filtrar servicios según el estado seleccionado
   // Nota: El endpoint /admin/history ya devuelve solo APPROVED y REJECTED, pero mantenemos el filtro por si acaso

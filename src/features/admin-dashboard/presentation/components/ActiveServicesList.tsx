@@ -4,15 +4,17 @@ import {
   LocalHospital,
   LocalPharmacy,
   Science,
+  CheckCircle,
 } from "@mui/icons-material";
-import { Avatar, Box, Chip, Paper, Stack, Typography } from "@mui/material";
+import { Avatar, Box, Chip, Paper, Stack, Typography, Skeleton, Alert } from "@mui/material";
 import type { ActiveService } from "../../../admin-dashboard/domain/service-stats.entity";
 
 interface Props {
   services: ActiveService[];
+  loading?: boolean;
 }
 
-export const ActiveServicesList = ({ services }: Props) => {
+export const ActiveServicesList = ({ services, loading = false }: Props) => {
   // Helper para obtener icono según tipo
   const getIcon = (type: string) => {
     switch (type) {
@@ -24,10 +26,38 @@ export const ActiveServicesList = ({ services }: Props) => {
         return <Science fontSize="small" />;
       case "ambulance":
         return <AirportShuttle fontSize="small" />;
+      case "supplies":
+        return <Inventory fontSize="small" />;
       default:
         return <Inventory fontSize="small" />;
     }
   };
+
+  // Estado de carga
+  if (loading) {
+    return (
+      <Stack spacing={2}>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <Skeleton key={i} variant="rectangular" height={72} sx={{ borderRadius: 3 }} />
+        ))}
+      </Stack>
+    );
+  }
+
+  // Estado vacío
+  if (!services || services.length === 0) {
+    return (
+      <Box sx={{ textAlign: 'center', py: 6 }}>
+        <CheckCircle sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+        <Typography variant="h6" color="text.secondary" gutterBottom>
+          No hay servicios activos
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Los servicios aprobados aparecerán aquí
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Stack spacing={2}>

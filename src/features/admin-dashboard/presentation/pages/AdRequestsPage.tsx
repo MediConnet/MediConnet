@@ -1,35 +1,12 @@
 import {
-  Campaign,
-  Check,
-  Close,
-  LocalHospital,
-  LocalPharmacy,
-  Science,
-  AirportShuttle,
-  Inventory,
-  Visibility,
-  DeleteOutline,
+  Campaign, Check, Close, LocalHospital, LocalPharmacy,
+  Science, AirportShuttle, Inventory, Visibility, DeleteOutline,
 } from "@mui/icons-material";
 import {
-  Avatar,
-  Box,
-  Button,
-  IconButton,
-  MenuItem,
-  Stack,
-  TextField,
-  Typography,
-  Chip,
-  Snackbar,
-  Alert,
+  Avatar, Box, Button, Chip, IconButton, Stack, Typography, Snackbar, Alert,
 } from "@mui/material";
-import {
-  DataGrid,
-  type GridColDef,
-  type GridRenderCellParams,
-  type GridPaginationModel,
-} from "@mui/x-data-grid";
-import { useState, useMemo, useCallback } from "react";
+import { type GridColDef, type GridRenderCellParams, type GridPaginationModel } from "@mui/x-data-grid";
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import type { AdRequest } from "../../domain/ad-request.entity";
 import { RejectAdRequestModal } from "../components/RejectAdRequestModal";
@@ -41,24 +18,21 @@ import { rejectAdRequestUseCase } from "../../application/reject-ad-request.usec
 import { clearAdsFromStorage } from "../../infrastructure/ads.mock";
 import { clearAdRequests } from "../../infrastructure/ad-requests.mock";
 import { useAdminNotificationsLayout } from "../hooks/useAdminNotificationsLayout";
+import { DataTable, TableToolbar, TablePageLayout } from "../../../../shared/components/DataTable";
 
-const CURRENT_ADMIN = {
-  name: "Admin General",
-  roleLabel: "Super Admin",
-  initials: "AG",
-};
+const CURRENT_ADMIN = { name: "Admin General", roleLabel: "Super Admin", initials: "AG" };
 
 const SERVICE_ICONS: Record<string, React.ReactNode> = {
-  doctor: <LocalHospital />,
-  pharmacy: <LocalPharmacy />,
-  laboratory: <Science />,
-  ambulance: <AirportShuttle />,
-  supplies: <Inventory />,
+  doctor: <LocalHospital />, pharmacy: <LocalPharmacy />, laboratory: <Science />,
+  ambulance: <AirportShuttle />, supplies: <Inventory />,
 };
 
 export const AdRequestsPage = () => {
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
-  const [statusFilter, setStatusFilter] = useState("PENDING");
+  // ✅ CORRECCIÓN: Cambiar filtro inicial de "PENDING" a "all" para mostrar todas las solicitudes
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchText, setSearchText] = useState("");
+
   const { data: result, isLoading, refetch } = useAdRequests({
     status: statusFilter === "all" ? undefined : statusFilter,
     page: paginationModel.page + 1,
@@ -69,73 +43,46 @@ export const AdRequestsPage = () => {
   const requests = useMemo(() => result?.data ?? [], [result]);
   const pagination = useMemo(() => result?.pagination ?? { total: 0, page: 1, limit: 10, totalPages: 0 }, [result]);
 
-  const [searchText, setSearchText] = useState("");
   const [selectedRequest, setSelectedRequest] = useState<AdRequest | null>(null);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'info' }>({
-    open: false,
-    message: '',
-    severity: 'info'
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" | "info" }>({
+    open: false, message: "", severity: "info",
   });
 
+  // Búsqueda client-side sobre la página actual
   const filteredRequests = useMemo(() => {
-    if (!requests.length) return [];
-
-    return requests.filter((req) => {
-      const searchLower = searchText.toLowerCase();
-      const matchesSearch =
-        req.providerName.toLowerCase().includes(searchLower) ||
-        req.providerEmail.toLowerCase().includes(searchLower);
-      return matchesSearch;
-    });
+    if (!searchText) return requests;
+    const q = searchText.toLowerCase();
+    return requests.filter(
+      (r) => r.providerName.toLowerCase().includes(q) || r.providerEmail.toLowerCase().includes(q)
+    );
   }, [requests, searchText]);
 
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+  };
+
   const handleApprove = async (id: string) => {
-    try {
-      await approveAdRequestUseCase(id);
-      // Refrescar los datos - la solicitud se eliminará de la lista porque el filtro es "PENDING"
-      await refetch();
-    } catch (error) {
-      console.error("Error approving ad request:", error);
-    }
+    try { await approveAdRequestUseCase(id); await refetch(); } catch (e) { console.error(e); }
   };
 
   const handleReject = async (id: string, reason: string) => {
     try {
       await rejectAdRequestUseCase(id, reason);
-      // Refrescar los datos - la solicitud se eliminará automáticamente de la lista porque el filtro es "PENDING"
-      // y se moverá al historial
       await refetch();
       setIsRejectModalOpen(false);
       setSelectedRequest(null);
-      // Opcional: Redirigir al historial después de rechazar
-      // window.location.href = '/admin/history?tab=ads';
-    } catch (error) {
-      console.error("Error rejecting ad request:", error);
-    }
-  };
-
-  const openRejectModal = (request: AdRequest) => {
-    setSelectedRequest(request);
-    setIsRejectModalOpen(true);
-  };
-
-  const openDetailModal = (request: AdRequest) => {
-    setSelectedRequest(request);
-    setIsDetailModalOpen(true);
+    } catch (e) { console.error(e); }
   };
 
   const handleClearAllAds = () => {
-    if (window.confirm("¿Estás seguro de que quieres limpiar TODOS los anuncios y solicitudes? Esta acción no se puede deshacer.")) {
+    if (window.confirm("¿Limpiar TODOS los anuncios y solicitudes? Esta acción no se puede deshacer.")) {
       clearAdsFromStorage();
       clearAdRequests();
       refetch();
-      setSnackbar({
-        open: true,
-        message: "Anuncios y solicitudes limpiados correctamente",
-        severity: 'success'
-      });
+      setSnackbar({ open: true, message: "Anuncios y solicitudes limpiados correctamente", severity: "success" });
     }
   };
 
@@ -145,47 +92,13 @@ export const AdRequestsPage = () => {
       headerName: "Proveedor",
       width: 300,
       renderCell: (params: GridRenderCellParams<AdRequest>) => (
-        <Stack
-          direction="row"
-          spacing={2}
-          alignItems="center"
-          sx={{ height: "100%", width: "100%", py: 1 }}
-        >
-          <Avatar 
-            sx={{ 
-              bgcolor: "primary.light", 
-              width: 48, 
-              height: 48,
-              flexShrink: 0
-            }}
-          >
+        <Stack direction="row" spacing={2} alignItems="center" sx={{ height: "100%", width: "100%", py: 1 }}>
+          <Avatar sx={{ bgcolor: "primary.light", width: 48, height: 48, flexShrink: 0 }}>
             {params.row.providerName.charAt(0)}
           </Avatar>
-          <Box sx={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
-            <Typography 
-              variant="body2" 
-              fontWeight={600}
-              sx={{ 
-                lineHeight: 1.2,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap"
-              }}
-            >
-              {params.row.providerName}
-            </Typography>
-            <Typography 
-              variant="caption" 
-              color="text.secondary"
-              sx={{ 
-                lineHeight: 1.2,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                display: "block",
-                mt: 0.5
-              }}
-            >
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="body2" fontWeight={600} noWrap>{params.row.providerName}</Typography>
+            <Typography variant="caption" color="text.secondary" noWrap sx={{ display: "block" }}>
               {params.row.providerEmail}
             </Typography>
           </Box>
@@ -197,11 +110,9 @@ export const AdRequestsPage = () => {
       headerName: "Tipo de Servicio",
       width: 180,
       renderCell: (params: GridRenderCellParams<AdRequest>) => (
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ height: "100%" }}>
           {SERVICE_ICONS[params.row.serviceType]}
-          <Typography variant="body2" sx={{ textTransform: "capitalize" }}>
-            {params.row.serviceType}
-          </Typography>
+          <Typography variant="body2" sx={{ textTransform: "capitalize" }}>{params.row.serviceType}</Typography>
         </Stack>
       ),
     },
@@ -209,32 +120,20 @@ export const AdRequestsPage = () => {
       field: "submissionDate",
       headerName: "Fecha de Solicitud",
       width: 150,
-      renderCell: (params: GridRenderCellParams<AdRequest>) => (
-        <Typography variant="body2">
-          {new Date(params.row.submissionDate).toLocaleDateString("es-ES")}
-        </Typography>
+      renderCell: (params) => (
+        <Typography variant="body2">{new Date(params.row.submissionDate).toLocaleDateString("es-ES")}</Typography>
       ),
     },
     {
       field: "adContent",
       headerName: "Contenido del Anuncio",
       width: 250,
-      renderCell: (params: GridRenderCellParams<AdRequest>) => {
-        if (!params.row.adContent) {
-          return <Typography variant="body2" color="text.secondary">Sin contenido</Typography>;
-        }
+      renderCell: (params) => {
+        if (!params.row.adContent) return <Typography variant="body2" color="text.secondary">Sin contenido</Typography>;
         return (
           <Box>
-            <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
-              {params.row.adContent.title}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ 
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-              textOverflow: "ellipsis"
-            }}>
+            <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>{params.row.adContent.title}</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
               {params.row.adContent.description}
             </Typography>
           </Box>
@@ -245,20 +144,14 @@ export const AdRequestsPage = () => {
       field: "status",
       headerName: "Estado",
       width: 150,
-      renderCell: (params: GridRenderCellParams<AdRequest>) => (
-        <RequestStatusBadge status={params.row.status} />
-      ),
+      renderCell: (params) => <RequestStatusBadge status={params.row.status} />,
     },
     {
       field: "hasActiveAd",
       headerName: "Anuncio Activo",
-      width: 150,
-      renderCell: (params: GridRenderCellParams<AdRequest>) => (
-        <Chip
-          label={params.row.hasActiveAd ? "Sí" : "No"}
-          color={params.row.hasActiveAd ? "success" : "default"}
-          size="small"
-        />
+      width: 140,
+      renderCell: (params) => (
+        <Chip label={params.row.hasActiveAd ? "Sí" : "No"} color={params.row.hasActiveAd ? "success" : "default"} size="small" />
       ),
     },
     {
@@ -266,189 +159,103 @@ export const AdRequestsPage = () => {
       headerName: "Acciones",
       width: 200,
       sortable: false,
-      renderCell: (params: GridRenderCellParams<AdRequest>) => {
-        return (
-          <Stack
-            direction="row"
-            spacing={1}
-            alignItems="center"
-            sx={{ height: "100%" }}
-          >
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<Visibility />}
-              onClick={() => openDetailModal(params.row)}
-              sx={{
-                textTransform: "none",
-                fontSize: "0.75rem",
-              }}
-            >
-              Ver Detalle
-            </Button>
-            {params.row.status === "PENDING" && (
-              <>
-                <IconButton
-                  size="small"
-                  title="Aprobar"
-                  color="success"
-                  onClick={() => handleApprove(params.row.id)}
-                >
-                  <Check fontSize="small" />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  title="Rechazar"
-                  color="error"
-                  onClick={() => openRejectModal(params.row)}
-                >
-                  <Close fontSize="small" />
-                </IconButton>
-              </>
-            )}
-          </Stack>
-        );
-      },
+      renderCell: (params) => (
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ height: "100%" }}>
+          <Button variant="outlined" size="small" startIcon={<Visibility />}
+            onClick={() => { setSelectedRequest(params.row); setIsDetailModalOpen(true); }}
+            sx={{ textTransform: "none", fontSize: "0.75rem" }}>
+            Ver Detalle
+          </Button>
+          {params.row.status === "PENDING" && (
+            <>
+              <IconButton size="small" color="success" title="Aprobar" onClick={() => handleApprove(params.row.id)}>
+                <Check fontSize="small" />
+              </IconButton>
+              <IconButton size="small" color="error" title="Rechazar"
+                onClick={() => { setSelectedRequest(params.row); setIsRejectModalOpen(true); }}>
+                <Close fontSize="small" />
+              </IconButton>
+            </>
+          )}
+        </Stack>
+      ),
     },
   ];
 
   return (
-    <DashboardLayout 
-      role="ADMIN" 
+    <DashboardLayout
+      role="ADMIN"
       userProfile={CURRENT_ADMIN}
       appointments={adminAppointments}
       notificationsVariant="professional"
       notificationsViewAllPath={notificationsViewAllPath}
     >
-      <Box sx={{ p: 3 }}>
-        <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between" mb={3}>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Campaign sx={{ fontSize: 32, color: "primary.main" }} />
-            <Box>
-              <Typography variant="h4" fontWeight={700}>
-                Solicitudes de Anuncios
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Gestiona las solicitudes de permisos para crear anuncios
-              </Typography>
-            </Box>
-          </Stack>
-          <Button
-            variant="outlined"
-            color="error"
-            startIcon={<DeleteOutline />}
-            onClick={handleClearAllAds}
-            sx={{ textTransform: "none" }}
-          >
-            Limpiar Todo
-          </Button>
-        </Stack>
-
-        {/* Filtros */}
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={2}
-          mb={3}
-          sx={{
-            bgcolor: "white",
-            p: 2,
-            borderRadius: 2,
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-          }}
-        >
-          <TextField
-            label="Buscar"
-            placeholder="Nombre o email del proveedor..."
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            size="small"
-            sx={{ flexGrow: 1 }}
-          />
-          <TextField
-            select
-            label="Estado"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            size="small"
-            sx={{ minWidth: 150 }}
-          >
-            <MenuItem value="all">Todos</MenuItem>
-            <MenuItem value="PENDING">Pendiente</MenuItem>
-            <MenuItem value="APPROVED">Aprobado</MenuItem>
-            <MenuItem value="REJECTED">Rechazado</MenuItem>
-          </TextField>
-        </Stack>
-
-        {/* DataGrid */}
-        <Box
-          sx={{
-            height: 600,
-            width: "100%",
-            bgcolor: "white",
-            borderRadius: 2,
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-          }}
-        >
-          <DataGrid
-            rows={filteredRequests}
-            columns={columns}
-            loading={isLoading}
-            rowHeight={80}
-            paginationMode="server"
-            rowCount={pagination.total}
-            paginationModel={paginationModel}
-            onPaginationModelChange={setPaginationModel}
-            pageSizeOptions={[5, 10, 20]}
-            disableColumnResize
-            disableRowSelectionOnClick
-            sx={{
-              border: "none",
-              "& .MuiDataGrid-cell": { display: "flex", alignItems: "center" },
-              "& .MuiDataGrid-cell:focus": { outline: "none" },
-              "& .MuiDataGrid-columnHeader:focus": { outline: "none" },
-            }}
-          />
-        </Box>
-
-        {/* Modal de Detalle del Anuncio */}
-        <AdDetailModal
-          open={isDetailModalOpen}
-          onClose={() => {
-            setIsDetailModalOpen(false);
-            setSelectedRequest(null);
-          }}
-          request={selectedRequest}
+      <TablePageLayout>
+        <TableToolbar
+          title="Solicitudes de Anuncios"
+          subtitle="Gestiona las solicitudes de permisos para crear anuncios"
+          titleIcon={<Campaign sx={{ fontSize: 32 }} />}
+          searchValue={searchText}
+          searchPlaceholder="Nombre o email del proveedor..."
+          onSearchChange={setSearchText}
+          filters={[
+            {
+              key: "status",
+              label: "Estado",
+              value: statusFilter,
+              onChange: handleStatusFilterChange,
+              options: [
+                { value: "all", label: "Todos" },
+                { value: "PENDING", label: "Pendiente" },
+                { value: "APPROVED", label: "Aprobado" },
+                { value: "REJECTED", label: "Rechazado" },
+              ],
+            },
+          ]}
+          actions={[
+            {
+              label: "Limpiar Todo",
+              icon: <DeleteOutline />,
+              onClick: handleClearAllAds,
+              variant: "outlined",
+              color: "error",
+            },
+          ]}
+          sx={{ mb: 3 }}
         />
 
-        {/* Modal de Rechazo */}
+        <DataTable<AdRequest>
+          rows={filteredRequests}
+          columns={columns}
+          rowCount={pagination.total}
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          pageSizeOptions={[5, 10, 20]}
+          loading={isLoading}
+          rowHeight={80}
+          emptyTitle="Sin solicitudes de anuncios"
+          emptyDescription="No hay solicitudes que coincidan con los filtros aplicados."
+        />
+
+        <AdDetailModal
+          open={isDetailModalOpen}
+          onClose={() => { setIsDetailModalOpen(false); setSelectedRequest(null); }}
+          request={selectedRequest}
+        />
         <RejectAdRequestModal
           open={isRejectModalOpen}
-          onClose={() => {
-            setIsRejectModalOpen(false);
-            setSelectedRequest(null);
-          }}
+          onClose={() => { setIsRejectModalOpen(false); setSelectedRequest(null); }}
           request={selectedRequest}
           onConfirm={handleReject}
         />
 
-        {/* Snackbar para notificaciones */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        >
-          <Alert
-            onClose={() => setSnackbar({ ...snackbar, open: false })}
-            severity={snackbar.severity}
-            sx={{ width: '100%' }}
-            variant="filled"
-          >
+        <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
+          <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} variant="filled" sx={{ width: "100%" }}>
             {snackbar.message}
           </Alert>
         </Snackbar>
-      </Box>
+      </TablePageLayout>
     </DashboardLayout>
   );
 };
-

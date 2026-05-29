@@ -17,25 +17,74 @@ const mapAdRequest = (raw: any): AdRequest => ({
 /**
  * API: Obtener solicitudes de anuncios
  * Endpoint: GET /api/admin/ad-requests
+ * 
+ * ✅ CORRECCIÓN: Manejo robusto de respuestas paginadas
  */
 export const getAdRequestsAPI = async (params?: {
   status?: string;
   page?: number;
   limit?: number;
 }): Promise<PaginatedResponse<AdRequest>> => {
-  const searchParams = new URLSearchParams();
-  searchParams.set("page", String(params?.page || 1));
-  searchParams.set("limit", String(params?.limit || 20));
-  if (params?.status) searchParams.set("status", params.status);
+  try {
+    const searchParams = new URLSearchParams();
+    searchParams.set("page", String(params?.page || 1));
+    searchParams.set("limit", String(params?.limit || 20));
+    
+    // ✅ Solo agregar status si está definido (no filtrar automáticamente)
+    if (params?.status && params.status !== 'all') {
+      searchParams.set("status", params.status);
+    }
 
-  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<AdRequest> }>(
-    `/admin/ad-requests?${searchParams.toString()}`
-  );
-  const result = extractData(response);
-  return {
-    data: result.data.map(mapAdRequest),
-    pagination: result.pagination,
-  };
+    console.log('🔍 getAdRequestsAPI - Params:', { params, searchParams: searchParams.toString() });
+
+    const response = await httpClient.get<{ success: boolean; data: any }>(
+      `/admin/ad-requests?${searchParams.toString()}`
+    );
+    
+    console.log('🔍 getAdRequestsAPI - Response:', response);
+    
+    const extractedData = extractData(response);
+    console.log('🔍 getAdRequestsAPI - Extracted data:', extractedData);
+    
+    // ✅ Validar estructura de respuesta
+    let data: AdRequest[] = [];
+    let pagination = {
+      total: 0,
+      page: params?.page || 1,
+      limit: params?.limit || 20,
+      totalPages: 0,
+    };
+    
+    // Caso 1: Respuesta con estructura { data: [], pagination: {} }
+    if (extractedData && typeof extractedData === 'object') {
+      if (Array.isArray(extractedData.data)) {
+        data = extractedData.data.map(mapAdRequest);
+        pagination = extractedData.pagination || pagination;
+      }
+      // Caso 2: Respuesta directa como array
+      else if (Array.isArray(extractedData)) {
+        data = extractedData.map(mapAdRequest);
+        pagination.total = data.length;
+        pagination.totalPages = Math.ceil(data.length / pagination.limit);
+      }
+    }
+    
+    console.log('✅ getAdRequestsAPI - Final result:', { data: data.length, pagination });
+    
+    return { data, pagination };
+  } catch (error) {
+    console.error('❌ getAdRequestsAPI - Error:', error);
+    // Retornar estructura vacía en caso de error
+    return {
+      data: [],
+      pagination: {
+        total: 0,
+        page: params?.page || 1,
+        limit: params?.limit || 20,
+        totalPages: 0,
+      },
+    };
+  }
 };
 
 /**

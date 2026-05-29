@@ -8,6 +8,7 @@ import { QueryProvider } from "./providers/QueryProvider";
 import { RealtimeProvider } from "./providers/RealtimeProvider";
 import { AppRouter } from "./router/AppRouter";
 import { LoadingSpinner } from "../shared/components/LoadingSpinner";
+import { ErrorBoundary } from "../shared/components/ErrorBoundary";
 import { useGlobalLoading } from "../shared/hooks/useGlobalLoading";
 
 const AppContent = () => {
@@ -23,12 +24,14 @@ const AppContent = () => {
 
 export const App = () => {
   return (
-    <MUIThemeProviderWrapper>
-      <QueryProvider>
-        <RealtimeProvider>
-          <AppContent />
-        </RealtimeProvider>
-      </QueryProvider>
-    </MUIThemeProviderWrapper>
+    <ErrorBoundary>
+      <MUIThemeProviderWrapper>
+        <QueryProvider>
+          <RealtimeProvider>
+            <AppContent />
+          </RealtimeProvider>
+        </QueryProvider>
+      </MUIThemeProviderWrapper>
+    </ErrorBoundary>
   );
 };

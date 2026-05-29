@@ -19,14 +19,9 @@ import {
   Alert,
   Snackbar,
 } from "@mui/material";
-import {
-  DataGrid,
-  type GridColDef,
-  type GridRenderCellParams,
-  type GridPaginationModel,
-} from "@mui/x-data-grid";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
+import { DataTable, TableToolbar, TablePageLayout } from "../../../../shared/components/DataTable";
 import { useAdminSpecialties } from "../hooks/useAdminSpecialties";
 import type { Specialty } from "../../domain/specialty.entity";
 
@@ -46,7 +41,9 @@ const COLOR_OPTIONS = [
 
 export const SpecialtiesPage = () => {
   const { specialties, loading, error, total, setPage, setPageSize, createSpecialty, updateSpecialty, deleteSpecialty, clearError } = useAdminSpecialties();
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 20 });
+  const [page, setPageState] = useState(1);
+  const [pageSize, setPageSizeState] = useState(20);
+  const [searchText, setSearchText] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSpecialty, setEditingSpecialty] = useState<Specialty | null>(null);
   const [saving, setSaving] = useState(false);
@@ -61,11 +58,26 @@ export const SpecialtiesPage = () => {
     severity: 'success' | 'error' | 'info' | 'warning';
   }>({ open: false, message: '', severity: 'success' });
 
-  const handlePaginationChange = (model: GridPaginationModel) => {
-    setPaginationModel(model);
-    setPage(model.page + 1);
-    setPageSize(model.pageSize);
+  const handlePageChange = (newPage: number) => {
+    setPageState(newPage);
+    setPage(newPage);
   };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSizeState(newPageSize);
+    setPageSize(newPageSize);
+  };
+
+  // Filter specialties by search text
+  const filteredSpecialties = useMemo(() => {
+    if (!searchText) return specialties;
+    const searchLower = searchText.toLowerCase();
+    return specialties.filter(
+      (specialty) =>
+        specialty.name.toLowerCase().includes(searchLower) ||
+        (specialty.description && specialty.description.toLowerCase().includes(searchLower))
+    );
+  }, [specialties, searchText]);
 
   const handleCreate = () => {
     setEditingSpecialty(null);
@@ -181,64 +193,46 @@ export const SpecialtiesPage = () => {
     },
   ];
 
-  if (loading && specialties.length === 0) {
-    return (
-      <DashboardLayout role="ADMIN" userProfile={CURRENT_ADMIN}>
-        <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
-          <Typography>Cargando especialidades...</Typography>
-        </Box>
-      </DashboardLayout>
-    );
-  }
-
   return (
     <DashboardLayout role="ADMIN" userProfile={CURRENT_ADMIN}>
-      <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
+      <TablePageLayout>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }} onClose={clearError}>
             {error}
           </Alert>
         )}
-        <Box mb={3} display="flex" justifyContent="space-between" alignItems="center">
-          <Box>
-            <Typography variant="h4" fontWeight={700} mb={1}>
-              Especialidades Médicas
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Gestiona las especialidades médicas disponibles en el sistema
-            </Typography>
-          </Box>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={handleCreate}
-            sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
-          >
-            Nueva Especialidad
-          </Button>
-        </Box>
 
-        <Box sx={{ height: 600, width: "100%", bgcolor: "white", borderRadius: 2, boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-          <DataGrid
-            rows={specialties}
-            columns={columns}
-            getRowId={(row) => row.id}
-            loading={loading}
-            rowHeight={72}
-            paginationMode="server"
-            rowCount={total}
-            paginationModel={paginationModel}
-            onPaginationModelChange={handlePaginationChange}
-            pageSizeOptions={[10, 20, 50]}
-            disableRowSelectionOnClick
-            sx={{
-              border: "none",
-              "& .MuiDataGrid-cell": { display: "flex", alignItems: "center" },
-              "& .MuiDataGrid-cell:focus": { outline: "none" },
-              "& .MuiDataGrid-columnHeader:focus": { outline: "none" },
-            }}
-          />
-        </Box>
+        <TableToolbar
+          title="Especialidades Médicas"
+          subtitle="Gestiona las especialidades médicas disponibles en el sistema"
+          searchValue={searchText}
+          onSearchChange={setSearchText}
+          searchPlaceholder="Buscar por nombre o descripción..."
+          actions={
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={handleCreate}
+              sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
+            >
+              Nueva Especialidad
+            </Button>
+          }
+        />
+
+        <DataTable
+          columns={columns}
+          rows={filteredSpecialties}
+          loading={loading}
+          total={total}
+          page={page}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+          getRowId={(row) => row.id}
+          emptyMessage="No se encontraron especialidades"
+          emptyDescription="Crea una nueva especialidad para comenzar"
+        />
 
         <Dialog open={isModalOpen} onClose={() => setIsModalOpen(false)} maxWidth="sm" fullWidth>
           <DialogTitle>{editingSpecialty ? "Editar Especialidad" : "Nueva Especialidad"}</DialogTitle>
@@ -276,7 +270,7 @@ export const SpecialtiesPage = () => {
             {snackbar.message}
           </Alert>
         </Snackbar>
-      </Box>
+      </TablePageLayout>
     </DashboardLayout>
   );
 };
