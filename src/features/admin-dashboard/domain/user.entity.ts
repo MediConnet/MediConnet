@@ -3,7 +3,7 @@ export interface User {
   name: string;
   email: string;
   role: "ADMIN" | "PROVIDER" | "PROFESIONAL" | "PATIENT" | "admin" | "provider" | "clinic" | "patient";
-  tipo?: "doctor" | "pharmacy" | "lab" | "ambulance" | "supplies";
+  tipo?: "doctor" | "pharmacy" | "laboratory" | "ambulance" | "supplies" | "clinica";
   isActive: boolean;
   createdAt?: string;
   displayName?: string;

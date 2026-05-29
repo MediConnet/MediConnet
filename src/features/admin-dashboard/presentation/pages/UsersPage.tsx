@@ -132,12 +132,13 @@ export const UsersPage = () => {
   const getRoleLabel = (role: string, tipo?: string) => {
     const r = role.toLowerCase();
     if (r === "admin") return "Administrador";
-    if (r === "clinic") return "Clínica";
+    if (r === "clinic" || r === "clinica") return "Clínica";
     if (tipo === "doctor") return "Médico";
     if (tipo === "pharmacy") return "Farmacia";
-    if (tipo === "lab") return "Laboratorio";
+    if (tipo === "laboratory" || tipo === "lab") return "Laboratorio";
     if (tipo === "ambulance") return "Ambulancia";
     if (tipo === "supplies") return "Insumos Médicos";
+    if (tipo === "clinica") return "Clínica";
     return "Proveedor";
   };
 
@@ -292,7 +293,7 @@ export const UsersPage = () => {
                     <Select value={selectedUser.tipo || ""} label="Tipo de Servicio"
                       onChange={(e) => setSelectedUser({ ...selectedUser, tipo: e.target.value as any })}>
                       {(Object.keys(PROVIDER_TYPE_LABELS) as Array<keyof typeof PROVIDER_TYPE_LABELS>)
-                        .filter((k) => k !== "clinic")
+                        .filter((k) => k !== "clinica")
                         .map((type) => (
                           <MenuItem key={type} value={type}>{PROVIDER_TYPE_LABELS[type]}</MenuItem>
                         ))}

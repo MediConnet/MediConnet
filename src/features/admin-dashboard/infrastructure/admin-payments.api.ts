@@ -54,7 +54,7 @@ export const getAdminClinicPaymentsAPI = async (
   params?: { page?: number; limit?: number }
 ): Promise<PaginatedResponse<AdminClinicPayment>> => {
   const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<AdminClinicPayment> }>(
-    '/admin/payments/clinics',
+    '/clinics/admin/payments',
     { params }
   );
   return extractData(response);
@@ -94,7 +94,7 @@ export const markDoctorPaymentsAsPaidAPI = async (
  */
 export const markClinicPaymentAsPaidAPI = async (clinicPaymentId: string): Promise<void> => {
   await httpClient.post<{ success: boolean }>(
-    `/admin/payments/clinics/${clinicPaymentId}/mark-paid`
+    `/clinics/admin/payments/${clinicPaymentId}/mark-paid`
   );
 };
 

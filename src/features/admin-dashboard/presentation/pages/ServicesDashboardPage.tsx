@@ -1,14 +1,7 @@
 import {
-  AirportShuttle,
-  Inventory,
-  LocalPharmacy,
-  MedicalServices,
-  Science,
-  Refresh,
-  FileDownload,
-  CheckCircle,
-  LocationOn,
-  Category,
+  Business, Category, FileDownload, LocalHospital, LocalPharmacy, LocationOn, Science, AirportShuttle,
+  Inventory, MedicalServices, Refresh, TrendingUp, People, CalendarMonth,
+  LocationCity, CheckCircle, Close, History,
 } from "@mui/icons-material";
 import { Box, Typography, Avatar, Stack, Chip } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
@@ -33,6 +26,7 @@ const SERVICE_ICONS: Record<string, React.ReactNode> = {
   laboratory: <Science />,
   ambulance: <AirportShuttle />,
   supplies: <Inventory />,
+  clinica: <Business />,
 };
 
 const SERVICE_LABELS: Record<string, string> = {
@@ -41,6 +35,7 @@ const SERVICE_LABELS: Record<string, string> = {
   laboratory: "Laboratorio",
   ambulance: "Ambulancia",
   supplies: "Insumos Médicos",
+  clinica: "Clínica",
 };
 
 const SERVICE_COLORS: Record<string, string> = {
@@ -49,6 +44,7 @@ const SERVICE_COLORS: Record<string, string> = {
   laboratory: "#ef4444",
   ambulance: "#06b6d4",
   supplies: "#f59e0b",
+  clinica: "#8b5cf6",
 };
 
 export const ServicesDashboardPage = () => {
@@ -278,6 +274,7 @@ export const ServicesDashboardPage = () => {
                 { value: "laboratory", label: "Laboratorio" },
                 { value: "ambulance", label: "Ambulancia" },
                 { value: "supplies", label: "Insumos Médicos" },
+                { value: "clinica", label: "Clínica" },
               ],
               minWidth: 180,
             },

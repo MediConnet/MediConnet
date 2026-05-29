@@ -5,6 +5,7 @@ export interface ServiceStats {
   laboratoryCount: number;
   ambulanceCount: number;
   suppliesCount: number;
+  clinicaCount: number;
   lastUpdated?: Date;
 }
 
@@ -12,5 +13,5 @@ export interface ActiveService {
   id: string;
   name: string;
   location: string;
-  type: "ambulance" | "doctor" | "pharmacy" | "laboratory" | "supplies";
+  type: "ambulance" | "doctor" | "pharmacy" | "laboratory" | "supplies" | "clinica";
 }

@@ -1,5 +1,5 @@
 import {
-  Campaign, Check, Close, LocalHospital, LocalPharmacy,
+  Business, Campaign, Check, Close, LocalHospital, LocalPharmacy,
   Science, AirportShuttle, Inventory, Visibility, DeleteOutline,
 } from "@mui/icons-material";
 import {
@@ -24,7 +24,7 @@ const CURRENT_ADMIN = { name: "Admin General", roleLabel: "Super Admin", initial
 
 const SERVICE_ICONS: Record<string, React.ReactNode> = {
   doctor: <LocalHospital />, pharmacy: <LocalPharmacy />, laboratory: <Science />,
-  ambulance: <AirportShuttle />, supplies: <Inventory />,
+  ambulance: <AirportShuttle />, supplies: <Inventory />, clinica: <Business />,
 };
 
 export const AdRequestsPage = () => {
