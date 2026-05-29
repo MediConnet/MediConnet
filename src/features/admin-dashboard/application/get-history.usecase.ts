@@ -5,6 +5,9 @@ export const getHistoryUseCase = async (params?: {
   page?: number;
   limit?: number;
   search?: string;
+  serviceType?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }) => {
   return await getProviderHistoryAPI(params);
 };

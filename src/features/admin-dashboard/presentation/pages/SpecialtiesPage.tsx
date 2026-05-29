@@ -2,12 +2,10 @@ import {
   Add,
   Edit,
   Delete,
-  LocalHospital,
 } from "@mui/icons-material";
 import {
   Box,
   Button,
-  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -19,11 +17,12 @@ import {
   Alert,
   Snackbar,
 } from "@mui/material";
-import { useState, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { DataTable, TableToolbar, TablePageLayout } from "../../../../shared/components/DataTable";
 import { useAdminSpecialties } from "../hooks/useAdminSpecialties";
 import type { Specialty } from "../../domain/specialty.entity";
+import type { GridPaginationModel, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 
 const CURRENT_ADMIN = {
   name: "Administrador",
@@ -40,10 +39,13 @@ const COLOR_OPTIONS = [
 ];
 
 export const SpecialtiesPage = () => {
-  const { specialties, loading, error, total, setPage, setPageSize, createSpecialty, updateSpecialty, deleteSpecialty, clearError } = useAdminSpecialties();
-  const [page, setPageState] = useState(1);
-  const [pageSize, setPageSizeState] = useState(20);
+  const { specialties, loading, error, total, loadSpecialties, createSpecialty, updateSpecialty, deleteSpecialty, clearError } = useAdminSpecialties();
+
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 20 });
   const [searchText, setSearchText] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSpecialty, setEditingSpecialty] = useState<Specialty | null>(null);
   const [saving, setSaving] = useState(false);
@@ -58,26 +60,29 @@ export const SpecialtiesPage = () => {
     severity: 'success' | 'error' | 'info' | 'warning';
   }>({ open: false, message: '', severity: 'success' });
 
-  const handlePageChange = (newPage: number) => {
-    setPageState(newPage);
-    setPage(newPage);
-  };
+  // Debounce search input
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      setDebouncedSearch(searchText);
+      setPaginationModel((prev) => ({ ...prev, page: 0 }));
+    }, 400);
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, [searchText]);
 
-  const handlePageSizeChange = (newPageSize: number) => {
-    setPageSizeState(newPageSize);
-    setPageSize(newPageSize);
-  };
+  // Fetch data when pagination or debounced search changes
+  useEffect(() => {
+    const apiPage = paginationModel.page + 1;
+    console.log('📦 SpecialtiesPage - Fetching:', { apiPage, pageSize: paginationModel.pageSize, search: debouncedSearch });
+    loadSpecialties(apiPage, paginationModel.pageSize, debouncedSearch || undefined);
+  }, [paginationModel, debouncedSearch, loadSpecialties]);
 
-  // Filter specialties by search text
-  const filteredSpecialties = useMemo(() => {
-    if (!searchText) return specialties;
-    const searchLower = searchText.toLowerCase();
-    return specialties.filter(
-      (specialty) =>
-        specialty.name.toLowerCase().includes(searchLower) ||
-        (specialty.description && specialty.description.toLowerCase().includes(searchLower))
-    );
-  }, [specialties, searchText]);
+  const handleReload = useCallback(() => {
+    const apiPage = paginationModel.page + 1;
+    loadSpecialties(apiPage, paginationModel.pageSize, debouncedSearch || undefined);
+  }, [paginationModel, debouncedSearch, loadSpecialties]);
 
   const handleCreate = () => {
     setEditingSpecialty(null);
@@ -100,6 +105,7 @@ export const SpecialtiesPage = () => {
       try {
         await deleteSpecialty(id);
         setSnackbar({ open: true, message: "Especialidad eliminada correctamente", severity: 'success' });
+        handleReload();
       } catch (err: any) {
         setSnackbar({
           open: true,
@@ -137,6 +143,7 @@ export const SpecialtiesPage = () => {
         setSnackbar({ open: true, message: "Especialidad creada correctamente", severity: 'success' });
       }
       setIsModalOpen(false);
+      handleReload();
     } catch (err) {
     } finally {
       setSaving(false);
@@ -208,29 +215,31 @@ export const SpecialtiesPage = () => {
           searchValue={searchText}
           onSearchChange={setSearchText}
           searchPlaceholder="Buscar por nombre o descripción..."
-          actions={
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={handleCreate}
-              sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
-            >
-              Nueva Especialidad
-            </Button>
-          }
+          actions={[
+            {
+              label: "Actualizar",
+              icon: undefined,
+              onClick: handleReload,
+              variant: "outlined",
+            },
+            {
+              label: "Nueva Especialidad",
+              icon: <Add />,
+              onClick: handleCreate,
+              variant: "contained",
+            },
+          ]}
         />
 
         <DataTable
           columns={columns}
-          rows={filteredSpecialties}
+          rows={specialties}
           loading={loading}
-          total={total}
-          page={page}
-          pageSize={pageSize}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
+          rowCount={total}
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
           getRowId={(row) => row.id}
-          emptyMessage="No se encontraron especialidades"
+          emptyTitle="No se encontraron especialidades"
           emptyDescription="Crea una nueva especialidad para comenzar"
         />
 

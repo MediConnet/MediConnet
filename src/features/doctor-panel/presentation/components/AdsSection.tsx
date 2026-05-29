@@ -3,10 +3,11 @@ import {
   Campaign,
   CheckCircle,
   HourglassEmpty,
+  Refresh,
   Send,
 } from "@mui/icons-material";
 import { Alert, Snackbar, Box, Typography, Chip } from "@mui/material";
-import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import { DataGrid, type GridColDef, type GridPaginationModel } from "@mui/x-data-grid";
 import { useState } from "react";
 
 import {
@@ -17,6 +18,7 @@ import { AdsEmptyState } from "../../../../shared/components/AdsEmptyState";
 import { CreateAdModal } from "../../../../shared/components/modals/CreateAdModal";
 import { PromotionalBanner } from "../../../../shared/components/PromotionalBanner";
 import { useAdRequest } from "../../../../shared/hooks/useAdRequest";
+import { useDoctorAds } from "../hooks/useDoctorAds";
 
 const STATUS_LABELS: Record<string, { label: string; color: "success" | "warning" | "error" | "default" }> = {
   APPROVED: { label: "Aprobado", color: "success" },
@@ -30,9 +32,20 @@ export const AdsSection = () => {
     hasActiveAd,
     hasApprovedRequest,
     activeAd,
-    isLoading,
-    refetch,
+    isLoading: isRequestLoading,
+    refetch: refetchRequest,
   } = useAdRequest();
+
+  const {
+    ads,
+    loading: adsLoading,
+    total,
+    page,
+    setPage,
+    limit,
+    setLimit,
+    refetch: refetchAds,
+  } = useDoctorAds();
 
   const [isCreating, setIsCreating] = useState(false);
   const [isCreateAdModalOpen, setIsCreateAdModalOpen] = useState(false);
@@ -42,7 +55,25 @@ export const AdsSection = () => {
     message: string;
   } | null>(null);
 
-  const adsList = activeAd ? [activeAd] : [];
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+    page: 0,
+    pageSize: 10,
+  });
+
+  const isLoading = isRequestLoading || adsLoading;
+
+  const handleRefresh = () => {
+    refetchRequest();
+    refetchAds();
+  };
+
+  const handlePaginationModelChange = (model: GridPaginationModel) => {
+    setPaginationModel(model);
+    setPage(model.page + 1);
+    setLimit(model.pageSize);
+  };
+
+  const adsList = ads.length > 0 ? ads : activeAd ? [activeAd] : [];
 
   const handleRequestPermission = async (adData: {
     label: string;
@@ -72,7 +103,7 @@ export const AdsSection = () => {
         message:
           "¡Solicitud enviada correctamente! El administrador la revisará pronto.",
       });
-      await refetch();
+      await handleRefresh();
     } catch (error) {
       console.error("Error creating request:", error);
       setFeedback({
@@ -160,36 +191,46 @@ export const AdsSection = () => {
             </p>
           </div>
 
-          <button
-            onClick={() => setIsCreateAdModalOpen(true)}
-            disabled={!!hasActiveAd || !!pendingRequest || isCreating}
-            className={`
-              px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium text-sm
-              ${
-                hasActiveAd || pendingRequest || isCreating
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-teal-600 text-white hover:bg-teal-700 shadow-sm"
-              }
-            `}
-          >
-            {hasActiveAd || pendingRequest ? (
-              <Campaign className="text-sm" />
-            ) : hasApprovedRequest ? (
-              <Add className="text-sm" />
-            ) : (
-              <Send className="text-sm" />
-            )}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleRefresh}
+              className="px-3 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium text-sm border border-gray-200 text-gray-600 hover:bg-gray-50"
+            >
+              <Refresh className="text-sm" />
+              <span>Refrescar</span>
+            </button>
 
-            <span>
-              {hasActiveAd
-                ? "Anuncio Activo"
-                : pendingRequest
-                  ? "Solicitud Pendiente"
-                  : isCreating
-                    ? "Enviando..."
-                    : "Crear anuncio"}
-            </span>
-          </button>
+            <button
+              onClick={() => setIsCreateAdModalOpen(true)}
+              disabled={!!hasActiveAd || !!pendingRequest || isCreating}
+              className={`
+                px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium text-sm
+                ${
+                  hasActiveAd || pendingRequest || isCreating
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-teal-600 text-white hover:bg-teal-700 shadow-sm"
+                }
+              `}
+            >
+              {hasActiveAd || pendingRequest ? (
+                <Campaign className="text-sm" />
+              ) : hasApprovedRequest ? (
+                <Add className="text-sm" />
+              ) : (
+                <Send className="text-sm" />
+              )}
+
+              <span>
+                {hasActiveAd
+                  ? "Anuncio Activo"
+                  : pendingRequest
+                    ? "Solicitud Pendiente"
+                    : isCreating
+                      ? "Enviando..."
+                      : "Crear anuncio"}
+              </span>
+            </button>
+          </div>
         </div>
 
         {pendingRequest && (
@@ -225,16 +266,19 @@ export const AdsSection = () => {
             <AdsEmptyState />
           </div>
         ) : (
-          <Box sx={{ height: 400, width: "100%" }}>
+          <Box sx={{ height: 450, width: "100%" }}>
             <DataGrid
               rows={adsList}
               columns={columns}
-              loading={isLoading}
-              pageSizeOptions={[5]}
+              loading={adsLoading}
+              paginationMode="server"
+              rowCount={total}
+              paginationModel={paginationModel}
+              onPaginationModelChange={handlePaginationModelChange}
+              pageSizeOptions={[5, 10, 20, 50]}
               disableRowSelectionOnClick
               getRowId={(row) => row.id}
               sx={{ border: "none" }}
-              hideFooterPagination
             />
           </Box>
         )}

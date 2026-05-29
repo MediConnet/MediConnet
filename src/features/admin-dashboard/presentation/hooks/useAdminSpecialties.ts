@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   getSpecialtiesAPI,
   createSpecialtyAPI,
@@ -12,16 +12,14 @@ export const useAdminSpecialties = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
 
-  const loadSpecialties = useCallback(async (p: number, ps: number) => {
+  const loadSpecialties = useCallback(async (page: number, pageSize: number, search?: string) => {
     try {
       setLoading(true);
       setError(null);
-      const result = await getSpecialtiesAPI({ page: p, limit: ps });
-      setSpecialties(result.data);
-      setTotal(result.pagination.total);
+      const result = await getSpecialtiesAPI({ page, limit: pageSize, search });
+      setSpecialties(Array.isArray(result?.data) ? result.data : []);
+      setTotal(result?.pagination?.total ?? 0);
     } catch (err: any) {
       console.error('Error loading specialties:', err);
       setError(err?.response?.data?.message || 'Error al cargar especialidades');
@@ -32,46 +30,21 @@ export const useAdminSpecialties = () => {
   }, []);
 
   const createSpecialty = async (data: { name: string; description?: string; color_hex?: string }): Promise<Specialty> => {
-    try {
-      setError(null);
-      const newSpecialty = await createSpecialtyAPI(data);
-      await loadSpecialties(page, pageSize);
-      return newSpecialty;
-    } catch (err: any) {
-      const errorMessage = err?.response?.data?.message || 'Error al crear la especialidad';
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    }
+    setError(null);
+    const newSpecialty = await createSpecialtyAPI(data);
+    return newSpecialty;
   };
 
   const updateSpecialty = async (id: string, data: { name?: string; description?: string; color_hex?: string }): Promise<Specialty> => {
-    try {
-      setError(null);
-      const updatedSpecialty = await updateSpecialtyAPI(id, data);
-      await loadSpecialties(page, pageSize);
-      return updatedSpecialty;
-    } catch (err: any) {
-      const errorMessage = err?.response?.data?.message || 'Error al actualizar la especialidad';
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    }
+    setError(null);
+    const updatedSpecialty = await updateSpecialtyAPI(id, data);
+    return updatedSpecialty;
   };
 
   const deleteSpecialty = async (id: string): Promise<void> => {
-    try {
-      setError(null);
-      await deleteSpecialtyAPI(id);
-      await loadSpecialties(page, pageSize);
-    } catch (err: any) {
-      const errorMessage = err?.message || err?.response?.data?.message || 'Error al eliminar la especialidad';
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    }
+    setError(null);
+    await deleteSpecialtyAPI(id);
   };
-
-  useEffect(() => {
-    loadSpecialties(page, pageSize);
-  }, [page, pageSize, loadSpecialties]);
 
   const clearError = () => {
     setError(null);
@@ -82,10 +55,6 @@ export const useAdminSpecialties = () => {
     loading,
     error,
     total,
-    page,
-    pageSize,
-    setPage,
-    setPageSize,
     loadSpecialties,
     createSpecialty,
     updateSpecialty,

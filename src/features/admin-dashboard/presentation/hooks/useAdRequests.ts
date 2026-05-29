@@ -5,18 +5,23 @@ export const useAdRequests = (params?: {
   status?: string;
   page?: number;
   limit?: number;
+  search?: string;
+  serviceType?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }) => {
-  // ✅ CORRECCIÓN: No usar valor por defecto 'PENDING' en queryKey
-  // Esto causaba que siempre se filtrara por pendientes
   const statusKey = params?.status || 'all';
   const pageKey = params?.page || 1;
   const limitKey = params?.limit || 20;
-  
+  const searchKey = params?.search || '';
+  const serviceTypeKey = params?.serviceType || '';
+  const dateFromKey = params?.dateFrom || '';
+  const dateToKey = params?.dateTo || '';
+
   return useQuery({
-    queryKey: ['ad-requests-list', statusKey, pageKey, limitKey],
+    queryKey: ['ad-requests-list', statusKey, pageKey, limitKey, searchKey, serviceTypeKey, dateFromKey, dateToKey],
     queryFn: () => getAdRequestsUseCase(params),
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
   });
 };
-

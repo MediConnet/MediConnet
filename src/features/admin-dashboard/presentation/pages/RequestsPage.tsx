@@ -1,5 +1,6 @@
 import {
   AirportShuttle,
+  Business,
   Check,
   Close,
   Download,
@@ -310,6 +311,8 @@ export const RequestsPage = () => {
           icon = <AirportShuttle color="error" fontSize="small" />;
         if (type === "supplies")
           icon = <Inventory color="warning" fontSize="small" />;
+        if (type === "clinica")
+          icon = <Business color="secondary" fontSize="small" />;
 
         return (
           <Stack

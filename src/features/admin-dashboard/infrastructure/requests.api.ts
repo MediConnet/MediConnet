@@ -120,6 +120,9 @@ export const getProviderHistoryAPI = async (params?: {
   page?: number;
   limit?: number;
   search?: string;
+  serviceType?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }): Promise<PaginatedResponse<ProviderRequest>> => {
   try {
     const searchParams = new URLSearchParams();
@@ -132,6 +135,15 @@ export const getProviderHistoryAPI = async (params?: {
     }
     if (params?.search && params.search.trim() !== '') {
       searchParams.set("search", params.search.trim());
+    }
+    if (params?.serviceType) {
+      searchParams.set("serviceType", params.serviceType);
+    }
+    if (params?.dateFrom) {
+      searchParams.set("dateFrom", params.dateFrom);
+    }
+    if (params?.dateTo) {
+      searchParams.set("dateTo", params.dateTo);
     }
 
     console.log('🔍 getProviderHistoryAPI - Params:', { params, searchParams: searchParams.toString() });
