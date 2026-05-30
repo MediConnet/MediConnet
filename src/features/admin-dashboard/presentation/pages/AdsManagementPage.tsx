@@ -1,74 +1,37 @@
 import {
-  Add,
-  Campaign,
-  Delete,
-  Edit,
-  ToggleOff,
-  ToggleOn,
-} from '@mui/icons-material';
+  Add, Campaign, Delete, Edit, ToggleOff, ToggleOn,
+} from "@mui/icons-material";
 import {
-  Alert,
-  Avatar,
-  Box,
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
-  Snackbar,
-  Stack,
-  TextField,
-  Tooltip,
-  Typography,
-} from '@mui/material';
-import { DataGrid, type GridColDef, type GridRenderCellParams, type GridPaginationModel } from '@mui/x-data-grid';
-import { useState, useMemo } from 'react';
-import { DashboardLayout } from '../../../../shared/layouts/DashboardLayout';
-import type { CreateAdminAdPayload, AdminAd } from '../../infrastructure/admin-ads.api';
-import { useAdminAds } from '../hooks/useAdminAds';
-import { useAdminNotificationsLayout } from '../hooks/useAdminNotificationsLayout';
+  Alert, Avatar, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle,
+  FormControl, IconButton, InputLabel, MenuItem, Select, Snackbar, Stack, TextField, Tooltip, Typography,
+} from "@mui/material";
+import { type GridColDef, type GridRenderCellParams, type GridPaginationModel } from "@mui/x-data-grid";
+import { useState, useMemo } from "react";
+import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
+import type { CreateAdminAdPayload, AdminAd } from "../../infrastructure/admin-ads.api";
+import { useAdminAds } from "../hooks/useAdminAds";
+import { useAdminNotificationsLayout } from "../hooks/useAdminNotificationsLayout";
+import { DataTable, TableToolbar, TablePageLayout } from "../../../../shared/components/DataTable";
 
-const CURRENT_ADMIN = { name: 'Admin General', roleLabel: 'Super Admin', initials: 'AG' };
+const CURRENT_ADMIN = { name: "Admin General", roleLabel: "Super Admin", initials: "AG" };
 
-const STATUS_COLORS: Record<string, 'warning' | 'success' | 'error' | 'default'> = {
-  PENDING: 'warning',
-  APPROVED: 'success',
-  REJECTED: 'error',
+const STATUS_COLORS: Record<string, "warning" | "success" | "error" | "default"> = {
+  PENDING: "warning", APPROVED: "success", REJECTED: "error",
 };
-
 const STATUS_LABELS: Record<string, string> = {
-  PENDING: 'Pendiente',
-  APPROVED: 'Aprobado',
-  REJECTED: 'Rechazado',
+  PENDING: "Pendiente", APPROVED: "Aprobado", REJECTED: "Rechazado",
 };
-
 const TARGET_SCREENS = [
-  { value: 'Home', label: 'Inicio' },
-  { value: 'DoctorDetail', label: 'Detalle Médico' },
-  { value: 'FarmaciaDetail', label: 'Detalle Farmacia' },
-  { value: 'LaboratorioDetail', label: 'Detalle Laboratorio' },
-  { value: 'AmbulanciaDetail', label: 'Detalle Ambulancia' },
+  { value: "Home", label: "Inicio" },
+  { value: "DoctorDetail", label: "Detalle Médico" },
+  { value: "FarmaciaDetail", label: "Detalle Farmacia" },
+  { value: "LaboratorioDetail", label: "Detalle Laboratorio" },
+  { value: "AmbulanciaDetail", label: "Detalle Ambulancia" },
 ];
-
 const EMPTY_FORM: CreateAdminAdPayload = {
-  badge_text: '',
-  title: '',
-  subtitle: '',
-  action_text: 'Ver más',
-  image_url: '',
-  start_date: new Date().toISOString().split('T')[0],
-  end_date: '',
-  target_screen: 'Home',
-  target_id: '',
-  bg_color_hex: '#FFFFFF',
-  accent_color_hex: '#009688',
-  priority_order: 5,
+  badge_text: "", title: "", subtitle: "", action_text: "Ver más", image_url: "",
+  start_date: new Date().toISOString().split("T")[0], end_date: "",
+  target_screen: "Home", target_id: "", bg_color_hex: "#FFFFFF", accent_color_hex: "#009688", priority_order: 5,
 };
 
 function toBase64(file: File): Promise<string> {
@@ -83,45 +46,34 @@ function toBase64(file: File): Promise<string> {
 export const AdsManagementPage = () => {
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
   const { ads, pagination, isLoading, createAd, updateAd, deleteAd, toggleAd, refetch } = useAdminAds();
+  const { appointments, notificationsViewAllPath } = useAdminNotificationsLayout();
 
   const handlePaginationChange = (newModel: GridPaginationModel) => {
     setPaginationModel(newModel);
     refetch(newModel.page + 1, newModel.pageSize);
   };
-  const { appointments, notificationsViewAllPath } = useAdminNotificationsLayout();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAd, setEditingAd] = useState<AdminAd | null>(null);
   const [form, setForm] = useState<CreateAdminAdPayload>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'inactive'>('all');
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
-    open: false, message: '', severity: 'success',
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({
+    open: false, message: "", severity: "success",
   });
 
-  const showSnack = (message: string, severity: 'success' | 'error' = 'success') =>
+  const showSnack = (message: string, severity: "success" | "error" = "success") =>
     setSnackbar({ open: true, message, severity });
 
-  const openCreate = () => {
-    setEditingAd(null);
-    setForm(EMPTY_FORM);
-    setDialogOpen(true);
-  };
-
+  const openCreate = () => { setEditingAd(null); setForm(EMPTY_FORM); setDialogOpen(true); };
   const openEdit = (ad: AdminAd) => {
     setEditingAd(ad);
     setForm({
-      badge_text: ad.badgeText,
-      title: ad.title,
-      subtitle: ad.subtitle || '',
-      action_text: ad.actionText,
-      image_url: ad.imageUrl || '',
-      start_date: ad.startDate,
-      end_date: ad.endDate || '',
-      target_screen: ad.targetScreen,
-      target_id: ad.targetId || '',
-      bg_color_hex: ad.bgColorHex || '#FFFFFF',
-      accent_color_hex: ad.accentColorHex || '#009688',
+      badge_text: ad.badgeText, title: ad.title, subtitle: ad.subtitle || "",
+      action_text: ad.actionText, image_url: ad.imageUrl || "",
+      start_date: ad.startDate, end_date: ad.endDate || "",
+      target_screen: ad.targetScreen, target_id: ad.targetId || "",
+      bg_color_hex: ad.bgColorHex || "#FFFFFF", accent_color_hex: ad.accentColorHex || "#009688",
       priority_order: ad.priorityOrder,
     });
     setDialogOpen(true);
@@ -136,77 +88,54 @@ export const AdsManagementPage = () => {
 
   const handleSave = async () => {
     if (!form.badge_text || !form.title || !form.action_text || !form.start_date || !form.target_screen) {
-      showSnack('Completa los campos obligatorios', 'error');
-      return;
+      showSnack("Completa los campos obligatorios", "error"); return;
     }
     setSaving(true);
     try {
       const payload = { ...form, end_date: form.end_date || undefined, target_id: form.target_id || undefined };
-      if (editingAd) {
-        await updateAd(editingAd.id, payload);
-        showSnack('Anuncio actualizado');
-      } else {
-        await createAd(payload);
-        showSnack('Anuncio creado y publicado');
-      }
+      if (editingAd) { await updateAd(editingAd.id, payload); showSnack("Anuncio actualizado"); }
+      else { await createAd(payload); showSnack("Anuncio creado y publicado"); }
       setDialogOpen(false);
-    } catch (e: any) {
-      showSnack(e.message || 'Error al guardar', 'error');
-    } finally {
-      setSaving(false);
-    }
+    } catch (e: any) { showSnack(e.message || "Error al guardar", "error"); }
+    finally { setSaving(false); }
   };
 
   const handleDelete = async (ad: AdminAd) => {
     if (!window.confirm(`¿Eliminar el anuncio "${ad.title}"?`)) return;
-    try {
-      await deleteAd(ad.id);
-      showSnack('Anuncio eliminado');
-    } catch (e: any) {
-      showSnack(e.message || 'Error al eliminar', 'error');
-    }
+    try { await deleteAd(ad.id); showSnack("Anuncio eliminado"); }
+    catch (e: any) { showSnack(e.message || "Error al eliminar", "error"); }
   };
 
   const handleToggle = async (ad: AdminAd) => {
-    try {
-      await toggleAd(ad.id);
-      showSnack(`Anuncio ${ad.isActive ? 'desactivado' : 'activado'}`);
-    } catch (e: any) {
-      showSnack(e.message || 'Error', 'error');
-    }
+    try { await toggleAd(ad.id); showSnack(`Anuncio ${ad.isActive ? "desactivado" : "activado"}`); }
+    catch (e: any) { showSnack(e.message || "Error", "error"); }
   };
 
-  const filtered = ads.filter((ad) => {
-    if (activeFilter === 'active') return ad.isActive;
-    if (activeFilter === 'inactive') return !ad.isActive;
-    return true;
-  });
+  const filtered = useMemo(() => {
+    if (activeFilter === "active") return ads.filter((a) => a.isActive);
+    if (activeFilter === "inactive") return ads.filter((a) => !a.isActive);
+    return ads;
+  }, [ads, activeFilter]);
 
   const columns: GridColDef<AdminAd>[] = [
     {
-      field: 'title',
-      headerName: 'Anuncio',
+      field: "title",
+      headerName: "Anuncio",
       width: 320,
       renderCell: (p: GridRenderCellParams<AdminAd>) => (
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ height: '100%', px: 1 }}>
-          <Avatar
-            src={p.row.imageUrl}
-            variant="rounded"
-            sx={{ width: 48, height: 48, bgcolor: p.row.bgColorHex || 'grey.200', flexShrink: 0 }}
-          >
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ height: "100%", px: 1 }}>
+          <Avatar src={p.row.imageUrl} variant="rounded"
+            sx={{ width: 48, height: 48, bgcolor: p.row.bgColorHex || "grey.200", flexShrink: 0 }}>
             <Campaign />
           </Avatar>
           <Box sx={{ minWidth: 0 }}>
             {p.row.badgeText && (
-              <Chip
-                label={p.row.badgeText}
-                size="small"
-                sx={{ mb: 0.3, bgcolor: p.row.accentColorHex, color: '#fff', fontSize: 12, fontWeight: 700,marginTop:5 }}
-              />
+              <Chip label={p.row.badgeText} size="small"
+                sx={{ mb: 0.3, bgcolor: p.row.accentColorHex, color: "#fff", fontSize: 12, fontWeight: 700 }} />
             )}
             <Typography variant="body2" fontWeight={600} noWrap>{p.row.title}</Typography>
             {p.row.subtitle && (
-              <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 200, display: 'block',padding:2}}>
+              <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 200, display: "block" }}>
                 {p.row.subtitle}
               </Typography>
             )}
@@ -215,290 +144,185 @@ export const AdsManagementPage = () => {
       ),
     },
     {
-      field: 'status',
-      headerName: 'Estado',
+      field: "status",
+      headerName: "Estado",
       width: 120,
-      renderCell: (p: GridRenderCellParams<AdminAd>) => (
-        <Chip
-          label={STATUS_LABELS[p.row.status] || p.row.status}
-          color={STATUS_COLORS[p.row.status] || 'default'}
-          size="small"
-        />
+      renderCell: (p) => (
+        <Chip label={STATUS_LABELS[p.row.status] || p.row.status} color={STATUS_COLORS[p.row.status] || "default"} size="small" />
       ),
     },
     {
-      field: 'providerName',
-      headerName: 'Origen',
+      field: "providerName",
+      headerName: "Origen",
       width: 130,
-      renderCell: (p: GridRenderCellParams<AdminAd>) => (
-        <Chip
-          label={p.row.isAdminAd ? 'Admin' : p.row.providerName}
-          color={p.row.isAdminAd ? 'primary' : 'default'}
-          size="small"
-        />
+      renderCell: (p) => (
+        <Chip label={p.row.isAdminAd ? "Admin" : p.row.providerName} color={p.row.isAdminAd ? "primary" : "default"} size="small" />
       ),
     },
     {
-      field: 'targetScreen',
-      headerName: 'Pantalla',
+      field: "targetScreen",
+      headerName: "Pantalla",
       width: 150,
-      renderCell: (p: GridRenderCellParams<AdminAd>) => (
-        <Typography variant="body2">{TARGET_SCREENS.find(s => s.value === p.row.targetScreen)?.label ?? p.row.targetScreen}</Typography>
+      renderCell: (p) => (
+        <Typography variant="body2">{TARGET_SCREENS.find((s) => s.value === p.row.targetScreen)?.label ?? p.row.targetScreen}</Typography>
       ),
     },
     {
-      field: 'startDate',
-      headerName: 'Fechas',
+      field: "startDate",
+      headerName: "Fechas",
       width: 170,
-      renderCell: (p: GridRenderCellParams<AdminAd>) => (
+      renderCell: (p) => (
         <Box>
           <Typography variant="caption" display="block">Inicio: {p.row.startDate}</Typography>
-          <Typography variant="caption" display="block" color="text.secondary">
-            Fin: {p.row.endDate || 'Sin límite'}
-          </Typography>
+          <Typography variant="caption" display="block" color="text.secondary">Fin: {p.row.endDate || "Sin límite"}</Typography>
         </Box>
       ),
     },
     {
-      field: 'isActive',
-      headerName: 'Activo',
+      field: "isActive",
+      headerName: "Activo",
       width: 80,
-      renderCell: (p: GridRenderCellParams<AdminAd>) => (
-        <Tooltip title={p.row.isActive ? 'Desactivar' : 'Activar'}>
-          <IconButton size="small" onClick={() => handleToggle(p.row)} color={p.row.isActive ? 'success' : 'default'}>
+      renderCell: (p) => (
+        <Tooltip title={p.row.isActive ? "Desactivar" : "Activar"}>
+          <IconButton size="small" onClick={() => handleToggle(p.row)} color={p.row.isActive ? "success" : "default"}>
             {p.row.isActive ? <ToggleOn /> : <ToggleOff />}
           </IconButton>
         </Tooltip>
       ),
     },
     {
-      field: 'actions',
-      headerName: 'Acciones',
+      field: "actions",
+      headerName: "Acciones",
       width: 110,
       sortable: false,
-      renderCell: (p: GridRenderCellParams<AdminAd>) => (
-        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ height: '100%' }}>
-          <Tooltip title="Editar">
-            <IconButton size="small" onClick={() => openEdit(p.row)}>
-              <Edit fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Eliminar">
-            <IconButton size="small" color="error" onClick={() => handleDelete(p.row)}>
-              <Delete fontSize="small" />
-            </IconButton>
-          </Tooltip>
+      renderCell: (p) => (
+        <Stack direction="row" spacing={0.5} alignItems="center" sx={{ height: "100%" }}>
+          <Tooltip title="Editar"><IconButton size="small" onClick={() => openEdit(p.row)}><Edit fontSize="small" /></IconButton></Tooltip>
+          <Tooltip title="Eliminar"><IconButton size="small" color="error" onClick={() => handleDelete(p.row)}><Delete fontSize="small" /></IconButton></Tooltip>
         </Stack>
       ),
     },
   ];
 
   return (
-    <DashboardLayout
-      role="ADMIN"
-      userProfile={CURRENT_ADMIN}
-      appointments={appointments}
-      notificationsVariant="professional"
-      notificationsViewAllPath={notificationsViewAllPath}
-    >
-      <Box sx={{ px: 5, py: 4 }}>
-        {/* Header */}
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Campaign sx={{ fontSize: 32, color: 'primary.main' }} />
-            <Box>
-              <Typography variant="h4" fontWeight={700}>Gestión de Anuncios</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Crea y administra los anuncios del carrusel
-              </Typography>
-            </Box>
-          </Stack>
-          <Button variant="contained" startIcon={<Add />} onClick={openCreate} sx={{ textTransform: 'none' }}>
-            Nuevo Anuncio
-          </Button>
-        </Stack>
+    <DashboardLayout role="ADMIN" userProfile={CURRENT_ADMIN} appointments={appointments}
+      notificationsVariant="professional" notificationsViewAllPath={notificationsViewAllPath}>
+      <TablePageLayout>
+        <TableToolbar
+          title="Gestión de Anuncios"
+          subtitle="Crea y administra los anuncios del carrusel"
+          titleIcon={<Campaign sx={{ fontSize: 32 }} />}
+          filters={[
+            {
+              key: "active",
+              label: "Estado",
+              value: activeFilter,
+              onChange: setActiveFilter,
+              options: [
+                { value: "all", label: "Todos" },
+                { value: "active", label: "Activos" },
+                { value: "inactive", label: "Inactivos" },
+              ],
+            },
+          ]}
+          actions={[{ label: "Nuevo Anuncio", icon: <Add />, onClick: openCreate, variant: "contained" }]}
+          sx={{ mb: 3 }}
+        />
 
-        {/* Filtro */}
-        <Stack direction="row" spacing={1} mb={1.5}>
-          {(['all', 'active', 'inactive'] as const).map((f) => (
-            <Chip
-              key={f}
-              label={f === 'all' ? 'Todos' : f === 'active' ? 'Activos' : 'Inactivos'}
-              onClick={() => setActiveFilter(f)}
-              color={activeFilter === f ? 'primary' : 'default'}
-              variant={activeFilter === f ? 'filled' : 'outlined'}
-            />
-          ))}
-        </Stack>
+        <DataTable<AdminAd>
+          rows={filtered}
+          columns={columns}
+          rowCount={pagination.total}
+          paginationModel={paginationModel}
+          onPaginationModelChange={handlePaginationChange}
+          pageSizeOptions={[10, 20, 50]}
+          loading={isLoading}
+          rowHeight={80}
+          emptyTitle="Sin anuncios"
+          emptyDescription="No hay anuncios que coincidan con el filtro seleccionado."
+        />
 
-        {/* Grid */}
-        <Box sx={{ height: 600, bgcolor: 'white', borderRadius: 2, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-          <DataGrid
-            rows={filtered}
-            columns={columns}
-            loading={isLoading}
-            rowHeight={80}
-            paginationMode="server"
-            rowCount={pagination.total}
-            paginationModel={paginationModel}
-            onPaginationModelChange={handlePaginationChange}
-            pageSizeOptions={[10, 20, 50]}
-            disableColumnResize
-            disableRowSelectionOnClick
-            sx={{
-              border: 'none',
-              '& .MuiDataGrid-cell': {
-                display: 'flex',
-                alignItems: 'center',
-                px: 1.5,
-              },
-              '& .MuiDataGrid-cell:focus': { outline: 'none' },
-              '& .MuiDataGrid-columnHeader': { px: 1.5 },
-              '& .MuiDataGrid-columnHeaderTitle': { fontWeight: 700 },
-            }}
-          />
-        </Box>
-      </Box>
-
-      {/* Dialog Crear/Editar */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>{editingAd ? 'Editar Anuncio' : 'Nuevo Anuncio'}</DialogTitle>
-        <DialogContent dividers>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            {/* Imagen */}
-            <Box>
-              <Typography variant="caption" color="text.secondary" mb={0.5} display="block">
-                Imagen del anuncio
-              </Typography>
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Avatar
-                  src={form.image_url?.startsWith('data:') || form.image_url?.startsWith('http') ? form.image_url : undefined}
-                  variant="rounded"
-                  sx={{ width: 64, height: 64, bgcolor: 'grey.100' }}
-                >
-                  <Campaign />
-                </Avatar>
-                <Box>
-                  <Button variant="outlined" component="label" size="small" sx={{ textTransform: 'none' }}>
-                    Subir imagen
-                    <input type="file" hidden accept="image/*" onChange={handleImageUpload} />
-                  </Button>
-                  <Typography variant="caption" display="block" color="text.secondary" mt={0.5}>
-                    Recomendado: 1200 × 500 px (proporción 12:5)
-                  </Typography>
-                  <Typography variant="caption" display="block" color="text.secondary">
-                    Formatos: JPG, PNG · Mín. 1200x400px (proporción 3:1) · Máx. 5MB
-                  </Typography>
+        {/* Dialog Crear/Editar */}
+        <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>{editingAd ? "Editar Anuncio" : "Nuevo Anuncio"}</DialogTitle>
+          <DialogContent dividers>
+            <Stack spacing={2} sx={{ pt: 1 }}>
+              <Box>
+                <Typography variant="caption" color="text.secondary" mb={0.5} display="block">Imagen del anuncio</Typography>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Avatar src={form.image_url?.startsWith("data:") || form.image_url?.startsWith("http") ? form.image_url : undefined}
+                    variant="rounded" sx={{ width: 64, height: 64, bgcolor: "grey.100" }}>
+                    <Campaign />
+                  </Avatar>
+                  <Box>
+                    <Button variant="outlined" component="label" size="small" sx={{ textTransform: "none" }}>
+                      Subir imagen
+                      <input type="file" hidden accept="image/*" onChange={handleImageUpload} />
+                    </Button>
+                    <Typography variant="caption" display="block" color="text.secondary" mt={0.5}>
+                      Recomendado: 1200 × 500 px · Máx. 5MB
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Box>
+              <TextField label="Badge / Etiqueta *" value={form.badge_text} size="small" fullWidth placeholder="Ej: OFERTA"
+                onChange={(e) => setForm((f) => ({ ...f, badge_text: e.target.value }))} />
+              <TextField label="Título *" value={form.title} size="small" fullWidth placeholder="Ej: 20% OFF en consultas"
+                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} />
+              <TextField label="Descripción" value={form.subtitle} size="small" fullWidth multiline rows={2}
+                onChange={(e) => setForm((f) => ({ ...f, subtitle: e.target.value }))} />
+              <TextField label="Texto del botón *" value={form.action_text} size="small" fullWidth placeholder="Ej: Ver más"
+                onChange={(e) => setForm((f) => ({ ...f, action_text: e.target.value }))} />
+              <Stack direction="row" spacing={2}>
+                <TextField label="Fecha inicio *" type="date" value={form.start_date} size="small" fullWidth InputLabelProps={{ shrink: true }}
+                  onChange={(e) => setForm((f) => ({ ...f, start_date: e.target.value }))} />
+                <TextField label="Fecha fin" type="date" value={form.end_date} size="small" fullWidth InputLabelProps={{ shrink: true }}
+                  onChange={(e) => setForm((f) => ({ ...f, end_date: e.target.value }))} />
+              </Stack>
+              <FormControl size="small" fullWidth>
+                <InputLabel>Pantalla destino *</InputLabel>
+                <Select value={form.target_screen} label="Pantalla destino *"
+                  onChange={(e) => setForm((f) => ({ ...f, target_screen: e.target.value }))}>
+                  {TARGET_SCREENS.map((s) => <MenuItem key={s.value} value={s.value}>{s.label}</MenuItem>)}
+                </Select>
+              </FormControl>
+              <Stack direction="row" spacing={2}>
+                <Box flex={1}>
+                  <Typography variant="caption" color="text.secondary">Color de fondo</Typography>
+                  <Stack direction="row" spacing={1} alignItems="center" mt={0.5}>
+                    <input type="color" value={form.bg_color_hex}
+                      onChange={(e) => setForm((f) => ({ ...f, bg_color_hex: e.target.value }))}
+                      style={{ width: 40, height: 32, border: "none", cursor: "pointer", borderRadius: 4 }} />
+                    <Typography variant="body2">{form.bg_color_hex}</Typography>
+                  </Stack>
+                </Box>
+                <Box flex={1}>
+                  <Typography variant="caption" color="text.secondary">Color acento</Typography>
+                  <Stack direction="row" spacing={1} alignItems="center" mt={0.5}>
+                    <input type="color" value={form.accent_color_hex}
+                      onChange={(e) => setForm((f) => ({ ...f, accent_color_hex: e.target.value }))}
+                      style={{ width: 40, height: 32, border: "none", cursor: "pointer", borderRadius: 4 }} />
+                    <Typography variant="body2">{form.accent_color_hex}</Typography>
+                  </Stack>
                 </Box>
               </Stack>
-            </Box>
-
-            <Stack direction="row" spacing={2}>
-              <TextField
-                label="Badge / Etiqueta *"
-                value={form.badge_text}
-                onChange={(e) => setForm((f) => ({ ...f, badge_text: e.target.value }))}
-                size="small"
-                fullWidth
-                placeholder="Ej: OFERTA"
-              />
             </Stack>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, py: 2 }}>
+            <Button onClick={() => setDialogOpen(false)} sx={{ textTransform: "none" }}>Cancelar</Button>
+            <Button variant="contained" onClick={handleSave} disabled={saving} sx={{ textTransform: "none" }}>
+              {saving ? "Guardando..." : editingAd ? "Guardar cambios" : "Crear anuncio"}
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-            <TextField
-              label="Título *"
-              value={form.title}
-              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              size="small"
-              fullWidth
-              placeholder="Ej: 20% OFF en consultas"
-            />
-
-            <TextField
-              label="Descripción"
-              value={form.subtitle}
-              onChange={(e) => setForm((f) => ({ ...f, subtitle: e.target.value }))}
-              size="small"
-              fullWidth
-              multiline
-              rows={2}
-            />
-
-            <TextField
-              label="Texto del botón *"
-              value={form.action_text}
-              onChange={(e) => setForm((f) => ({ ...f, action_text: e.target.value }))}
-              size="small"
-              fullWidth
-              placeholder="Ej: Ver más"
-            />
-
-            <Stack direction="row" spacing={2}>
-              <TextField
-                label="Fecha inicio *"
-                type="date"
-                value={form.start_date}
-                onChange={(e) => setForm((f) => ({ ...f, start_date: e.target.value }))}
-                size="small"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-              />
-              <TextField
-                label="Fecha fin"
-                type="date"
-                value={form.end_date}
-                onChange={(e) => setForm((f) => ({ ...f, end_date: e.target.value }))}
-                size="small"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-              />
-            </Stack>
-
-            <Stack direction="row" spacing={2}>
-              <Box flex={1}>
-                <Typography variant="caption" color="text.secondary">Color de fondo</Typography>
-                <Stack direction="row" spacing={1} alignItems="center" mt={0.5}>
-                  <input
-                    type="color"
-                    value={form.bg_color_hex}
-                    onChange={(e) => setForm((f) => ({ ...f, bg_color_hex: e.target.value }))}
-                    style={{ width: 40, height: 32, border: 'none', cursor: 'pointer', borderRadius: 4 }}
-                  />
-                  <Typography variant="body2">{form.bg_color_hex}</Typography>
-                </Stack>
-              </Box>
-              <Box flex={1}>
-                <Typography variant="caption" color="text.secondary">Color acento</Typography>
-                <Stack direction="row" spacing={1} alignItems="center" mt={0.5}>
-                  <input
-                    type="color"
-                    value={form.accent_color_hex}
-                    onChange={(e) => setForm((f) => ({ ...f, accent_color_hex: e.target.value }))}
-                    style={{ width: 40, height: 32, border: 'none', cursor: 'pointer', borderRadius: 4 }}
-                  />
-                  <Typography variant="body2">{form.accent_color_hex}</Typography>
-                </Stack>
-              </Box>
-            </Stack>
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={() => setDialogOpen(false)} sx={{ textTransform: 'none' }}>Cancelar</Button>
-          <Button variant="contained" onClick={handleSave} disabled={saving} sx={{ textTransform: 'none' }}>
-            {saving ? 'Guardando...' : editingAd ? 'Guardar cambios' : 'Crear anuncio'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert severity={snackbar.severity} variant="filled" onClose={() => setSnackbar((s) => ({ ...s, open: false }))}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+        <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
+          <Alert severity={snackbar.severity} variant="filled" onClose={() => setSnackbar((s) => ({ ...s, open: false }))}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </TablePageLayout>
     </DashboardLayout>
   );
 };

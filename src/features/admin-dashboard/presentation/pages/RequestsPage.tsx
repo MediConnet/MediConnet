@@ -1,5 +1,6 @@
 import {
   AirportShuttle,
+  Business,
   Check,
   Close,
   Download,
@@ -14,7 +15,6 @@ import {
   Box,
   Button,
   IconButton,
-  MenuItem,
   Stack,
   TextField,
   Typography,
@@ -22,7 +22,6 @@ import {
   Alert,
 } from "@mui/material";
 import {
-  DataGrid,
   type GridColDef,
   type GridRenderCellParams,
   type GridPaginationModel,
@@ -40,6 +39,11 @@ import { useProviderRequests } from "../hooks/useProviderRequests";
 import { useRequestFiltering } from "../hooks/useRequestFiltering";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAdminNotificationsLayout } from "../hooks/useAdminNotificationsLayout";
+import {
+  DataTable,
+  TableToolbar,
+  TablePageLayout,
+} from "../../../../shared/components/DataTable";
 
 const CURRENT_ADMIN = {
   name: "Admin General",
@@ -307,6 +311,8 @@ export const RequestsPage = () => {
           icon = <AirportShuttle color="error" fontSize="small" />;
         if (type === "supplies")
           icon = <Inventory color="warning" fontSize="small" />;
+        if (type === "clinica")
+          icon = <Business color="secondary" fontSize="small" />;
 
         return (
           <Stack
@@ -400,107 +406,66 @@ export const RequestsPage = () => {
       notificationsVariant="professional"
       notificationsViewAllPath={notificationsViewAllPath}
     >
-      <Box sx={{ height: "100%", width: "100%", p: 1 }}>
-        {/* Header */}
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={3}
-        >
-          <Box>
-            <Typography variant="h5" fontWeight={700} color="text.primary">
-              Solicitudes de Proveedores
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Gestiona las solicitudes de registro y verificación.
-            </Typography>
-          </Box>
-          <Button 
-            variant="outlined" 
-            startIcon={<Download />}
-            onClick={handleExportCSV}
-            disabled={requests.length === 0 || isLoading}
-          >
-            Exportar CSV
-          </Button>
-        </Stack>
+      <TablePageLayout>
+        {/* Toolbar: título + exportar + filtros */}
+        <TableToolbar
+          title="Solicitudes de Proveedores"
+          subtitle="Gestiona las solicitudes de registro y verificación."
+          searchValue={filters.searchText}
+          searchPlaceholder="Buscar por nombre o email..."
+          onSearchChange={setSearchText}
+          filters={[
+            {
+              key: "status",
+              label: "Estado",
+              value: filters.statusFilter,
+              onChange: handleStatusFilterChange,
+              options: [
+                { value: "all", label: "Todos" },
+                { value: "PENDING", label: "Pendientes" },
+                { value: "APPROVED", label: "Aprobados" },
+                { value: "REJECTED", label: "Rechazados" },
+              ],
+            },
+          ]}
+          extraFilters={
+            <TextField
+              type="date"
+              size="small"
+              sx={{ minWidth: 150 }}
+              slotProps={{ inputLabel: { shrink: true } }}
+              label="Desde fecha"
+              value={filters.dateFilter}
+              onChange={(e) => handleDateFilterChange(e.target.value)}
+            />
+          }
+          actions={[
+            {
+              label: "Exportar CSV",
+              icon: <Download />,
+              onClick: handleExportCSV,
+              disabled: requests.length === 0 || isLoading,
+              variant: "outlined",
+            },
+          ]}
+          sx={{ mb: 3 }}
+        />
 
-        {/* Filtros (Conectados al Hook) */}
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={2}
-          mb={3}
-          sx={{
-            bgcolor: "white",
-            p: 2,
-            borderRadius: 2,
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-          }}
-        >
-          <TextField
-            placeholder="Buscar por nombre o email..."
-            size="small"
-            sx={{ flexGrow: 1 }}
-            value={filters.searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-          <TextField
-            select
-            label="Estado"
-            size="small"
-            value={filters.statusFilter}
-            onChange={(e) => handleStatusFilterChange(e.target.value)}
-            sx={{ minWidth: 150 }}
-          >
-            <MenuItem value="all">Todos</MenuItem>
-            <MenuItem value="PENDING">Pendientes</MenuItem>
-            <MenuItem value="APPROVED">Aprobados</MenuItem>
-            <MenuItem value="REJECTED">Rechazados</MenuItem>
-          </TextField>
-          <TextField
-            type="date"
-            size="small"
-            sx={{ minWidth: 150 }}
-            slotProps={{ inputLabel: { shrink: true } }}
-            label="Desde fecha"
-            value={filters.dateFilter}
-            onChange={(e) => handleDateFilterChange(e.target.value)}
-          />
-        </Stack>
+        {/* Tabla */}
+        <DataTable<ProviderRequest>
+          rows={requests}
+          columns={columns}
+          rowCount={pagination.total}
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          pageSizeOptions={[5, 10, 20]}
+          loading={isLoading}
+          rowHeight={80}
+          emptyTitle="Sin solicitudes"
+          emptyDescription="No hay solicitudes de proveedores que coincidan con los filtros."
+        />
 
-        {/* DataGrid */}
-        <Box
-          sx={{
-            height: 600,
-            width: "100%",
-            bgcolor: "white",
-            borderRadius: 2,
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-          }}
-        >
-          <DataGrid
-            rows={requests}
-            columns={columns}
-            loading={isLoading}
-            rowHeight={80}
-            paginationMode="server"
-            rowCount={pagination.total}
-            paginationModel={paginationModel}
-            onPaginationModelChange={setPaginationModel}
-            pageSizeOptions={[5, 10, 20]}
-            disableColumnResize
-            disableRowSelectionOnClick
-            sx={{
-              border: "none",
-              "& .MuiDataGrid-cell": { display: "flex", alignItems: "center" },
-              "& .MuiDataGrid-cell:focus": { outline: "none" },
-              "& .MuiDataGrid-columnHeader:focus": { outline: "none" },
-            }}
-          />
-        </Box>
-
-        {/* Modal de Detalles */}
+        {/* Modales */}
         <RequestDetailModal
           open={isModalOpen}
           onClose={handleCloseModal}
@@ -508,8 +473,6 @@ export const RequestsPage = () => {
           onApprove={onApprove}
           onReject={onReject}
         />
-
-        {/* Modal de Rechazo */}
         <RejectProviderRequestModal
           open={isRejectModalOpen}
           onClose={() => {
@@ -520,23 +483,23 @@ export const RequestsPage = () => {
           onConfirm={handleReject}
         />
 
-        {/* Snackbar para notificaciones */}
+        {/* Snackbar */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={6000}
           onClose={() => setSnackbar({ ...snackbar, open: false })}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         >
           <Alert
             onClose={() => setSnackbar({ ...snackbar, open: false })}
             severity={snackbar.severity}
-            sx={{ width: '100%' }}
+            sx={{ width: "100%" }}
             variant="filled"
           >
             {snackbar.message}
           </Alert>
         </Snackbar>
-      </Box>
+      </TablePageLayout>
     </DashboardLayout>
   );
 };

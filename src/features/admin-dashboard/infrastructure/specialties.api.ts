@@ -2,12 +2,39 @@ import { httpClient, extractData } from '../../../shared/lib/http';
 import type { Specialty } from '../domain/specialty.entity';
 import type { PaginatedResponse } from '../../../shared/types/pagination';
 
-export const getSpecialtiesAPI = async (params?: { page?: number; limit?: number }): Promise<PaginatedResponse<Specialty>> => {
+export const getSpecialtiesAPI = async (params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}): Promise<PaginatedResponse<Specialty>> => {
+  const queryParams: Record<string, string> = {};
+  if (params?.page) queryParams.page = String(params.page);
+  if (params?.limit) queryParams.limit = String(params.limit);
+  if (params?.search) queryParams.search = params.search;
+
+  console.log('🔍 getSpecialtiesAPI - Params:', queryParams);
+
   const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<Specialty> }>(
     '/admin/specialties',
-    { params }
+    { params: queryParams }
   );
-  return extractData(response);
+
+  console.log('🔍 getSpecialtiesAPI - Response:', response);
+
+  const extractedData = extractData(response);
+  console.log('🔍 getSpecialtiesAPI - Extracted data:', extractedData);
+
+  const data = Array.isArray(extractedData?.data) ? extractedData.data : [];
+  const pagination = extractedData?.pagination ?? {
+    total: 0,
+    page: params?.page || 1,
+    limit: params?.limit || 20,
+    totalPages: 0,
+  };
+
+  console.log('✅ getSpecialtiesAPI - Result:', { dataLength: data.length, total: pagination.total });
+
+  return { data, pagination };
 };
 
 export const createSpecialtyAPI = async (

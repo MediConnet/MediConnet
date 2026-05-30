@@ -9,5 +9,6 @@ export const getServiceStatsUseCase = async (): Promise<ServiceStats> => {
     laboratoryCount: stats.servicesByType.laboratories,
     ambulanceCount: stats.servicesByType.ambulances,
     suppliesCount: stats.servicesByType.supplies,
+    clinicaCount: stats.servicesByType.clinicas,
   };
 };

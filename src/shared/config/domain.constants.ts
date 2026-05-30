@@ -91,15 +91,15 @@ export const RECEPTION_STATUS_LABELS: Record<ReceptionStatus, string> = {
 };
 
 // ── Provider types ──
-export const PROVIDER_TYPES = ["doctor", "pharmacy", "lab", "ambulance", "supplies", "clinic"] as const;
+export const PROVIDER_TYPES = ["doctor", "pharmacy", "laboratory", "ambulance", "supplies", "clinica"] as const;
 export type ProviderType = (typeof PROVIDER_TYPES)[number];
 export const PROVIDER_TYPE_LABELS: Record<ProviderType, string> = {
   doctor: "Médico",
   pharmacy: "Farmacia",
-  lab: "Laboratorio",
+  laboratory: "Laboratorio",
   ambulance: "Ambulancia",
   supplies: "Insumos Médicos",
-  clinic: "Clínica",
+  clinica: "Clínica",
 };
 
 // ── Verification / request status ──

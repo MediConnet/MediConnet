@@ -2,6 +2,7 @@ import {
   AccessTime,
   AirportShuttle,
   Biotech,
+  Business,
   ChatBubbleOutline,
   CheckCircleOutline,
   HighlightOff,
@@ -176,6 +177,14 @@ export const AdminDashboardPage = () => {
               icon={<Inventory />}
               color="text-amber-500"
               barColor="bg-amber-500"
+            />
+            <ServiceBar
+              label="Clínicas"
+              count={stats.servicesByType?.clinicas ?? 0}
+              total={200}
+              icon={<Business />}
+              color="text-purple-600"
+              barColor="bg-purple-500"
             />
           </div>
         </div>

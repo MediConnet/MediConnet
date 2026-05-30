@@ -10,22 +10,20 @@ import type {
 
 /**
  * API: Obtener información de la clínica asociada
- * Endpoint: GET /api/doctors/clinic-info
+ * Endpoint: GET /api/clinics/doctors/me/info
  * ⚠️ NOTA: Si el médico no está asociado, el backend retorna objeto con campos null (no 404)
  */
 export const getClinicInfoAPI = async (): Promise<ClinicInfo | null> => {
   try {
     const response = await httpClient.get<{ success: boolean; data: ClinicInfo | null }>(
-      '/doctors/clinic-info'
+      '/clinics/doctors/me/info'
     );
     const data = extractData(response);
-    // ⭐ Verificar si todos los campos son null (médico no asociado)
     if (data && data.id) {
       return data;
     }
     return null;
   } catch (error: any) {
-    // Si es 404, retornar null (médico no asociado)
     if (error?.response?.status === 404) {
       return null;
     }
@@ -35,24 +33,24 @@ export const getClinicInfoAPI = async (): Promise<ClinicInfo | null> => {
 
 /**
  * API: Obtener perfil del médico asociado
- * Endpoint: GET /api/doctors/clinic/profile
+ * Endpoint: GET /api/clinics/doctors/me/profile
  */
 export const getClinicAssociatedProfileAPI = async (): Promise<ClinicAssociatedDoctorProfile> => {
   const response = await httpClient.get<{ success: boolean; data: ClinicAssociatedDoctorProfile }>(
-    '/doctors/clinic/profile'
+    '/clinics/doctors/me/profile'
   );
   return extractData(response);
 };
 
 /**
  * API: Actualizar perfil del médico asociado
- * Endpoint: PUT /api/doctors/clinic/profile
+ * Endpoint: PUT /api/clinics/doctors/me/profile
  */
 export const updateClinicAssociatedProfileAPI = async (
   profile: Partial<ClinicAssociatedDoctorProfile>
 ): Promise<ClinicAssociatedDoctorProfile> => {
   const response = await httpClient.put<{ success: boolean; data: ClinicAssociatedDoctorProfile }>(
-    '/doctors/clinic/profile',
+    '/clinics/doctors/me/profile',
     profile
   );
   return extractData(response);
@@ -60,13 +58,13 @@ export const updateClinicAssociatedProfileAPI = async (
 
 /**
  * API: Obtener mensajes con recepción
- * Endpoint: GET /api/doctors/clinic/reception/messages
+ * Endpoint: GET /api/clinics/doctors/me/messages
  */
 export const getReceptionMessagesAPI = async (
   params?: { page?: number; limit?: number }
 ): Promise<PaginatedResponse<ReceptionMessage>> => {
   const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<ReceptionMessage> }>(
-    '/doctors/clinic/reception/messages',
+    '/clinics/doctors/me/messages',
     { params }
   );
   return extractData(response);
@@ -74,13 +72,13 @@ export const getReceptionMessagesAPI = async (
 
 /**
  * API: Enviar mensaje a recepción
- * Endpoint: POST /api/doctors/clinic/reception/messages
+ * Endpoint: POST /api/clinics/doctors/me/messages
  */
 export const sendReceptionMessageAPI = async (
   message: string
 ): Promise<ReceptionMessage> => {
   const response = await httpClient.post<{ success: boolean; data: ReceptionMessage }>(
-    '/doctors/clinic/reception/messages',
+    '/clinics/doctors/me/messages',
     { message }
   );
   return extractData(response);
@@ -88,24 +86,24 @@ export const sendReceptionMessageAPI = async (
 
 /**
  * API: Marcar mensajes como leídos
- * Endpoint: PATCH /api/doctors/clinic/reception/messages/read
+ * Endpoint: PATCH /api/clinics/doctors/me/messages/read
  */
 export const markMessagesAsReadAPI = async (messageIds: string[]): Promise<void> => {
   await httpClient.patch<{ success: boolean }>(
-    '/doctors/clinic/reception/messages/read',
+    '/clinics/doctors/me/messages/read',
     { messageIds }
   );
 };
 
 /**
  * API: Obtener solicitudes de bloqueo de fecha
- * Endpoint: GET /api/doctors/clinic/date-blocks
+ * Endpoint: GET /api/clinics/doctors/me/date-blocks
  */
 export const getDateBlockRequestsAPI = async (
   params?: { page?: number; limit?: number }
 ): Promise<PaginatedResponse<DateBlockRequest>> => {
   const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<DateBlockRequest> }>(
-    '/doctors/clinic/date-blocks',
+    '/clinics/doctors/me/date-blocks',
     { params }
   );
   return extractData(response);
@@ -113,7 +111,7 @@ export const getDateBlockRequestsAPI = async (
 
 /**
  * API: Solicitar bloqueo de fecha
- * Endpoint: POST /api/doctors/clinic/date-blocks/request
+ * Endpoint: POST /api/clinics/doctors/me/date-blocks
  */
 export const requestDateBlockAPI = async (
   startDate: string,
@@ -121,7 +119,7 @@ export const requestDateBlockAPI = async (
   reason: string
 ): Promise<DateBlockRequest> => {
   const response = await httpClient.post<{ success: boolean; data: DateBlockRequest }>(
-    '/doctors/clinic/date-blocks/request',
+    '/clinics/doctors/me/date-blocks',
     { startDate, endDate, reason }
   );
   return extractData(response);
@@ -129,13 +127,13 @@ export const requestDateBlockAPI = async (
 
 /**
  * API: Obtener citas del médico asociado (solo confirmadas)
- * Endpoint: GET /api/doctors/clinic/appointments
+ * Endpoint: GET /api/clinics/doctors/me/appointments
  */
 export const getClinicAssociatedAppointmentsAPI = async (
   params?: { page?: number; limit?: number }
 ): Promise<PaginatedResponse<ClinicAssociatedAppointment>> => {
   const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<ClinicAssociatedAppointment> }>(
-    '/doctors/clinic/appointments',
+    '/clinics/doctors/me/appointments',
     { params }
   );
   return extractData(response);
@@ -143,14 +141,14 @@ export const getClinicAssociatedAppointmentsAPI = async (
 
 /**
  * API: Actualizar estado de cita (marcar como atendida/no asistió)
- * Endpoint: PATCH /api/doctors/clinic/appointments/:appointmentId/status
+ * Endpoint: PATCH /api/clinics/doctors/me/appointments/:appointmentId/status
  */
 export const updateClinicAppointmentStatusAPI = async (
   appointmentId: string,
   status: 'COMPLETED' | 'NO_SHOW'
 ): Promise<ClinicAssociatedAppointment> => {
   const response = await httpClient.patch<{ success: boolean; data: ClinicAssociatedAppointment }>(
-    `/doctors/clinic/appointments/${appointmentId}/status`,
+    `/clinics/doctors/me/appointments/${appointmentId}/status`,
     { status }
   );
   return extractData(response);
