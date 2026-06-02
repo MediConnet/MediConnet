@@ -17,6 +17,7 @@ import { useState } from "react";
 import type { PharmacyProfile, WorkSchedule } from "../../domain/pharmacy-profile.entity";
 import { EditScheduleModal } from "./EditScheduleModal";
 import { useUpdatePharmacyProfile } from "../hooks/usePharmacyProfile";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 interface ScheduleSectionProps {
   profile: PharmacyProfile;
@@ -35,7 +36,7 @@ const DAYS_LABELS: Record<string, string> = {
 
 export const ScheduleSection = ({ profile, onUpdate }: ScheduleSectionProps) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [snackMsg, setSnackMsg] = useState<string | null>(null);
+  const feedback = useFeedbackStore();
   const { mutateAsync: updateProfile, isPending } = useUpdatePharmacyProfile();
 
   const handleSave = async (updatedSchedule: WorkSchedule[]) => {
@@ -43,9 +44,9 @@ export const ScheduleSection = ({ profile, onUpdate }: ScheduleSectionProps) => 
       const updated = await updateProfile({ ...profile, schedule: updatedSchedule });
       onUpdate(updated);
       setIsEditOpen(false);
-      setSnackMsg("Horarios guardados correctamente.");
-    } catch (err: any) {
-      setSnackMsg(err?.message || "Error al guardar horarios.");
+      feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
+    } catch {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     }
   };
 
@@ -151,12 +152,6 @@ export const ScheduleSection = ({ profile, onUpdate }: ScheduleSectionProps) => 
         onSave={handleSave}
         isSaving={isPending}
       />
-      {snackMsg && (
-        <Box sx={{ position: 'fixed', bottom: 24, right: 24, zIndex: 9999, bgcolor: snackMsg.includes('Error') ? 'error.main' : 'success.main', color: 'white', px: 3, py: 1.5, borderRadius: 2, boxShadow: 3 }}>
-          {snackMsg}
-          <Button size="small" sx={{ color: 'white', ml: 1 }} onClick={() => setSnackMsg(null)}>✕</Button>
-        </Box>
-      )}
     </Box>
   );
 };

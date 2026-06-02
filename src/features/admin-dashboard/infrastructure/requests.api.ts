@@ -19,8 +19,9 @@ export const getProviderRequestsAPI = async (params?: {
     searchParams.set("page", String(params?.page || 1));
     searchParams.set("limit", String(params?.limit || 20));
     
-    // ✅ Solo agregar status si no es "all"
-    if (params?.status && params.status !== "all") {
+    if (params?.status === "all") {
+      searchParams.set("status", "ALL");
+    } else if (params?.status) {
       searchParams.set("status", params.status);
     }
     

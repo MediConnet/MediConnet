@@ -3,7 +3,7 @@ import {
   Science, AirportShuttle, Inventory, Visibility, DeleteOutline,
 } from "@mui/icons-material";
 import {
-  Avatar, Box, Button, Chip, IconButton, Stack, Typography, Snackbar, Alert,
+  Avatar, Box, Button, Chip, IconButton, Stack, Typography,
 } from "@mui/material";
 import { type GridColDef, type GridRenderCellParams, type GridPaginationModel } from "@mui/x-data-grid";
 import { useState, useMemo } from "react";
@@ -19,6 +19,8 @@ import { clearAdsFromStorage } from "../../infrastructure/ads.mock";
 import { clearAdRequests } from "../../infrastructure/ad-requests.mock";
 import { useAdminNotificationsLayout } from "../hooks/useAdminNotificationsLayout";
 import { DataTable, TableToolbar, TablePageLayout } from "../../../../shared/components/DataTable";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
+import { FEEDBACK } from "../../../../shared/constants/feedback-messages";
 
 const CURRENT_ADMIN = { name: "Admin General", roleLabel: "Super Admin", initials: "AG" };
 
@@ -29,7 +31,6 @@ const SERVICE_ICONS: Record<string, React.ReactNode> = {
 
 export const AdRequestsPage = () => {
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
-  // ✅ CORRECCIÓN: Cambiar filtro inicial de "PENDING" a "all" para mostrar todas las solicitudes
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchText, setSearchText] = useState("");
 
@@ -39,6 +40,7 @@ export const AdRequestsPage = () => {
     limit: paginationModel.pageSize,
   });
   const { appointments: adminAppointments, notificationsViewAllPath } = useAdminNotificationsLayout();
+  const feedback = useFeedbackStore();
 
   const requests = useMemo(() => result?.data ?? [], [result]);
   const pagination = useMemo(() => result?.pagination ?? { total: 0, page: 1, limit: 10, totalPages: 0 }, [result]);
@@ -46,11 +48,7 @@ export const AdRequestsPage = () => {
   const [selectedRequest, setSelectedRequest] = useState<AdRequest | null>(null);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" | "info" }>({
-    open: false, message: "", severity: "info",
-  });
 
-  // Búsqueda client-side sobre la página actual
   const filteredRequests = useMemo(() => {
     if (!searchText) return requests;
     const q = searchText.toLowerCase();
@@ -65,7 +63,13 @@ export const AdRequestsPage = () => {
   };
 
   const handleApprove = async (id: string) => {
-    try { await approveAdRequestUseCase(id); await refetch(); } catch (e) { console.error(e); }
+    try {
+      await approveAdRequestUseCase(id);
+      await refetch();
+      feedback.showFeedback("success", FEEDBACK.SUCCESS.UPDATE.title, FEEDBACK.SUCCESS.UPDATE.message);
+    } catch (e) {
+      feedback.showFeedback("error", FEEDBACK.ERROR.GENERIC.title, FEEDBACK.ERROR.GENERIC.message);
+    }
   };
 
   const handleReject = async (id: string, reason: string) => {
@@ -74,16 +78,19 @@ export const AdRequestsPage = () => {
       await refetch();
       setIsRejectModalOpen(false);
       setSelectedRequest(null);
-    } catch (e) { console.error(e); }
+      feedback.showFeedback("success", FEEDBACK.SUCCESS.UPDATE.title, FEEDBACK.SUCCESS.UPDATE.message);
+    } catch (e) {
+      feedback.showFeedback("error", FEEDBACK.ERROR.GENERIC.title, FEEDBACK.ERROR.GENERIC.message);
+    }
   };
 
   const handleClearAllAds = () => {
-    if (window.confirm("¿Limpiar TODOS los anuncios y solicitudes? Esta acción no se puede deshacer.")) {
+    feedback.showDelete("Eliminar todos los registros", "¿Limpiar TODOS los anuncios y solicitudes? Esta acción no se puede deshacer.", () => {
       clearAdsFromStorage();
       clearAdRequests();
       refetch();
-      setSnackbar({ open: true, message: "Anuncios y solicitudes limpiados correctamente", severity: "success" });
-    }
+      feedback.showFeedback("success", "Registros eliminados", "Anuncios y solicitudes limpiados correctamente");
+    });
   };
 
   const columns: GridColDef<AdRequest>[] = [
@@ -248,13 +255,6 @@ export const AdRequestsPage = () => {
           request={selectedRequest}
           onConfirm={handleReject}
         />
-
-        <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={() => setSnackbar({ ...snackbar, open: false })}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
-          <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} variant="filled" sx={{ width: "100%" }}>
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
       </TablePageLayout>
     </DashboardLayout>
   );

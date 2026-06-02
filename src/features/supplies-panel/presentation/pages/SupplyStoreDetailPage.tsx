@@ -6,12 +6,14 @@ import { useSupply, useSupplyReviews, useCreateReview } from '../hooks/useSupply
 import { ReviewForm } from '../components/ReviewForm';
 import { ReviewItem } from '../components/ReviewItem';
 import { Footer } from '../../../../shared/components/Footer';
+import { useFeedbackStore } from '../../../../app/store/feedback.store';
 
 export const SupplyStoreDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [showReviewForm, setShowReviewForm] = useState(false);
   
+  const feedback = useFeedbackStore();
   const { data: supplyStore, isLoading: isLoadingSupply } = useSupply(id || '');
   const { data: reviews = [] } = useSupplyReviews(id || '');
   const createReviewMutation = useCreateReview();
@@ -37,7 +39,7 @@ export const SupplyStoreDetailPage = () => {
       setShowReviewForm(false);
     } catch (error) {
       console.error('Error al crear reseña:', error);
-      alert('Error al publicar la reseña. Por favor, intenta de nuevo.');
+      feedback.showFeedback('error', 'Error', 'No fue posible publicar la reseña. Por favor, intenta de nuevo.');
     }
   };
 

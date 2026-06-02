@@ -12,6 +12,7 @@ import {
   useDeletePharmacyBranch,
 } from "../hooks/usePharmacyBranches";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import { usePharmacyReviews } from "../hooks/usePharmacyReviews";
 
 export const PharmacyBranchesPage = () => {
@@ -43,6 +44,8 @@ export const PharmacyBranchesPage = () => {
   const { mutateAsync: updateBranch } = useUpdatePharmacyBranch();
   const { mutateAsync: deleteBranch } = useDeletePharmacyBranch();
 
+  const feedback = useFeedbackStore();
+
   // 2. Estado local para el Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<PharmacyBranch | null>(
@@ -62,13 +65,13 @@ export const PharmacyBranchesPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("¿Estás seguro de eliminar esta sucursal?")) {
+    feedback.showDelete("Eliminar sucursal", "¿Estás seguro de eliminar esta sucursal?", async () => {
       try {
         await deleteBranch(id);
       } catch (error) {
         console.error("Error eliminando sucursal:", error);
       }
-    }
+    });
   };
 
   const handleSave = async (

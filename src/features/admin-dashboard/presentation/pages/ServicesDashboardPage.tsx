@@ -177,16 +177,6 @@ export const ServicesDashboardPage = () => {
         />
       ),
     },
-    {
-      field: "id",
-      headerName: "ID",
-      width: 120,
-      renderCell: (params: GridRenderCellParams<ActiveService>) => (
-        <Typography variant="caption" color="text.secondary" sx={{ fontFamily: "monospace" }}>
-          {params.row.id.slice(0, 8)}...
-        </Typography>
-      ),
-    },
   ];
 
   const themeColors = {

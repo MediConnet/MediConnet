@@ -1,14 +1,17 @@
 import { useMutation } from '@tanstack/react-query';
 import { resetPasswordUseCase } from '../../application/reset-password.usecase';
+import { useFeedbackStore } from '../../../../app/store/feedback.store';
 
 export const useResetPassword = () => {
+  const feedback = useFeedbackStore();
+
   return useMutation({
     mutationFn: resetPasswordUseCase,
     onSuccess: () => {
-      console.log('✅ Contraseña actualizada exitosamente');
+      feedback.showFeedback('success', 'Contraseña actualizada', 'Tu contraseña se ha actualizado correctamente.');
     },
-    onError: (error: any) => {
-      console.error('❌ Error al actualizar contraseña:', error);
+    onError: () => {
+      feedback.showFeedback('error', 'Error', 'No fue posible actualizar la contraseña.');
     },
   });
 };

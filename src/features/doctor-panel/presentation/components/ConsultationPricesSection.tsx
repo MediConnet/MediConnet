@@ -1,18 +1,21 @@
 import {
   Box,
-  Typography,
   Button,
+  Typography,
   IconButton,
-  Alert,
-  Snackbar,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Tooltip,
   TextField,
-  InputAdornment,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   CircularProgress,
+  Stack,
 } from "@mui/material";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import { DataGrid, type GridColDef, type GridPaginationModel } from "@mui/x-data-grid";
 import { Add, Edit, Delete, AttachMoney } from "@mui/icons-material";
 import { useState } from "react";
@@ -55,15 +58,7 @@ export const ConsultationPricesSection = ({ specialties }: Props) => {
     price: "",
   });
 
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: "success" | "error";
-  }>({
-    open: false,
-    message: "",
-    severity: "success",
-  });
+  const feedback = useFeedbackStore();
 
   const handleOpenDialog = (item?: ConsultationPrice) => {
     if (item) {
@@ -93,40 +88,40 @@ export const ConsultationPricesSection = ({ specialties }: Props) => {
       const price = parseFloat(formData.price);
 
       if (!formData.consultationType || formData.consultationType.length < 3) {
-        setSnackbar({ open: true, message: "El tipo de consulta debe tener al menos 3 caracteres", severity: "error" });
+        feedback.showFeedback("error", "Información incompleta", "El tipo de consulta debe tener al menos 3 caracteres.");
         return;
       }
 
       if (isNaN(price) || price < 0) {
-        setSnackbar({ open: true, message: "El precio debe ser un número válido mayor o igual a 0", severity: "error" });
+        feedback.showFeedback("error", "Información incompleta", "El precio debe ser un número válido mayor o igual a 0.");
         return;
       }
 
       if (editingItem) {
         await updateConsultationPrice({ id: editingItem.id, data: { consultationType: formData.consultationType, price } });
-        setSnackbar({ open: true, message: "Tipo de consulta actualizado correctamente", severity: "success" });
+        feedback.showFeedback("success", "Cambios guardados", "Tipo de consulta actualizado correctamente.");
       } else if (selectedSpecialty) {
         await createConsultationPrice({ specialtyId: selectedSpecialty.id, consultationType: formData.consultationType, price });
-        setSnackbar({ open: true, message: "Tipo de consulta creado correctamente", severity: "success" });
+        feedback.showFeedback("success", "Operación completada", "Tipo de consulta creado correctamente.");
       }
 
       handleCloseDialog();
     } catch (error) {
       console.error("Error al guardar:", error);
-      setSnackbar({ open: true, message: "Error al guardar. Intenta nuevamente.", severity: "error" });
+      feedback.showFeedback("error", "Error", "Error al guardar. Intenta nuevamente.");
     }
   };
 
   const handleDelete = async (id: string, consultationType: string) => {
-    if (!window.confirm(`¿Estás seguro de eliminar "${consultationType}"?`)) return;
-
-    try {
-      await deleteConsultationPrice(id);
-      setSnackbar({ open: true, message: "Tipo de consulta eliminado correctamente", severity: "success" });
-    } catch (error) {
-      console.error("Error al eliminar:", error);
-      setSnackbar({ open: true, message: "Error al eliminar. Intenta nuevamente.", severity: "error" });
-    }
+    feedback.showDelete("Eliminar tipo de consulta", `¿Estás seguro de eliminar "${consultationType}"?`, async () => {
+      try {
+        await deleteConsultationPrice(id);
+        feedback.showFeedback("success", "Registro eliminado", "Tipo de consulta eliminado correctamente.");
+      } catch (error) {
+        console.error("Error al eliminar:", error);
+        feedback.showFeedback("error", "Error", "Error al eliminar. Intenta nuevamente.");
+      }
+    });
   };
 
   const handlePaginationChange = (model: GridPaginationModel) => {
@@ -289,12 +284,6 @@ export const ConsultationPricesSection = ({ specialties }: Props) => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar({ ...snackbar, open: false })} anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
-        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} variant="filled">
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };

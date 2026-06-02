@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../../app/store/auth.store';
+import { useFeedbackStore } from '../../../../app/store/feedback.store';
 import { getClinicProfileUseCase } from '../../application/get-clinic-profile.usecase';
 import { updateClinicProfileUseCase } from '../../application/update-clinic-profile.usecase';
 import type { ClinicProfile } from '../../domain/clinic.entity';
@@ -33,6 +34,7 @@ export const useClinicProfile = () => {
 export const useUpdateClinicProfile = () => {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const feedback = useFeedbackStore();
 
   return useMutation<ClinicProfile, Error, Partial<ClinicProfile>>({
     mutationFn: updateClinicProfileUseCase,
@@ -43,6 +45,10 @@ export const useUpdateClinicProfile = () => {
       queryClient.invalidateQueries({ queryKey: ['clinics', 'dashboard', user?.id] });
       // Actualizar cache optimísticamente
       queryClient.setQueryData(['clinics', 'profile', user?.id], data);
+      feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
+    },
+    onError: () => {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     },
   });
 };

@@ -15,14 +15,13 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Alert,
-  Snackbar,
 } from "@mui/material";
 import { type GridColDef, type GridRenderCellParams } from "@mui/x-data-grid";
 import { useState, useEffect, useCallback } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { getUsersAPI, toggleUserStatusAPI, updateUserAPI, deleteUserAPI } from "../../infrastructure/users.api";
 import type { User } from "../../domain/user.entity";
+import { getUserFriendlyMessage } from "../../../../shared/lib/api-error";
 import { useAdminNotificationsLayout } from "../hooks/useAdminNotificationsLayout";
 import { PROVIDER_TYPE_LABELS } from "../../../../shared/config/domain.constants";
 import {
@@ -31,6 +30,8 @@ import {
   TablePageLayout,
 } from "../../../../shared/components/DataTable";
 import type { GridPaginationModel } from "@mui/x-data-grid";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
+import { FEEDBACK } from "../../../../shared/constants/feedback-messages";
 
 const CURRENT_ADMIN = {
   name: "Admin General",
@@ -51,9 +52,7 @@ export const UsersPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { appointments: adminAppointments, notificationsViewAllPath } = useAdminNotificationsLayout();
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" | "info" | "warning" }>({
-    open: false, message: "", severity: "info",
-  });
+  const feedback = useFeedbackStore();
 
   const loadUsers = useCallback(async (page: number, limit: number, role: string, search: string) => {
     try {
@@ -68,7 +67,7 @@ export const UsersPage = () => {
       setUsers(result.data);
       setTotal(result.pagination.total);
     } catch (err: any) {
-      setError(err.message || "Error al cargar usuarios");
+      setError(getUserFriendlyMessage(err, { fallback: "No fue posible cargar los usuarios." }));
     } finally {
       setLoading(false);
     }
@@ -94,9 +93,9 @@ export const UsersPage = () => {
     try {
       await toggleUserStatusAPI(userId, !user.isActive);
       setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, isActive: !u.isActive } : u)));
-      setSnackbar({ open: true, message: `Usuario ${!user.isActive ? "activado" : "desactivado"} correctamente`, severity: "success" });
+      feedback.showFeedback("success", FEEDBACK.SUCCESS.UPDATE.title, `Usuario ${!user.isActive ? "activado" : "desactivado"} correctamente`);
     } catch (err: any) {
-      setSnackbar({ open: true, message: err.message || "Error al cambiar estado", severity: "error" });
+      feedback.showFeedback("error", FEEDBACK.ERROR.GENERIC.title, getUserFriendlyMessage(err, { fallback: "No fue posible cambiar el estado." }));
     }
   };
 
@@ -110,9 +109,9 @@ export const UsersPage = () => {
       setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
       setIsDeleteModalOpen(false);
       setUserToDelete(null);
-      setSnackbar({ open: true, message: "Usuario eliminado correctamente", severity: "success" });
+      feedback.showFeedback("success", FEEDBACK.SUCCESS.DELETE.title, FEEDBACK.SUCCESS.DELETE.message);
     } catch (err: any) {
-      setSnackbar({ open: true, message: err.message || "Error al eliminar usuario", severity: "error" });
+      feedback.showFeedback("error", FEEDBACK.ERROR.GENERIC.title, getUserFriendlyMessage(err, { fallback: "No fue posible eliminar el usuario." }));
     }
   };
 
@@ -123,9 +122,9 @@ export const UsersPage = () => {
       setUsers((prev) => prev.map((u) => (u.id === selectedUser.id ? selectedUser : u)));
       setIsEditModalOpen(false);
       setSelectedUser(null);
-      setSnackbar({ open: true, message: "Usuario actualizado correctamente", severity: "success" });
+      feedback.showFeedback("success", FEEDBACK.SUCCESS.UPDATE.title, FEEDBACK.SUCCESS.UPDATE.message);
     } catch (err: any) {
-      setSnackbar({ open: true, message: err.message || "Error al actualizar usuario", severity: "error" });
+      feedback.showFeedback("error", FEEDBACK.ERROR.GENERIC.title, getUserFriendlyMessage(err, { fallback: "No fue posible actualizar el usuario." }));
     }
   };
 
@@ -267,7 +266,6 @@ export const UsersPage = () => {
           emptyDescription="No se encontraron usuarios con los filtros aplicados."
         />
 
-        {/* Modal edición */}
         <Dialog open={isEditModalOpen} onClose={() => { setIsEditModalOpen(false); setSelectedUser(null); }} maxWidth="sm" fullWidth>
           <DialogTitle>Editar Usuario</DialogTitle>
           <DialogContent>
@@ -309,7 +307,6 @@ export const UsersPage = () => {
           </DialogActions>
         </Dialog>
 
-        {/* Modal eliminación */}
         <Dialog open={isDeleteModalOpen} onClose={() => { setIsDeleteModalOpen(false); setUserToDelete(null); }} maxWidth="sm" fullWidth>
           <DialogTitle sx={{ color: "error.main" }}>¿Eliminar Usuario?</DialogTitle>
           <DialogContent>
@@ -329,13 +326,6 @@ export const UsersPage = () => {
             <Button variant="contained" color="error" onClick={handleConfirmDelete} startIcon={<Delete />}>Eliminar</Button>
           </DialogActions>
         </Dialog>
-
-        <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={() => setSnackbar({ ...snackbar, open: false })}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
-          <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} variant="filled" sx={{ width: "100%" }}>
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
       </TablePageLayout>
     </DashboardLayout>
   );

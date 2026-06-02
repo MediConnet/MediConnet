@@ -31,6 +31,7 @@ import type { ClinicAppointment } from "../../domain/appointment.entity";
 import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner";
 import { ReceptionMessagesSection } from "./ReceptionMessagesSection";
 import { RECEPTION_STATUS_LABELS } from "../../../../shared/config/domain.constants";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 interface ReceptionSectionProps {
   clinicId: string;
@@ -39,23 +40,22 @@ interface ReceptionSectionProps {
 export const ReceptionSection = ({ clinicId }: ReceptionSectionProps) => {
   const today = new Date().toISOString().split("T")[0];
   const { appointments, loading, updateReceptionStatus } = useClinicAppointments(clinicId, today);
+  const feedback = useFeedbackStore();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<string | null>(null);
   const [receptionStatus, setReceptionStatus] = useState<"arrived" | "not_arrived" | "attended">("arrived");
   const [notes, setNotes] = useState("");
   const [activeTab, setActiveTab] = useState<"appointments" | "messages">("appointments");
-  
-  // Para recepción, usar el endpoint específico si está disponible
+
   const [receptionAppointments, setReceptionAppointments] = useState<ClinicAppointment[]>([]);
   const [receptionLoading, setReceptionLoading] = useState(true);
-  
+
   useEffect(() => {
     const loadReceptionAppointments = async () => {
       try {
         const result = await getTodayReceptionAppointmentsAPI();
         setReceptionAppointments(result.data);
       } catch (error) {
-        // Si falla, usar las citas normales filtradas por fecha
         console.warn('Error cargando citas de recepción, usando citas normales');
         setReceptionAppointments(appointments.filter((apt) => apt.date === today));
       } finally {
@@ -77,8 +77,9 @@ export const ReceptionSection = ({ clinicId }: ReceptionSectionProps) => {
         setDialogOpen(false);
         setSelectedAppointment(null);
         setNotes("");
-      } catch (error) {
-        console.error("Error al actualizar estado:", error);
+        feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
+      } catch {
+        feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
       }
     }
   };
@@ -113,9 +114,8 @@ export const ReceptionSection = ({ clinicId }: ReceptionSectionProps) => {
     return <LoadingSpinner text="Cargando citas del día..." />;
   }
 
-  // Usar citas de recepción si están disponibles, sino usar las citas normales
-  const todayAppointments = receptionAppointments.length > 0 
-    ? receptionAppointments 
+  const todayAppointments = receptionAppointments.length > 0
+    ? receptionAppointments
     : appointments.filter((apt) => apt.date === today);
 
   return (
@@ -124,7 +124,6 @@ export const ReceptionSection = ({ clinicId }: ReceptionSectionProps) => {
         Recepción / Control Diario
       </Typography>
 
-      {/* Tabs para cambiar entre Citas y Mensajería */}
       <Tabs
         value={activeTab}
         onChange={(_, newValue) => setActiveTab(newValue)}

@@ -29,6 +29,7 @@ import {
   getDiagnosisByAppointmentAPI,
   type DiagnosisParams,
 } from "../../../infrastructure/diagnoses.api";
+import { useFeedbackStore } from "../../../../../app/store/feedback.store";
 
 interface CreateDiagnosisModalProps {
   open: boolean;
@@ -64,6 +65,7 @@ export const CreateDiagnosisModal = ({
   const [isEditing, setIsEditing] = useState(false);
   const [initialValues, setInitialValues] =
     useState<DiagnosisParams>(emptyValues);
+  const feedback = useFeedbackStore();
 
   const formik = useFormik({
     initialValues: initialValues,
@@ -78,20 +80,16 @@ export const CreateDiagnosisModal = ({
         const success = await createDiagnosisAPI(appointment.id, values);
 
         if (success) {
-          alert(
-            isEditing
-              ? "Diagnóstico actualizado correctamente"
-              : "Diagnóstico creado correctamente",
-          );
+          feedback.showFeedback('success', 'Diagnóstico guardado', isEditing ? 'El diagnóstico se actualizó correctamente.' : 'El diagnóstico se creó correctamente.');
           resetForm();
           onSuccess();
           onClose();
         } else {
-          alert("No se pudo guardar el diagnóstico");
+          feedback.showFeedback('error', 'Error', 'No fue posible guardar el diagnóstico.');
         }
       } catch (error) {
         console.error("Error guardando diagnóstico:", error);
-        alert("Error de conexión al guardar diagnóstico");
+        feedback.showFeedback('error', 'Error de conexión', 'No fue posible conectar con el servidor al guardar el diagnóstico.');
       } finally {
         setSubmitting(false);
       }

@@ -20,6 +20,7 @@ import {
   formatCoordinateForInput,
   parseCoordinate,
 } from "../../../../shared/lib/parseCoordinate";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 interface EditContactLocationModalProps {
   open: boolean;
@@ -42,6 +43,7 @@ export const EditContactLocationModal = ({
     longitude: "",
     google_maps_url: "",
   });
+  const feedback = useFeedbackStore();
 
   useEffect(() => {
     if (data) {
@@ -76,30 +78,33 @@ export const EditContactLocationModal = ({
         longitude: parsedLng ?? undefined,
         google_maps_url: formData.google_maps_url,
       });
+
+      feedback.showFeedback('success', 'Información guardada', 'Los datos de contacto y ubicación se han actualizado correctamente.');
+
+      const updatedData: LaboratoryDashboard = {
+        ...data,
+        laboratory: {
+          ...data.laboratory,
+          whatsapp: formData.whatsapp,
+          phone: formData.phone,
+          address: formData.address,
+          google_maps_url: formData.google_maps_url,
+          location:
+            parsedLat !== null && parsedLng !== null
+              ? {
+                  latitude: parsedLat,
+                  longitude: parsedLng,
+                  address: formData.address,
+                }
+              : undefined,
+        },
+      };
+      onSave(updatedData);
+      onClose();
     } catch (e) {
       console.error("Error guardando contacto/ubicación laboratorio:", e);
+      feedback.showFeedback('error', 'Error', 'No se pudieron guardar los datos de contacto y ubicación.');
     }
-
-    const updatedData: LaboratoryDashboard = {
-      ...data,
-      laboratory: {
-        ...data.laboratory,
-        whatsapp: formData.whatsapp,
-        phone: formData.phone,
-        address: formData.address,
-        google_maps_url: formData.google_maps_url,
-        location:
-          parsedLat !== null && parsedLng !== null
-            ? {
-                latitude: parsedLat,
-                longitude: parsedLng,
-                address: formData.address,
-              }
-            : undefined,
-      },
-    };
-    onSave(updatedData);
-    onClose();
   };
 
   return (
@@ -131,7 +136,6 @@ export const EditContactLocationModal = ({
 
       <DialogContent dividers>
         <Stack spacing={3} sx={{ mt: 1 }}>
-          {/* WhatsApp */}
           <TextField
             fullWidth
             label="WhatsApp"
@@ -148,7 +152,6 @@ export const EditContactLocationModal = ({
             helperText="Número de WhatsApp para contacto directo"
           />
 
-          {/* Teléfono */}
           <TextField
             fullWidth
             label="Teléfono"
@@ -158,7 +161,6 @@ export const EditContactLocationModal = ({
             helperText="Teléfono de contacto (opcional)"
           />
 
-          {/* Dirección */}
           <TextField
             fullWidth
             label="Dirección"
@@ -176,7 +178,6 @@ export const EditContactLocationModal = ({
             }}
           />
 
-          {/* Coordenadas (Opcional) */}
           <Box>
             <Typography variant="subtitle2" fontWeight={600} mb={2}>
               Coordenadas (Opcional)
@@ -210,7 +211,6 @@ export const EditContactLocationModal = ({
             </Typography>
           </Box>
 
-          {/* Google Maps URL (Opcional) */}
           <TextField
             fullWidth
             label="Link de Google Maps (opcional)"
@@ -244,4 +244,3 @@ export const EditContactLocationModal = ({
     </Dialog>
   );
 };
-

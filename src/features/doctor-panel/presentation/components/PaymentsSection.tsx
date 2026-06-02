@@ -25,6 +25,7 @@ import Grid2 from "@mui/material/Grid2";
 import { useState, useEffect } from "react";
 import { getDoctorBankAccountAPI, updateDoctorBankAccountAPI, type BankAccountData } from "../../infrastructure/payments.api";
 import { formatMoney } from "../../../../shared/lib/formatMoney";
+import { getUserFriendlyMessage } from "../../../../shared/lib/api-error";
 import { useDoctorDashboard } from "../hooks/useDoctorDashboard";
 import { useDoctorPayments } from "../hooks/useDoctorPayments";
 
@@ -96,7 +97,7 @@ export const PaymentsSection = () => {
       setBankAccount(updated);
       setBankDialogOpen(false);
     } catch (err: any) {
-      setBankError(err.message || 'Error al guardar los datos bancarios');
+      setBankError(getUserFriendlyMessage(err, { fallback: 'No fue posible guardar los datos bancarios.' }));
     } finally {
       setSavingBank(false);
     }

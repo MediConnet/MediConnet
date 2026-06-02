@@ -29,6 +29,7 @@ import {
 } from "@mui/material";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import {
   handleBothInput,
   handleEmailInput,
@@ -168,6 +169,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const galleryFileRef = useRef<HTMLInputElement>(null);
   const authStore = useAuthStore();
   const { user } = authStore;
+  const feedback = useFeedbackStore();
   const { mutateAsync: updateProfile, isPending: saving } = useUpdateDoctorProfile();
 
   // Estado del formulario actual
@@ -330,17 +332,22 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
     const newStatus: ProfileStatus =
       formData.profileStatus === "published" ? "draft" : "published";
-    const updatedData = await updateProfile({
-      profileStatus: newStatus,
-    });
+    try {
+      const updatedData = await updateProfile({
+        profileStatus: newStatus,
+      });
 
-    if (updatedData) {
-      const newData = { ...formData, profileStatus: newStatus };
-      setFormData(newData);
-      setInitialFormData(newData);
-      if (onUpdate) {
-        onUpdate(updatedData);
+      if (updatedData) {
+        const newData = { ...formData, profileStatus: newStatus };
+        setFormData(newData);
+        setInitialFormData(newData);
+        if (onUpdate) {
+          onUpdate(updatedData);
+        }
+        feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
       }
+    } catch {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     }
   };
 
@@ -442,7 +449,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
       const firstError = Object.values(errors)[0];
-      alert(firstError);
+      feedback.showFeedback('error', 'Error de validación', firstError);
       return;
     }
 
@@ -496,9 +503,10 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
         setInitialPreviewImages(returnedPreviews);
         if (onUpdate) onUpdate(updatedData);
       }
+      feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
     } catch (error: any) {
       console.error('Error al guardar el perfil:', error);
-      alert(error?.message || 'Error al guardar el perfil. Por favor, intenta de nuevo.');
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     }
   };
 
@@ -566,11 +574,11 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     e.target.value = "";
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      alert("Por favor selecciona un archivo de imagen válido");
+      feedback.showFeedback('error', 'Archivo inválido', 'Por favor selecciona un archivo de imagen válido.');
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      alert("La imagen debe ser menor a 10MB");
+      feedback.showFeedback('error', 'Archivo muy grande', 'La imagen debe ser menor a 10MB.');
       return;
     }
     const reader = new FileReader();
@@ -587,15 +595,15 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     e.target.value = "";
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      alert("Por favor selecciona un archivo de imagen válido");
+      feedback.showFeedback('error', 'Archivo inválido', 'Por favor selecciona un archivo de imagen válido.');
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      alert("La imagen debe ser menor a 10MB");
+      feedback.showFeedback('error', 'Archivo muy grande', 'La imagen debe ser menor a 10MB.');
       return;
     }
     if (previewImages.length >= 10) {
-      alert("Has alcanzado el límite de 10 imágenes de vista previa");
+      feedback.showFeedback('error', 'Límite alcanzado', 'Has alcanzado el límite de 10 imágenes de vista previa.');
       return;
     }
     const reader = new FileReader();
@@ -1589,9 +1597,10 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                       setInitialPreviewImages(returnedPreviews);
                       if (onUpdate) onUpdate(updatedData);
                     }
+                    feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
                   } catch (error: any) {
                     console.error('Error al guardar imágenes:', error);
-                    alert(error?.message || 'Error al guardar las imágenes. Por favor, intenta de nuevo.');
+                    feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
                   } finally {
                     setSavingImages(false);
                   }

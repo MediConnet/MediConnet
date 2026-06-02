@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuthStore } from "../store/auth.store";
+import { isClinicsProviderType } from "../../shared/lib/normalizeProviderType";
 
 export const ClinicRoute = ({ children }: { children: React.ReactNode }) => {
   const authStore = useAuthStore();
@@ -10,7 +11,8 @@ export const ClinicRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   // Verificar si el usuario es administrador de clínica
-  const isClinicAdmin = user?.role === "provider" && user?.tipo === "clinic";
+  const isClinicAdmin =
+    user?.role === "provider" && isClinicsProviderType(user?.tipo);
 
   if (!isClinicAdmin) {
     return <Navigate to="/home" replace />;

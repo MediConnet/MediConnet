@@ -1,0 +1,10 @@
+import { updateReceptionStatusAPI } from '../api/clinic-appointments.api';
+
+export const updateReceptionStatusUseCase = async (
+  _clinicId: string,
+  appointmentId: string,
+  receptionStatus: 'arrived' | 'not_arrived' | 'attended',
+  notes?: string
+): Promise<void> => {
+  await updateReceptionStatusAPI(appointmentId, receptionStatus, notes);
+};

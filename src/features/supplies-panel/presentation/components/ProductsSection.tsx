@@ -39,7 +39,9 @@ import {
   deleteProductAPI 
 } from "../../infrastructure/products.api";
 import type { Product } from "../../domain/Product.entity";
+import { getUserFriendlyMessage } from "../../../../shared/lib/api-error";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 const categories = [
   "Movilidad",
@@ -51,6 +53,7 @@ const categories = [
 
 export const ProductsSection = () => {
   const { user } = useAuthStore();
+  const feedback = useFeedbackStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +72,6 @@ export const ProductsSection = () => {
   const [imagePreview, setImagePreview] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Cargar productos al montar el componente
   useEffect(() => {
     loadProducts();
   }, [user?.providerId]);
@@ -84,7 +86,6 @@ export const ProductsSection = () => {
       setLoading(true);
       setError(null);
 
-      // ✅ 100%: no usar localStorage como “BD” ni mostrar DEMO
       const data = await getSupplyPanelProductsWithFallbackAPI(user?.providerId);
       setProducts(Array.isArray(data) ? data : []);
     } catch (err: any) {
@@ -170,17 +171,17 @@ export const ProductsSection = () => {
       let updatedProducts: Product[];
 
       try {
-        // Intentar guardar en el backend
         if (editingProduct) {
           const updated = await updateProductAPI(editingProduct.id, formData);
           updatedProducts = products.map(p => p.id === updated.id ? updated : p);
+          feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
         } else {
           const created = await createProductAPI(formData);
           updatedProducts = [...products, created];
+          feedback.showFeedback('success', 'Operación completada', 'La información se guardó correctamente.');
         }
       } catch (backendError) {
         console.warn('Backend no disponible, guardando en localStorage');
-        // Si falla el backend, guardar localmente
         if (editingProduct) {
           updatedProducts = products.map(p => 
             p.id === editingProduct.id ? { ...p, ...formData } : p
@@ -206,7 +207,7 @@ export const ProductsSection = () => {
       handleCloseModal();
     } catch (err: any) {
       console.error('Error saving product:', err);
-      setError(err.message || 'Error al guardar producto');
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     } finally {
       setSaving(false);
     }
@@ -214,26 +215,24 @@ export const ProductsSection = () => {
 
   const handleDeleteProduct = async (productId: string) => {
     if (!user?.id) return;
-    if (!window.confirm("¿Estás seguro de eliminar este producto?")) {
-      return;
-    }
-
-    try {
-      setError(null);
-      
+    feedback.showDelete("Eliminar producto", "¿Estás seguro de eliminar este producto?", async () => {
       try {
-        await deleteProductAPI(productId);
-      } catch (backendError) {
-        // Si el backend falla, no inventar persistencia local
-        throw backendError;
+        setError(null);
+        
+        try {
+          await deleteProductAPI(productId);
+        } catch (backendError) {
+          throw backendError;
+        }
+        
+        const updatedProducts = products.filter(p => p.id !== productId);
+        setProducts(updatedProducts);
+        feedback.showFeedback('success', 'Registro eliminado', 'La acción se completó correctamente.');
+      } catch (err: any) {
+        console.error('Error deleting product:', err);
+        feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
       }
-      
-      const updatedProducts = products.filter(p => p.id !== productId);
-      setProducts(updatedProducts);
-    } catch (err: any) {
-      console.error('Error deleting product:', err);
-      setError(err.message || 'Error al eliminar producto');
-    }
+    });
   };
 
   if (loading) {
@@ -379,7 +378,6 @@ export const ProductsSection = () => {
         </Table>
       </TableContainer>
 
-      {/* Modal para agregar/editar producto */}
       <Dialog open={openModal} onClose={handleCloseModal} maxWidth="sm" fullWidth>
         <DialogContent>
           <Typography variant="h6" gutterBottom>
@@ -387,7 +385,6 @@ export const ProductsSection = () => {
           </Typography>
 
           <Box sx={{ mt: 3, display: "flex", flexDirection: "column", gap: 2 }}>
-            {/* Imagen */}
             <Box sx={{ textAlign: "center" }}>
               <Avatar
                 src={imagePreview}

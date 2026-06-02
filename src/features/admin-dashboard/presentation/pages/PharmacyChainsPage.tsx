@@ -22,8 +22,6 @@ import {
   Typography,
   Switch,
   FormControlLabel,
-  Alert,
-  Snackbar,
 } from "@mui/material";
 import {
   DataGrid,
@@ -35,6 +33,7 @@ import { useState, useRef, useMemo } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { usePharmacyChains } from "../hooks/usePharmacyChains";
 import type { PharmacyChain } from "../../domain/pharmacy-chain.entity";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 const CURRENT_ADMIN = {
   name: "Administrador",
@@ -56,11 +55,7 @@ export const PharmacyChainsPage = () => {
     isActive: true,
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: 'success' | 'error' | 'info' | 'warning';
-  }>({ open: false, message: '', severity: 'success' });
+  const feedback = useFeedbackStore();
 
   const handlePaginationChange = (model: GridPaginationModel) => {
     setPaginationModel(model);
@@ -86,29 +81,29 @@ export const PharmacyChainsPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("¿Estás seguro de eliminar esta cadena?")) {
+    feedback.showDelete("Eliminar cadena", "¿Estás seguro de eliminar esta cadena?", async () => {
       try {
         await deleteChain(id);
-        setSnackbar({ open: true, message: "Cadena eliminada correctamente", severity: 'success' });
+        feedback.showFeedback("success", "Operación completada", "Cadena eliminada correctamente.");
       } catch (err: any) {
         const errorMessage = err?.message || err?.response?.data?.message || "Error al eliminar la cadena. Por favor, intenta nuevamente.";
-        setSnackbar({ open: true, message: errorMessage, severity: 'error' });
+        feedback.showFeedback("error", "Error", errorMessage);
       }
-    }
+    });
   };
 
   const handleToggleActive = async (chain: PharmacyChain) => {
     try {
       await updateChain(chain.id, { isActive: !chain.isActive });
-      setSnackbar({ open: true, message: `Cadena ${chain.isActive ? 'desactivada' : 'activada'} correctamente`, severity: 'success' });
+      feedback.showFeedback("success", "Cambios guardados", `Cadena ${chain.isActive ? 'desactivada' : 'activada'} correctamente.`);
     } catch (err) {
-      setSnackbar({ open: true, message: "Error al cambiar el estado. Por favor, intenta nuevamente.", severity: 'error' });
+      feedback.showFeedback("error", "Error", "Error al cambiar el estado. Por favor, intenta nuevamente.");
     }
   };
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      setSnackbar({ open: true, message: "El nombre es requerido", severity: 'warning' });
+      feedback.showFeedback("warning", "Campo requerido", "El nombre es requerido.");
       return;
     }
     try {
@@ -120,7 +115,7 @@ export const PharmacyChainsPage = () => {
           description: formData.description,
           isActive: formData.isActive,
         });
-        setSnackbar({ open: true, message: "Cadena actualizada correctamente", severity: 'success' });
+        feedback.showFeedback("success", "Cambios guardados", "Cadena actualizada correctamente.");
       } else {
         await createChain({
           name: formData.name,
@@ -128,7 +123,7 @@ export const PharmacyChainsPage = () => {
           description: formData.description,
           isActive: formData.isActive,
         });
-        setSnackbar({ open: true, message: "Cadena creada correctamente", severity: 'success' });
+        feedback.showFeedback("success", "Operación completada", "Cadena creada correctamente.");
       }
       setIsModalOpen(false);
     } catch (err) {
@@ -314,13 +309,6 @@ export const PharmacyChainsPage = () => {
             </Button>
           </DialogActions>
         </Dialog>
-
-        <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={() => setSnackbar({ ...snackbar, open: false })}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
-          <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
       </Box>
     </DashboardLayout>
   );

@@ -31,6 +31,8 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { DataTable, TableToolbar } from "../../../../shared/components/DataTable";
 import { formatMoney } from "../../../../shared/lib/formatMoney";
+import { getUserFriendlyMessage } from "../../../../shared/lib/api-error";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import {
   getAdminDoctorPaymentsAPI,
   getAdminClinicPaymentsAPI,
@@ -70,6 +72,7 @@ export const PaymentsPage = () => {
   const [isClinicPaymentConfirmDialogOpen, setIsClinicPaymentConfirmDialogOpen] = useState(false);
   const [clinicToPay, setClinicToPay] = useState<AdminClinicPayment | null>(null);
   const [doctorToPay, setDoctorToPay] = useState<string | null>(null);
+  const feedback = useFeedbackStore();
 
   // Cargar pagos desde la API
   useEffect(() => {
@@ -84,7 +87,7 @@ export const PaymentsPage = () => {
         setPayments(doctorPaymentsData.data);
         setClinicPayments(clinicPaymentsData.data);
       } catch (err: any) {
-        setError(err.message || 'Error al cargar pagos');
+        setError(getUserFriendlyMessage(err, { fallback: 'No fue posible cargar los pagos.' }));
       } finally {
         setLoading(false);
       }
@@ -169,7 +172,7 @@ export const PaymentsPage = () => {
       setIsPaymentConfirmDialogOpen(false);
       setDoctorToPay(null);
     } catch (err: any) {
-      alert(err.message || 'Error al marcar pagos como pagados');
+      feedback.showFeedback('error', 'Error', getUserFriendlyMessage(err, { fallback: 'No fue posible marcar los pagos como pagados.' }));
     }
   };
 
@@ -605,7 +608,7 @@ export const PaymentsPage = () => {
         setPayments(doctorPaymentsData.data);
         setClinicPayments(clinicPaymentsData.data);
       } catch (err: any) {
-        setError(err.message || 'Error al cargar pagos');
+        setError(getUserFriendlyMessage(err, { fallback: 'No fue posible cargar los pagos.' }));
       } finally {
         setLoading(false);
       }
@@ -1302,7 +1305,7 @@ export const PaymentsPage = () => {
                       setIsClinicPaymentConfirmDialogOpen(false);
                       setClinicToPay(null);
                     } catch (err: any) {
-                      alert(err.message || "Error al marcar pago de clínica como pagado");
+                      feedback.showFeedback('error', 'Error', getUserFriendlyMessage(err, { fallback: "No fue posible marcar el pago como pagado." }));
                     }
                   }}
                   variant="contained"

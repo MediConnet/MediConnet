@@ -23,6 +23,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "../../../../app/store/auth.store";
 import type { SupplyDashboard } from "../../domain/SupplyDashboard.entity";
 import { updateSupplyProfileAPI } from "../../infrastructure/supply.api";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 interface ProfileSectionProps {
   data: SupplyDashboard;
@@ -30,6 +31,7 @@ interface ProfileSectionProps {
 }
 
 export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
+  const feedback = useFeedbackStore();
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -73,13 +75,11 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     if (!user?.id) return;
 
     try {
-      // ✅ 100%: persistir en backend
       const saved = await updateSupplyProfileAPI({
         name: formData.name,
         description: formData.description,
         isActive: formData.isActive,
         logoUrl: profileImage,
-        // mantener campos existentes si el backend requiere body completo
         address: data?.supply?.address || "",
         phone: data?.supply?.phone || "",
         whatsapp: data?.supply?.whatsapp || "",
@@ -106,9 +106,10 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
       setIsEditing(false);
       if (onUpdate) onUpdate(updatedData);
+      feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
     } catch (e: any) {
       console.error("Error updating supply profile:", e);
-      alert(e?.message || "No se pudo guardar el perfil. Intenta de nuevo.");
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     }
   };
 
@@ -124,11 +125,11 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.startsWith("image/")) {
-        alert("Por favor selecciona un archivo de imagen");
+        useFeedbackStore.getState().showFeedback('error', 'Error', 'Por favor selecciona un archivo de imagen.');
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        alert("La imagen debe ser menor a 5MB");
+        useFeedbackStore.getState().showFeedback('error', 'Error', 'La imagen debe ser menor a 5MB.');
         return;
       }
       const reader = new FileReader();
@@ -162,14 +163,12 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
   const supply = data.supply;
   
-  // Colores del tema para insumos médicos (naranja)
-  const themeColor = "#f97316"; // Naranja
-  const bgCardColor = "#fff7ed"; // Fondo naranja suave
+  const themeColor = "#f97316";
+  const bgCardColor = "#fff7ed";
 
   return (
     <Box>
       <Grid2 container spacing={3}>
-        {/* Columna izquierda: Información del Perfil */}
         <Grid2 size={{ xs: 12, md: 8 }}>
           <Paper
             elevation={0}
@@ -210,7 +209,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
         </Box>
 
         <Stack spacing={3}>
-          {/* Logo y Nombre */}
           <Grid2 container spacing={4} alignItems="center">
             <Grid2 size={{ xs: 12, md: 4 }}>
               <Box
@@ -314,7 +312,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
           <Divider />
 
-          {/* Descripción */}
           <Box display="flex" gap={2}>
             <Description sx={{ color: "text.secondary", mt: 0.5 }} />
             <Box flex={1}>
@@ -335,7 +332,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
           <Divider />
 
-          {/* Estado del Perfil */}
           <Box>
             <Typography
               variant="caption"
@@ -355,7 +351,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
           </Box>
         </Stack>
 
-        {/* Modal de Edición */}
         {isEditing && (
           <Box
             sx={{
@@ -387,7 +382,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 rows={4}
                 required
               />
-              {/* Imagen dentro del formulario de edición */}
               <Box>
                 <Typography variant="subtitle2" fontWeight={600} mb={1}>
                   Imagen de perfil
@@ -485,9 +479,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
       </Paper>
         </Grid2>
 
-        {/* Columna derecha: Vista previa en App */}
         <Grid2 size={{ xs: 12, md: 4 }}>
-          {/* Sección de carga de imagen */}
           <Paper
             elevation={0}
             sx={{
@@ -556,7 +548,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
             </Typography>
           </Paper>
 
-          {/* Vista previa en App */}
           <Paper
             elevation={0}
             sx={{
@@ -571,7 +562,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
             </Typography>
 
             <Box display="flex" justifyContent="center">
-              {/* Card móvil de insumos médicos */}
               <Box
                 sx={{
                   bgcolor: "white",
@@ -586,7 +576,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   borderColor: "grey.100",
                 }}
               >
-                {/* Imagen Superior */}
                 <Box
                   sx={{
                     height: 176,
@@ -624,7 +613,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   )}
                 </Box>
 
-                {/* Contenido (Fondo Naranja Suave) */}
                 <Box
                   sx={{
                     p: 2.5,
@@ -634,7 +622,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                     bgcolor: bgCardColor,
                   }}
                 >
-                  {/* Nombre */}
                   <Typography
                     variant="h6"
                     sx={{
@@ -646,7 +633,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                     {isEditing ? formData.name || "Nombre del Negocio" : supply.name}
                   </Typography>
 
-                  {/* Info: Dirección */}
                   <Box display="flex" alignItems="flex-start" gap={1} sx={{ minWidth: 0 }}>
                     <LocationOn
                       sx={{ fontSize: 18, color: "grey.600", mt: 0.5, flexShrink: 0 }}
@@ -664,7 +650,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                     </Typography>
                   </Box>
 
-                  {/* Info: Descripción (truncada) */}
                   <Typography
                     variant="caption"
                     sx={{
@@ -681,7 +666,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                       : supply.description || "Sin descripción"}
                   </Typography>
 
-                  {/* Botón Ver Información */}
                   <Box mt={1} width="100%">
                     <Box
                       sx={{

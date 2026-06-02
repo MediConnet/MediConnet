@@ -22,6 +22,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import * as Yup from "yup";
 import { ROUTES } from "../../../../app/config/constants";
 import { useResetPassword } from "../hooks/useResetPassword";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 const resetPasswordValidationSchema = Yup.object({
   newPassword: Yup.string()
@@ -43,6 +44,7 @@ export const ResetPasswordPage = () => {
   const [success, setSuccess] = useState(false);
 
   const resetPassword = useResetPassword();
+  const feedback = useFeedbackStore();
 
   const formik = useFormik({
     initialValues: {
@@ -61,9 +63,11 @@ export const ResetPasswordPage = () => {
           token,
           newPassword: values.newPassword,
         });
+        feedback.showFeedback('success', 'Contraseña actualizada', 'Tu contraseña se ha actualizado correctamente. Ya puedes iniciar sesión.');
         setSuccess(true);
       } catch (err: any) {
         console.error("Error resetting password:", err);
+        feedback.showFeedback('error', 'Error', 'No fue posible restablecer la contraseña. El enlace puede haber expirado.');
         const errorMessage =
           err?.response?.data?.message ||
           "Error al restablecer contraseña. El enlace puede haber expirado.";

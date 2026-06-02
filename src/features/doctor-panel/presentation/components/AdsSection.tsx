@@ -6,7 +6,8 @@ import {
   Refresh,
   Send,
 } from "@mui/icons-material";
-import { Alert, Snackbar, Box, Typography, Chip } from "@mui/material";
+import { Box, Typography, Chip } from "@mui/material";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import { DataGrid, type GridColDef, type GridPaginationModel } from "@mui/x-data-grid";
 import { useState } from "react";
 
@@ -50,10 +51,7 @@ export const AdsSection = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [isCreateAdModalOpen, setIsCreateAdModalOpen] = useState(false);
 
-  const [feedback, setFeedback] = useState<{
-    type: "success" | "error";
-    message: string;
-  } | null>(null);
+  const feedback = useFeedbackStore();
 
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
     page: 0,
@@ -98,24 +96,17 @@ export const AdsSection = () => {
 
       await createAdAPI(apiPayload);
       setIsCreateAdModalOpen(false);
-      setFeedback({
-        type: "success",
-        message:
-          "¡Solicitud enviada correctamente! El administrador la revisará pronto.",
-      });
+      feedback.showFeedback('success', 'Solicitud enviada', '¡Solicitud enviada correctamente! El administrador la revisará pronto.');
       await handleRefresh();
     } catch (error) {
       console.error("Error creating request:", error);
-      setFeedback({
-        type: "error",
-        message: "Hubo un error al enviar la solicitud. Inténtalo de nuevo.",
-      });
+      feedback.showFeedback('error', 'Error', 'Hubo un error al enviar la solicitud. Inténtalo de nuevo.');
     } finally {
       setIsCreating(false);
     }
   };
 
-  const handleCloseFeedback = () => setFeedback(null);
+
 
   const columns: GridColDef[] = [
     {
@@ -310,22 +301,6 @@ export const AdsSection = () => {
         onCreateAd={handleRequestPermission}
         submitButtonText="Enviar solicitud"
       />
-
-      <Snackbar
-        open={!!feedback}
-        autoHideDuration={6000}
-        onClose={handleCloseFeedback}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert
-          onClose={handleCloseFeedback}
-          severity={feedback?.type}
-          sx={{ width: "100%" }}
-          variant="filled"
-        >
-          {feedback?.message}
-        </Alert>
-      </Snackbar>
     </>
   );
 };

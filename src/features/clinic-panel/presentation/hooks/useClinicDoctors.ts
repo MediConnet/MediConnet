@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getClinicDoctorsUseCase } from '../../application/get-clinic-doctors.usecase';
 import { inviteDoctorUseCase } from '../../application/invite-doctor.usecase';
 import { toggleDoctorStatusUseCase } from '../../application/toggle-doctor-status.usecase';
+import { httpClient } from '../../../../shared/lib/http';
 import { assignOfficeUseCase } from '../../application/assign-office.usecase';
 import { deleteDoctorUseCase } from '../../application/delete-doctor.usecase';
 import type { ClinicDoctor, DoctorInvitation } from '../../domain/doctor.entity';
@@ -42,10 +43,10 @@ export const useClinicDoctors = (clinicId: string) => {
     }
   };
 
-  const toggleStatus = async (doctorId: string) => {
+  const toggleStatus = async (doctorId: string, isActive: boolean) => {
     setError(null);
     try {
-      await toggleDoctorStatusUseCase(clinicId, doctorId);
+      await toggleDoctorStatusUseCase(clinicId, doctorId, isActive);
       await loadDoctors();
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Error al cambiar estado');
@@ -81,12 +82,7 @@ export const useClinicDoctors = (clinicId: string) => {
   const updateConsultationFee = async (doctorId: string, consultationFee: number) => {
     setError(null);
     try {
-      const response = await fetch(`/api/clinics/${clinicId}/doctors/${doctorId}/consultation-fee`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ consultationFee }),
-      });
-      if (!response.ok) throw new Error('Error al actualizar precio');
+      await httpClient.patch(`/clinics/${clinicId}/doctors/${doctorId}/consultation-fee`, { consultationFee });
       await loadDoctors();
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Error al actualizar precio');

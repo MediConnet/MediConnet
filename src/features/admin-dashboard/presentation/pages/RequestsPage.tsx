@@ -18,8 +18,6 @@ import {
   Stack,
   TextField,
   Typography,
-  Snackbar,
-  Alert,
 } from "@mui/material";
 import {
   type GridColDef,
@@ -44,6 +42,8 @@ import {
   TableToolbar,
   TablePageLayout,
 } from "../../../../shared/components/DataTable";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
+import { FEEDBACK } from "../../../../shared/constants/feedback-messages";
 
 const CURRENT_ADMIN = {
   name: "Admin General",
@@ -67,6 +67,7 @@ export const RequestsPage = () => {
 
   const queryClient = useQueryClient();
   const { appointments: adminAppointments, notificationsViewAllPath } = useAdminNotificationsLayout();
+  const feedback = useFeedbackStore();
 
   const {
     filters,
@@ -82,11 +83,6 @@ export const RequestsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [requestToReject, setRequestToReject] = useState<ProviderRequest | null>(null);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'info' }>({
-    open: false,
-    message: '',
-    severity: 'info'
-  });
 
   const handleStatusFilterChange = (value: string) => {
     setStatusFilter(value);
@@ -112,30 +108,36 @@ export const RequestsPage = () => {
   };
 
   const onApprove = async (id: string) => {
-    await approveRequest(id);
-    // Invalidar la query para refrescar los datos
-    queryClient.invalidateQueries({ queryKey: ['provider-requests-list'] });
-    handleCloseModal();
+    try {
+      await approveRequest(id);
+      queryClient.invalidateQueries({ queryKey: ['provider-requests-list'] });
+      handleCloseModal();
+      feedback.showFeedback("success", FEEDBACK.SUCCESS.UPDATE.title, FEEDBACK.SUCCESS.UPDATE.message);
+    } catch {
+      feedback.showFeedback("error", FEEDBACK.ERROR.GENERIC.title, FEEDBACK.ERROR.GENERIC.message);
+    }
   };
 
   const handleOpenRejectModal = (request: ProviderRequest) => {
     setRequestToReject(request);
     setIsRejectModalOpen(true);
-    // Si el modal de detalles está abierto, cerrarlo
     if (isModalOpen) {
       handleCloseModal();
     }
   };
 
   const handleReject = async (id: string, reason: string) => {
-    await rejectRequest(id, reason);
-    // Invalidar la query para refrescar los datos
-    queryClient.invalidateQueries({ queryKey: ['provider-requests-list'] });
-    setIsRejectModalOpen(false);
-    setRequestToReject(null);
-    // Si el modal de detalles está abierto, cerrarlo
-    if (isModalOpen) {
-      handleCloseModal();
+    try {
+      await rejectRequest(id, reason);
+      queryClient.invalidateQueries({ queryKey: ['provider-requests-list'] });
+      setIsRejectModalOpen(false);
+      setRequestToReject(null);
+      if (isModalOpen) {
+        handleCloseModal();
+      }
+      feedback.showFeedback("success", FEEDBACK.SUCCESS.UPDATE.title, FEEDBACK.SUCCESS.UPDATE.message);
+    } catch {
+      feedback.showFeedback("error", FEEDBACK.ERROR.GENERIC.title, FEEDBACK.ERROR.GENERIC.message);
     }
   };
 
@@ -145,15 +147,10 @@ export const RequestsPage = () => {
 
   const handleExportCSV = () => {
     if (requests.length === 0) {
-      setSnackbar({
-        open: true,
-        message: "No hay datos para exportar",
-        severity: 'info'
-      });
+      feedback.showFeedback("info", "Sin datos", "No hay datos para exportar");
       return;
     }
 
-    // Definir las columnas del CSV
     const headers = [
       "ID",
       "Nombre del Proveedor",
@@ -169,7 +166,6 @@ export const RequestsPage = () => {
       "Motivo de Rechazo"
     ];
 
-    // Convertir los datos a filas CSV
     const rows = requests.map((request) => [
       request.id,
       request.providerName,
@@ -185,12 +181,10 @@ export const RequestsPage = () => {
       request.rejectionReason || ""
     ]);
 
-    // Crear el contenido CSV
     const csvContent = [
       headers.join(","),
       ...rows.map(row => 
         row.map(cell => {
-          // Escapar comillas y envolver en comillas si contiene comas o saltos de línea
           const cellStr = String(cell || "");
           if (cellStr.includes(",") || cellStr.includes("\n") || cellStr.includes('"')) {
             return `"${cellStr.replace(/"/g, '""')}"`;
@@ -200,15 +194,12 @@ export const RequestsPage = () => {
       )
     ].join("\n");
 
-    // Crear el BOM para UTF-8 (para que Excel abra correctamente caracteres especiales)
     const BOM = "\uFEFF";
     const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
     
-    // Crear el link de descarga
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     
-    // Nombre del archivo con fecha actual
     const date = new Date().toISOString().split("T")[0];
     const fileName = `solicitudes_proveedores_${date}.csv`;
     
@@ -220,14 +211,9 @@ export const RequestsPage = () => {
     link.click();
     document.body.removeChild(link);
     
-    // Limpiar el URL object
     URL.revokeObjectURL(url);
     
-    setSnackbar({
-      open: true,
-      message: `Archivo CSV exportado correctamente: ${fileName}`,
-      severity: 'success'
-    });
+    feedback.showFeedback("success", "Exportación completada", `Archivo CSV exportado correctamente: ${fileName}`);
   };
 
   // --- Definición de Columnas ---
@@ -407,7 +393,6 @@ export const RequestsPage = () => {
       notificationsViewAllPath={notificationsViewAllPath}
     >
       <TablePageLayout>
-        {/* Toolbar: título + exportar + filtros */}
         <TableToolbar
           title="Solicitudes de Proveedores"
           subtitle="Gestiona las solicitudes de registro y verificación."
@@ -451,7 +436,6 @@ export const RequestsPage = () => {
           sx={{ mb: 3 }}
         />
 
-        {/* Tabla */}
         <DataTable<ProviderRequest>
           rows={requests}
           columns={columns}
@@ -465,7 +449,6 @@ export const RequestsPage = () => {
           emptyDescription="No hay solicitudes de proveedores que coincidan con los filtros."
         />
 
-        {/* Modales */}
         <RequestDetailModal
           open={isModalOpen}
           onClose={handleCloseModal}
@@ -482,23 +465,6 @@ export const RequestsPage = () => {
           request={requestToReject}
           onConfirm={handleReject}
         />
-
-        {/* Snackbar */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        >
-          <Alert
-            onClose={() => setSnackbar({ ...snackbar, open: false })}
-            severity={snackbar.severity}
-            sx={{ width: "100%" }}
-            variant="filled"
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
       </TablePageLayout>
     </DashboardLayout>
   );

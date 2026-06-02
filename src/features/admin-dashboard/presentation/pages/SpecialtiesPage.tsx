@@ -4,6 +4,7 @@ import {
   Delete,
 } from "@mui/icons-material";
 import {
+  Alert,
   Box,
   Button,
   Dialog,
@@ -14,8 +15,6 @@ import {
   Stack,
   TextField,
   Typography,
-  Alert,
-  Snackbar,
 } from "@mui/material";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
@@ -23,6 +22,8 @@ import { DataTable, TableToolbar, TablePageLayout } from "../../../../shared/com
 import { useAdminSpecialties } from "../hooks/useAdminSpecialties";
 import type { Specialty } from "../../domain/specialty.entity";
 import type { GridPaginationModel, GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
+import { FEEDBACK } from "../../../../shared/constants/feedback-messages";
 
 const CURRENT_ADMIN = {
   name: "Administrador",
@@ -54,11 +55,7 @@ export const SpecialtiesPage = () => {
     description: "",
     color_hex: "#4CAF50",
   });
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: 'success' | 'error' | 'info' | 'warning';
-  }>({ open: false, message: '', severity: 'success' });
+  const feedback = useFeedbackStore();
 
   // Debounce search input
   useEffect(() => {
@@ -75,7 +72,6 @@ export const SpecialtiesPage = () => {
   // Fetch data when pagination or debounced search changes
   useEffect(() => {
     const apiPage = paginationModel.page + 1;
-    console.log('📦 SpecialtiesPage - Fetching:', { apiPage, pageSize: paginationModel.pageSize, search: debouncedSearch });
     loadSpecialties(apiPage, paginationModel.pageSize, debouncedSearch || undefined);
   }, [paginationModel, debouncedSearch, loadSpecialties]);
 
@@ -101,28 +97,24 @@ export const SpecialtiesPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("¿Estás seguro de eliminar esta especialidad?")) {
+    feedback.showDelete("Eliminar especialidad", "¿Estás seguro de eliminar esta especialidad?", async () => {
       try {
         await deleteSpecialty(id);
-        setSnackbar({ open: true, message: "Especialidad eliminada correctamente", severity: 'success' });
+        feedback.showFeedback("success", FEEDBACK.SUCCESS.DELETE.title, FEEDBACK.SUCCESS.DELETE.message);
         handleReload();
       } catch (err: any) {
-        setSnackbar({
-          open: true,
-          message: err?.message || err?.response?.data?.message || "Error al eliminar la especialidad",
-          severity: 'error'
-        });
+        feedback.showFeedback("error", FEEDBACK.ERROR.GENERIC.title, err?.message || err?.response?.data?.message || FEEDBACK.ERROR.GENERIC.message);
       }
-    }
+    });
   };
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      setSnackbar({ open: true, message: "El nombre es requerido", severity: 'warning' });
+      feedback.showFeedback("warning", "Campo requerido", "El nombre es requerido");
       return;
     }
     if (formData.name.trim().length < 3) {
-      setSnackbar({ open: true, message: "El nombre debe tener al menos 3 caracteres", severity: 'warning' });
+      feedback.showFeedback("warning", "Validación", "El nombre debe tener al menos 3 caracteres");
       return;
     }
     try {
@@ -133,18 +125,19 @@ export const SpecialtiesPage = () => {
           description: formData.description,
           color_hex: formData.color_hex,
         });
-        setSnackbar({ open: true, message: "Especialidad actualizada correctamente", severity: 'success' });
+        feedback.showFeedback("success", FEEDBACK.SUCCESS.UPDATE.title, FEEDBACK.SUCCESS.UPDATE.message);
       } else {
         await createSpecialty({
           name: formData.name,
           description: formData.description,
           color_hex: formData.color_hex,
         });
-        setSnackbar({ open: true, message: "Especialidad creada correctamente", severity: 'success' });
+        feedback.showFeedback("success", FEEDBACK.SUCCESS.SAVE.title, FEEDBACK.SUCCESS.SAVE.message);
       }
       setIsModalOpen(false);
       handleReload();
     } catch (err) {
+      feedback.showFeedback("error", FEEDBACK.ERROR.GENERIC.title, FEEDBACK.ERROR.GENERIC.message);
     } finally {
       setSaving(false);
     }
@@ -272,13 +265,6 @@ export const SpecialtiesPage = () => {
             </Button>
           </DialogActions>
         </Dialog>
-
-        <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={() => setSnackbar({ ...snackbar, open: false })}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
-          <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
       </TablePageLayout>
     </DashboardLayout>
   );

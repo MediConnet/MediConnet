@@ -1,0 +1,513 @@
+import { extractData, httpClient } from '../../../shared/lib/http';
+import type { PaginatedResponse } from '../../../shared/types/pagination';
+import type { DoctorDashboard, PaymentMethod, ProfileStatus, WorkSchedule } from '../types/DoctorDashboard.entity';
+import { PAYMENT_METHOD_BACKEND } from '../../../shared/config/domain.constants';
+
+export interface BlockedSlot {
+  id: string;
+  branchId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  reason?: string;
+  createdAt?: string;
+}
+
+interface BackendSchedule {
+  day_id: number;
+  day: string;
+  start?: string | null;
+  end?: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+
+  break_start?: string | null;
+  break_end?: string | null;
+  breakStart?: string | null;
+  breakEnd?: string | null;
+  blockedHours?: string[];
+
+  is_active?: boolean;
+  enabled?: boolean;
+}
+
+interface BackendProfileResponse {
+  id: string;
+  full_name: string;
+  email: string;
+  specialty?: string;
+  specialties_list?: string[];
+  category: string;
+  years_of_experience: number;
+  consultation_fee: number;
+  payment_methods: string[];
+  description: string;
+  address: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  google_maps_url?: string | null;
+  phone: string;
+  whatsapp: string;
+  status: string;
+  is_published: boolean;
+  schedules: BackendSchedule[];
+  imageUrl?: string | null;
+  profile_picture_url?: string | null;
+  preview_images?: string[];
+}
+
+export interface Specialty {
+  id: string;
+  name: string;
+  description?: string;
+  color_hex?: string;
+}
+
+export interface UpdateDoctorProfileParams {
+  name?: string;
+  specialties?: string[];
+  email?: string;
+  whatsapp?: string;
+  address?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  google_maps_url?: string | null;
+  price?: number;
+  description?: string;
+  experience?: number;
+  workSchedule?: WorkSchedule[];
+  profileStatus?: ProfileStatus;
+  paymentMethods?: PaymentMethod;
+  consultationDuration?: number;
+  blockedDates?: string[];
+  imageUrl?: string | null;
+  profile_picture_url?: string | null;
+  preview_images?: string[];
+  bankAccount?: {
+    bankName: string;
+    accountNumber: string;
+    accountType: string;
+    accountHolder: string;
+    identificationNumber?: string;
+  };
+}
+
+export interface DoctorReview {
+  id: string;
+  userName?: string;
+  rating: number;
+  comment?: string;
+  createdAt?: string;
+  date?: string;
+}
+
+export const getDoctorPanelReviewsAPI = async (
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<DoctorReview>> => {
+  const response = await httpClient.get<{
+    success: boolean;
+    data: PaginatedResponse<DoctorReview>;
+  }>('/doctors/reviews', { params });
+
+  const data = extractData(response) as any;
+  const reviews = Array.isArray(data?.data) ? (data.data as DoctorReview[]) : [];
+
+  return {
+    data: reviews,
+    pagination: data?.pagination ?? {
+      total: reviews.length,
+      page: params?.page ?? 1,
+      limit: params?.limit ?? 10,
+      totalPages: Math.ceil(reviews.length / (params?.limit ?? 10)),
+    },
+  };
+};
+
+const mapBackendPaymentsToFrontend = (methods: string[]): PaymentMethod => {
+  if (!methods) return 'cash';
+  const hasCash = methods.some(m => m.toLowerCase().includes(PAYMENT_METHOD_BACKEND.CASH.toLowerCase()));
+  const hasCard = methods.some(m => m.toLowerCase().includes(PAYMENT_METHOD_BACKEND.CARD.toLowerCase()));
+
+  if (hasCash && hasCard) return 'both';
+  if (hasCard) return 'card';
+  return 'cash';
+};
+
+const mapFrontendPaymentsToBackend = (method: PaymentMethod): string[] => {
+  if (method === 'both') return [PAYMENT_METHOD_BACKEND.CASH, PAYMENT_METHOD_BACKEND.CARD];
+  if (method === 'card') return [PAYMENT_METHOD_BACKEND.CARD];
+  return [PAYMENT_METHOD_BACKEND.CASH];
+};
+
+const mapBackendScheduleToFrontend = (backendSchedules: BackendSchedule[]): WorkSchedule[] => {
+  const safeSchedules = Array.isArray(backendSchedules) ? backendSchedules : [];
+
+  const toHHmm = (value: any, fallback: string | null = null): string | null => {
+    if (value === null || value === undefined || value === "") return fallback;
+    if (typeof value !== "string") return fallback;
+
+    const hhmm = value.match(/^(\d{2}):(\d{2})/);
+    if (hhmm) return `${hhmm[1]}:${hhmm[2]}`;
+
+    const d = new Date(value);
+    if (!isNaN(d.getTime())) {
+      return d.toISOString().substring(11, 16);
+    }
+
+    return fallback;
+  };
+
+  const daysTemplate = [
+    { day: "monday", day_id: 1 },
+    { day: "tuesday", day_id: 2 },
+    { day: "wednesday", day_id: 3 },
+    { day: "thursday", day_id: 4 },
+    { day: "friday", day_id: 5 },
+    { day: "saturday", day_id: 6 },
+    { day: "sunday", day_id: 7 },
+  ];
+
+  return daysTemplate.map(template => {
+    const found = safeSchedules.find(sch =>
+      sch.day_id === template.day_id ||
+      sch.day.toLowerCase() === template.day
+    );
+
+    if (found) {
+      const enabled = Boolean(found.enabled ?? found.is_active ?? false);
+      const startTime = toHHmm(found.startTime ?? found.start_time ?? found.start, "09:00") || "09:00";
+      const endTime = toHHmm(found.endTime ?? found.end_time ?? found.end, "17:00") || "17:00";
+      const breakStart = toHHmm(found.breakStart ?? found.break_start, null);
+      const breakEnd = toHHmm(found.breakEnd ?? found.break_end, null);
+
+      return {
+        day: template.day,
+        day_id: template.day_id,
+        enabled,
+        startTime,
+        endTime,
+        breakStart,
+        breakEnd,
+        blockedHours: Array.isArray((found as any).blockedHours)
+          ? (found as any).blockedHours.filter((h: unknown) => typeof h === "string")
+          : [],
+      };
+    } else {
+      return {
+        day: template.day,
+        day_id: template.day_id,
+        enabled: false,
+        startTime: "09:00",
+        endTime: "17:00",
+        breakStart: null,
+        breakEnd: null,
+        blockedHours: [],
+      };
+    }
+  });
+};
+
+export const getSpecialtiesAPI = async (): Promise<Specialty[]> => {
+  const response = await httpClient.get<{ success: boolean; data: Specialty[] }>(
+    '/specialties'
+  );
+  return extractData(response);
+};
+
+export const getDoctorDashboardAPI = async (userId: string): Promise<DoctorDashboard> => {
+  const response = await httpClient.get<{
+    success: boolean;
+    data: {
+      totalAppointments?: number;
+      pendingAppointments?: number;
+      completedAppointments?: number;
+      totalRevenue?: number;
+      averageRating?: number;
+      totalReviews?: number;
+      upcomingAppointments?: any[];
+      provider: any;
+    }
+  }>(
+    `/doctors/dashboard?userId=${userId}`
+  );
+
+  const backendData = extractData(response);
+  const provider = backendData.provider || {};
+
+  const specialtyValue = (provider.specialties_list && provider.specialties_list.length > 0)
+    ? provider.specialties_list
+    : (provider.specialty || provider.specialties || "Médico");
+
+  return {
+    visits: backendData.totalAppointments || 0,
+    contacts: 0,
+    reviews: backendData.totalReviews || 0,
+    rating: backendData.averageRating || 0,
+    doctor: {
+      name: provider.commercial_name || "Dr. Usuario",
+      specialty: specialtyValue,
+      email: provider.email || (provider.users && provider.users.email) || "",
+      whatsapp: provider.phone_contact || "",
+      address: provider.address_text || "",
+      latitude: provider.latitude ?? null,
+      longitude: provider.longitude ?? null,
+      google_maps_url: provider.google_maps_url ?? null,
+      price: Number(provider.consultation_fee) || 0,
+      description: provider.description || "",
+      experience: provider.years_of_experience || 0,
+      isActive: provider.verification_status === 'APPROVED',
+      profileStatus: provider.is_active ? 'published' : 'draft',
+      paymentMethods: mapBackendPaymentsToFrontend(provider.payment_methods || []),
+      workSchedule: mapBackendScheduleToFrontend(provider.schedules || []),
+    },
+    clinic: (backendData as any).clinic ? {
+      id: (backendData as any).clinic.id,
+      name: (backendData as any).clinic.name,
+      address: (backendData as any).clinic.address,
+      phone: (backendData as any).clinic.phone,
+      whatsapp: (backendData as any).clinic.whatsapp,
+      logoUrl: (backendData as any).clinic.logoUrl,
+    } : null
+  };
+};
+
+export const getDoctorProfileAPI = async (): Promise<DoctorDashboard> => {
+  const response = await httpClient.get<{ success: boolean; data: BackendProfileResponse }>(
+    '/doctors/profile'
+  );
+
+  const backendData = extractData(response);
+
+  let specialtyValue: string | string[] = [];
+
+  if (backendData.specialties_list && backendData.specialties_list.length > 0) {
+      specialtyValue = backendData.specialties_list;
+  } else if (backendData.specialty) {
+      specialtyValue = backendData.specialty;
+  }
+
+  return {
+    visits: 0,
+    contacts: 0,
+    reviews: 0,
+    rating: 0,
+    doctor: {
+      id: backendData.id,
+
+      name: backendData.full_name || "",
+      email: backendData.email || "",
+
+      specialty: specialtyValue as any,
+
+      whatsapp: backendData.whatsapp || backendData.phone || "",
+      address: backendData.address || "",
+      latitude: backendData.latitude ?? null,
+      longitude: backendData.longitude ?? null,
+      google_maps_url: backendData.google_maps_url ?? null,
+
+      price: Number(backendData.consultation_fee) || 0,
+
+      description: backendData.description || "",
+
+      experience: Number(backendData.years_of_experience) || 0,
+
+      isActive: backendData.status === 'APPROVED',
+      profileStatus: backendData.is_published ? 'published' : 'draft',
+
+      paymentMethods: mapBackendPaymentsToFrontend(backendData.payment_methods || []),
+      workSchedule: mapBackendScheduleToFrontend(backendData.schedules || []),
+      imageUrl: (backendData as any).imageUrl || null,
+      profile_picture_url: backendData.profile_picture_url || null,
+      preview_images: (backendData as any).preview_images || [],
+    },
+    clinic: (backendData as any).clinic ? {
+      id: (backendData as any).clinic.id,
+      name: (backendData as any).clinic.name,
+      address: (backendData as any).clinic.address,
+      phone: (backendData as any).clinic.phone,
+      whatsapp: (backendData as any).clinic.whatsapp,
+      logoUrl: (backendData as any).clinic.logoUrl,
+    } : null
+  };
+};
+
+export const updateDoctorProfileAPI = async (
+  params: UpdateDoctorProfileParams
+): Promise<DoctorDashboard> => {
+
+  const backendPayload: any = {};
+
+  if (params.name !== undefined) backendPayload.full_name = params.name;
+  if (params.description !== undefined) backendPayload.bio = params.description;
+  if (params.address !== undefined) backendPayload.address = params.address;
+  if (params.latitude !== undefined) backendPayload.latitude = params.latitude;
+  if (params.longitude !== undefined) backendPayload.longitude = params.longitude;
+  if (params.google_maps_url !== undefined) backendPayload.google_maps_url = params.google_maps_url || null;
+  if (params.whatsapp !== undefined) {
+    backendPayload.phone = params.whatsapp;
+    backendPayload.whatsapp = params.whatsapp;
+  }
+  if (params.experience !== undefined) backendPayload.years_of_experience = params.experience;
+  if (params.price !== undefined) backendPayload.consultation_fee = params.price;
+  if (params.profileStatus !== undefined) backendPayload.is_published = params.profileStatus === 'published';
+  if (params.specialties !== undefined && params.specialties.length > 0) {
+    backendPayload.specialties = params.specialties;
+  }
+  if (params.paymentMethods !== undefined) {
+    backendPayload.payment_methods = mapFrontendPaymentsToBackend(params.paymentMethods);
+  }
+
+  if (params.imageUrl !== undefined) {
+    backendPayload.imageUrl = params.imageUrl;
+  }
+
+  if (params.profile_picture_url !== undefined) {
+    backendPayload.profile_picture_url = params.profile_picture_url;
+  }
+
+  if (params.preview_images !== undefined) {
+    backendPayload.preview_images = params.preview_images;
+  }
+
+  if (params.bankAccount !== undefined) {
+    backendPayload.bankAccount = {
+      bankName: params.bankAccount.bankName,
+      accountNumber: params.bankAccount.accountNumber,
+      accountType: params.bankAccount.accountType,
+      accountHolder: params.bankAccount.accountHolder,
+      identificationNumber: params.bankAccount.identificationNumber ?? null,
+    };
+  }
+
+  if (params.workSchedule !== undefined) {
+    backendPayload.workSchedule = params.workSchedule.map((s) => {
+      const hasBreak = Boolean(s.breakStart) && Boolean(s.breakEnd);
+
+      return {
+        day: s.day,
+        enabled: Boolean(s.enabled),
+        startTime: s.enabled ? s.startTime : null,
+        endTime: s.enabled ? s.endTime : null,
+        breakStart: s.enabled && hasBreak ? (s.breakStart as string) : null,
+        breakEnd: s.enabled && hasBreak ? (s.breakEnd as string) : null,
+        blockedHours: Array.isArray(s.blockedHours) ? s.blockedHours : [],
+      };
+    });
+  }
+
+  console.log('🔧 Payload transformado para backend:', JSON.stringify(backendPayload, null, 2));
+
+  const response = await httpClient.put<{ success: boolean; data: BackendProfileResponse }>(
+    '/doctors/profile',
+    backendPayload
+  );
+
+  const backendData = extractData(response);
+
+  const specialtyValue = (backendData.specialties_list && backendData.specialties_list.length > 0)
+    ? backendData.specialties_list
+    : (backendData.specialty || "");
+
+  return {
+    visits: 0,
+    contacts: 0,
+    reviews: 0,
+    rating: 0,
+    doctor: {
+      id: backendData.id,
+      name: backendData.full_name,
+      email: backendData.email,
+      specialty: specialtyValue as any,
+      whatsapp: backendData.whatsapp,
+      address: backendData.address,
+      latitude: backendData.latitude ?? null,
+      longitude: backendData.longitude ?? null,
+      google_maps_url: backendData.google_maps_url ?? null,
+      price: Number(backendData.consultation_fee),
+      description: backendData.description,
+      experience: backendData.years_of_experience,
+      isActive: backendData.status === 'APPROVED',
+      profileStatus: backendData.is_published ? 'published' : 'draft',
+      paymentMethods: mapBackendPaymentsToFrontend(backendData.payment_methods || []),
+      workSchedule: mapBackendScheduleToFrontend(backendData.schedules || []),
+      imageUrl: (backendData as any).imageUrl || null,
+      profile_picture_url: backendData.profile_picture_url || null,
+      preview_images: (backendData as any).preview_images || [],
+    }
+  };
+};
+
+export const getDoctorAppointmentsAPI = async (): Promise<any[]> => {
+  const response = await httpClient.get<{ success: boolean; data: any[] }>(
+    '/doctors/appointments'
+  );
+  return extractData(response);
+};
+
+export const updateAppointmentStatusAPI = async (
+  appointmentId: string,
+  status: string
+): Promise<any> => {
+  const response = await httpClient.put<{ success: boolean; data: any }>(
+    `/doctors/appointments/${appointmentId}/status`,
+    { status }
+  );
+  return extractData(response);
+};
+
+
+export const getDoctorPaymentsAPI = async (): Promise<any[]> => {
+  const response = await httpClient.get<{ success: boolean; data: any[] }>(
+    '/doctors/payments'
+  );
+  return extractData(response);
+};
+
+export const getDoctorScheduleAPI = async (): Promise<WorkSchedule[]> => {
+  const response = await httpClient.get<{ success: boolean; data: any[] }>(
+    '/doctors/schedule'
+  );
+  const data = extractData(response);
+  return mapBackendScheduleToFrontend(data);
+};
+
+export const updateDoctorScheduleAPI = async (
+  schedule: WorkSchedule[]
+): Promise<WorkSchedule[]> => {
+  const response = await httpClient.put<{ success: boolean; data: any[] }>(
+    '/doctors/schedule',
+    { schedule }
+  );
+  const data = extractData(response);
+  return mapBackendScheduleToFrontend(data);
+};
+
+export const getDoctorBlockedSlotsAPI = async (): Promise<BlockedSlot[]> => {
+  const response = await httpClient.get<{ success: boolean; data: BlockedSlot[] }>(
+    '/doctors/blocked-slots'
+  );
+  const data = extractData(response) as any;
+  return Array.isArray(data) ? (data as BlockedSlot[]) : [];
+};
+
+export const createDoctorBlockedSlotAPI = async (params: {
+  date: string;
+  startTime: string;
+  endTime: string;
+  reason?: string;
+}): Promise<BlockedSlot> => {
+  const response = await httpClient.post<{ success: boolean; data: BlockedSlot }>(
+    '/doctors/blocked-slots',
+    params
+  );
+  return extractData(response) as any;
+};
+
+export const deleteDoctorBlockedSlotAPI = async (slotId: string): Promise<{ message?: string }> => {
+  const response = await httpClient.delete<{ success: boolean; data: { message?: string } }>(
+    `/doctors/blocked-slots/${slotId}`
+  );
+  return extractData(response) as any;
+};

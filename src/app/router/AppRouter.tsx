@@ -49,7 +49,7 @@ import { SpecialtiesPage } from "../../features/admin-dashboard/presentation/pag
 import { ProviderAdsPage } from "../../shared/pages/ProviderAdsPage";
 
 // Pages - Doctor
-import { DoctorDashboardPage } from "../../features/doctor-panel/presentation/pages/DoctorDashboardPage";
+import { DoctorDashboardPage } from "../../features/doctor/pages/DoctorDashboardPage";
 
 // Pages - Ambulancia
 import { AmbulanceDashboardPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceDashboardPage";
@@ -71,8 +71,8 @@ import { SupplyDashboardPage } from "../../features/supplies-panel/presentation/
 import { SupplyStoreDetailPage } from "../../features/supplies-panel/presentation/pages/SupplyStoreDetailPage";
 
 // Pages - Clínica
-import { ClinicDashboardPage } from "../../features/clinic-panel/presentation/pages/ClinicDashboardPage";
-import { ClinicInvitationPage } from "../../features/clinic-panel/presentation/pages/ClinicInvitationPage";
+import { ClinicDashboardPage } from "../../features/clinic/pages/ClinicDashboardPage";
+import { ClinicInvitationPage } from "../../features/association/pages/ClinicInvitationPage";
 import { httpClient } from "../../shared/lib/http";
 
 export const AppRouter = () => {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import { getAppointmentsAPI } from "../../infrastructure/appointments.api";
 import {
   updateAppointmentStatusAPI,
@@ -52,15 +53,18 @@ export const useDoctorAppointments = () => {
 export const useUpdateAppointmentStatus = () => {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const feedback = useFeedbackStore();
 
   return useMutation({
     mutationFn: ({ appointmentId, status }: { appointmentId: string; status: string }) =>
       updateAppointmentStatusAPI(appointmentId, status),
     onSuccess: () => {
-      // Invalidar cache para refrescar la lista de appointments
+      feedback.showFeedback('success', 'Operación completada', 'La información se guardó correctamente.');
       queryClient.invalidateQueries({ queryKey: ['doctors', 'appointments', user?.id] });
-      // También invalidar dashboard que puede mostrar estadísticas
       queryClient.invalidateQueries({ queryKey: ['doctors', 'dashboard', user?.id] });
+    },
+    onError: () => {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     },
   });
 };
