@@ -6,6 +6,7 @@ import {
   Business,
   CalendarToday,
   Campaign,
+  Comment,
   Dashboard,
   Group,
   History,
@@ -68,6 +69,7 @@ export const ADMIN_MENU: MenuItem[] = [
     label: "Cadenas de Farmacias",
     path: "/admin/pharmacy-chains",
   },
+  { icon: <Comment />, label: "Comentarios", path: "/admin/comments" },
   {
     icon: <LocalHospital />,
     label: "Especialidades",

@@ -30,6 +30,7 @@ import { ServicesCatalogPage } from "../../features/home/presentation/pages/Serv
 
 // Pages - Admin
 import { ActivityPage } from "../../features/admin-dashboard/presentation/pages/ActivityPage";
+import { CommentsPage } from "../../features/admin-dashboard/presentation/pages/CommentsPage";
 import { AdRequestsPage } from "../../features/admin-dashboard/presentation/pages/AdRequestsPage";
 import { AdminDashboardPage } from "../../features/admin-dashboard/presentation/pages/AdminDashboardPage";
 import { CommissionsPage } from "../../features/admin-dashboard/presentation/pages/CommissionsPage";
@@ -135,6 +136,7 @@ export const AppRouter = () => {
           <Route path="users" element={<UsersPage />} />
           <Route path="services" element={<ServicesDashboardPage />} />
           <Route path="activity" element={<ActivityPage />} />
+          <Route path="comments" element={<CommentsPage />} />
           <Route path="pharmacy-chains" element={<PharmacyChainsPage />} />
           <Route path="specialties" element={<SpecialtiesPage />} />
           <Route path="settings" element={<SettingsPage />} />
