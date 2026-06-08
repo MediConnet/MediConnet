@@ -44,6 +44,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import * as Yup from "yup";
 import { ROUTES } from "../../../../app/config/constants";
+import { getUserFriendlyMessage } from "../../../../shared/lib/api-error";
 import type { PharmacyChain } from "../../../../features/admin-dashboard/domain/pharmacy-chain.entity";
 import {
   handleBothInput,
@@ -117,6 +118,9 @@ export const RegisterPage = () => {
   const typeFromQuery =
     (searchParams.get("tipo") as ServiceType | null) ||
     (searchParams.get("type") as ServiceType | null);
+
+  const invitationTokenFromQuery = searchParams.get("invitation");
+  const emailFromInvitation = searchParams.get("email") || "";
 
   const initialType = typeFromQuery;
   const [step, setStep] = useState(initialType ? 1 : 0);
@@ -247,7 +251,7 @@ export const RegisterPage = () => {
   const formik = useFormik({
     initialValues: {
       nombreCompleto: "",
-      email: "",
+      email: emailFromInvitation,
       telefono: "",
       whatsapp: "",
       password: "",
@@ -306,6 +310,9 @@ export const RegisterPage = () => {
           const professionalData = {
             email: values.email,
             password: values.password,
+            ...(invitationTokenFromQuery
+              ? { invitationToken: invitationTokenFromQuery }
+              : {}),
             firstName: firstName,
             lastName: lastName,
             name: values.nombreCompleto,
@@ -338,7 +345,10 @@ export const RegisterPage = () => {
           await submit(professionalData);
           setShowSuccessModal(true);
         } catch (error) {
-          const msg = error instanceof Error ? error.message : "Error al enviar la solicitud. Intenta nuevamente.";
+          const msg = getUserFriendlyMessage(error, {
+            fallback: "Error al enviar la solicitud. Intenta nuevamente.",
+            allowBackendMessage: true,
+          });
           setErrorMessage(msg);
           console.error("Error al enviar solicitud:", error);
         } finally {

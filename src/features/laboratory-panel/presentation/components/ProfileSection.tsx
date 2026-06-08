@@ -13,6 +13,7 @@ import type {
   WorkSchedule,
 } from "../../domain/LaboratoryDashboard.entity";
 import { handleLetterInput, handlePhoneInput, handleEmailInput, handleBothInput, handleEcuadorPhoneInput } from "../../../../shared/lib/inputValidation";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 interface ProfileSectionProps {
   data: LaboratoryDashboard;
@@ -181,11 +182,11 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.startsWith("image/")) {
-        alert("Por favor selecciona un archivo de imagen");
+        useFeedbackStore.getState().showFeedback('error', 'Error', 'Por favor selecciona un archivo de imagen.');
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        alert("La imagen debe ser menor a 5MB");
+        useFeedbackStore.getState().showFeedback('error', 'Error', 'La imagen debe ser menor a 5MB.');
         return;
       }
       const reader = new FileReader();

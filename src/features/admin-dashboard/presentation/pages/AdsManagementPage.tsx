@@ -2,8 +2,8 @@ import {
   Add, Campaign, Delete, Edit, ToggleOff, ToggleOn,
 } from "@mui/icons-material";
 import {
-  Alert, Avatar, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle,
-  FormControl, IconButton, InputLabel, MenuItem, Select, Snackbar, Stack, TextField, Tooltip, Typography,
+  Avatar, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle,
+  FormControl, IconButton, InputLabel, MenuItem, Select, Stack, TextField, Tooltip, Typography,
 } from "@mui/material";
 import { type GridColDef, type GridRenderCellParams, type GridPaginationModel } from "@mui/x-data-grid";
 import { useState, useMemo } from "react";
@@ -12,6 +12,8 @@ import type { CreateAdminAdPayload, AdminAd } from "../../infrastructure/admin-a
 import { useAdminAds } from "../hooks/useAdminAds";
 import { useAdminNotificationsLayout } from "../hooks/useAdminNotificationsLayout";
 import { DataTable, TableToolbar, TablePageLayout } from "../../../../shared/components/DataTable";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
+import { FEEDBACK } from "../../../../shared/constants/feedback-messages";
 
 const CURRENT_ADMIN = { name: "Admin General", roleLabel: "Super Admin", initials: "AG" };
 
@@ -47,6 +49,7 @@ export const AdsManagementPage = () => {
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
   const { ads, pagination, isLoading, createAd, updateAd, deleteAd, toggleAd, refetch } = useAdminAds();
   const { appointments, notificationsViewAllPath } = useAdminNotificationsLayout();
+  const feedback = useFeedbackStore();
 
   const handlePaginationChange = (newModel: GridPaginationModel) => {
     setPaginationModel(newModel);
@@ -58,12 +61,6 @@ export const AdsManagementPage = () => {
   const [form, setForm] = useState<CreateAdminAdPayload>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [activeFilter, setActiveFilter] = useState("all");
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({
-    open: false, message: "", severity: "success",
-  });
-
-  const showSnack = (message: string, severity: "success" | "error" = "success") =>
-    setSnackbar({ open: true, message, severity });
 
   const openCreate = () => { setEditingAd(null); setForm(EMPTY_FORM); setDialogOpen(true); };
   const openEdit = (ad: AdminAd) => {
@@ -88,27 +85,44 @@ export const AdsManagementPage = () => {
 
   const handleSave = async () => {
     if (!form.badge_text || !form.title || !form.action_text || !form.start_date || !form.target_screen) {
-      showSnack("Completa los campos obligatorios", "error"); return;
+      feedback.showFeedback("error", FEEDBACK.ERROR.VALIDATION.title, "Completa los campos obligatorios"); return;
     }
     setSaving(true);
     try {
       const payload = { ...form, end_date: form.end_date || undefined, target_id: form.target_id || undefined };
-      if (editingAd) { await updateAd(editingAd.id, payload); showSnack("Anuncio actualizado"); }
-      else { await createAd(payload); showSnack("Anuncio creado y publicado"); }
+      if (editingAd) {
+        await updateAd(editingAd.id, payload);
+        feedback.showFeedback("success", FEEDBACK.SUCCESS.UPDATE.title, FEEDBACK.SUCCESS.UPDATE.message);
+      } else {
+        await createAd(payload);
+        feedback.showFeedback("success", FEEDBACK.SUCCESS.SAVE.title, FEEDBACK.SUCCESS.SAVE.message);
+      }
       setDialogOpen(false);
-    } catch (e: any) { showSnack(e.message || "Error al guardar", "error"); }
-    finally { setSaving(false); }
+    } catch (e: any) {
+      feedback.showFeedback("error", FEEDBACK.ERROR.GENERIC.title, e.message || FEEDBACK.ERROR.GENERIC.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async (ad: AdminAd) => {
-    if (!window.confirm(`¿Eliminar el anuncio "${ad.title}"?`)) return;
-    try { await deleteAd(ad.id); showSnack("Anuncio eliminado"); }
-    catch (e: any) { showSnack(e.message || "Error al eliminar", "error"); }
+    feedback.showDelete("Eliminar anuncio", `¿Estás seguro de eliminar el anuncio "${ad.title}"?`, async () => {
+      try {
+        await deleteAd(ad.id);
+        feedback.showFeedback("success", FEEDBACK.SUCCESS.DELETE.title, FEEDBACK.SUCCESS.DELETE.message);
+      } catch (e: any) {
+        feedback.showFeedback("error", FEEDBACK.ERROR.GENERIC.title, e.message || FEEDBACK.ERROR.GENERIC.message);
+      }
+    });
   };
 
   const handleToggle = async (ad: AdminAd) => {
-    try { await toggleAd(ad.id); showSnack(`Anuncio ${ad.isActive ? "desactivado" : "activado"}`); }
-    catch (e: any) { showSnack(e.message || "Error", "error"); }
+    try {
+      await toggleAd(ad.id);
+      feedback.showFeedback("success", FEEDBACK.SUCCESS.UPDATE.title, `Anuncio ${ad.isActive ? "desactivado" : "activado"}`);
+    } catch (e: any) {
+      feedback.showFeedback("error", FEEDBACK.ERROR.GENERIC.title, e.message || FEEDBACK.ERROR.GENERIC.message);
+    }
   };
 
   const filtered = useMemo(() => {
@@ -242,7 +256,6 @@ export const AdsManagementPage = () => {
           emptyDescription="No hay anuncios que coincidan con el filtro seleccionado."
         />
 
-        {/* Dialog Crear/Editar */}
         <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
           <DialogTitle>{editingAd ? "Editar Anuncio" : "Nuevo Anuncio"}</DialogTitle>
           <DialogContent dividers>
@@ -315,13 +328,6 @@ export const AdsManagementPage = () => {
             </Button>
           </DialogActions>
         </Dialog>
-
-        <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
-          <Alert severity={snackbar.severity} variant="filled" onClose={() => setSnackbar((s) => ({ ...s, open: false }))}>
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
       </TablePageLayout>
     </DashboardLayout>
   );

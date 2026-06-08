@@ -5,13 +5,13 @@ import {
   HourglassEmpty,
   Send,
 } from "@mui/icons-material";
-import { Alert, Snackbar } from "@mui/material";
 import { useEffect, useState } from "react";
 
 import {
   createAdAPI,
   type CreateAdParams,
 } from "../../../../shared/api/ads.api";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import { AdsEmptyState } from "../../../../shared/components/AdsEmptyState";
 import { CreateAdModal } from "../../../../shared/components/modals/CreateAdModal";
 import { PromotionalBanner } from "../../../../shared/components/PromotionalBanner";
@@ -30,10 +30,7 @@ export const AdsSection = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [isCreateAdModalOpen, setIsCreateAdModalOpen] = useState(false);
 
-  const [feedback, setFeedback] = useState<{
-    type: "success" | "error";
-    message: string;
-  } | null>(null);
+  const feedback = useFeedbackStore();
 
   // Verificación de expiración automática
   useEffect(() => {
@@ -75,24 +72,17 @@ export const AdsSection = () => {
 
       await createAdAPI(apiPayload);
       setIsCreateAdModalOpen(false);
-      setFeedback({
-        type: "success",
-        message:
-          "¡Solicitud enviada correctamente! El administrador la revisará pronto.",
-      });
+      feedback.showFeedback('success', 'Solicitud enviada', '¡Solicitud enviada correctamente! El administrador la revisará pronto.');
       await refetch();
     } catch (error) {
       console.error("Error creating request:", error);
-      setFeedback({
-        type: "error",
-        message: "Hubo un error al enviar la solicitud. Inténtalo de nuevo.",
-      });
+      feedback.showFeedback('error', 'Error', 'Hubo un error al enviar la solicitud. Inténtalo de nuevo.');
     } finally {
       setIsCreating(false);
     }
   };
 
-  const handleCloseFeedback = () => setFeedback(null);
+
 
   const adsList = activeAd ? [activeAd] : [];
 
@@ -221,23 +211,6 @@ export const AdsSection = () => {
         onCreateAd={handleRequestPermission}
         submitButtonText="Enviar solicitud"
       />
-
-      {/* Feedback Snackbar */}
-      <Snackbar
-        open={!!feedback}
-        autoHideDuration={6000}
-        onClose={handleCloseFeedback}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert
-          onClose={handleCloseFeedback}
-          severity={feedback?.type}
-          sx={{ width: "100%" }}
-          variant="filled"
-        >
-          {feedback?.message}
-        </Alert>
-      </Snackbar>
     </>
   );
 };

@@ -21,40 +21,31 @@ import {
   Alert,
 } from "@mui/material";
 import { CheckCircle, Cancel } from "@mui/icons-material";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { ClinicAssociatedAppointment } from "../../domain/ClinicAssociatedDoctor.entity";
-import {
-  getClinicAssociatedAppointmentsAPI,
-  updateClinicAppointmentStatusAPI,
-} from "../../infrastructure/clinic-associated.api";
 import { useClinicAssociatedDoctor } from "../hooks/useClinicAssociatedDoctor";
+import { useClinicAssociatedAppointments } from "../hooks/useClinicAssociatedAppointments";
+import { ensureArray } from "../../infrastructure/clinic-associated-list.utils";
 import { CreateDiagnosisModal } from "./modals/CreateDiagnosisModal";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 export const ClinicAssociatedAppointmentsSection = () => {
-  const { clinicInfo: _clinicInfo } = useClinicAssociatedDoctor();
-  const [appointments, setAppointments] = useState<ClinicAssociatedAppointment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { clinicInfo } = useClinicAssociatedDoctor();
+  const {
+    appointments,
+    loading,
+    updatingStatus,
+    loadAppointments,
+    updateStatus,
+  } = useClinicAssociatedAppointments(clinicInfo?.id || "");
+  const feedback = useFeedbackStore();
+
+  const safeAppointments = ensureArray<ClinicAssociatedAppointment>(appointments);
+
   const [selectedAppointment, setSelectedAppointment] = useState<ClinicAssociatedAppointment | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isDiagnosisModalOpen, setIsDiagnosisModalOpen] = useState(false);
-  const [updatingStatus, setUpdatingStatus] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
-
-  const loadAppointments = async () => {
-    setLoading(true);
-    try {
-      const data = await getClinicAssociatedAppointmentsAPI();
-      setAppointments(data);
-    } catch (error) {
-      console.error("Error cargando citas:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadAppointments();
-  }, []);
 
   const handleOpenDetail = (appointment: ClinicAssociatedAppointment) => {
     setSelectedAppointment(appointment);
@@ -63,12 +54,9 @@ export const ClinicAssociatedAppointmentsSection = () => {
 
   const handleStatusChange = async (status: "COMPLETED" | "NO_SHOW") => {
     if (!selectedAppointment) return;
-    setUpdatingStatus(true);
     try {
-      const updated = await updateClinicAppointmentStatusAPI(selectedAppointment.id, status);
-      setAppointments((prev) =>
-        prev.map((apt) => (apt.id === updated.id ? updated : apt))
-      );
+      await updateStatus(selectedAppointment.id, status);
+      feedback.showFeedback('success', 'Estado actualizado', 'El estado de la cita se actualizó correctamente.');
       if (status === "COMPLETED") {
         setIsDetailModalOpen(false);
         setIsDiagnosisModalOpen(true);
@@ -78,13 +66,11 @@ export const ClinicAssociatedAppointmentsSection = () => {
       }
     } catch (error) {
       console.error("Error actualizando estado:", error);
-      alert("Error al actualizar el estado de la cita");
-    } finally {
-      setUpdatingStatus(false);
+      feedback.showFeedback('error', 'Error', 'No fue posible actualizar el estado de la cita.');
     }
   };
 
-  const filteredAppointments = appointments.filter(
+  const filteredAppointments = safeAppointments.filter(
     (apt) => apt.date === selectedDate && apt.status === "CONFIRMED"
   );
 
@@ -117,6 +103,14 @@ export const ClinicAssociatedAppointmentsSection = () => {
         return status;
     }
   };
+
+  if (!clinicInfo) {
+    return (
+      <Box>
+        <Typography>Cargando información de la clínica...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -174,7 +168,7 @@ export const ClinicAssociatedAppointmentsSection = () => {
                   <TableCell>
                     <Chip
                       label={getStatusLabel(appointment.status)}
-                      color={getStatusColor(appointment.status) as any}
+                      color={getStatusColor(appointment.status) as "primary" | "success" | "error" | "default"}
                       size="small"
                     />
                   </TableCell>
@@ -194,7 +188,6 @@ export const ClinicAssociatedAppointmentsSection = () => {
         </TableContainer>
       )}
 
-      {/* Modal de Detalle */}
       <Dialog
         open={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
@@ -245,7 +238,7 @@ export const ClinicAssociatedAppointmentsSection = () => {
                 </Typography>
                 <Chip
                   label={getStatusLabel(selectedAppointment.status)}
-                  color={getStatusColor(selectedAppointment.status) as any}
+                  color={getStatusColor(selectedAppointment.status) as "primary" | "success" | "error" | "default"}
                   size="small"
                 />
               </Grid2>
@@ -279,7 +272,6 @@ export const ClinicAssociatedAppointmentsSection = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Modal de Diagnóstico */}
       {selectedAppointment && (
         <CreateDiagnosisModal
           open={isDiagnosisModalOpen}
@@ -295,10 +287,10 @@ export const ClinicAssociatedAppointmentsSection = () => {
             date: selectedAppointment.date,
             time: selectedAppointment.time,
             reason: selectedAppointment.reason || "",
-            status: selectedAppointment.status as any,
-            isPaid: false, // No se muestra información de pago
+            status: selectedAppointment.status as "CONFIRMED" | "COMPLETED" | "NO_SHOW" | "CANCELLED",
+            isPaid: false,
             paymentMethodRaw: "UNKNOWN",
-          } as any}
+          }}
           onSuccess={() => {
             loadAppointments();
           }}

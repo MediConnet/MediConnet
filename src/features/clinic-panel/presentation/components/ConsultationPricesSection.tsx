@@ -18,7 +18,6 @@ import {
   Chip,
   IconButton,
   Stack,
-  Snackbar,
 } from '@mui/material';
 import { AttachMoney, Edit, Warning } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
@@ -28,7 +27,7 @@ import { formatMoney } from '../../../../shared/lib/formatMoney';
 import type { ConsultationPrice } from '../../domain/clinic.entity';
 
 interface ConsultationPricesSectionProps {
-  specialties: string[]; // Especialidades del perfil de la clínica
+  specialties: string[];
   consultationPrices?: ConsultationPrice[];
   onUpdate: (prices: ConsultationPrice[]) => Promise<void>;
 }
@@ -52,20 +51,10 @@ export const ConsultationPricesSection = ({
   const [selectedSpecialty, setSelectedSpecialty] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [prices, setPrices] = useState<ConsultationPrice[]>(consultationPrices);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
-    open: false,
-    message: '',
-    severity: 'success'
-  });
 
-  // Sincronizar precios cuando cambien las especialidades del perfil o consultationPrices
   useEffect(() => {
-    console.log('🔄 Sincronizando precios...', { specialties, consultationPrices });
-    
-    // Si hay precios guardados, usarlos como base
     const basePrices = consultationPrices.length > 0 ? [...consultationPrices] : [];
-    
-    // Agregar nuevas especialidades con precio 0
+
     specialties.forEach((specialty) => {
       const exists = basePrices.find((p) => p.specialty === specialty);
       if (!exists) {
@@ -77,7 +66,6 @@ export const ConsultationPricesSection = ({
       }
     });
 
-    // Marcar como inactivas las especialidades que ya no están en el perfil
     basePrices.forEach((price) => {
       if (!specialties.includes(price.specialty)) {
         price.isActive = false;
@@ -86,7 +74,6 @@ export const ConsultationPricesSection = ({
       }
     });
 
-    console.log('✅ Precios sincronizados:', basePrices);
     setPrices(basePrices);
   }, [specialties, consultationPrices]);
 
@@ -100,34 +87,21 @@ export const ConsultationPricesSection = ({
 
       try {
         setLoading(true);
-        console.log('💾 Guardando precio...', { selectedSpecialty, price: values.price });
-        
+
         const updatedPrices = prices.map((p) =>
           p.specialty === selectedSpecialty
             ? { ...p, price: parseFloat(values.price) }
             : p
         );
 
-        console.log('📤 Enviando precios actualizados:', updatedPrices);
         await onUpdate(updatedPrices);
-        
-        console.log('✅ Precio guardado exitosamente');
+
         setPrices(updatedPrices);
         setDialogOpen(false);
         setSelectedSpecialty(null);
         formik.resetForm();
-        setSnackbar({
-          open: true,
-          message: 'Precio actualizado correctamente',
-          severity: 'success'
-        });
-      } catch (error) {
-        console.error('❌ Error al actualizar precio:', error);
-        setSnackbar({
-          open: true,
-          message: 'Error al actualizar el precio. Intenta nuevamente.',
-          severity: 'error'
-        });
+      } catch {
+        // Error handled by parent hook (useUpdateClinicProfile)
       } finally {
         setLoading(false);
       }
@@ -247,7 +221,6 @@ export const ConsultationPricesSection = ({
         </>
       )}
 
-      {/* Dialog para editar precio */}
       <Dialog open={dialogOpen} onClose={() => !loading && setDialogOpen(false)} maxWidth="sm" fullWidth>
         <form onSubmit={formik.handleSubmit}>
           <DialogTitle>
@@ -299,23 +272,6 @@ export const ConsultationPricesSection = ({
           </DialogActions>
         </form>
       </Dialog>
-
-      {/* Snackbar para notificaciones */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-          variant="filled"
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import {
   updateDoctorProfileAPI,
   type UpdateDoctorProfileParams,
@@ -13,16 +14,17 @@ import type { DoctorDashboard } from "../../domain/DoctorDashboard.entity";
 export const useUpdateDoctorProfile = () => {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const feedback = useFeedbackStore();
 
   return useMutation<DoctorDashboard, Error, UpdateDoctorProfileParams>({
     mutationFn: updateDoctorProfileAPI,
     onSuccess: () => {
-      // Invalidar cache del perfil
+      feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
       queryClient.invalidateQueries({ queryKey: ['doctors', 'profile', user?.id] });
-      // Invalidar cache del dashboard (puede tener datos del perfil)
       queryClient.invalidateQueries({ queryKey: ['doctors', 'dashboard', user?.id] });
     },
     onError: (error) => {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
       console.error('Error en useUpdateDoctorProfile:', error);
     },
   });

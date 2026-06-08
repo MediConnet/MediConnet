@@ -18,6 +18,7 @@ import {
 import { useRef, useState, useEffect } from "react";
 import type { LaboratoryDashboard } from "../../domain/LaboratoryDashboard.entity";
 import { updateLaboratoryProfileAPI } from "../../infrastructure/laboratories.repository";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 interface EditLaboratoryProfileModalProps {
   open: boolean;
@@ -40,6 +41,7 @@ export const EditLaboratoryProfileModal = ({
   const [saving, setSaving] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const feedback = useFeedbackStore();
 
   useEffect(() => {
     if (data) {
@@ -64,7 +66,7 @@ export const EditLaboratoryProfileModal = ({
     const file = event.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) return;
-    if (file.size > 5 * 1024 * 1024) return; // 5MB
+    if (file.size > 5 * 1024 * 1024) return;
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -77,12 +79,14 @@ export const EditLaboratoryProfileModal = ({
   const handleSave = async () => {
     try {
       setSaving(true);
-      const response = await updateLaboratoryProfileAPI({
+      await updateLaboratoryProfileAPI({
         full_name: formData.name,
         description: formData.description,
         is_published: formData.isPublished,
         ...(logoPreview ? { logo_url: logoPreview } : {}),
       });
+
+      feedback.showFeedback('success', 'Perfil actualizado', 'La información del laboratorio se ha guardado correctamente.');
 
       const updatedData: LaboratoryDashboard = {
         ...data,
@@ -92,13 +96,14 @@ export const EditLaboratoryProfileModal = ({
           description: formData.description,
           is_published: formData.isPublished,
           isActive: formData.isPublished,
-          logoUrl: response.logo_url ?? data.laboratory.logoUrl,
+          logoUrl: logoPreview ?? data.laboratory.logoUrl,
         },
       };
       onSave(updatedData);
       onClose();
     } catch (e) {
       console.error("Error guardando perfil de laboratorio:", e);
+      feedback.showFeedback('error', 'Error', 'No se pudo guardar la información del laboratorio.');
     } finally {
       setSaving(false);
     }
@@ -133,7 +138,6 @@ export const EditLaboratoryProfileModal = ({
 
       <DialogContent dividers>
         <Stack spacing={3} sx={{ mt: 1 }}>
-          {/* Logo */}
           <Box>
             <Typography variant="subtitle2" fontWeight={600} mb={1}>
               Logo del Laboratorio
@@ -193,7 +197,6 @@ export const EditLaboratoryProfileModal = ({
             }}
           />
 
-          {/* Estado del Servicio */}
           <Box
             sx={{
               p: 2,
@@ -254,4 +257,3 @@ export const EditLaboratoryProfileModal = ({
     </Dialog>
   );
 };
-

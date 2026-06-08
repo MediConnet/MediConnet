@@ -4,6 +4,10 @@ import type { ClinicInfo, ClinicAssociatedDoctorProfile } from '../../domain/Cli
 import { getClinicInfoAPI } from '../../infrastructure/clinic-associated.api';
 import { getClinicAssociatedProfileAPI } from '../../infrastructure/clinic-associated.api';
 import { getDoctorDashboardAPI } from '../../infrastructure/doctors.api';
+import { createLogger } from '../../../../shared/lib/logger';
+import { logApiError } from '../../../../shared/lib/api-error';
+
+const clinicAssocLog = createLogger('useClinicAssociatedDoctor');
 
 /**
  * Hook para detectar si un médico está asociado a una clínica
@@ -64,7 +68,7 @@ export const useClinicAssociatedDoctor = () => {
             } catch (profileError: any) {
               // Si falla obtener el perfil, no es crítico
               // Solo loguear el error, pero mantener isClinicAssociated = true
-              console.warn('No se pudo cargar el perfil del médico asociado:', profileError);
+              clinicAssocLog.warn('Perfil de médico asociado no disponible (no crítico)', profileError);
             }
           } else {
             // ✅ NO está asociado - clinic es null o undefined
@@ -74,7 +78,7 @@ export const useClinicAssociatedDoctor = () => {
           }
         } catch (dashboardError: any) {
           // Si falla el dashboard, intentar con clinic-info como respaldo
-          console.warn('Error obteniendo dashboard, intentando con clinic-info:', dashboardError);
+          clinicAssocLog.warn('Dashboard falló; usando clinic-info como respaldo', dashboardError);
           
           // ✅ OPCIÓN 2: Verificar desde clinic-info (RESPALDO)
           try {
@@ -91,11 +95,11 @@ export const useClinicAssociatedDoctor = () => {
                 const profileData = await getClinicAssociatedProfileAPI();
                 setProfile(profileData);
               } catch (profileError) {
-                console.warn('No se pudo cargar el perfil del médico asociado:', profileError);
+                clinicAssocLog.warn('Perfil de médico asociado no disponible (no crítico)', profileError);
               }
             } else {
               // ⭐ NUEVO: Backend retorna null cuando no está asociado
-              console.log('Doctor no está asociado a ninguna clínica (backend retornó null)');
+              clinicAssocLog.info('Doctor no asociado a clínica (null)');
               setIsClinicAssociated(false);
               setClinicInfo(null);
               setProfile(null);
@@ -105,12 +109,12 @@ export const useClinicAssociatedDoctor = () => {
             // Si hay un error HTTP real, manejarlo
             const statusCode = clinicInfoError?.response?.status || clinicInfoError?.status;
             if (statusCode === 404) {
-              console.log('Doctor no está asociado a ninguna clínica (404)');
+              clinicAssocLog.info('Doctor no asociado a clínica (404)');
               setIsClinicAssociated(false);
               setClinicInfo(null);
               setProfile(null);
             } else {
-              console.error('Error verificando asociación con clínica:', clinicInfoError);
+              logApiError('useClinicAssociatedDoctor', clinicInfoError);
               setIsClinicAssociated(false);
               setClinicInfo(null);
               setProfile(null);
@@ -119,7 +123,7 @@ export const useClinicAssociatedDoctor = () => {
         }
       } catch (error: any) {
         // ✅ Error general - asumir que NO está asociado
-        console.error('Error verificando asociación con clínica:', error);
+        logApiError('useClinicAssociatedDoctor', error);
         setIsClinicAssociated(false);
         setClinicInfo(null);
         setProfile(null);

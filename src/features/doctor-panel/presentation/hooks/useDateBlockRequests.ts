@@ -4,6 +4,7 @@ import {
   getDateBlockRequestsAPI,
   requestDateBlockAPI,
 } from '../../infrastructure/clinic-associated.api';
+import { ensureArray } from '../../infrastructure/clinic-associated-list.utils';
 
 export const useDateBlockRequests = (clinicId: string) => {
   const [requests, setRequests] = useState<DateBlockRequest[]>([]);
@@ -14,9 +15,10 @@ export const useDateBlockRequests = (clinicId: string) => {
     setLoading(true);
     try {
       const data = await getDateBlockRequestsAPI();
-      setRequests(data);
+      setRequests(ensureArray<DateBlockRequest>(data));
     } catch (error) {
       console.error('Error cargando solicitudes de bloqueo:', error);
+      setRequests([]);
     } finally {
       setLoading(false);
     }
@@ -26,7 +28,7 @@ export const useDateBlockRequests = (clinicId: string) => {
     setSubmitting(true);
     try {
       const newRequest = await requestDateBlockAPI(startDate, endDate, reason);
-      setRequests((prev) => [...prev, newRequest]);
+      setRequests((prev) => [...ensureArray<DateBlockRequest>(prev), newRequest]);
       return newRequest;
     } catch (error) {
       console.error('Error solicitando bloqueo:', error);

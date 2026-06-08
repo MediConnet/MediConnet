@@ -5,6 +5,7 @@ import {
   sendReceptionMessageAPI,
   markMessagesAsReadAPI,
 } from '../../infrastructure/clinic-associated.api';
+import { ensureArray } from '../../infrastructure/clinic-associated-list.utils';
 
 export const useReceptionMessages = (clinicId: string) => {
   const [messages, setMessages] = useState<ReceptionMessage[]>([]);
@@ -15,9 +16,10 @@ export const useReceptionMessages = (clinicId: string) => {
     setLoading(true);
     try {
       const data = await getReceptionMessagesAPI();
-      setMessages(data);
+      setMessages(ensureArray<ReceptionMessage>(data));
     } catch (error) {
       console.error('Error cargando mensajes:', error);
+      setMessages([]);
     } finally {
       setLoading(false);
     }
@@ -27,7 +29,7 @@ export const useReceptionMessages = (clinicId: string) => {
     setSending(true);
     try {
       const newMessage = await sendReceptionMessageAPI(messageText);
-      setMessages((prev) => [...prev, newMessage]);
+      setMessages((prev) => [...ensureArray<ReceptionMessage>(prev), newMessage]);
     } catch (error) {
       console.error('Error enviando mensaje:', error);
       throw error;
@@ -43,9 +45,8 @@ export const useReceptionMessages = (clinicId: string) => {
       } catch (error) {
         console.warn('Error marcando mensajes como leídos en backend');
       }
-      // Actualizar estado local
       setMessages((prev) =>
-        prev.map((msg) =>
+        ensureArray<ReceptionMessage>(prev).map((msg) =>
           messageIds.includes(msg.id) ? { ...msg, isRead: true } : msg
         )
       );

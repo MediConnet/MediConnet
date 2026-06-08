@@ -8,6 +8,7 @@ import { StatsCards } from "../components/StatsCards";
 import { DashboardCharts } from "../components/DashboardCharts";
 import { ProfileSection } from "../components/ProfileSection";
 import { ErrorBoundary } from "../../../../shared/components/ErrorBoundary";
+import { LoadErrorState } from "../../../../shared/components/LoadErrorState";
 import { DoctorsSection } from "../components/DoctorsSection";
 import { AppointmentsSection } from "../components/AppointmentsSection";
 import { ReceptionSection } from "../components/ReceptionSection";
@@ -152,7 +153,7 @@ export const ClinicDashboardPage = () => {
         appointments={[]}
       >
         <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
-          <Typography color="error">Error al cargar el dashboard: {error.message}</Typography>
+          <LoadErrorState message="No fue posible cargar el dashboard." onRetry={() => window.location.reload()} />
         </Box>
       </DashboardLayout>
     );
@@ -186,19 +187,47 @@ export const ClinicDashboardPage = () => {
           </ErrorBoundary>
         )}
 
-        {currentTab === "doctors" && <DoctorsSection clinicId={clinic.id} />}
+        {currentTab === "doctors" && (
+          <ErrorBoundary>
+            <DoctorsSection clinicId={clinic.id} />
+          </ErrorBoundary>
+        )}
 
-        {currentTab === "consultationPrices" && <ConsultationPricesPage clinicId={clinic.id} />}
+        {currentTab === "consultationPrices" && (
+          <ErrorBoundary>
+            <ConsultationPricesPage clinicId={clinic.id} />
+          </ErrorBoundary>
+        )}
 
-        {currentTab === "appointments" && <AppointmentsSection clinicId={clinic.id} />}
+        {currentTab === "appointments" && (
+          <ErrorBoundary>
+            <AppointmentsSection clinicId={clinic.id} />
+          </ErrorBoundary>
+        )}
 
-        {currentTab === "reception" && <ReceptionSection clinicId={clinic.id} />}
+        {currentTab === "reception" && (
+          <ErrorBoundary>
+            <ReceptionSection clinicId={clinic.id} />
+          </ErrorBoundary>
+        )}
 
-        {currentTab === "schedules" && <SchedulesSection clinicId={clinic.id} />}
+        {currentTab === "schedules" && (
+          <ErrorBoundary>
+            <SchedulesSection clinicId={clinic.id} />
+          </ErrorBoundary>
+        )}
 
-        {currentTab === "payments" && <ClinicPaymentsSection clinicId={clinic.id} />}
+        {currentTab === "payments" && (
+          <ErrorBoundary>
+            <ClinicPaymentsSection clinicId={clinic.id} />
+          </ErrorBoundary>
+        )}
 
-        {currentTab === "bankAccount" && <BankAccountPage clinicId={clinic.id} />}
+        {currentTab === "bankAccount" && (
+          <ErrorBoundary>
+            <BankAccountPage clinicId={clinic.id} />
+          </ErrorBoundary>
+        )}
       </Box>
     </DashboardLayout>
   );

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useFeedbackStore } from '../../../../app/store/feedback.store';
 import { getSuppliesUseCase } from '../../application/get-supplies.usecase';
 import { getSupplyUseCase } from '../../application/get-supply.usecase';
 import { getSupplyReviewsUseCase } from '../../application/get-supply-reviews.usecase';
@@ -91,16 +92,17 @@ export const useSupplyPanelReviews = () => {
  */
 export const useCreateReview = () => {
   const queryClient = useQueryClient();
+  const feedback = useFeedbackStore();
 
   return useMutation({
     mutationFn: (params: CreateReviewParams) => createReviewUseCase(params),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['supply-reviews', variables.supplyStoreId] });
       queryClient.refetchQueries({ queryKey: ['supply-reviews', variables.supplyStoreId] });
+      feedback.showFeedback('success', 'Operación completada', 'La información se guardó correctamente.');
     },
-    onError: (error) => {
-      console.error('Error en useCreateReview:', error);
+    onError: () => {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     },
   });
 };
-

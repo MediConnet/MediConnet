@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import {
   getConsultationPricesAPI,
   createConsultationPriceAPI,
@@ -15,6 +16,7 @@ export const useConsultationPrices = () => {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const feedback = useFeedbackStore();
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -37,7 +39,11 @@ export const useConsultationPrices = () => {
   const createMutation = useMutation({
     mutationFn: createConsultationPriceAPI,
     onSuccess: () => {
+      feedback.showFeedback('success', 'Operación completada', 'La información se guardó correctamente.');
       loadData();
+    },
+    onError: () => {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     },
   });
 
@@ -45,14 +51,22 @@ export const useConsultationPrices = () => {
     mutationFn: ({ id, data }: { id: string; data: UpdateConsultationPriceRequest }) =>
       updateConsultationPriceAPI(id, data),
     onSuccess: () => {
+      feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
       loadData();
+    },
+    onError: () => {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteConsultationPriceAPI,
     onSuccess: () => {
+      feedback.showFeedback('success', 'Registro eliminado', 'La acción se completó correctamente.');
       loadData();
+    },
+    onError: () => {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     },
   });
 

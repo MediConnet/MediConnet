@@ -24,6 +24,7 @@ import { useEffect, useRef, useState } from "react";
 import type { AmbulanceProfile } from "../../domain/ambulance-profile.entity";
 import { parseCoordinate } from "../../../../shared/lib/parseCoordinate";
 import { AMBULANCE_TYPE_LABELS, AMBULANCE_AVAILABILITY_LABELS } from "../../../../shared/config/domain.constants";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 interface Props {
   open: boolean;
@@ -102,7 +103,7 @@ export const EditProfileModal = ({
     if (file && formData) {
       if (!file.type.startsWith("image/")) return;
       if (file.size > 5 * 1024 * 1024) {
-        alert("La imagen debe ser menor a 5MB");
+        useFeedbackStore.getState().showFeedback('error', 'Error', 'La imagen debe ser menor a 5MB.');
         return;
       }
       const reader = new FileReader();

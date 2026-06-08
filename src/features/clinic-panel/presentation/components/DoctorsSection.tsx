@@ -16,8 +16,6 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Snackbar,
-  Alert,
 } from "@mui/material";
 import { Email, Edit, ToggleOn, ToggleOff, Delete, Visibility } from "@mui/icons-material";
 import { useState, useEffect } from "react";
@@ -27,6 +25,7 @@ import * as Yup from "yup";
 import { generateInvitationLinkAPI } from "../../infrastructure/clinic-doctors.api";
 import { clearClinicMocks } from "../../infrastructure/clear-clinic-mocks";
 import { DoctorProfileViewModal } from "./DoctorProfileViewModal";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import type { ClinicDoctor } from "../../domain/doctor.entity";
 
 
@@ -40,6 +39,7 @@ const inviteValidationSchema = Yup.object({
 
 export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
   const { doctors, loading, inviteDoctor, toggleStatus, assignOffice, deleteDoctor, updateConsultationFee } = useClinicDoctors(clinicId);
+  const feedback = useFeedbackStore();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [assignOfficeDialogOpen, setAssignOfficeDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -50,13 +50,7 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
   const [selectedDoctorForView, setSelectedDoctorForView] = useState<ClinicDoctor | null>(null);
   const [doctorEmail, setDoctorEmail] = useState<string>("");
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'info' }>({
-    open: false,
-    message: '',
-    severity: 'info'
-  });
 
-  // ⭐ Limpiar mocks al cargar el componente (solo una vez)
   useEffect(() => {
     clearClinicMocks();
   }, []);
@@ -67,11 +61,12 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
       if (selectedDoctor) {
         try {
           await assignOffice(selectedDoctor, values.officeNumber);
+          feedback.showFeedback('success', 'Operación completada', 'La información se guardó correctamente.');
           setAssignOfficeDialogOpen(false);
           officeFormik.resetForm();
           setSelectedDoctor(null);
-        } catch (error) {
-          console.error("Error al asignar consultorio:", error);
+        } catch {
+          feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
         }
       }
     },
@@ -84,35 +79,30 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
         try {
           const fee = parseFloat(values.consultationFee);
           if (isNaN(fee) || fee < 0) {
-            setSnackbar({
-              open: true,
-              message: "Por favor ingresa un precio válido",
-              severity: 'error'
-            });
+            feedback.showFeedback('error', 'Error', 'Por favor ingresa un precio válido');
             return;
           }
-          
+
           await updateConsultationFee(selectedDoctor, fee);
-          
+          feedback.showFeedback('success', 'Operación completada', 'La información se guardó correctamente.');
           setPriceDialogOpen(false);
           priceFormik.resetForm();
           setSelectedDoctor(null);
-          setSnackbar({
-            open: true,
-            message: "Precio actualizado correctamente",
-            severity: 'success'
-          });
-        } catch (error) {
-          console.error("Error al actualizar precio:", error);
-          setSnackbar({
-            open: true,
-            message: "Error al actualizar el precio. Intenta nuevamente.",
-            severity: 'error'
-          });
+        } catch {
+          feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
         }
       }
     },
   });
+
+  const handleToggleStatus = async (doctor: ClinicDoctor) => {
+    try {
+      await toggleStatus(doctor.id, !doctor.isActive);
+      feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
+    } catch {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
+    }
+  };
 
   const handleInviteByEmail = () => {
     setInviteDialogOpen(true);
@@ -121,72 +111,49 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
 
   const handleGenerateAndOpenEmail = async () => {
     if (!doctorEmail || !inviteValidationSchema.isValidSync({ email: doctorEmail })) {
-      setSnackbar({
-        open: true,
-        message: "Por favor ingresa un email válido",
-        severity: 'error'
-      });
+      feedback.showFeedback('error', 'Error', 'Por favor ingresa un email válido');
       return;
     }
 
     setIsGeneratingLink(true);
     try {
-      // Generar el link de invitación
       const { invitationLink } = await generateInvitationLinkAPI(doctorEmail);
-      
-      // ⭐ CONSTRUIR URL COMPLETA DEL FRONTEND
+
       let fullInvitationLink = invitationLink;
-      
-      // Si el link no empieza con http:// o https://, construir la URL completa
+
       if (!invitationLink.startsWith('http://') && !invitationLink.startsWith('https://')) {
         const frontendBaseUrl = window.location.origin;
-        
+
         if (invitationLink.startsWith('/')) {
           fullInvitationLink = `${frontendBaseUrl}${invitationLink}`;
         } else {
           fullInvitationLink = `${frontendBaseUrl}/clinic/invite/${invitationLink}`;
         }
       }
-      
-      // ⭐ CONVERTIR QUERY PARAMETER A PATH PARAMETER
-      // Si el link tiene formato ?token=..., convertirlo a /:token
+
       try {
         const url = new URL(fullInvitationLink);
         if (url.searchParams.has('token')) {
-          const token = url.searchParams.get('token');
-          if (token) {
-            // Construir la URL correcta con path parameter
-            fullInvitationLink = `${url.origin}/clinic/invite/${token}`;
+          const tokenValue = url.searchParams.get('token');
+          if (tokenValue) {
+            fullInvitationLink = `${url.origin}/clinic/invite/${tokenValue}`;
           }
         }
       } catch (e) {
-        // Si no es una URL válida, continuar con el link original
         console.warn('No se pudo parsear la URL:', e);
       }
-      
-      // Copiar automáticamente al portapapeles
+
       await navigator.clipboard.writeText(fullInvitationLink);
-      
-      // Cerrar el diálogo
+
       setInviteDialogOpen(false);
       setDoctorEmail("");
-      
-      // Abrir el cliente de correo vacío
+
       window.location.href = "mailto:";
-      
-      // Mostrar mensaje de confirmación
-      setSnackbar({
-        open: true,
-        message: "Link de invitación generado y copiado al portapapeles. Pega el link (Ctrl+V) en tu email cuando lo escribas.",
-        severity: 'success'
-      });
-    } catch (error) {
-      console.error("Error al generar link de invitación:", error);
-      setSnackbar({
-        open: true,
-        message: "Error al generar el link de invitación. Intenta nuevamente.",
-        severity: 'error'
-      });
+
+      feedback.showFeedback('success', 'Operación completada', 'La información se guardó correctamente.');
+    } catch (err: any) {
+      const message = err?.message || 'No fue posible completar la operación.';
+      feedback.showFeedback('error', 'Error', message);
     } finally {
       setIsGeneratingLink(false);
     }
@@ -212,20 +179,11 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
     if (doctorToDelete) {
       try {
         await deleteDoctor(doctorToDelete.id);
+        feedback.showFeedback('success', 'Registro eliminado', 'La acción se completó correctamente.');
         setDeleteDialogOpen(false);
         setDoctorToDelete(null);
-        setSnackbar({
-          open: true,
-          message: "Médico eliminado correctamente",
-          severity: 'success'
-        });
-      } catch (error) {
-        console.error("Error al eliminar médico:", error);
-        setSnackbar({
-          open: true,
-          message: "Error al eliminar médico. Intenta nuevamente.",
-          severity: 'error'
-        });
+      } catch {
+        feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
       }
     }
   };
@@ -302,7 +260,7 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
                       </IconButton>
                       <IconButton
                         size="small"
-                        onClick={() => toggleStatus(doctor.id)}
+                        onClick={() => handleToggleStatus(doctor)}
                         title={doctor.isActive ? "Desactivar" : "Activar"}
                       >
                         {doctor.isActive ? <ToggleOn color="success" /> : <ToggleOff />}
@@ -355,7 +313,7 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
             }
             sx={{ mt: 1 }}
             autoFocus
-            onKeyPress={(e) => {
+            onKeyDown={(e) => {
               if (e.key === "Enter" && doctorEmail && inviteValidationSchema.isValidSync({ email: doctorEmail })) {
                 handleGenerateAndOpenEmail();
               }
@@ -465,23 +423,6 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
         }}
         doctor={selectedDoctorForView}
       />
-
-      {/* Snackbar para notificaciones */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-          variant="filled"
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };

@@ -6,6 +6,7 @@ import { Box, Button, Typography, IconButton, Drawer, List, ListItem, ListItemBu
 import { ArrowForward, Download, Menu, Close, Login } from '@mui/icons-material';
 import { ROUTES } from '../../app/config/constants';
 import { useAuthStore } from '../../app/store/auth.store';
+import { isClinicsProviderType } from '../lib/normalizeProviderType';
 import { useState } from 'react';
 
 export const AppLayout = () => {
@@ -59,7 +60,7 @@ export const AppLayout = () => {
     if (role === 'PROVIDER') {
       if (tipo === 'doctor') return '/doctor/dashboard';
       if (tipo === 'laboratory') return '/laboratory/dashboard';
-      if (tipo === 'clinic') return '/clinic/dashboard';
+      if (isClinicsProviderType(user.tipo)) return '/clinic/dashboard';
       if (tipo === 'pharmacy') return '/provider/pharmacy/dashboard';
       if (tipo === 'ambulance') return '/provider/ambulance/dashboard';
       if (tipo === 'supplies') return '/supply/dashboard';

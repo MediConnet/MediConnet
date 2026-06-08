@@ -15,6 +15,7 @@ import {
 import { useFormik } from "formik";
 import { useRef, useState } from "react";
 import * as Yup from "yup";
+import { getUserFriendlyMessage } from "../../lib/api-error";
 
 interface AdFormData {
   label: string;
@@ -141,7 +142,7 @@ export const CreateAdModal = ({
         setImageBase64(null);
         onClose();
       } catch (err: any) {
-        setError(err.message || "Error al crear el anuncio");
+        setError(getUserFriendlyMessage(err, { fallback: "No fue posible crear el anuncio." }));
       } finally {
         setIsSubmitting(false);
       }

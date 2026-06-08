@@ -19,6 +19,7 @@ import {
   formatCoordinateForInput,
   parseCoordinate,
 } from "../../../../shared/lib/parseCoordinate";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 interface EditContactLocationModalProps {
   open: boolean;
@@ -33,6 +34,7 @@ export const EditContactLocationModal = ({
   data,
   onSave,
 }: EditContactLocationModalProps) => {
+  const feedback = useFeedbackStore();
   const [formData, setFormData] = useState({
     whatsapp: "",
     address: "",
@@ -81,9 +83,10 @@ export const EditContactLocationModal = ({
       };
       onSave(updatedData);
       onClose();
+      feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
     } catch (error: any) {
       console.error("Error updating supply contact location:", error);
-      alert(error?.message || "No se pudo guardar. Intenta de nuevo.");
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     }
   };
 
@@ -116,7 +119,6 @@ export const EditContactLocationModal = ({
 
       <DialogContent dividers>
         <Stack spacing={3} sx={{ mt: 1 }}>
-          {/* WhatsApp */}
           <TextField
             fullWidth
             label="WhatsApp"
@@ -133,7 +135,6 @@ export const EditContactLocationModal = ({
             helperText="Número de WhatsApp para contacto directo"
           />
 
-          {/* Dirección */}
           <TextField
             fullWidth
             label="Dirección"
@@ -152,7 +153,6 @@ export const EditContactLocationModal = ({
             helperText="Dirección completa de tu negocio"
           />
 
-          {/* Coordenadas (Opcional) */}
           <Box>
             <Typography variant="subtitle2" fontWeight={600} mb={2}>
               Coordenadas (Opcional)
@@ -183,7 +183,6 @@ export const EditContactLocationModal = ({
             </Grid2>
           </Box>
 
-          {/* Google Maps URL */}
           <TextField
             fullWidth
             type="url"
@@ -221,4 +220,3 @@ export const EditContactLocationModal = ({
     </Dialog>
   );
 };
-

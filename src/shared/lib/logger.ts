@@ -1,49 +1,34 @@
-// NOTE: Logger helper para controlar logs en producción
-// Solo muestra logs en desarrollo, excepto errores que siempre se muestran
+// NOTE: Logger centralizado — errores técnicos solo en consola (desarrolladores)
 
 const isDevelopment = import.meta.env.MODE === 'development';
 
 export const logger = {
-  /**
-   * Log de información general (solo en desarrollo)
-   */
-  log: (...args: any[]) => {
-    if (isDevelopment) {
-      console.log(...args);
-    }
+  log: (...args: unknown[]) => {
+    if (isDevelopment) console.log(...args);
   },
-
-  /**
-   * Log de información (solo en desarrollo)
-   */
-  info: (...args: any[]) => {
-    if (isDevelopment) {
-      console.info(...args);
-    }
+  info: (...args: unknown[]) => {
+    if (isDevelopment) console.info(...args);
   },
-
-  /**
-   * Log de advertencias (solo en desarrollo)
-   */
-  warn: (...args: any[]) => {
-    if (isDevelopment) {
-      console.warn(...args);
-    }
+  warn: (...args: unknown[]) => {
+    if (isDevelopment) console.warn(...args);
   },
-
-  /**
-   * Log de errores (siempre se muestran, incluso en producción)
-   */
-  error: (...args: any[]) => {
+  /** Siempre en consola; nunca mostrar este output en UI */
+  error: (...args: unknown[]) => {
     console.error(...args);
   },
-
-  /**
-   * Log de debug (solo en desarrollo)
-   */
-  debug: (...args: any[]) => {
-    if (isDevelopment) {
-      console.debug(...args);
-    }
+  debug: (...args: unknown[]) => {
+    if (isDevelopment) console.debug(...args);
   },
 };
+
+/** Logger con prefijo de módulo: [DoctorSchedule] mensaje */
+export function createLogger(scope: string) {
+  const prefix = `[${scope}]`;
+  return {
+    log: (...args: unknown[]) => logger.log(prefix, ...args),
+    info: (...args: unknown[]) => logger.info(prefix, ...args),
+    warn: (...args: unknown[]) => logger.warn(prefix, ...args),
+    error: (...args: unknown[]) => logger.error(prefix, ...args),
+    debug: (...args: unknown[]) => logger.debug(prefix, ...args),
+  };
+}

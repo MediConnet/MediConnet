@@ -6,6 +6,7 @@ import {
   Business,
   CalendarToday,
   Campaign,
+  Comment,
   Dashboard,
   Group,
   History,
@@ -24,6 +25,7 @@ import {
   Store,
   Timeline,
 } from "@mui/icons-material";
+import { normalizeProviderType } from "../lib/normalizeProviderType";
 
 export type UserRole =
   | "ADMIN"
@@ -67,6 +69,7 @@ export const ADMIN_MENU: MenuItem[] = [
     label: "Cadenas de Farmacias",
     path: "/admin/pharmacy-chains",
   },
+  { icon: <Comment />, label: "Comentarios", path: "/admin/comments" },
   {
     icon: <LocalHospital />,
     label: "Especialidades",
@@ -154,7 +157,7 @@ export const CLINIC_ASSOCIATED_DOCTOR_MENU: MenuItem[] = [
   },
   {
     icon: <Settings />,
-    label: "Horario Laboral",
+    label: "Horarios",
     path: "/doctor/dashboard?tab=clinic-schedule",
   },
   {
@@ -360,6 +363,7 @@ export const getMenuByRole = (
   providerType?: string | null,
 ): MenuItem[] => {
   const normalizedRole = role.toUpperCase();
+  const normalizedProviderType = normalizeProviderType(providerType);
 
   switch (normalizedRole) {
     case "ADMIN":
@@ -367,7 +371,7 @@ export const getMenuByRole = (
 
     case "PROVIDER":
     case "PROFESIONAL":
-      switch (providerType) {
+      switch (normalizedProviderType) {
         case "doctor":
           return DOCTOR_MENU;
         case "ambulance":
@@ -379,7 +383,7 @@ export const getMenuByRole = (
           return LAB_MENU;
         case "supplies":
           return SUPPLIES_MENU;
-        case "clinic":
+        case "clinics":
           return CLINIC_MENU;
         default:
           return [];

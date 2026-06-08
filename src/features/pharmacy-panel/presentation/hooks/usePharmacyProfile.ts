@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import { getPharmacyProfileUseCase } from "../../application/get-pharmacy-profile.usecase";
 import { updatePharmacyProfileAPI } from "../../infrastructure/pharmacy.api";
 import type { PharmacyProfile } from "../../domain/pharmacy-profile.entity";
@@ -56,12 +57,17 @@ export const usePharmacyProfile = () => {
 export const useUpdatePharmacyProfile = () => {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const feedback = useFeedbackStore();
 
   return useMutation<PharmacyProfile, Error, Partial<PharmacyProfile>>({
     mutationFn: updatePharmacyProfileAPI,
     onSuccess: (data) => {
       queryClient.setQueryData(['pharmacies', 'profile', user?.id], data);
       queryClient.invalidateQueries({ queryKey: ['pharmacies', 'profile', user?.id] });
+      feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
+    },
+    onError: () => {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     },
   });
 };

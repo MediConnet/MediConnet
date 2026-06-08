@@ -20,6 +20,7 @@ import {
   Select,
 } from "@mui/material";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import { useUpdateDoctorProfile } from "../hooks/useUpdateDoctorProfile";
 import type { WorkSchedule, TimeSlot } from "../../domain/DoctorDashboard.entity";
 import { useDoctorDashboard } from "../hooks/useDoctorDashboard";
@@ -33,6 +34,7 @@ import {
 export const SettingsSection = () => {
   const authStore = useAuthStore();
   const { user } = authStore;
+  const feedback = useFeedbackStore();
   const { data, refetch } = useDoctorDashboard();
   const { mutateAsync: updateProfile, isPending: saving } = useUpdateDoctorProfile();
 
@@ -238,6 +240,9 @@ export const SettingsSection = () => {
       });
       setBlockedSlots((prev) => [...prev, created]);
       setNewBlockedDate("");
+      feedback.showFeedback('success', 'Operación completada', 'La información se guardó correctamente.');
+    } catch {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     } finally {
       setSavingBlocked(false);
     }
@@ -255,6 +260,9 @@ export const SettingsSection = () => {
       setBlockedSlots((prev) =>
         prev.filter((s) => !(s.date === date && s.startTime === "00:00" && s.endTime === "23:59")),
       );
+      feedback.showFeedback('success', 'Registro eliminado', 'La acción se completó correctamente.');
+    } catch {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     } finally {
       setSavingBlocked(false);
     }
@@ -281,23 +289,26 @@ export const SettingsSection = () => {
   };
 
   const handleSave = async () => {
-    // Guardamos workSchedule (horarios) en backend.
-    await updateProfile({
-      consultationDuration: normalizeDuration(consultationDuration),
-      workSchedule: workSchedule.map((s) => ({
-        ...s,
-        // Asegurar que los slots reflejen la duración actual al guardar
-        timeSlots: s.enabled
-          ? buildTimeSlots({
-              startTime: s.startTime || "09:00",
-              endTime: s.endTime || "17:00",
-              durationMin: consultationDuration,
-              previousSlots: s.timeSlots,
-            })
-          : s.timeSlots,
-      })),
-    });
-    refetch();
+    try {
+      await updateProfile({
+        consultationDuration: normalizeDuration(consultationDuration),
+        workSchedule: workSchedule.map((s) => ({
+          ...s,
+          timeSlots: s.enabled
+            ? buildTimeSlots({
+                startTime: s.startTime || "09:00",
+                endTime: s.endTime || "17:00",
+                durationMin: consultationDuration,
+                previousSlots: s.timeSlots,
+              })
+            : s.timeSlots,
+        })),
+      });
+      refetch();
+      feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
+    } catch {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
+    }
   };
 
   return (

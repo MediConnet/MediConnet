@@ -25,6 +25,9 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useDateBlockRequests } from "../hooks/useDateBlockRequests";
 import { useClinicAssociatedDoctor } from "../hooks/useClinicAssociatedDoctor";
+import { ensureArray } from "../../infrastructure/clinic-associated-list.utils";
+import type { DateBlockRequest as DateBlockRequestType } from "../../domain/ClinicAssociatedDoctor.entity";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 // Formateo de fechas sin date-fns
 
 const validationSchema = Yup.object({
@@ -47,6 +50,8 @@ export const DateBlockRequest = () => {
   const { requests, loading, submitting, requestBlock } = useDateBlockRequests(
     clinicInfo?.id || ""
   );
+  const safeRequests = ensureArray<DateBlockRequestType>(requests);
+  const feedback = useFeedbackStore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const formik = useFormik({
@@ -61,10 +66,10 @@ export const DateBlockRequest = () => {
         await requestBlock(values.startDate, values.endDate, values.reason);
         formik.resetForm();
         setIsDialogOpen(false);
-        alert("Solicitud de bloqueo enviada. Espera la aprobación de la clínica.");
+        feedback.showFeedback('success', 'Solicitud enviada', 'Solicitud de bloqueo enviada. Espera la aprobación de la clínica.');
       } catch (error) {
         console.error("Error solicitando bloqueo:", error);
-        alert("Error al enviar la solicitud de bloqueo");
+        feedback.showFeedback('error', 'Error', 'No fue posible enviar la solicitud de bloqueo.');
       }
     },
   });
@@ -136,7 +141,7 @@ export const DateBlockRequest = () => {
 
       {loading ? (
         <Typography>Cargando solicitudes...</Typography>
-      ) : requests.length === 0 ? (
+      ) : safeRequests.length === 0 ? (
         <Card>
           <CardContent>
             <Typography variant="body2" color="text.secondary" textAlign="center" py={3}>
@@ -157,7 +162,7 @@ export const DateBlockRequest = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {requests.map((request) => (
+              {safeRequests.map((request) => (
                 <TableRow key={request.id}>
                   <TableCell>{formatDate(request.startDate)}</TableCell>
                   <TableCell>{formatDate(request.endDate)}</TableCell>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import { getPharmacyBranchesUseCase } from "../../application/get-pharmacy-branches.usecase";
 import type { PharmacyBranch } from "../../domain/pharmacy-branch.entity";
 import {
@@ -44,6 +45,7 @@ export const usePharmacyBranches = () => {
 export const useCreatePharmacyBranch = () => {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const feedback = useFeedbackStore();
 
   return useMutation<PharmacyBranch, Error, Omit<PharmacyBranch, "id">>({
     mutationFn: createPharmacyBranchAPI,
@@ -71,10 +73,12 @@ export const useCreatePharmacyBranch = () => {
       if (context?.previousBranches) {
         queryClient.setQueryData(['pharmacies', 'branches', user?.id], context.previousBranches);
       }
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     },
     onSuccess: () => {
       // Invalidar para refrescar con datos reales
       queryClient.invalidateQueries({ queryKey: ['pharmacies', 'branches', user?.id] });
+      feedback.showFeedback('success', 'Operación completada', 'La información se guardó correctamente.');
     },
   });
 };
@@ -85,6 +89,7 @@ export const useCreatePharmacyBranch = () => {
 export const useUpdatePharmacyBranch = () => {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const feedback = useFeedbackStore();
 
   return useMutation<PharmacyBranch, Error, PharmacyBranch>({
     mutationFn: (branch) => updatePharmacyBranchAPI(branch.id, branch),
@@ -105,9 +110,11 @@ export const useUpdatePharmacyBranch = () => {
       if (context?.previousBranches) {
         queryClient.setQueryData(['pharmacies', 'branches', user?.id], context.previousBranches);
       }
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pharmacies', 'branches', user?.id] });
+      feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
     },
   });
 };
@@ -118,6 +125,7 @@ export const useUpdatePharmacyBranch = () => {
 export const useDeletePharmacyBranch = () => {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const feedback = useFeedbackStore();
 
   return useMutation<void, Error, string>({
     mutationFn: deletePharmacyBranchAPI,
@@ -138,9 +146,11 @@ export const useDeletePharmacyBranch = () => {
       if (context?.previousBranches) {
         queryClient.setQueryData(['pharmacies', 'branches', user?.id], context.previousBranches);
       }
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pharmacies', 'branches', user?.id] });
+      feedback.showFeedback('success', 'Registro eliminado', 'La acción se completó correctamente.');
     },
   });
 };

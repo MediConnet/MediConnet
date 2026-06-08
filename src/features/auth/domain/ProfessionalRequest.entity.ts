@@ -24,6 +24,8 @@ export interface ProfessionalRequest {
   firstName?: string;
   lastName?: string;
   role?: string;
+  /** Token de invitación de clínica (registro desde enlace de invitación) */
+  invitationToken?: string;
   
   // Archivos (Se envían al backend para subir a S3/Local)
   files?: {

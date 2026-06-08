@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Box, Paper, Tab, Tabs, Typography, Divider, Button, Snackbar, Alert } from "@mui/material";
+import { Box, Paper, Tab, Tabs, Typography, Divider, Button } from "@mui/material";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import { Save } from "@mui/icons-material";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { CommissionSettingItem } from "../components/CommissionSettingItem";
@@ -30,11 +31,7 @@ export const CommissionsPage = () => {
   const { settings, isLoading, isSaving, updateCommission, saveSettings } = useAdminSettings();
   const [activeTab, setActiveTab] = useState(0);
   const [hasChanges, setHasChanges] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
-    open: false,
-    message: '',
-    severity: 'success'
-  });
+  const feedback = useFeedbackStore();
 
   console.log("🎬 CommissionsPage renderizado");
   console.log("📊 Settings:", settings);
@@ -55,22 +52,10 @@ export const CommissionsPage = () => {
     
     if (success) {
       setHasChanges(false);
-      setSnackbar({
-        open: true,
-        message: 'Configuración guardada correctamente',
-        severity: 'success'
-      });
+      feedback.showFeedback('success', 'Configuración guardada', 'Configuración guardada correctamente.');
     } else {
-      setSnackbar({
-        open: true,
-        message: 'Error al guardar la configuración. Intenta nuevamente.',
-        severity: 'error'
-      });
+      feedback.showFeedback('error', 'Error', 'Error al guardar la configuración. Intenta nuevamente.');
     }
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
   };
 
   if (isLoading || !settings) {
@@ -347,17 +332,6 @@ export const CommissionsPage = () => {
             </Button>
           </Box>
         </Paper>
-
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        >
-          <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
       </Box>
     </DashboardLayout>
   );

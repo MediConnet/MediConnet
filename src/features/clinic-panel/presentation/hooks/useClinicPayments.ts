@@ -5,6 +5,7 @@ import { getClinicPaymentsUseCase } from '../../application/get-clinic-payments.
 import { getClinicToDoctorPaymentsUseCase } from '../../application/get-clinic-to-doctor-payments.usecase';
 import { distributePaymentUseCase } from '../../application/distribute-payment.usecase';
 import { payDoctorUseCase } from '../../application/pay-doctor.usecase';
+import { getUserFriendlyMessage } from '../../../../shared/lib/api-error';
 
 export const useClinicPayments = (clinicId: string) => {
   const [clinicPayments, setClinicPayments] = useState<ClinicPayment[]>([]);
@@ -29,7 +30,7 @@ export const useClinicPayments = (clinicId: string) => {
       setClinicTotal(clinic.pagination.total);
       setDoctorTotal(doctors.pagination.total);
     } catch (err: any) {
-      setError(err.message || 'Error al cargar pagos');
+      setError(getUserFriendlyMessage(err, { fallback: 'No fue posible cargar los pagos.' }));
     } finally {
       setLoading(false);
     }
@@ -47,7 +48,7 @@ export const useClinicPayments = (clinicId: string) => {
       await distributePaymentUseCase(paymentId, distribution);
       await loadPayments();
     } catch (err: any) {
-      throw new Error(err.message || 'Error al distribuir pago');
+      throw new Error(getUserFriendlyMessage(err, { fallback: 'No fue posible distribuir el pago.' }));
     }
   };
 
@@ -56,7 +57,7 @@ export const useClinicPayments = (clinicId: string) => {
       await payDoctorUseCase(doctorId, paymentId);
       await loadPayments();
     } catch (err: any) {
-      throw new Error(err.message || 'Error al pagar al médico');
+      throw new Error(getUserFriendlyMessage(err, { fallback: 'No fue posible registrar el pago al médico.' }));
     }
   };
 

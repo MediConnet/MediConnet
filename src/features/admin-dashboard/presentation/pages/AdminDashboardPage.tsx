@@ -36,11 +36,8 @@ export const AdminDashboardPage = () => {
   if (!stats || error) {
     return (
       <div className="p-8">
-        <p className="text-red-600 font-semibold mb-2">Error al cargar las estadísticas del dashboard.</p>
-        <p className="text-gray-600">Por favor, verifica que el backend esté funcionando correctamente.</p>
-        {error && (
-          <p className="text-sm text-gray-500 mt-2">Error: {error.message || 'Error desconocido'}</p>
-        )}
+        <p className="text-red-600 font-semibold mb-2">No fue posible cargar las estadísticas del dashboard.</p>
+        <p className="text-gray-600">Intenta recargar la página en unos momentos.</p>
       </div>
     );
   }

@@ -20,6 +20,7 @@ import type { ClinicPayment } from '../../domain/clinic-payment.entity';
 import type { ClinicDoctor } from '../../domain/doctor.entity';
 import { formatMoney } from '../../../../shared/lib/formatMoney';
 import { handleNumberInput } from '../../../../shared/lib/inputValidation';
+import { getUserFriendlyMessage } from '../../../../shared/lib/api-error';
 
 interface PaymentDistributionModalProps {
   open: boolean;
@@ -77,7 +78,7 @@ export const PaymentDistributionModal = ({
       await onDistribute(distributionArray);
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Error al distribuir pago');
+      setError(getUserFriendlyMessage(err, { fallback: 'No fue posible distribuir el pago.' }));
     } finally {
       setLoading(false);
     }
