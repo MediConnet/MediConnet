@@ -7,12 +7,15 @@ import {
   LocationOn,
   AccessTime,
   CloudUpload,
+  Close,
 } from "@mui/icons-material";
 import {
+  Avatar,
   Box,
   Button,
   Chip,
   Divider,
+  IconButton,
   Paper,
   Stack,
   TextField,
@@ -34,7 +37,12 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const feedback = useFeedbackStore();
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [bannerImage, setBannerImage] = useState<string | null>(null);
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const authStore = useAuthStore();
   const { user } = authStore;
@@ -52,7 +60,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
         description: data.supply.description,
         isActive: data.supply.isActive !== false,
       });
-      setProfileImage(data.supply.logoUrl || null);
+      setProfileImage(data.supply.logoUrl || data.supply.profile_picture_url || null);
+      setBannerImage(data.supply.imageUrl || null);
+      setPreviewImages(data.supply.preview_images || []);
     }
   }, [data]);
 
@@ -68,6 +78,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
         description: data.supply.description,
         isActive: data.supply.isActive !== false,
       });
+      setProfileImage(data.supply.logoUrl || data.supply.profile_picture_url || null);
+      setBannerImage(data.supply.imageUrl || null);
+      setPreviewImages(data.supply.preview_images || []);
     }
   };
 
@@ -80,6 +93,10 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
         description: formData.description,
         isActive: formData.isActive,
         logoUrl: profileImage,
+        profile_picture_url: profileImage,
+        imageUrl: bannerImage,
+        preview_images: previewImages,
+        // mantener campos existentes si el backend requiere body completo
         address: data?.supply?.address || "",
         phone: data?.supply?.phone || "",
         whatsapp: data?.supply?.whatsapp || "",
@@ -100,7 +117,10 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
           phone: saved.phone,
           whatsapp: saved.whatsapp,
           schedule: saved.schedule,
-          logoUrl: saved.logoUrl ?? null,
+          logoUrl: saved.logoUrl || saved.profile_picture_url || null,
+          profile_picture_url: saved.profile_picture_url || null,
+          imageUrl: saved.imageUrl || null,
+          preview_images: saved.preview_images || [],
         },
       };
 
@@ -139,6 +159,63 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleBannerClick = () => {
+    bannerInputRef.current?.click();
+  };
+
+  const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        alert("Por favor selecciona un archivo de imagen");
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert("La imagen debe ser menor a 5MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setBannerImage(base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleGalleryClick = () => {
+    galleryInputRef.current?.click();
+  };
+
+  const handleGalleryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      Array.from(files).forEach((file) => {
+        if (!file.type.startsWith("image/")) return;
+        if (file.size > 5 * 1024 * 1024) {
+          alert(`La imagen ${file.name} debe ser menor a 5MB`);
+          return;
+        }
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64String = reader.result as string;
+          setPreviewImages((prev) => {
+            if (prev.length >= 6) {
+              alert("Puedes subir un máximo de 6 imágenes de vista previa");
+              return prev;
+            }
+            return [...prev, base64String];
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const handleDeleteGalleryImage = (indexToDelete: number) => {
+    setPreviewImages((prev) => prev.filter((_, idx) => idx !== indexToDelete));
   };
 
   if (!data || !data.supply) {
@@ -209,6 +286,32 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
         </Box>
 
         <Stack spacing={3}>
+          {/* Cover Banner */}
+          {(bannerImage || supply.imageUrl) && (
+            <Box
+              sx={{
+                width: "100%",
+                height: 180,
+                borderRadius: 2,
+                overflow: "hidden",
+                border: "1px solid",
+                borderColor: "grey.200",
+              }}
+            >
+              <Box
+                component="img"
+                src={bannerImage || supply.imageUrl || ""}
+                alt="Banner de portada"
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+              />
+            </Box>
+          )}
+
+          {/* Logo y Nombre */}
           <Grid2 container spacing={4} alignItems="center">
             <Grid2 size={{ xs: 12, md: 4 }}>
               <Box
@@ -349,6 +452,43 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
               sx={{ fontWeight: 600 }}
             />
           </Box>
+
+          {/* Galería de Vista Previa */}
+          {previewImages && previewImages.length > 0 && (
+            <>
+              <Divider />
+              <Box>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  fontWeight={600}
+                  mb={1.5}
+                  display="block"
+                >
+                  Galería de Fotos del Establecimiento / Productos
+                </Typography>
+                <Grid2 container spacing={2}>
+                  {previewImages.map((imgUrl, idx) => (
+                    <Grid2 size={{ xs: 4 }} key={idx}>
+                      <Box
+                        component="img"
+                        src={imgUrl}
+                        alt={`Vista previa ${idx}`}
+                        sx={{
+                          width: "100%",
+                          height: 100,
+                          objectFit: "cover",
+                          borderRadius: 2,
+                          border: "1px solid",
+                          borderColor: "grey.200",
+                        }}
+                      />
+                    </Grid2>
+                  ))}
+                </Grid2>
+              </Box>
+            </>
+          )}
         </Stack>
 
         {isEditing && (
@@ -382,9 +522,10 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 rows={4}
                 required
               />
+              {/* Logo / Avatar del Negocio */}
               <Box>
                 <Typography variant="subtitle2" fontWeight={600} mb={1}>
-                  Imagen de perfil
+                  Logo de la Tienda
                 </Typography>
                 <Box display="flex" alignItems="center" gap={2}>
                   <Box
@@ -407,7 +548,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                     {profileImage ? (
                       <Box component="img" src={profileImage} alt="Logo" sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : (
-                      <CloudUpload sx={{ color: "grey.400" }} />
+                      <PhotoCamera sx={{ color: "grey.400" }} />
                     )}
                   </Box>
                   <Box>
@@ -418,13 +559,158 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                       onClick={handleImageClick}
                       sx={{ textTransform: "none", borderColor: "#f97316", color: "#f97316", "&:hover": { borderColor: "#ea580c", bgcolor: "#fff7ed" } }}
                     >
-                      {profileImage ? "Cambiar imagen" : "Subir imagen"}
+                      {profileImage ? "Cambiar logo" : "Subir logo"}
                     </Button>
                     <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
-                      JPG, PNG. Mín. 800x180px (proporción 4:1). En la app se muestra como banner de ancho completo. Máx. 5MB.
+                      JPG, PNG. Mín. 500x500px (cuadrado). Máx. 5MB.
                     </Typography>
                   </Box>
                 </Box>
+              </Box>
+
+              {/* Banner de Portada */}
+              <Box>
+                <Typography variant="subtitle2" fontWeight={600} mb={1}>
+                  Banner de Portada
+                </Typography>
+                <Box display="flex" alignItems="center" gap={2}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    ref={bannerInputRef}
+                    style={{ display: "none" }}
+                    onChange={handleBannerChange}
+                  />
+                  <Box
+                    sx={{
+                      width: 150,
+                      height: 72,
+                      borderRadius: 2,
+                      overflow: "hidden",
+                      border: "2px dashed",
+                      borderColor: "grey.300",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      bgcolor: "grey.100",
+                      cursor: "pointer",
+                      "&:hover": { borderColor: "#f97316" },
+                    }}
+                    onClick={handleBannerClick}
+                  >
+                    {bannerImage ? (
+                      <Box component="img" src={bannerImage} alt="Banner" sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      <CloudUpload sx={{ color: "grey.400" }} />
+                    )}
+                  </Box>
+                  <Box>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<CloudUpload />}
+                      onClick={handleBannerClick}
+                      sx={{ textTransform: "none", borderColor: "#f97316", color: "#f97316", "&:hover": { borderColor: "#ea580c", bgcolor: "#fff7ed" } }}
+                    >
+                      {bannerImage ? "Cambiar banner" : "Subir banner"}
+                    </Button>
+                    <Typography variant="caption" color="text.secondary" display="block" mt={0.5}>
+                      Recomendado 800x180px (relación 4:1). Máx. 5MB.
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* Galería de Vista Previa */}
+              <Box>
+                <Typography variant="subtitle2" fontWeight={600} mb={1}>
+                  Galería de Fotos de Vista Previa (Máx. 6)
+                </Typography>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  ref={galleryInputRef}
+                  style={{ display: "none" }}
+                  onChange={handleGalleryChange}
+                />
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ gap: 2 }}>
+                  {previewImages.map((imgUrl, idx) => (
+                    <Box
+                      key={idx}
+                      sx={{
+                        width: 72,
+                        height: 72,
+                        borderRadius: 2,
+                        overflow: "hidden",
+                        border: "1px solid",
+                        borderColor: "grey.200",
+                        position: "relative",
+                        "&:hover .delete-btn": {
+                          opacity: 1,
+                        },
+                      }}
+                    >
+                      <Box
+                        component="img"
+                        src={imgUrl}
+                        alt={`Gallery preview ${idx}`}
+                        sx={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                      <IconButton
+                        className="delete-btn"
+                        size="small"
+                        onClick={() => handleDeleteGalleryImage(idx)}
+                        sx={{
+                          position: "absolute",
+                          top: 2,
+                          right: 2,
+                          bgcolor: "rgba(255, 255, 255, 0.8)",
+                          color: "error.main",
+                          opacity: 0,
+                          transition: "opacity 0.2s",
+                          p: 0.25,
+                          "&:hover": {
+                            bgcolor: "white",
+                          },
+                        }}
+                      >
+                        <Close sx={{ fontSize: 14 }} />
+                      </IconButton>
+                    </Box>
+                  ))}
+                  {previewImages.length < 6 && (
+                    <Box
+                      onClick={handleGalleryClick}
+                      sx={{
+                        width: 72,
+                        height: 72,
+                        borderRadius: 2,
+                        border: "2px dashed",
+                        borderColor: "grey.300",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                        bgcolor: "grey.50",
+                        "&:hover": {
+                          borderColor: "#f97316",
+                          bgcolor: "grey.100",
+                        },
+                      }}
+                    >
+                      <CloudUpload sx={{ color: "grey.400", mb: 0.5, fontSize: 20 }} />
+                      <Typography variant="caption" color="text.secondary" sx={{ fontSize: 10 }}>
+                        Añadir
+                      </Typography>
+                    </Box>
+                  )}
+                </Stack>
               </Box>
               <Box
                 sx={{
@@ -584,10 +870,10 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                     position: "relative",
                   }}
                 >
-                  {profileImage ? (
+                  {bannerImage || supply.imageUrl || profileImage ? (
                     <Box
                       component="img"
-                      src={profileImage}
+                      src={bannerImage || supply.imageUrl || profileImage || undefined}
                       alt={supply.name}
                       sx={{
                         width: "100%",

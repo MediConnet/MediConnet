@@ -1,5 +1,5 @@
 import { httpClient, extractData } from "../../../shared/lib/http";
-import { Comment, UpdateStatusData, RespondCommentData } from "../domain/comment.entity";
+import type { Comment, UpdateStatusData, RespondCommentData } from "../domain/comment.entity";
 
 interface PaginatedResponse<T> {
   data: T[];

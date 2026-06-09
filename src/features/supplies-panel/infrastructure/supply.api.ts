@@ -15,6 +15,9 @@ export interface SupplyProfile {
   google_maps_url?: string | null;
   schedule: string;
   logoUrl?: string | null;
+  profile_picture_url?: string | null;
+  imageUrl?: string | null;
+  preview_images?: string[];
   isActive: boolean;
 }
 
@@ -65,12 +68,42 @@ export const getSupplyReviewsAPI = async (
  */
 export const getSupplyPanelReviewsAPI = async (
   params?: { page?: number; limit?: number }
-): Promise<PaginatedResponse<Review>> => {
+): Promise<PaginatedResponse<Review> & { reviews?: Review[]; averageRating: number; totalReviews: number }> => {
   const response = await httpClient.get<{
     success: boolean;
-    data: PaginatedResponse<Review>;
+    data: {
+      reviews: any[];
+      averageRating: number;
+      totalReviews: number;
+      pagination?: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      };
+    };
   }>('/supplies/reviews', { params });
-  return extractData(response);
+  const raw = extractData(response);
+  const mappedReviews = (raw.reviews || []).map((r: any): Review => ({
+    id: r.id,
+    userId: r.userId ?? r.patientId ?? r.patient?.id ?? '',
+    rating: r.rating ?? 0,
+    comment: r.comment ?? '',
+    userName: r.userName ?? r.patientName ?? r.patient?.fullName ?? 'Usuario',
+    createdAt: r.createdAt ?? r.date ?? new Date().toISOString(),
+  }));
+  return {
+    data: mappedReviews,
+    reviews: mappedReviews,
+    averageRating: raw.averageRating ?? 0,
+    totalReviews: raw.totalReviews ?? 0,
+    pagination: {
+      total: raw.pagination?.total ?? raw.totalReviews ?? 0,
+      page: raw.pagination?.page ?? params?.page ?? 1,
+      limit: raw.pagination?.limit ?? params?.limit ?? 20,
+      totalPages: raw.pagination?.totalPages ?? 1,
+    },
+  };
 };
 
 /**

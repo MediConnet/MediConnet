@@ -1,6 +1,9 @@
 export interface AmbulanceProfile {
   id: string;
   bannerUrl: string;
+  logoUrl?: string | null; // Logo/Avatar
+  profile_picture_url?: string | null; // Avatar del usuario en backend
+  previewImages?: string[]; // Galería de imágenes
   commercialName: string;
   shortDescription: string;
   address: string;

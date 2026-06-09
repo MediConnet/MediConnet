@@ -22,6 +22,9 @@ export interface SupplyDashboard {
     description: string;
     schedule: string;
     logoUrl?: string | null;
+    profile_picture_url?: string | null;
+    imageUrl?: string | null;
+    preview_images?: string[];
     workSchedule?: WorkSchedule[]; // Horario laboral de lunes a viernes
     isActive?: boolean; // Estado del servicio: Activo / Inactivo
   };

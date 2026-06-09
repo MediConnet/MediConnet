@@ -37,7 +37,7 @@ import Grid2 from "@mui/material/Grid2";
 import { useEffect, useRef, useState } from "react";
 import type { PharmacyProfile } from "../../domain/pharmacy-profile.entity";
 import { getPharmacyChains } from "../../../../shared/lib/pharmacy-chains";
-import type { PharmacyChain } from "../../../../admin-dashboard/domain/pharmacy-chain.entity";
+import type { PharmacyChain } from "../../../admin-dashboard/domain/pharmacy-chain.entity";
 import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 interface Props {
@@ -55,6 +55,8 @@ export const EditPharmacyModal = ({
 }: Props) => {
   const theme = useTheme();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   // Estado: Identidad de marca + dirección + estado
   const [formData, setFormData] = useState<Partial<PharmacyProfile>>({
@@ -67,6 +69,8 @@ export const EditPharmacyModal = ({
     status: "draft",
     isActive: true,
     chainId: "",
+    imageUrl: "",
+    previewImages: [],
   });
 
   const [hasNewImage, setHasNewImage] = useState(false);
@@ -121,6 +125,8 @@ export const EditPharmacyModal = ({
           status: initialData.status || "draft",
           isActive: initialData.isActive !== false,
           chainId: initialData.chainId || "",
+          imageUrl: initialData.imageUrl || "",
+          previewImages: initialData.previewImages || [],
         });
         
         // Si hay chainId, buscar la cadena para mostrar en el selector (solo lectura)
@@ -147,6 +153,8 @@ export const EditPharmacyModal = ({
             status: initialData.status || "draft",
             isActive: initialData.isActive !== false,
             chainId: chainId,
+            imageUrl: initialData.imageUrl || "",
+            previewImages: initialData.previewImages || [],
           });
         } else {
           setFormData({
@@ -159,6 +167,8 @@ export const EditPharmacyModal = ({
             status: initialData.status || "draft",
             isActive: initialData.isActive !== false,
             chainId: chainId,
+            imageUrl: initialData.imageUrl || "",
+            previewImages: initialData.previewImages || [],
           });
         }
       }
@@ -176,6 +186,8 @@ export const EditPharmacyModal = ({
         status: "draft",
         isActive: true,
         chainId: "",
+        imageUrl: "",
+        previewImages: [],
       });
       setSelectedChain(null);
       setHasNewImage(false);
@@ -244,6 +256,67 @@ export const EditPharmacyModal = ({
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleBannerUploadClick = () => bannerInputRef.current?.click();
+
+  const handleBannerFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const isMember = initialData?.isChainMember === true;
+    if (isMember) return;
+    if (selectedChain) return;
+
+    const file = event.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) return;
+      if (file.size > 5 * 1024 * 1024) {
+        alert("La imagen debe ser menor a 5MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setFormData((prev) => ({ ...prev, imageUrl: base64 }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleGalleryUploadClick = () => galleryInputRef.current?.click();
+
+  const handleGalleryFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      Array.from(files).forEach((file) => {
+        if (!file.type.startsWith("image/")) return;
+        if (file.size > 5 * 1024 * 1024) {
+          alert(`La imagen ${file.name} debe ser menor a 5MB`);
+          return;
+        }
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = reader.result as string;
+          setFormData((prev) => {
+            const currentImages = prev.previewImages || [];
+            if (currentImages.length >= 6) {
+              alert("Puedes subir un máximo de 6 imágenes de vista previa");
+              return prev;
+            }
+            return { ...prev, previewImages: [...currentImages, base64] };
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const handleDeleteGalleryImage = (indexToDelete: number) => {
+    setFormData((prev) => {
+      const currentImages = prev.previewImages || [];
+      return {
+        ...prev,
+        previewImages: currentImages.filter((_, idx) => idx !== indexToDelete),
+      };
+    });
   };
 
   const handleSave = () => {
@@ -494,6 +567,219 @@ export const EditPharmacyModal = ({
               </Box>
             </Box>
           )}
+
+          {/* --- 1.1 BANNER DE PORTADA (SI hay cadena, SOLO mostrar, NO editar) --- */}
+          {isChainMember ? (
+            <Box>
+              <Typography variant="subtitle2" fontWeight={600} mb={1}>
+                Banner de Portada de la Cadena (Solo lectura)
+              </Typography>
+              <Box
+                sx={{
+                  border: `2px solid ${alpha(theme.palette.error.main, 0.2)}`,
+                  borderRadius: 3,
+                  p: 3,
+                  textAlign: "center",
+                  bgcolor: alpha(theme.palette.error.main, 0.02),
+                  minHeight: 120,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "not-allowed",
+                  pointerEvents: "none",
+                }}
+              >
+                {formData.imageUrl ? (
+                  <Box
+                    component="img"
+                    src={formData.imageUrl}
+                    alt="Banner de la cadena"
+                    sx={{
+                      maxHeight: 100,
+                      maxWidth: "100%",
+                      objectFit: "cover",
+                      borderRadius: 1,
+                    }}
+                  />
+                ) : (
+                  <Typography variant="caption" color="text.secondary">
+                    Sin banner establecido por la cadena.
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+          ) : (
+            <Box>
+              <Typography variant="subtitle2" fontWeight={600} mb={1}>
+                Banner de Portada / Imagen Superior
+              </Typography>
+              <input
+                type="file"
+                accept="image/*"
+                ref={bannerInputRef}
+                style={{ display: "none" }}
+                onChange={handleBannerFileChange}
+              />
+              <Box
+                onClick={handleBannerUploadClick}
+                sx={{
+                  border: `2px dashed ${alpha(theme.palette.primary.main, 0.4)}`,
+                  borderRadius: 3,
+                  p: 2,
+                  textAlign: "center",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  bgcolor: alpha(theme.palette.primary.main, 0.04),
+                  "&:hover": {
+                    borderColor: theme.palette.primary.main,
+                    bgcolor: alpha(theme.palette.primary.main, 0.08),
+                  },
+                  minHeight: 120,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  overflow: "hidden",
+                }}
+              >
+                {formData.imageUrl ? (
+                  <Box
+                    component="img"
+                    src={formData.imageUrl}
+                    alt="Banner Preview"
+                    sx={{
+                      maxHeight: 100,
+                      maxWidth: "100%",
+                      objectFit: "cover",
+                      borderRadius: 1,
+                    }}
+                  />
+                ) : (
+                  <CloudUpload
+                    sx={{
+                      fontSize: 40,
+                      color: theme.palette.primary.main,
+                      mb: 1,
+                    }}
+                  />
+                )}
+                <Typography variant="body2" fontWeight={600} color="primary.main">
+                  {formData.imageUrl ? "Click para cambiar banner" : "Subir Banner de Portada"}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" mt={0.5} display="block" textAlign="center">
+                  Recomendado 800x180px. Máx. 5MB.
+                </Typography>
+              </Box>
+            </Box>
+          )}
+
+          {/* --- 1.2 GALERÍA DE IMÁGENES DE VISTA PREVIA --- */}
+          <Box>
+            <Typography variant="subtitle2" fontWeight={600} mb={1}>
+              Galería de Imágenes de Vista Previa (Máx. 6)
+            </Typography>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              ref={galleryInputRef}
+              style={{ display: "none" }}
+              onChange={handleGalleryFileChange}
+            />
+            <Grid2 container spacing={2}>
+              {formData.previewImages?.map((imgUrl, index) => (
+                <Grid2 size={{ xs: 4 }} key={index}>
+                  <Box
+                    sx={{
+                      width: "100%",
+                      height: 100,
+                      borderRadius: 2,
+                      overflow: "hidden",
+                      border: "1px solid",
+                      borderColor: "grey.200",
+                      position: "relative",
+                      "&:hover .delete-overlay": {
+                        opacity: 1,
+                      },
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={imgUrl}
+                      alt={`Gallery item ${index}`}
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                    <Box
+                      className="delete-overlay"
+                      sx={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        bgcolor: "rgba(0,0,0,0.5)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        opacity: 0,
+                        transition: "opacity 0.2s",
+                      }}
+                    >
+                      <IconButton
+                        color="error"
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteGalleryImage(index);
+                        }}
+                        sx={{
+                          bgcolor: "white",
+                          "&:hover": {
+                            bgcolor: "grey.100",
+                          },
+                        }}
+                      >
+                        <Close fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                </Grid2>
+              ))}
+              {(formData.previewImages?.length || 0) < 6 && (
+                <Grid2 size={{ xs: 4 }}>
+                  <Box
+                    onClick={handleGalleryUploadClick}
+                    sx={{
+                      width: "100%",
+                      height: 100,
+                      borderRadius: 2,
+                      border: `2px dashed ${alpha(theme.palette.primary.main, 0.4)}`,
+                      bgcolor: alpha(theme.palette.primary.main, 0.02),
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      "&:hover": {
+                        borderColor: theme.palette.primary.main,
+                        bgcolor: alpha(theme.palette.primary.main, 0.08),
+                      },
+                    }}
+                  >
+                    <CloudUpload sx={{ color: "primary.main", mb: 0.5 }} />
+                    <Typography variant="caption" fontWeight={600} color="primary.main">
+                      Añadir Foto
+                    </Typography>
+                  </Box>
+                </Grid2>
+              )}
+            </Grid2>
+          </Box>
 
           {/* --- 2. DATOS DE IDENTIDAD --- */}
           <Grid2 container spacing={2}>

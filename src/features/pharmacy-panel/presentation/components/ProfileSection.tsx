@@ -114,7 +114,8 @@ export const ProfileSection = ({ profile, onUpdate }: ProfileSectionProps) => {
               </Button>
             </Box>
 
-            {/* ⭐ Badge de cadena si es miembro */}
+            <Stack spacing={3}>
+              {/* ⭐ Badge de cadena si es miembro */}
             {profile.isChainMember && profile.chainName && (
               <Box sx={{ mb: 2 }}>
                 <Chip
@@ -126,10 +127,35 @@ export const ProfileSection = ({ profile, onUpdate }: ProfileSectionProps) => {
               </Box>
             )}
 
-            <Stack spacing={3}>
-          {/* Logo grande y Nombre como Título */}
-          <Box
-            sx={{
+           {/* Cover Banner */}
+           {profile.imageUrl && (
+             <Box
+               sx={{
+                 width: "100%",
+                 height: 200,
+                 borderRadius: 3,
+                 overflow: "hidden",
+                 mb: 3,
+                 border: "1px solid",
+                 borderColor: "grey.200",
+               }}
+             >
+               <Box
+                 component="img"
+                 src={profile.imageUrl}
+                 alt="Banner de portada"
+                 sx={{
+                   width: "100%",
+                   height: "100%",
+                   objectFit: "cover",
+                 }}
+               />
+             </Box>
+           )}
+
+           {/* Logo grande y Nombre como Título */}
+           <Box
+             sx={{
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -318,6 +344,39 @@ export const ProfileSection = ({ profile, onUpdate }: ProfileSectionProps) => {
               <Divider />
             </>
           )}
+          {/* Galería de Vista Previa */}
+          {profile.previewImages && profile.previewImages.length > 0 && (
+            <Box sx={{ mt: 1 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                fontWeight={600}
+                mb={1.5}
+                display="block"
+              >
+                Galería de Fotos de la Sucursal
+              </Typography>
+              <Grid2 container spacing={2}>
+                {profile.previewImages.map((imgUrl, idx) => (
+                  <Grid2 size={{ xs: 4 }} key={idx}>
+                    <Box
+                      component="img"
+                      src={imgUrl}
+                      alt={`Vista previa ${idx}`}
+                      sx={{
+                        width: "100%",
+                        height: 100,
+                        objectFit: "cover",
+                        borderRadius: 2,
+                        border: "1px solid",
+                        borderColor: "grey.200",
+                      }}
+                    />
+                  </Grid2>
+                ))}
+              </Grid2>
+            </Box>
+          )}
         </Stack>
           </Paper>
         </Grid2>
@@ -367,17 +426,17 @@ export const ProfileSection = ({ profile, onUpdate }: ProfileSectionProps) => {
                 justifyContent: "center",
               }}
             >
-              {displayLogo ? (
-                <Box
-                  component="img"
-                  src={displayLogo}
-                  alt={displayName}
-                  sx={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
-                />
+                  {profile.imageUrl || displayLogo ? (
+                    <Box
+                      component="img"
+                      src={profile.imageUrl || displayLogo || undefined}
+                      alt={displayName}
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
               ) : (
                 <Box
                   sx={{

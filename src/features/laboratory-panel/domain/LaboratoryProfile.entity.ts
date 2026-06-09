@@ -5,5 +5,8 @@ export interface LaboratoryProfile {
     direccion: string;
     descripcion: string;
     horario: string;
+    logoUrl?: string | null;
+    imageUrl?: string | null;
+    previewImages?: string[];
   }
   

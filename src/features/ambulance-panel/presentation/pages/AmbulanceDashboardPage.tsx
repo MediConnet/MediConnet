@@ -9,6 +9,7 @@ import {
   WhatsApp,
 } from "@mui/icons-material";
 import {
+  Avatar,
   Box,
   Button,
   Chip,
@@ -25,7 +26,7 @@ import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import type { AmbulanceProfile } from "../../domain/ambulance-profile.entity";
 import { EditProfileModal } from "../components/EditProfileModal";
 import { KPICard } from "../components/KPICard";
-import { useAmbulanceProfile } from "../hooks/useAmbulanceProfile";
+import { useAmbulanceProfile, useUpdateAmbulanceProfile } from "../hooks/useAmbulanceProfile";
 import { DashboardContent } from "../components/DashboardContent";
 import { useAmbulanceReviews } from "../hooks/useAmbulanceReviews";
 
@@ -44,6 +45,7 @@ export const AmbulanceDashboardPage = () => {
   const [searchParams] = useSearchParams();
   const theme = useTheme();
   const { profile: fetchedProfile, isLoading, error } = useAmbulanceProfile();
+  const { mutateAsync: updateProfile } = useUpdateAmbulanceProfile();
   const { reviews: fetchedReviews } = useAmbulanceReviews();
   const [profile, setProfile] = useState<AmbulanceProfile | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -73,8 +75,13 @@ export const AmbulanceDashboardPage = () => {
     }
   }, [fetchedProfile]);
 
-  const handleSaveChanges = (updatedProfile: AmbulanceProfile) => {
-    setProfile(updatedProfile);
+  const handleSaveChanges = async (updatedProfile: AmbulanceProfile) => {
+    try {
+      await updateProfile(updatedProfile);
+      setProfile(updatedProfile);
+    } catch (err) {
+      alert("Error al guardar cambios: " + ((err as any)?.response?.data?.message || (err as any).message || err));
+    }
   };
 
   // Show error state
@@ -271,7 +278,59 @@ export const AmbulanceDashboardPage = () => {
               </Box>
 
               <Stack spacing={3}>
-                <Grid2 container spacing={3}>
+              {/* Cover Banner */}
+              {profile.bannerUrl && (
+                <Box
+                  sx={{
+                    width: "100%",
+                    height: 180,
+                    borderRadius: 2,
+                    overflow: "hidden",
+                    border: "1px solid",
+                    borderColor: "grey.200",
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={profile.bannerUrl}
+                    alt="Banner de portada"
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                </Box>
+              )}
+
+              {/* Logo / Avatar */}
+              <Box display="flex" alignItems="center" gap={2} mb={1}>
+                <Avatar
+                  src={profile.logoUrl || profile.profile_picture_url || undefined}
+                  alt={profile.commercialName}
+                  variant="rounded"
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: 2,
+                    bgcolor: "grey.100",
+                    border: "1px solid",
+                    borderColor: "grey.200",
+                  }}
+                >
+                  <Edit />
+                </Avatar>
+                <Box>
+                  <Typography variant="subtitle1" fontWeight={700}>
+                    {profile.commercialName}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Logo o avatar del servicio de ambulancia
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Grid2 container spacing={3}>
                   <Grid2 size={{ xs: 12, md: 6 }}>
                     <Typography
                       variant="caption"
@@ -530,6 +589,43 @@ export const AmbulanceDashboardPage = () => {
                     />
                   </Box>
                 </Box>
+
+                {/* Galería de Vista Previa */}
+                {profile.previewImages && profile.previewImages.length > 0 && (
+                  <>
+                    <Divider sx={{ my: 2 }} />
+                    <Box>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        fontWeight={600}
+                        mb={1.5}
+                        display="block"
+                      >
+                        Galería de Fotos de Unidades / Equipos
+                      </Typography>
+                      <Grid2 container spacing={2}>
+                        {profile.previewImages.map((imgUrl, idx) => (
+                          <Grid2 size={{ xs: 4 }} key={idx}>
+                            <Box
+                              component="img"
+                              src={imgUrl}
+                              alt={`Vista previa ${idx}`}
+                              sx={{
+                                width: "100%",
+                                height: 100,
+                                objectFit: "cover",
+                                borderRadius: 2,
+                                border: "1px solid",
+                                borderColor: "grey.200",
+                              }}
+                            />
+                          </Grid2>
+                        ))}
+                      </Grid2>
+                    </Box>
+                  </>
+                )}
               </Stack>
             </Paper>
           </Grid2>
@@ -564,7 +660,7 @@ export const AmbulanceDashboardPage = () => {
                         height: "100%",
                         width: "100%",
                         backgroundColor: "#e5e7eb",
-                        backgroundImage: `url(${profile.bannerUrl})`,
+                        backgroundImage: `url(${profile.bannerUrl || profile.logoUrl || ''})`,
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }}
