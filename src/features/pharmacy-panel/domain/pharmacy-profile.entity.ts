@@ -29,6 +29,8 @@ export interface PharmacyProfile {
   chainName?: string; // Nombre de la cadena
   chainLogo?: string; // Logo de la cadena
   chainDescription?: string; // Descripción de la cadena
+  imageUrl?: string | null; // Imagen de portada/banner de la sucursal principal
+  previewImages?: string[]; // Galería de imágenes de vista previa de la sucursal principal
   
   location?: {
     latitude: number;

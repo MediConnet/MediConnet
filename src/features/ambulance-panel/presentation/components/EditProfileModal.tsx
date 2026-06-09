@@ -1,5 +1,6 @@
 import { CheckCircle, Close, CloudUpload, Save } from "@mui/icons-material";
 import {
+  Avatar,
   Box,
   Button,
   Dialog,
@@ -39,6 +40,8 @@ export const EditProfileModal = ({
 }: Props) => {
   const theme = useTheme();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<AmbulanceProfile | null>(null);
   const [hasNewImage, setHasNewImage] = useState(false);
@@ -53,7 +56,7 @@ export const EditProfileModal = ({
   // Manejador genérico para texto
   const handleChange = (
     field: keyof AmbulanceProfile,
-    value: string | number
+    value: string | number | null
   ) => {
     if (formData) {
       setFormData({ ...formData, [field]: value });
@@ -114,6 +117,68 @@ export const EditProfileModal = ({
     }
   };
 
+  const handleLogoUploadClick = () => {
+    logoInputRef.current?.click();
+  };
+
+  const handleLogoFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && formData) {
+      if (!file.type.startsWith("image/")) return;
+      if (file.size > 5 * 1024 * 1024) {
+        alert("La imagen debe ser menor a 5MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setFormData({ ...formData, logoUrl: base64, profile_picture_url: base64 });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleGalleryUploadClick = () => {
+    galleryInputRef.current?.click();
+  };
+
+  const handleGalleryFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0 && formData) {
+      Array.from(files).forEach((file) => {
+        if (!file.type.startsWith("image/")) return;
+        if (file.size > 5 * 1024 * 1024) {
+          alert(`La imagen ${file.name} debe ser menor a 5MB`);
+          return;
+        }
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = reader.result as string;
+          setFormData((prev) => {
+            if (!prev) return prev;
+            const currentImages = prev.previewImages || [];
+            if (currentImages.length >= 6) {
+              alert("Puedes subir un máximo de 6 imágenes de vista previa");
+              return prev;
+            }
+            return { ...prev, previewImages: [...currentImages, base64] };
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const handleDeleteGalleryImage = (indexToDelete: number) => {
+    if (formData) {
+      const currentImages = formData.previewImages || [];
+      setFormData({
+        ...formData,
+        previewImages: currentImages.filter((_, idx) => idx !== indexToDelete),
+      });
+    }
+  };
+
   const handleSave = () => {
     if (formData) {
       onSave(formData);
@@ -152,7 +217,43 @@ export const EditProfileModal = ({
 
       <DialogContent dividers>
         <Stack spacing={3} sx={{ mt: 1 }}>
-          {/* --- ZONA DE CARGA DE IMAGEN --- */}
+          {/* --- ZONA DE CARGA DE LOGO --- */}
+          <Box>
+            <Typography variant="subtitle2" fontWeight={600} mb={1}>
+              Logo / Avatar del Servicio
+            </Typography>
+
+            <input
+              type="file"
+              accept="image/*"
+              ref={logoInputRef}
+              style={{ display: "none" }}
+              onChange={handleLogoFileChange}
+            />
+
+            <Box display="flex" alignItems="center" gap={2}>
+              <Avatar
+                src={formData.logoUrl || undefined}
+                variant="rounded"
+                sx={{
+                  width: 96,
+                  height: 96,
+                  borderRadius: 2,
+                  bgcolor: "grey.100",
+                }}
+              >
+                <CloudUpload />
+              </Avatar>
+              <Button variant="outlined" onClick={handleLogoUploadClick}>
+                {formData.logoUrl ? "Cambiar logo" : "Subir logo"}
+              </Button>
+            </Box>
+            <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+              Logotipo cuadrado (mín. 500x500px). Máx. 5MB.
+            </Typography>
+          </Box>
+
+          {/* --- ZONA DE CARGA DE BANNER (PORTADA) --- */}
           <Box>
             <Typography variant="subtitle2" fontWeight={600} mb={1}>
               Imagen de Portada
@@ -230,6 +331,113 @@ export const EditProfileModal = ({
                 </Stack>
               )}
             </Box>
+          </Box>
+
+          {/* --- ZONA DE CARGA DE GALERÍA --- */}
+          <Box>
+            <Typography variant="subtitle2" fontWeight={600} mb={1}>
+              Galería de Imágenes de Vista Previa (Máx. 6)
+            </Typography>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              ref={galleryInputRef}
+              style={{ display: "none" }}
+              onChange={handleGalleryFileChange}
+            />
+            <Grid2 container spacing={2}>
+              {formData.previewImages?.map((imgUrl, index) => (
+                <Grid2 size={{ xs: 4 }} key={index}>
+                  <Box
+                    sx={{
+                      width: "100%",
+                      height: 100,
+                      borderRadius: 2,
+                      overflow: "hidden",
+                      border: "1px solid",
+                      borderColor: "grey.200",
+                      position: "relative",
+                      "&:hover .delete-overlay": {
+                        opacity: 1,
+                      },
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={imgUrl}
+                      alt={`Gallery item ${index}`}
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                    <Box
+                      className="delete-overlay"
+                      sx={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        bgcolor: "rgba(0,0,0,0.5)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        opacity: 0,
+                        transition: "opacity 0.2s",
+                      }}
+                    >
+                      <IconButton
+                        color="error"
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteGalleryImage(index);
+                        }}
+                        sx={{
+                          bgcolor: "white",
+                          "&:hover": {
+                            bgcolor: "grey.100",
+                          },
+                        }}
+                      >
+                        <Close fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                </Grid2>
+              ))}
+              {(formData.previewImages?.length || 0) < 6 && (
+                <Grid2 size={{ xs: 4 }}>
+                  <Box
+                    onClick={handleGalleryUploadClick}
+                    sx={{
+                      width: "100%",
+                      height: 100,
+                      borderRadius: 2,
+                      border: `2px dashed ${alpha(theme.palette.primary.main, 0.4)}`,
+                      bgcolor: alpha(theme.palette.primary.main, 0.02),
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      "&:hover": {
+                        borderColor: theme.palette.primary.main,
+                        bgcolor: alpha(theme.palette.primary.main, 0.08),
+                      },
+                    }}
+                  >
+                    <CloudUpload sx={{ color: "primary.main", mb: 0.5 }} />
+                    <Typography variant="caption" fontWeight={600} color="primary.main">
+                      Añadir Foto
+                    </Typography>
+                  </Box>
+                </Grid2>
+              )}
+            </Grid2>
           </Box>
 
           {/* --- CAMPOS DE TEXTO --- */}

@@ -1,4 +1,4 @@
-import { Close, Description, PhotoCamera, Save } from "@mui/icons-material";
+import { Close, Description, PhotoCamera, Save, CloudUpload } from "@mui/icons-material";
 import {
   Avatar,
   Box,
@@ -39,10 +39,15 @@ export const EditLaboratoryProfileModal = ({
   });
   const [saving, setSaving] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (data) {
+    if (data && open) {
       setFormData({
         name: data.laboratory.name || "",
         description: data.laboratory.description || "",
@@ -50,7 +55,9 @@ export const EditLaboratoryProfileModal = ({
           data.laboratory.is_published ??
           (data.laboratory.isActive !== false),
       });
-      setLogoPreview(null);
+      setLogoPreview(data.laboratory.logoUrl || null);
+      setBannerPreview(data.laboratory.imageUrl || null);
+      setPreviewImages(data.laboratory.previewImages || []);
     }
   }, [data, open]);
 
@@ -74,6 +81,50 @@ export const EditLaboratoryProfileModal = ({
     reader.readAsDataURL(file);
   };
 
+  const handlePickBanner = () => bannerInputRef.current?.click();
+  
+  const handleBannerChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return;
+    if (file.size > 5 * 1024 * 1024) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      setBannerPreview(base64);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handlePickGallery = () => galleryInputRef.current?.click();
+  
+  const handleGalleryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      Array.from(files).forEach((file) => {
+        if (!file.type.startsWith("image/")) return;
+        if (file.size > 5 * 1024 * 1024) return;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = reader.result as string;
+          setPreviewImages((prev) => {
+            if (prev.length >= 6) {
+              alert("Puedes subir un máximo de 6 imágenes de vista previa");
+              return prev;
+            }
+            return [...prev, base64];
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const handleDeleteGalleryImage = (indexToDelete: number) => {
+    setPreviewImages((prev) => prev.filter((_, idx) => idx !== indexToDelete));
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -81,7 +132,9 @@ export const EditLaboratoryProfileModal = ({
         full_name: formData.name,
         description: formData.description,
         is_published: formData.isPublished,
-        ...(logoPreview ? { logo_url: logoPreview } : {}),
+        logo_url: logoPreview,
+        imageUrl: bannerPreview,
+        preview_images: previewImages,
       });
 
       const updatedData: LaboratoryDashboard = {
@@ -92,7 +145,9 @@ export const EditLaboratoryProfileModal = ({
           description: formData.description,
           is_published: formData.isPublished,
           isActive: formData.isPublished,
-          logoUrl: response.logo_url ?? data.laboratory.logoUrl,
+          logoUrl: response.logo_url ?? logoPreview,
+          imageUrl: response.imageUrl ?? bannerPreview,
+          previewImages: response.preview_images ?? previewImages,
         },
       };
       onSave(updatedData);
@@ -163,8 +218,154 @@ export const EditLaboratoryProfileModal = ({
               </Button>
             </Box>
             <Typography variant="caption" color="text.secondary" display="block" mt={1}>
-              Se recomienda imagen rectangular de al menos 800x180px (proporción 4:1). En la app se muestra como banner de ancho completo. Máx. 5MB. El logo se guarda al presionar "Guardar Perfil".
+              Logotipo cuadrado (mín. 500x500px). Se muestra en tarjeta en la app. Máx. 5MB.
             </Typography>
+          </Box>
+
+          {/* Banner */}
+          <Box>
+            <Typography variant="subtitle2" fontWeight={600} mb={1}>
+              Banner de Portada / Imagen Superior
+            </Typography>
+            <Box display="flex" alignItems="center" gap={2}>
+              <input
+                type="file"
+                accept="image/*"
+                ref={bannerInputRef}
+                style={{ display: "none" }}
+                onChange={handleBannerChange}
+              />
+              {bannerPreview ? (
+                <Box
+                  component="img"
+                  src={bannerPreview}
+                  alt="Banner preview"
+                  sx={{
+                    width: 180,
+                    height: 96,
+                    objectFit: "cover",
+                    borderRadius: 2,
+                    border: "1px solid",
+                    borderColor: "grey.200",
+                  }}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    width: 180,
+                    height: 96,
+                    borderRadius: 2,
+                    bgcolor: "grey.100",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "1px solid",
+                    borderColor: "grey.200",
+                  }}
+                >
+                  <PhotoCamera />
+                </Box>
+              )}
+              <Button variant="outlined" onClick={handlePickBanner}>
+                {bannerPreview ? "Cambiar banner" : "Subir banner"}
+              </Button>
+            </Box>
+            <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+              Se recomienda imagen de 800x180px. Máx. 5MB. En la app se muestra como banner de ancho completo.
+            </Typography>
+          </Box>
+
+          {/* Gallery */}
+          <Box>
+            <Typography variant="subtitle2" fontWeight={600} mb={1}>
+              Galería de Imágenes (Máx. 6)
+            </Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                ref={galleryInputRef}
+                style={{ display: "none" }}
+                onChange={handleGalleryChange}
+              />
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ gap: 2 }}>
+                {previewImages.map((imgUrl, index) => (
+                  <Box
+                    key={index}
+                    sx={{
+                      width: 96,
+                      height: 96,
+                      borderRadius: 2,
+                      overflow: "hidden",
+                      border: "1px solid",
+                      borderColor: "grey.200",
+                      position: "relative",
+                      "&:hover .delete-btn": {
+                        opacity: 1,
+                      },
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={imgUrl}
+                      alt={`Gallery preview ${index}`}
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                    <IconButton
+                      className="delete-btn"
+                      size="small"
+                      onClick={() => handleDeleteGalleryImage(index)}
+                      sx={{
+                        position: "absolute",
+                        top: 4,
+                        right: 4,
+                        bgcolor: "rgba(255, 255, 255, 0.8)",
+                        color: "error.main",
+                        opacity: 0,
+                        transition: "opacity 0.2s",
+                        "&:hover": {
+                          bgcolor: "white",
+                        },
+                      }}
+                    >
+                      <Close sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Box>
+                ))}
+                {previewImages.length < 6 && (
+                  <Box
+                    onClick={handlePickGallery}
+                    sx={{
+                      width: 96,
+                      height: 96,
+                      borderRadius: 2,
+                      border: "2px dashed",
+                      borderColor: "grey.300",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      bgcolor: "grey.50",
+                      "&:hover": {
+                        borderColor: "primary.main",
+                        bgcolor: "grey.100",
+                      },
+                    }}
+                  >
+                    <CloudUpload sx={{ color: "grey.400", mb: 0.5 }} />
+                    <Typography variant="caption" color="text.secondary">
+                      Añadir
+                    </Typography>
+                  </Box>
+                )}
+              </Stack>
+            </Box>
           </Box>
 
           <TextField

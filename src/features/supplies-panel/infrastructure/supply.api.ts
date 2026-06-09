@@ -14,6 +14,9 @@ export interface SupplyProfile {
   google_maps_url?: string | null;
   schedule: string;
   logoUrl?: string | null;
+  profile_picture_url?: string | null;
+  imageUrl?: string | null;
+  preview_images?: string[];
   isActive: boolean;
 }
 
@@ -73,6 +76,7 @@ export const getSupplyPanelReviewsAPI = async (): Promise<{
     ...raw,
     reviews: (raw.reviews || []).map((r: any): Review => ({
       id: r.id,
+      userId: r.userId ?? r.patientId ?? r.patient?.id ?? '',
       rating: r.rating ?? 0,
       comment: r.comment ?? '',
       userName: r.userName ?? r.patientName ?? r.patient?.fullName ?? 'Usuario',

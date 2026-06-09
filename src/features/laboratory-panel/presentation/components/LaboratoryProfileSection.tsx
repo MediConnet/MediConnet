@@ -117,6 +117,31 @@ export const LaboratoryProfileSection = ({
         </Box>
 
         <Stack spacing={3}>
+          {/* Cover Banner */}
+          {data.laboratory.imageUrl && (
+            <Box
+              sx={{
+                width: "100%",
+                height: 180,
+                borderRadius: 2,
+                overflow: "hidden",
+                border: "1px solid",
+                borderColor: "grey.200",
+              }}
+            >
+              <Box
+                component="img"
+                src={data.laboratory.imageUrl}
+                alt="Banner de portada"
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+              />
+            </Box>
+          )}
+
           {/* Logo y Nombre */}
           <Grid2 container spacing={3} alignItems="center">
             <Grid2 size={{ xs: 12, md: 3 }}>
@@ -220,6 +245,39 @@ export const LaboratoryProfileSection = ({
               sx={{ fontWeight: 600 }}
             />
           </Box>
+          {/* Galería de Vista Previa */}
+          {data.laboratory.previewImages && data.laboratory.previewImages.length > 0 && (
+            <Box sx={{ mt: 1 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                fontWeight={600}
+                mb={1.5}
+                display="block"
+              >
+                Galería de Fotos del Establecimiento
+              </Typography>
+              <Grid2 container spacing={2}>
+                {data.laboratory.previewImages.map((imgUrl, idx) => (
+                  <Grid2 size={{ xs: 4 }} key={idx}>
+                    <Box
+                      component="img"
+                      src={imgUrl}
+                      alt={`Vista previa ${idx}`}
+                      sx={{
+                        width: "100%",
+                        height: 100,
+                        objectFit: "cover",
+                        borderRadius: 2,
+                        border: "1px solid",
+                        borderColor: "grey.200",
+                      }}
+                    />
+                  </Grid2>
+                ))}
+              </Grid2>
+            </Box>
+          )}
         </Stack>
       </Paper>
         </Grid2>
@@ -334,10 +392,10 @@ export const LaboratoryProfileSection = ({
                     position: "relative",
                   }}
                 >
-                  {data.laboratory.logoUrl ? (
+                  {data.laboratory.imageUrl || data.laboratory.logoUrl ? (
                     <Box
                       component="img"
-                      src={data.laboratory.logoUrl}
+                      src={data.laboratory.imageUrl || data.laboratory.logoUrl || undefined}
                       alt={data.laboratory.name}
                       sx={{
                         width: "100%",

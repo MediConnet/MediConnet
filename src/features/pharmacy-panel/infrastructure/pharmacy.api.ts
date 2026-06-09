@@ -74,6 +74,8 @@ type BackendPharmacyProfile = {
 
   is_active?: boolean;
   isActive?: boolean;
+  imageUrl?: string | null;
+  preview_images?: string[];
 };
 
 // ⭐ Función para mapear la respuesta del backend al formato del frontend
@@ -194,6 +196,8 @@ const mapBackendToFrontend = (backend: BackendPharmacyProfile): PharmacyProfile 
       averageRating: stats.average_rating ?? stats.averageRating ?? 0,
     },
     isActive: backend.is_active ?? backend.isActive ?? true,
+    imageUrl: backend.imageUrl ?? null,
+    previewImages: backend.preview_images ?? [],
   };
 };
 
@@ -256,10 +260,14 @@ export const updatePharmacyProfileAPI = async (
     }));
   }
   
+  // A. Banner y Galería de Vista Previa (Editables por todos)
+  if (payload.imageUrl !== undefined) backendPayload.imageUrl = payload.imageUrl;
+  if (payload.previewImages !== undefined) backendPayload.preview_images = payload.previewImages;
+  
   // ⭐ Solo incluir full_name, profile_picture_url y description si NO es miembro de cadena
   if (!data.isChainMember) {
     if (payload.commercialName) backendPayload.full_name = payload.commercialName;
-    if (payload.logoUrl) backendPayload.imageUrl = payload.logoUrl; // base64 → Cloudinary en backend
+    if (payload.logoUrl) backendPayload.profile_picture_url = payload.logoUrl; // base64 → Cloudinary en backend
     if (payload.description) backendPayload.description = payload.description;
   }
   

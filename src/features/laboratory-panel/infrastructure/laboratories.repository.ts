@@ -68,6 +68,10 @@ export type LaboratoryProfileDTO = {
   is_published: boolean;
   schedules: LaboratoryProfileScheduleDTO[];
   exams: LaboratoryExamDTO[];
+  // ⭐ Nuevos campos de imágenes
+  imageUrl?: string | null;
+  profile_picture_url?: string | null;
+  preview_images?: string[];
 };
 
 export const getLaboratoryProfileAPI = async (): Promise<LaboratoryProfileDTO> => {
@@ -86,8 +90,11 @@ export type UpdateLaboratoryProfileBody = Partial<{
   latitude: number | string;
   longitude: number | string;
   google_maps_url: string;
-  logo_url: string;
+  logo_url: string | null;
   is_published: boolean;
+  imageUrl?: string | null;
+  profile_picture_url?: string | null;
+  preview_images?: string[];
   workSchedule: Array<{
     day:
       | "monday"

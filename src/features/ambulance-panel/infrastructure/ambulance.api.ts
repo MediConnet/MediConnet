@@ -21,15 +21,21 @@ type BackendAmbulanceProfile = {
   longitude?: number | null;
   google_maps_url?: string | null;
   status?: string | null;
+  profile_picture_url?: string | null;
+  imageUrl?: string | null;
+  preview_images?: string[];
 };
 
 const mapBackendToFrontend = (data: BackendAmbulanceProfile): AmbulanceProfile => {
-  const logo = (data.logoUrl ?? (data as any).logourl ?? null) as string | null;
+  const logo = (data.profile_picture_url ?? data.logoUrl ?? (data as any).logourl ?? null) as string | null;
+  const banner = data.imageUrl ?? data.bannerUrl ?? logo ?? '';
 
   return {
     id: data.id,
-    // El frontend usa bannerUrl como imagen de portada; si backend no tiene banner, usamos logo como fallback
-    bannerUrl: data.bannerUrl ?? logo ?? '',
+    bannerUrl: banner,
+    logoUrl: logo,
+    profile_picture_url: data.profile_picture_url ?? logo,
+    previewImages: data.preview_images ?? [],
     commercialName: data.name ?? '',
     shortDescription: data.description ?? '',
     address: data.address ?? '',
@@ -39,7 +45,6 @@ const mapBackendToFrontend = (data: BackendAmbulanceProfile): AmbulanceProfile =
     whatsappContact: data.whatsapp ?? '',
     emergencyPhone: data.phone ?? '',
     isActive: data.isActive ?? true,
-    // KPIs: el backend hoy no los manda; inicializamos en 0 y usamos rating como averageRating
     stats: {
       profileViews: 0,
       contactClicks: 0,
@@ -81,8 +86,18 @@ export const updateAmbulanceProfileAPI = async (
   };
 
   // Enviar imagen como base64 si es nueva (el backend la sube a Cloudinary)
-  if (profile.bannerUrl && profile.bannerUrl.startsWith('data:image/')) {
+  if (profile.bannerUrl) {
     payload.imageUrl = profile.bannerUrl;
+  }
+
+  // Enviar profile_picture_url (logo) si se provee
+  if (profile.profile_picture_url !== undefined) {
+    payload.profile_picture_url = profile.profile_picture_url;
+  }
+
+  // Enviar preview_images (galería) si se provee
+  if (profile.previewImages !== undefined) {
+    payload.preview_images = profile.previewImages;
   }
 
   const response = await httpClient.put<{ success: boolean; data: BackendAmbulanceProfile }>(

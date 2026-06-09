@@ -23,7 +23,9 @@ export interface LaboratoryDashboard {
   laboratory: {
     id: string;
     name: string;
-    logoUrl?: string; // Logo del laboratorio
+    logoUrl?: string | null; // Logo del laboratorio
+    imageUrl?: string | null; // Banner de portada
+    previewImages?: string[]; // Galería de fotos
     email: string;
     whatsapp: string;
     address: string;
