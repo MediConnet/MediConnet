@@ -8,8 +8,6 @@ import {
   Switch,
   TextField,
   Button,
-  Alert,
-  Snackbar,
 } from "@mui/material";
 import { Save } from "@mui/icons-material";
 import { useState, useEffect } from "react";
@@ -17,6 +15,7 @@ import type { ClinicSchedule, DaySchedule } from "../../domain/clinic.entity";
 import { useClinicProfile } from "../hooks/useClinicProfile";
 import { updateClinicScheduleAPI } from "../../infrastructure/clinic.api";
 import { LoadingSpinner } from "../../../../shared/components/LoadingSpinner";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 interface SchedulesSectionProps {
   clinicId: string;
@@ -34,11 +33,10 @@ const daysOfWeek = [
 
 export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
   const { profile, loading: profileLoading } = useClinicProfile();
+  const feedback = useFeedbackStore();
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  
+
   const defaultSchedule: ClinicSchedule = {
     monday: { enabled: false, startTime: "09:00", endTime: "18:00" },
     tuesday: { enabled: false, startTime: "09:00", endTime: "18:00" },
@@ -49,13 +47,11 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
     sunday: { enabled: false, startTime: "09:00", endTime: "18:00" },
   };
 
-  // ⭐ Función para normalizar el schedule y asegurar que todos los días existan
   const normalizeSchedule = (schedule: any): ClinicSchedule => {
     if (!schedule || typeof schedule !== 'object') {
       return defaultSchedule;
     }
 
-    // Si viene como array, convertir a objeto
     if (Array.isArray(schedule)) {
       const normalized: ClinicSchedule = { ...defaultSchedule };
       schedule.forEach((item: any) => {
@@ -71,10 +67,9 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
       return normalized;
     }
 
-    // Si viene como objeto, asegurar que todos los días existan
     const normalized: ClinicSchedule = { ...defaultSchedule };
     const dayKeys: (keyof ClinicSchedule)[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-    
+
       dayKeys.forEach((dayKey) => {
       const dayData = schedule[dayKey];
       if (dayData && typeof dayData === 'object') {
@@ -90,7 +85,7 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
   };
 
   const [schedule, setSchedule] = useState<ClinicSchedule>(defaultSchedule);
-  
+
   useEffect(() => {
     if (profile?.generalSchedule) {
       const normalized = normalizeSchedule(profile.generalSchedule);
@@ -98,7 +93,6 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
     } else {
       setSchedule(defaultSchedule);
     }
-    // Cuando carga nuevo perfil, salir del modo edición
     setIsEditing(false);
   }, [profile]);
 
@@ -114,12 +108,9 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
 
   const handleEdit = () => {
     setIsEditing(true);
-    setErrorMessage(null);
-    setSuccessMessage(null);
   };
 
   const handleCancel = () => {
-    // Restaurar valores originales del perfil
     if (profile?.generalSchedule) {
       const normalized = normalizeSchedule(profile.generalSchedule);
       setSchedule(normalized);
@@ -127,24 +118,19 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
       setSchedule(defaultSchedule);
     }
     setIsEditing(false);
-    setErrorMessage(null);
   };
 
   const handleSave = async () => {
     setSaving(true);
-    setErrorMessage(null);
-    setSuccessMessage(null);
-    
+
     try {
-      // Llamar al endpoint específico de horarios
       const updatedSchedule = await updateClinicScheduleAPI(schedule);
-      
-      // Actualizar el estado local con la respuesta del servidor
+
       setSchedule(updatedSchedule);
       setIsEditing(false);
-      setSuccessMessage('Horarios guardados correctamente');
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Error al guardar horarios');
+      feedback.showFeedback('success', 'Operación completada', 'La información se guardó correctamente.');
+    } catch {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     } finally {
       setSaving(false);
     }
@@ -165,22 +151,14 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
 
       <Card>
         <CardContent>
-          {errorMessage && (
-            <Alert severity="error" sx={{ mb: 3 }} onClose={() => setErrorMessage(null)}>
-              {errorMessage}
-            </Alert>
-          )}
-          
           <Grid2 container spacing={3}>
             {daysOfWeek.map((day) => {
-              // ⭐ Validación segura: asegurar que daySchedule siempre existe
               const daySchedule = schedule[day.key] || {
                 enabled: false,
                 startTime: "09:00",
                 endTime: "18:00",
               };
-              
-              // Validación adicional de propiedades
+
               const safeDaySchedule: DaySchedule = {
                 enabled: Boolean(daySchedule?.enabled ?? false),
                 startTime: daySchedule?.startTime || "09:00",
@@ -280,17 +258,6 @@ export const SchedulesSection = ({ clinicId }: SchedulesSectionProps) => {
       <Typography variant="body2" color="info.main" sx={{ mt: 3, p: 2, bgcolor: '#eff6ff', borderRadius: 1 }}>
         ℹ️ Los médicos asociados a esta clínica trabajarán según estos horarios generales.
       </Typography>
-
-      <Snackbar
-        open={!!successMessage}
-        autoHideDuration={3000}
-        onClose={() => setSuccessMessage(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert severity="success" onClose={() => setSuccessMessage(null)}>
-          {successMessage}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };

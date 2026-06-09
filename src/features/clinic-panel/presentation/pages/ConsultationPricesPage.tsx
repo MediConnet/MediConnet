@@ -31,7 +31,7 @@ export const ConsultationPricesPage = ({ clinicId }: ConsultationPricesPageProps
   if (error) {
     return (
       <Box sx={{ p: 3 }}>
-        <Alert severity="error">Error al cargar los precios: {error.message}</Alert>
+        <Alert severity="warning">No fue posible cargar los precios.</Alert>
       </Box>
     );
   }

@@ -1,31 +1,68 @@
 import { Star, RateReview } from "@mui/icons-material";
 import { useLaboratoryReviews } from "../hooks/useLaboratoryReviews";
-import { Box, Typography, CircularProgress, Alert } from "@mui/material";
+import { Box, Typography, CircularProgress } from "@mui/material";
+import { DataGrid, type GridColDef, type GridPaginationModel } from "@mui/x-data-grid";
+import { useState } from "react";
 
 export const ReviewsSection = () => {
-  const { data, isLoading, error } = useLaboratoryReviews();
+  const { reviews = [], loading, total, page, setPage, limit, setLimit } = useLaboratoryReviews();
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: limit });
 
-  if (isLoading) {
+  const handlePaginationChange = (model: GridPaginationModel) => {
+    setPaginationModel(model);
+    setPage(model.page + 1);
+    setLimit(model.pageSize);
+  };
+
+  const averageRating = reviews.length > 0
+    ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+    : 0;
+  const totalReviews = reviews.length;
+
+  const columns: GridColDef[] = [
+    {
+      field: "patientName",
+      headerName: "Paciente",
+      flex: 1,
+      minWidth: 180,
+    },
+    {
+      field: "rating",
+      headerName: "Calificación",
+      width: 130,
+      align: "center",
+      renderCell: (params) => (
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", width: "100%" }}>
+          {[1, 2, 3, 4, 5].map((star) => (
+            <Star
+              key={star}
+              sx={{ fontSize: 16, color: star <= params.value ? "#FFC107" : "#e0e0e0" }}
+            />
+          ))}
+        </Box>
+      ),
+    },
+    {
+      field: "comment",
+      headerName: "Comentario",
+      flex: 2,
+      minWidth: 300,
+    },
+    {
+      field: "date",
+      headerName: "Fecha",
+      width: 120,
+      valueGetter: (_value, row) => row.date ? new Date(row.date).toLocaleDateString('es-MX') : '',
+    },
+  ];
+
+  if (loading) {
     return (
       <Box className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex justify-center items-center min-h-[200px]">
         <CircularProgress />
       </Box>
     );
   }
-
-  if (error) {
-    return (
-      <Box className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-        <Alert severity="error">
-          Error al cargar las reseñas. Por favor, intenta de nuevo más tarde.
-        </Alert>
-      </Box>
-    );
-  }
-
-  const reviews = data?.reviews || [];
-  const averageRating = data?.averageRating || 0;
-  const totalReviews = data?.totalReviews || 0;
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
@@ -37,7 +74,7 @@ export const ReviewsSection = () => {
               Valoraciones recibidas desde la aplicación móvil
             </p>
           </div>
-          {totalReviews > 0 && (
+          {total > 0 && (
             <div className="text-right">
               <div className="flex items-center gap-2">
                 <Star className="text-yellow-400 fill-current" />
@@ -46,7 +83,7 @@ export const ReviewsSection = () => {
                 </span>
               </div>
               <p className="text-sm text-gray-500 mt-1">
-                {totalReviews} {totalReviews === 1 ? 'reseña' : 'reseñas'}
+                {total} {total === 1 ? 'reseña' : 'reseñas'}
               </p>
             </div>
           )}
@@ -64,40 +101,22 @@ export const ReviewsSection = () => {
           </Typography>
         </Box>
       ) : (
-        <div className="space-y-4">
-          {reviews.map((review, index) => (
-            <div
-              key={`review-${index}`}
-              className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
-            >
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <p className="font-medium text-gray-800">{review.patientName || 'Usuario'}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className={`text-sm ${
-                          star <= review.rating
-                            ? "text-yellow-400 fill-current"
-                            : "text-gray-300"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <span className="text-xs text-gray-500">
-                  {review.date ? new Date(review.date).toLocaleDateString('es-MX') : ''}
-                </span>
-              </div>
-              {review.comment && (
-                <p className="text-sm text-gray-700 mt-2">{review.comment}</p>
-              )}
-            </div>
-          ))}
-        </div>
+        <Box sx={{ height: 500, width: "100%" }}>
+          <DataGrid
+            rows={reviews}
+            columns={columns}
+            loading={loading}
+            paginationMode="server"
+            rowCount={total}
+            paginationModel={paginationModel}
+            onPaginationModelChange={handlePaginationChange}
+            pageSizeOptions={[5, 10, 20]}
+            disableRowSelectionOnClick
+            getRowId={(row, index) => row.id ?? index}
+            sx={{ border: "none" }}
+          />
+        </Box>
       )}
     </div>
   );
 };
-

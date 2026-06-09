@@ -1,7 +1,14 @@
 import type { ServiceStats } from "../domain/service-stats.entity";
-import { getServiceStatsMock } from "../infrastructure/stats.mock";
+import { getDashboardStatsAPI } from "../infrastructure/dashboard.api";
 
-// En el futuro, aquí podríamos cambiar a una llamada real a API
 export const getServiceStatsUseCase = async (): Promise<ServiceStats> => {
-  return await getServiceStatsMock();
+  const stats = await getDashboardStatsAPI();
+  return {
+    doctorCount: stats.servicesByType.doctors,
+    pharmacyCount: stats.servicesByType.pharmacies,
+    laboratoryCount: stats.servicesByType.laboratories,
+    ambulanceCount: stats.servicesByType.ambulances,
+    suppliesCount: stats.servicesByType.supplies,
+    clinicaCount: stats.servicesByType.clinicas,
+  };
 };

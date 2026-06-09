@@ -8,7 +8,9 @@ import { QueryProvider } from "./providers/QueryProvider";
 import { RealtimeProvider } from "./providers/RealtimeProvider";
 import { AppRouter } from "./router/AppRouter";
 import { LoadingSpinner } from "../shared/components/LoadingSpinner";
+import { ErrorBoundary } from "../shared/components/ErrorBoundary";
 import { useGlobalLoading } from "../shared/hooks/useGlobalLoading";
+import { GlobalFeedback } from "../shared/components/modals/FeedbackModal";
 
 const AppContent = () => {
   const { isLoading } = useGlobalLoading();
@@ -17,18 +19,21 @@ const AppContent = () => {
     <>
       <AppRouter />
       {isLoading && <LoadingSpinner />}
+      <GlobalFeedback />
     </>
   );
 };
 
 export const App = () => {
   return (
-    <MUIThemeProviderWrapper>
-      <QueryProvider>
-        <RealtimeProvider>
-          <AppContent />
-        </RealtimeProvider>
-      </QueryProvider>
-    </MUIThemeProviderWrapper>
+    <ErrorBoundary>
+      <MUIThemeProviderWrapper>
+        <QueryProvider>
+          <RealtimeProvider>
+            <AppContent />
+          </RealtimeProvider>
+        </QueryProvider>
+      </MUIThemeProviderWrapper>
+    </ErrorBoundary>
   );
 };

@@ -1,5 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useCallback } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import { getPharmacyBranchesUseCase } from "../../application/get-pharmacy-branches.usecase";
 import type { PharmacyBranch } from "../../domain/pharmacy-branch.entity";
 import {
@@ -8,24 +10,33 @@ import {
   updatePharmacyBranchAPI,
 } from "../../infrastructure/pharmacy.api";
 
-/**
- * Hook: Obtener sucursales de la farmacia
- * Migrado a React Query
- */
 export const usePharmacyBranches = () => {
   const { user } = useAuthStore();
+  const [branches, setBranches] = useState<PharmacyBranch[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
 
-  const {
-    data: branches = [],
-    isLoading,
-  } = useQuery<PharmacyBranch[]>({
-    queryKey: ['pharmacies', 'branches', user?.id],
-    queryFn: getPharmacyBranchesUseCase,
-    enabled: !!user?.id,
-    staleTime: 2 * 60 * 1000, // 2 minutos
-  });
+  const loadData = useCallback(async () => {
+    if (!user?.id) return;
+    setLoading(true);
+    try {
+      const result = await getPharmacyBranchesUseCase({ page, limit });
+      setBranches(result.data);
+      setTotal(result.pagination.total);
+    } catch (error) {
+      console.error("Error cargando sucursales:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id, page, limit]);
 
-  return { branches, isLoading };
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  return { branches, loading, total, page, setPage, limit, setLimit, refetch: loadData };
 };
 
 /**
@@ -34,6 +45,7 @@ export const usePharmacyBranches = () => {
 export const useCreatePharmacyBranch = () => {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const feedback = useFeedbackStore();
 
   return useMutation<PharmacyBranch, Error, Omit<PharmacyBranch, "id">>({
     mutationFn: createPharmacyBranchAPI,
@@ -61,10 +73,12 @@ export const useCreatePharmacyBranch = () => {
       if (context?.previousBranches) {
         queryClient.setQueryData(['pharmacies', 'branches', user?.id], context.previousBranches);
       }
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     },
     onSuccess: () => {
       // Invalidar para refrescar con datos reales
       queryClient.invalidateQueries({ queryKey: ['pharmacies', 'branches', user?.id] });
+      feedback.showFeedback('success', 'Operación completada', 'La información se guardó correctamente.');
     },
   });
 };
@@ -75,6 +89,7 @@ export const useCreatePharmacyBranch = () => {
 export const useUpdatePharmacyBranch = () => {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const feedback = useFeedbackStore();
 
   return useMutation<PharmacyBranch, Error, PharmacyBranch>({
     mutationFn: (branch) => updatePharmacyBranchAPI(branch.id, branch),
@@ -95,9 +110,11 @@ export const useUpdatePharmacyBranch = () => {
       if (context?.previousBranches) {
         queryClient.setQueryData(['pharmacies', 'branches', user?.id], context.previousBranches);
       }
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pharmacies', 'branches', user?.id] });
+      feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
     },
   });
 };
@@ -108,6 +125,7 @@ export const useUpdatePharmacyBranch = () => {
 export const useDeletePharmacyBranch = () => {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const feedback = useFeedbackStore();
 
   return useMutation<void, Error, string>({
     mutationFn: deletePharmacyBranchAPI,
@@ -128,9 +146,11 @@ export const useDeletePharmacyBranch = () => {
       if (context?.previousBranches) {
         queryClient.setQueryData(['pharmacies', 'branches', user?.id], context.previousBranches);
       }
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pharmacies', 'branches', user?.id] });
+      feedback.showFeedback('success', 'Registro eliminado', 'La acción se completó correctamente.');
     },
   });
 };

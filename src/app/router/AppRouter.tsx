@@ -14,6 +14,7 @@ import { ClinicRoute } from "./ClinicRoute";
 import { DoctorRoute } from "./DoctorRoute";
 import { LaboratoryRoute } from "./LaboratoryRoute";
 import { SupplyRoute } from "./SupplyRoute";
+import { RoleRoute } from "./RoleRoute";
 
 // Layouts
 import { AppLayout } from "../../shared/layouts/AppLayout";
@@ -29,6 +30,7 @@ import { ServicesCatalogPage } from "../../features/home/presentation/pages/Serv
 
 // Pages - Admin
 import { ActivityPage } from "../../features/admin-dashboard/presentation/pages/ActivityPage";
+import { CommentsPage } from "../../features/admin-dashboard/presentation/pages/CommentsPage";
 import { AdRequestsPage } from "../../features/admin-dashboard/presentation/pages/AdRequestsPage";
 import { AdminDashboardPage } from "../../features/admin-dashboard/presentation/pages/AdminDashboardPage";
 import { CommissionsPage } from "../../features/admin-dashboard/presentation/pages/CommissionsPage";
@@ -40,19 +42,22 @@ import { ServicesDashboardPage } from "../../features/admin-dashboard/presentati
 import { SettingsPage } from "../../features/admin-dashboard/presentation/pages/SettingsPage";
 import { UsersPage } from "../../features/admin-dashboard/presentation/pages/UsersPage";
 import { AdsManagementPage } from "../../features/admin-dashboard/presentation/pages/AdsManagementPage";
+import { AdsOverviewPage } from "../../features/admin-dashboard/presentation/pages/AdsOverviewPage";
 import { SendEmailPage } from "../../features/email/presentation/pages/SendEmailPage";
+import { SpecialtiesPage } from "../../features/admin-dashboard/presentation/pages/SpecialtiesPage";
+
+// Shared pages
+import { ProviderAdsPage } from "../../shared/pages/ProviderAdsPage";
 
 // Pages - Doctor
-import { DoctorDashboardPage } from "../../features/doctor-panel/presentation/pages/DoctorDashboardPage";
+import { DoctorDashboardPage } from "../../features/doctor/pages/DoctorDashboardPage";
 
 // Pages - Ambulancia
-import { AmbulanceAdsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceAdsPage";
 import { AmbulanceDashboardPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceDashboardPage";
 import { AmbulanceReviewsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceReviewsPage";
 import { AmbulanceSettingsPage } from "../../features/ambulance-panel/presentation/pages/AmbulanceSettingsPage";
 
 // Pages - Farmacia
-import { PharmacyAdsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyAdsPage";
 import { PharmacyBranchesPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyBranchesPage";
 import { PharmacyDashboardPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyDashboardPage";
 import { PharmacyReviewsPage } from "../../features/pharmacy-panel/presentation/pages/PharmacyReviewsPage";
@@ -67,8 +72,8 @@ import { SupplyDashboardPage } from "../../features/supplies-panel/presentation/
 import { SupplyStoreDetailPage } from "../../features/supplies-panel/presentation/pages/SupplyStoreDetailPage";
 
 // Pages - Clínica
-import { ClinicDashboardPage } from "../../features/clinic-panel/presentation/pages/ClinicDashboardPage";
-import { ClinicInvitationPage } from "../../features/clinic-panel/presentation/pages/ClinicInvitationPage";
+import { ClinicDashboardPage } from "../../features/clinic/pages/ClinicDashboardPage";
+import { ClinicInvitationPage } from "../../features/association/pages/ClinicInvitationPage";
 import { httpClient } from "../../shared/lib/http";
 
 export const AppRouter = () => {
@@ -114,7 +119,14 @@ export const AppRouter = () => {
         </Route>
 
         {/* --- Panel de Administrador --- */}
-        <Route path="/admin" element={<Outlet />}>
+        <Route 
+          path="/admin" 
+          element={
+            <RoleRoute allowedRoles={["admin"]}>
+              <Outlet />
+            </RoleRoute>
+          }
+        >
           <Route path="dashboard" element={<AdminDashboardPage />} />
           <Route path="requests" element={<RequestsPage />} />
           <Route path="ad-requests" element={<AdRequestsPage />} />
@@ -124,10 +136,13 @@ export const AppRouter = () => {
           <Route path="users" element={<UsersPage />} />
           <Route path="services" element={<ServicesDashboardPage />} />
           <Route path="activity" element={<ActivityPage />} />
+          <Route path="comments" element={<CommentsPage />} />
           <Route path="pharmacy-chains" element={<PharmacyChainsPage />} />
+          <Route path="specialties" element={<SpecialtiesPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="send-email" element={<SendEmailPage />} />
           <Route path="ads" element={<AdsManagementPage />} />
+          <Route path="ads-overview" element={<AdsOverviewPage />} />
         </Route>
 
         {/* --- Panel de Doctor (Root level path) --- */}
@@ -140,6 +155,7 @@ export const AppRouter = () => {
           }
         >
           <Route path="dashboard" element={<DoctorDashboardPage />} />
+          <Route path="ads" element={<ProviderAdsPage />} />
         </Route>
 
         {/* --- Panel de Laboratorio --- */}
@@ -152,6 +168,7 @@ export const AppRouter = () => {
           }
         >
           <Route path="dashboard" element={<LaboratoryDashboardPage />} />
+          <Route path="ads" element={<ProviderAdsPage />} />
         </Route>
 
         {/* --- Panel de Insumos Médicos --- */}
@@ -164,6 +181,7 @@ export const AppRouter = () => {
           }
         >
           <Route path="dashboard" element={<SupplyDashboardPage />} />
+          <Route path="ads" element={<ProviderAdsPage />} />
         </Route>
 
         {/* --- Panel de Clínica --- */}
@@ -176,14 +194,22 @@ export const AppRouter = () => {
           }
         >
           <Route path="dashboard" element={<ClinicDashboardPage />} />
+          <Route path="ads" element={<ProviderAdsPage />} />
         </Route>
 
         {/* --- RUTAS DE PROVEEDORES (Estructura Anidada) --- */}
-        <Route path="/provider" element={<Outlet />}>
+        <Route 
+          path="/provider" 
+          element={
+            <RoleRoute allowedRoles={["provider", "patient", "profesional"]}>
+              <Outlet />
+            </RoleRoute>
+          }
+        >
           {/* 1. Panel Ambulancia */}
           <Route path="ambulance">
             <Route path="dashboard" element={<AmbulanceDashboardPage />} />
-            <Route path="ads" element={<AmbulanceAdsPage />} />
+            <Route path="ads" element={<ProviderAdsPage />} />
             <Route path="reviews" element={<AmbulanceReviewsPage />} />
             <Route path="settings" element={<AmbulanceSettingsPage />} />
           </Route>
@@ -192,7 +218,7 @@ export const AppRouter = () => {
           <Route path="pharmacy">
             <Route path="dashboard" element={<PharmacyDashboardPage />} />
             <Route path="branches" element={<PharmacyBranchesPage />} />
-            <Route path="ads" element={<PharmacyAdsPage />} />
+            <Route path="ads" element={<ProviderAdsPage />} />
             <Route path="reviews" element={<PharmacyReviewsPage />} />
             <Route path="settings" element={<PharmacySettingsPage />} />
           </Route>

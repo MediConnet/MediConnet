@@ -1,60 +1,85 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useCallback } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import {
   getConsultationPricesAPI,
   createConsultationPriceAPI,
   updateConsultationPriceAPI,
   deleteConsultationPriceAPI,
 } from "../../infrastructure/consultation-prices.api";
-import type { CreateConsultationPriceRequest, UpdateConsultationPriceRequest } from "../../domain/ConsultationPrice.entity";
+import type { ConsultationPrice, CreateConsultationPriceRequest, UpdateConsultationPriceRequest } from "../../domain/ConsultationPrice.entity";
 
-/**
- * Hook para gestionar los tipos de consulta por especialidad
- */
 export const useConsultationPrices = () => {
-  const queryClient = useQueryClient();
+  const [consultationPrices, setConsultationPrices] = useState<ConsultationPrice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const feedback = useFeedbackStore();
 
-  // Query para obtener todos los tipos de consulta
-  const {
-    data: consultationPrices = [],
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ["consultation-prices"],
-    queryFn: getConsultationPricesAPI,
-    staleTime: 5 * 60 * 1000, // 5 minutos
-  });
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await getConsultationPricesAPI({ page, limit });
+      setConsultationPrices(result.data);
+      setTotal(result.pagination.total);
+    } catch (err: any) {
+      setError(err?.message || "Error al cargar precios de consulta");
+    } finally {
+      setLoading(false);
+    }
+  }, [page, limit]);
 
-  // Mutation para crear tipo de consulta
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
   const createMutation = useMutation({
     mutationFn: createConsultationPriceAPI,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["consultation-prices"] });
+      feedback.showFeedback('success', 'Operación completada', 'La información se guardó correctamente.');
+      loadData();
+    },
+    onError: () => {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     },
   });
 
-  // Mutation para actualizar tipo de consulta
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateConsultationPriceRequest }) =>
       updateConsultationPriceAPI(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["consultation-prices"] });
+      feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
+      loadData();
+    },
+    onError: () => {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     },
   });
 
-  // Mutation para eliminar tipo de consulta
   const deleteMutation = useMutation({
     mutationFn: deleteConsultationPriceAPI,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["consultation-prices"] });
+      feedback.showFeedback('success', 'Registro eliminado', 'La acción se completó correctamente.');
+      loadData();
+    },
+    onError: () => {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     },
   });
 
   return {
     consultationPrices,
-    isLoading,
+    loading,
     error,
-    refetch,
+    total,
+    page,
+    setPage,
+    limit,
+    setLimit,
+    refetch: loadData,
     createConsultationPrice: createMutation.mutateAsync,
     updateConsultationPrice: updateMutation.mutateAsync,
     deleteConsultationPrice: deleteMutation.mutateAsync,

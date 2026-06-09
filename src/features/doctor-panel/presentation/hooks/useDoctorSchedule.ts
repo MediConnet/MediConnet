@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import {
   getDoctorScheduleAPI,
   updateDoctorScheduleAPI,
@@ -27,14 +28,17 @@ export const useDoctorSchedule = () => {
 export const useUpdateDoctorSchedule = () => {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const feedback = useFeedbackStore();
 
   return useMutation<WorkSchedule[], Error, WorkSchedule[]>({
     mutationFn: updateDoctorScheduleAPI,
     onSuccess: () => {
-      // Invalidar cache del horario
+      feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
       queryClient.invalidateQueries({ queryKey: ['doctors', 'schedule', user?.id] });
-      // Invalidar cache del perfil (puede incluir horario)
       queryClient.invalidateQueries({ queryKey: ['doctors', 'profile', user?.id] });
+    },
+    onError: () => {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     },
   });
 };

@@ -1,4 +1,5 @@
 import { httpClient, extractData } from '../../../shared/lib/http';
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 
 /**
  * Pago pendiente a clínica
@@ -49,9 +50,12 @@ export interface AdminDoctorPayment {
  * API: Obtener pagos pendientes a clínicas
  * Endpoint: GET /api/admin/payments/clinics
  */
-export const getAdminClinicPaymentsAPI = async (): Promise<AdminClinicPayment[]> => {
-  const response = await httpClient.get<{ success: boolean; data: AdminClinicPayment[] }>(
-    '/admin/payments/clinics'
+export const getAdminClinicPaymentsAPI = async (
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<AdminClinicPayment>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<AdminClinicPayment> }>(
+    '/clinics/admin/payments',
+    { params }
   );
   return extractData(response);
 };
@@ -60,9 +64,12 @@ export const getAdminClinicPaymentsAPI = async (): Promise<AdminClinicPayment[]>
  * API: Obtener pagos pendientes a médicos
  * Endpoint: GET /api/admin/payments/doctors
  */
-export const getAdminDoctorPaymentsAPI = async (): Promise<AdminDoctorPayment[]> => {
-  const response = await httpClient.get<{ success: boolean; data: AdminDoctorPayment[] }>(
-    '/admin/payments/doctors'
+export const getAdminDoctorPaymentsAPI = async (
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<AdminDoctorPayment>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<AdminDoctorPayment> }>(
+    '/admin/payments/doctors',
+    { params }
   );
   return extractData(response);
 };
@@ -87,7 +94,7 @@ export const markDoctorPaymentsAsPaidAPI = async (
  */
 export const markClinicPaymentAsPaidAPI = async (clinicPaymentId: string): Promise<void> => {
   await httpClient.post<{ success: boolean }>(
-    `/admin/payments/clinics/${clinicPaymentId}/mark-paid`
+    `/clinics/admin/payments/${clinicPaymentId}/mark-paid`
   );
 };
 
@@ -95,9 +102,12 @@ export const markClinicPaymentAsPaidAPI = async (clinicPaymentId: string): Promi
  * API: Obtener historial de pagos
  * Endpoint: GET /api/admin/payments/history
  */
-export const getPaymentHistoryAPI = async (): Promise<any[]> => {
-  const response = await httpClient.get<{ success: boolean; data: any[] }>(
-    '/admin/payments/history'
+export const getPaymentHistoryAPI = async (
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<any>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<any> }>(
+    '/admin/payments/history',
+    { params }
   );
   return extractData(response);
 };

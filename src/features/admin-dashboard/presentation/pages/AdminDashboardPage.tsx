@@ -2,6 +2,7 @@ import {
   AccessTime,
   AirportShuttle,
   Biotech,
+  Business,
   ChatBubbleOutline,
   CheckCircleOutline,
   HighlightOff,
@@ -35,11 +36,8 @@ export const AdminDashboardPage = () => {
   if (!stats || error) {
     return (
       <div className="p-8">
-        <p className="text-red-600 font-semibold mb-2">Error al cargar las estadísticas del dashboard.</p>
-        <p className="text-gray-600">Por favor, verifica que el backend esté funcionando correctamente.</p>
-        {error && (
-          <p className="text-sm text-gray-500 mt-2">Error: {error.message || 'Error desconocido'}</p>
-        )}
+        <p className="text-red-600 font-semibold mb-2">No fue posible cargar las estadísticas del dashboard.</p>
+        <p className="text-gray-600">Intenta recargar la página en unos momentos.</p>
       </div>
     );
   }
@@ -176,6 +174,14 @@ export const AdminDashboardPage = () => {
               icon={<Inventory />}
               color="text-amber-500"
               barColor="bg-amber-500"
+            />
+            <ServiceBar
+              label="Clínicas"
+              count={stats.servicesByType?.clinicas ?? 0}
+              total={200}
+              icon={<Business />}
+              color="text-purple-600"
+              barColor="bg-purple-500"
             />
           </div>
         </div>

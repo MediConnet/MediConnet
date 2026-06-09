@@ -14,9 +14,9 @@ export const useRegisterProfessional = () => {
   });
 
   return {
-    submit: mutation.mutateAsync, 
-    loading: mutation.isPending, 
+    submit: mutation.mutateAsync,
+    loading: mutation.isPending,
     error: mutation.error,
-    isSuccess: mutation.isSuccess
+    isSuccess: mutation.isSuccess,
   };
 };

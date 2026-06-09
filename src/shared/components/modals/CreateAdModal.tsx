@@ -15,20 +15,26 @@ import {
 import { useFormik } from "formik";
 import { useRef, useState } from "react";
 import * as Yup from "yup";
+import { getUserFriendlyMessage } from "../../lib/api-error";
+
+interface AdFormData {
+  label: string;
+  discount: string;
+  description: string;
+  buttonText: string;
+  imageUrl?: string;
+  startDate: string;
+  endDate?: string;
+}
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  onCreateAd: (adData: {
-    label: string;
-    discount: string;
-    description: string;
-    buttonText: string;
-    imageUrl?: string;
-    startDate: string;
-    endDate?: string;
-  }) => Promise<void>;
+  onCreateAd: (adData: AdFormData) => Promise<void>;
   submitButtonText?: string;
+  initialData?: AdFormData;
+  isEditing?: boolean;
+  readOnly?: boolean;
 }
 
 const validationSchema = Yup.object({
@@ -77,22 +83,26 @@ export const CreateAdModal = ({
   onClose,
   onCreateAd,
   submitButtonText = "Publicar Anuncio",
+  initialData,
+  isEditing = false,
+  readOnly = false,
 }: Props) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(initialData?.imageUrl || null);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formik = useFormik({
+    enableReinitialize: true,
     initialValues: {
-      label: "",
-      discount: "",
-      description: "",
-      buttonText: "",
-      imageUrl: "",
-      startDate: "",
-      endDate: "",
+      label: initialData?.label || "",
+      discount: initialData?.discount || "",
+      description: initialData?.description || "",
+      buttonText: initialData?.buttonText || "",
+      imageUrl: initialData?.imageUrl || "",
+      startDate: initialData?.startDate || "",
+      endDate: initialData?.endDate || "",
     },
     validationSchema,
     onSubmit: async (values) => {
@@ -132,7 +142,7 @@ export const CreateAdModal = ({
         setImageBase64(null);
         onClose();
       } catch (err: any) {
-        setError(err.message || "Error al crear el anuncio");
+        setError(getUserFriendlyMessage(err, { fallback: "No fue posible crear el anuncio." }));
       } finally {
         setIsSubmitting(false);
       }
@@ -164,7 +174,7 @@ export const CreateAdModal = ({
   const handleClose = () => {
     formik.resetForm();
     setError("");
-    setImagePreview(null);
+    setImagePreview(initialData?.imageUrl || null);
     setImageBase64(null);
     onClose();
   };
@@ -191,10 +201,10 @@ export const CreateAdModal = ({
       >
         <Box>
           <Typography variant="h6" fontWeight={700}>
-            Crear Anuncio Promocional
+            {isEditing ? "Editar Anuncio Promocional" : "Crear Anuncio Promocional"}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Completa la información de tu anuncio
+            {isEditing ? "Modifica la información de tu anuncio" : "Completa la información de tu anuncio"}
           </Typography>
         </Box>
         <IconButton onClick={handleClose} size="small">
@@ -204,12 +214,18 @@ export const CreateAdModal = ({
 
       <form onSubmit={formik.handleSubmit}>
         <DialogContent sx={{ py: 3 }}>
+          {readOnly && (
+            <Alert severity="info" sx={{ mb: 3 }}>
+              Este anuncio no se puede editar porque su estado actual no lo permite.
+            </Alert>
+          )}
           {error && (
             <Alert severity="error" sx={{ mb: 3 }}>
               {error}
             </Alert>
           )}
 
+          <fieldset disabled={readOnly} style={{ border: "none", padding: 0, margin: 0 }}>
           {/* Label */}
           <TextField
             fullWidth
@@ -300,19 +316,20 @@ export const CreateAdModal = ({
               ref={fileInputRef}
               style={{ display: "none" }}
               onChange={handleFileChange}
+              disabled={readOnly}
             />
             {/* Zona de subida */}
             <Box
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => !readOnly && fileInputRef.current?.click()}
               sx={{
                 border: "2px dashed",
                 borderColor: imagePreview ? "success.main" : "grey.300",
                 borderRadius: 2,
                 p: 2,
                 textAlign: "center",
-                cursor: "pointer",
+                cursor: readOnly ? "default" : "pointer",
                 bgcolor: imagePreview ? "success.50" : "grey.50",
-                "&:hover": { borderColor: "primary.main", bgcolor: "primary.50" },
+                "&:hover": readOnly ? {} : { borderColor: "primary.main", bgcolor: "primary.50" },
                 mb: 1,
               }}
             >
@@ -327,7 +344,7 @@ export const CreateAdModal = ({
                   <Stack direction="row" alignItems="center" spacing={0.5} color="success.main">
                     <CheckCircle fontSize="small" />
                     <Typography variant="caption" fontWeight={600}>
-                      Imagen lista — click para cambiar
+                      Imagen lista
                     </Typography>
                   </Stack>
                 </Stack>
@@ -360,7 +377,7 @@ export const CreateAdModal = ({
                   setImagePreview(null);
                 }
               }}
-              disabled={!!imageBase64}
+              disabled={!!imageBase64 || readOnly}
               helperText={imageBase64 ? "Usando imagen subida (borra la imagen para usar URL)" : ""}
             />
           </Box>
@@ -401,6 +418,7 @@ export const CreateAdModal = ({
               slotProps={{ inputLabel: { shrink: true } }}
             />
           </Box>
+          </fieldset>
         </DialogContent>
 
         <DialogActions sx={{ p: 3, justifyContent: "flex-end", gap: 2 }}>
@@ -415,25 +433,27 @@ export const CreateAdModal = ({
               fontWeight: 600,
             }}
           >
-            Cancelar
+            {readOnly ? "Cerrar" : "Cancelar"}
           </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={isSubmitting}
-            sx={{
-              px: 4,
-              borderRadius: 2,
-              textTransform: "none",
-              fontWeight: 600,
-              bgcolor: "#14b8a6",
-              "&:hover": {
-                bgcolor: "#0d9488",
-              },
-            }}
-          >
-            {isSubmitting ? "Enviando..." : submitButtonText}
-          </Button>
+          {!readOnly && (
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={isSubmitting}
+              sx={{
+                px: 4,
+                borderRadius: 2,
+                textTransform: "none",
+                fontWeight: 600,
+                bgcolor: "#14b8a6",
+                "&:hover": {
+                  bgcolor: "#0d9488",
+                },
+              }}
+            >
+              {isSubmitting ? "Enviando..." : submitButtonText}
+            </Button>
+          )}
         </DialogActions>
       </form>
     </Dialog>

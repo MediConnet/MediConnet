@@ -22,10 +22,12 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import * as Yup from "yup";
 import { ROUTES } from "../../../../app/config/constants";
 import { useResetPassword } from "../hooks/useResetPassword";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 const resetPasswordValidationSchema = Yup.object({
   newPassword: Yup.string()
-    .min(6, "La contraseña debe tener al menos 6 caracteres")
+    .min(8, "La contraseña debe tener al menos 8 caracteres")
+    .max(20, "La contraseña no puede exceder 20 caracteres")
     .required("La contraseña es requerida"),
   confirmPassword: Yup.string()
     .oneOf([Yup.ref("newPassword")], "Las contraseñas no coinciden")
@@ -42,6 +44,7 @@ export const ResetPasswordPage = () => {
   const [success, setSuccess] = useState(false);
 
   const resetPassword = useResetPassword();
+  const feedback = useFeedbackStore();
 
   const formik = useFormik({
     initialValues: {
@@ -60,9 +63,11 @@ export const ResetPasswordPage = () => {
           token,
           newPassword: values.newPassword,
         });
+        feedback.showFeedback('success', 'Contraseña actualizada', 'Tu contraseña se ha actualizado correctamente. Ya puedes iniciar sesión.');
         setSuccess(true);
       } catch (err: any) {
         console.error("Error resetting password:", err);
+        feedback.showFeedback('error', 'Error', 'No fue posible restablecer la contraseña. El enlace puede haber expirado.');
         const errorMessage =
           err?.response?.data?.message ||
           "Error al restablecer contraseña. El enlace puede haber expirado.";
@@ -315,6 +320,7 @@ export const ResetPasswordPage = () => {
                       }
                       size="small"
                       slotProps={{
+                        htmlInput: { maxLength: 20 },
                         input: {
                           startAdornment: (
                             <InputAdornment position="start">
@@ -361,30 +367,7 @@ export const ResetPasswordPage = () => {
                       }
                       size="small"
                       slotProps={{
-                        input: {
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <LockIcon sx={{ color: "#9ca3af", fontSize: { xs: "1.2rem", sm: "1.5rem" } }} />
-                            </InputAdornment>
-                          ),
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <IconButton
-                                onClick={() =>
-                                  setShowConfirmPassword(!showConfirmPassword)
-                                }
-                                edge="end"
-                                size="small"
-                              >
-                                {showConfirmPassword ? (
-                                  <VisibilityOff />
-                                ) : (
-                                  <Visibility />
-                                )}
-                              </IconButton>
-                            </InputAdornment>
-                          ),
-                        },
+                        htmlInput: { maxLength: 20 },
                       }}
                     />
                   </Box>

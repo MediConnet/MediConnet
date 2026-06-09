@@ -1,4 +1,5 @@
 import { httpClient, extractData } from '../../../shared/lib/http';
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 import type { ClinicDoctor, DoctorInvitation } from '../domain/doctor.entity';
 import type { DoctorSchedule } from '../domain/doctor-schedule.entity';
 
@@ -6,9 +7,10 @@ import type { DoctorSchedule } from '../domain/doctor-schedule.entity';
  * API: Obtener lista de médicos de la clínica
  * Endpoint: GET /api/clinics/doctors
  */
-export const getClinicDoctorsAPI = async (status?: 'active' | 'inactive' | 'all'): Promise<ClinicDoctor[]> => {
-  const params = status ? { status } : {};
-  const response = await httpClient.get<{ success: boolean; data: ClinicDoctor[] }>(
+export const getClinicDoctorsAPI = async (
+  params?: { page?: number; limit?: number; status?: 'active' | 'inactive' | 'all' }
+): Promise<PaginatedResponse<ClinicDoctor>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<ClinicDoctor> }>(
     '/clinics/doctors',
     { params }
   );
@@ -45,14 +47,39 @@ export const generateInvitationLinkAPI = async (email: string): Promise<{ invita
  * API: Validar token de invitación (público)
  * Endpoint: GET /api/clinics/invite/:token
  */
-export const validateInvitationTokenAPI = async (token: string): Promise<{
-  clinic: { id: string; name: string };
+export interface ValidatedClinicInvitation {
+  clinic: { id: string; name: string } | null;
   email: string;
   expiresAt: string;
   isValid: boolean;
-}> => {
-  const response = await httpClient.get<{ success: boolean; data: any }>(
+  /** true si el correo ya tiene cuenta de médico en la plataforma */
+  doctorExiste?: boolean;
+}
+
+export const validateInvitationTokenAPI = async (
+  token: string,
+): Promise<ValidatedClinicInvitation> => {
+  const response = await httpClient.get<{ success: boolean; data: ValidatedClinicInvitation }>(
     `/clinics/invite/${token}`
+  );
+  return extractData(response);
+};
+
+/**
+ * API: Asociar médico autenticado a clínica tras aceptar invitación (usuario existente).
+ * Endpoint: POST /api/clinics/invite/:token/associate
+ */
+export const associateClinicInvitationAPI = async (
+  token: string,
+): Promise<{
+  message: string;
+  clinicId: string;
+  clinicName?: string;
+  userId: string;
+}> => {
+  const response = await httpClient.post<{ success: boolean; data: any }>(
+    `/clinics/invite/${token}/associate`,
+    {},
   );
   return extractData(response);
 };
@@ -122,25 +149,68 @@ export const assignOfficeAPI = async (doctorId: string, officeNumber: string): P
  * Endpoint: GET /api/clinics/doctors/:doctorId/schedule
  */
 export const getDoctorScheduleAPI = async (doctorId: string): Promise<DoctorSchedule> => {
-  const response = await httpClient.get<{ success: boolean; data: DoctorSchedule }>(
-    `/clinics/doctors/${doctorId}/schedule`
-  );
-  return extractData(response);
+  const response = await httpClient.get<{
+    success: boolean;
+    data: DoctorSchedule & { schedule?: DoctorSchedule };
+  }>(`/clinics/doctors/${doctorId}/schedule`);
+
+  const data = extractData(response);
+  if (data.schedule && typeof data.schedule === 'object') {
+    return {
+      ...data,
+      ...data.schedule,
+      doctorId: data.doctorId ?? doctorId,
+      clinicId: data.clinicId ?? '',
+    } as DoctorSchedule;
+  }
+  return data;
 };
 
 /**
  * API: Actualizar horarios de un médico
  * Endpoint: PUT /api/clinics/doctors/:doctorId/schedule
  */
+const weekDayKeys = [
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+] as const;
+
+const toSchedulePayload = (schedule: Partial<DoctorSchedule>) => {
+  const payload: Record<string, unknown> = {};
+  weekDayKeys.forEach((day) => {
+    if (schedule[day]) {
+      payload[day] = schedule[day];
+    }
+  });
+  return payload;
+};
+
 export const updateDoctorScheduleAPI = async (
   doctorId: string,
   schedule: Partial<DoctorSchedule>
 ): Promise<DoctorSchedule> => {
-  const response = await httpClient.put<{ success: boolean; data: DoctorSchedule }>(
-    `/clinics/doctors/${doctorId}/schedule`,
-    schedule
-  );
-  return extractData(response);
+  const response = await httpClient.put<{
+    success: boolean;
+    data: DoctorSchedule & { schedule?: DoctorSchedule };
+  }>(`/clinics/doctors/${doctorId}/schedule`, {
+    schedule: toSchedulePayload(schedule),
+  });
+
+  const data = extractData(response);
+  if (data.schedule && typeof data.schedule === 'object') {
+    return {
+      ...data,
+      ...data.schedule,
+      doctorId: data.doctorId ?? doctorId,
+      clinicId: data.clinicId ?? '',
+    } as DoctorSchedule;
+  }
+  return data;
 };
 
 /**

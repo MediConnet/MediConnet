@@ -1,4 +1,5 @@
 import { httpClient, extractData } from '../../../shared/lib/http';
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 
 export interface AdminAd {
   id: string;
@@ -15,6 +16,7 @@ export interface AdminAd {
   endDate?: string;
   isActive: boolean;
   priorityOrder: number;
+  status: string;
   isAdminAd: boolean;
   providerName: string;
 }
@@ -34,8 +36,16 @@ export interface CreateAdminAdPayload {
   priority_order?: number;
 }
 
-export const getAdminAdsAPI = async (): Promise<AdminAd[]> => {
-  const res = await httpClient.get<{ success: boolean; data: AdminAd[] }>('/admin/ads');
+export const getAdminAdsAPI = async (params?: {
+  page?: number;
+  limit?: number;
+}): Promise<PaginatedResponse<AdminAd>> => {
+  const searchParams = new URLSearchParams();
+  searchParams.set("page", String(params?.page || 1));
+  searchParams.set("limit", String(params?.limit || 20));
+  const res = await httpClient.get<{ success: boolean; data: PaginatedResponse<AdminAd> }>(
+    `/admin/ads?${searchParams.toString()}`
+  );
   return extractData(res);
 };
 
@@ -54,6 +64,6 @@ export const deleteAdminAdAPI = async (id: string): Promise<void> => {
 };
 
 export const toggleAdminAdAPI = async (id: string): Promise<boolean> => {
-  const res = await httpClient.patch<{ success: boolean; data: { isActive: boolean } }>(`/admin/ads/${id}/toggle`);
+  const res = await httpClient.put<{ success: boolean; data: { isActive: boolean } }>(`/admin/ads/${id}/toggle`);
   return extractData(res).isActive;
 };

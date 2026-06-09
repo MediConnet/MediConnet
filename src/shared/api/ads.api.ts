@@ -1,5 +1,6 @@
 import type { Ad } from "../domain/Ad.entity";
-import { httpClient } from "../lib/http";
+import type { PaginatedResponse } from "../types/pagination";
+import { httpClient, extractData } from "../lib/http";
 
 export interface CreateAdParams {
   label: string;
@@ -59,5 +60,86 @@ export const getMyAdAPI = async (): Promise<Ad | null> => {
   } catch (error) {
     console.warn("No se pudo obtener el anuncio activo o no existe:", error);
     return null;
+  }
+};
+
+export interface MyAdsFilters {
+  status?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+/**
+ * Obtiene el listado completo de anuncios del proveedor actual con filtros.
+ */
+/**
+ * Actualiza un anuncio propio (solo si está en estado PENDING).
+ */
+export const updateAdAPI = async (
+  id: string,
+  params: Partial<CreateAdParams>
+): Promise<void> => {
+  const payload: Record<string, any> = {};
+  if (params.label !== undefined) payload.badge_text = params.label;
+  if (params.discount !== undefined) payload.discount_title = params.discount;
+  if (params.description !== undefined) payload.description = params.description;
+  if (params.buttonText !== undefined) payload.button_text = params.buttonText;
+  if (params.imageUrl !== undefined) payload.image_url = params.imageUrl;
+  if (params.startDate !== undefined) payload.start_date = params.startDate;
+  if (params.endDate !== undefined) payload.end_date = params.endDate;
+
+  await httpClient.put(`/ads/${id}`, payload);
+};
+
+export const getMyPaginatedAdsAPI = async (
+  params?: { page?: number; limit?: number; status?: string }
+): Promise<PaginatedResponse<Ad>> => {
+  const searchParams = new URLSearchParams();
+  searchParams.set("mode", "all");
+  if (params?.page) searchParams.set("page", String(params.page));
+  if (params?.limit) searchParams.set("limit", String(params.limit));
+  if (params?.status) searchParams.set("status", params.status);
+
+  const response = await httpClient.get<any>(`/ads?${searchParams.toString()}`);
+  const raw = extractData(response);
+
+  // Normalize: el backend puede devolver { data: [...], pagination } o un array plano
+  if (Array.isArray(raw)) {
+    return {
+      data: raw,
+      pagination: {
+        total: raw.length,
+        page: params?.page ?? 1,
+        limit: params?.limit ?? (raw.length || 10),
+        totalPages: Math.ceil(raw.length / (params?.limit ?? (raw.length || 10))),
+      },
+    };
+  }
+
+  return {
+    data: raw?.data ?? [],
+    pagination: raw?.pagination ?? {
+      total: 0,
+      page: params?.page ?? 1,
+      limit: params?.limit ?? 10,
+      totalPages: 0,
+    },
+  };
+};
+
+export const getMyAdsAPI = async (filters?: MyAdsFilters): Promise<Ad[]> => {
+  try {
+    const params = new URLSearchParams();
+    params.set("mode", "all");
+    if (filters?.status) params.set("status", filters.status);
+    if (filters?.dateFrom) params.set("dateFrom", filters.dateFrom);
+    if (filters?.dateTo) params.set("dateTo", filters.dateTo);
+
+    const response = await httpClient.get<any>(`/ads?${params.toString()}`);
+    const data = response.data?.data || response.data;
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.warn("No se pudieron obtener los anuncios:", error);
+    return [];
   }
 };

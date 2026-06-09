@@ -1,5 +1,6 @@
 import {
   AirportShuttle,
+  Business,
   Check,
   Close,
   Download,
@@ -14,19 +15,16 @@ import {
   Box,
   Button,
   IconButton,
-  MenuItem,
   Stack,
   TextField,
   Typography,
-  Snackbar,
-  Alert,
 } from "@mui/material";
 import {
-  DataGrid,
   type GridColDef,
   type GridRenderCellParams,
+  type GridPaginationModel,
 } from "@mui/x-data-grid";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import type {
   ProviderRequest,
@@ -39,6 +37,13 @@ import { useProviderRequests } from "../hooks/useProviderRequests";
 import { useRequestFiltering } from "../hooks/useRequestFiltering";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAdminNotificationsLayout } from "../hooks/useAdminNotificationsLayout";
+import {
+  DataTable,
+  TableToolbar,
+  TablePageLayout,
+} from "../../../../shared/components/DataTable";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
+import { FEEDBACK } from "../../../../shared/constants/feedback-messages";
 
 const CURRENT_ADMIN = {
   name: "Admin General",
@@ -47,30 +52,49 @@ const CURRENT_ADMIN = {
 };
 
 export const RequestsPage = () => {
-  const { data: initialData, isLoading } = useProviderRequests();
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
+  const [serverStatusFilter, setServerStatusFilter] = useState<"all" | "PENDING" | "APPROVED" | "REJECTED">("all");
+  const [serverDateFilter, setServerDateFilter] = useState("");
+  const { data: result, isLoading } = useProviderRequests({
+    status: serverStatusFilter,
+    dateFrom: serverDateFilter || undefined,
+    page: paginationModel.page + 1,
+    limit: paginationModel.pageSize,
+  });
+
+  const requests = useMemo(() => result?.data ?? [], [result]);
+  const pagination = useMemo(() => result?.pagination ?? { total: 0, page: 1, limit: 10, totalPages: 0 }, [result]);
+
   const queryClient = useQueryClient();
   const { appointments: adminAppointments, notificationsViewAllPath } = useAdminNotificationsLayout();
+  const feedback = useFeedbackStore();
 
   const {
-    requests,
     filters,
     setSearchText,
     setStatusFilter,
     setDateFilter,
     approveRequest,
     rejectRequest,
-  } = useRequestFiltering(initialData, "PENDING"); // Filtrar solo PENDING por defecto
+  } = useRequestFiltering(requests, "all");
 
   const [selectedRequest, setSelectedRequest] =
     useState<ProviderRequest | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [requestToReject, setRequestToReject] = useState<ProviderRequest | null>(null);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'info' }>({
-    open: false,
-    message: '',
-    severity: 'info'
-  });
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    setServerStatusFilter((value as "all" | "PENDING" | "APPROVED" | "REJECTED") || "all");
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+  };
+
+  const handleDateFilterChange = (value: string) => {
+    setDateFilter(value);
+    setServerDateFilter(value);
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+  };
 
   // --- Handlers UI ---
   const handleViewRequest = (request: ProviderRequest) => {
@@ -84,30 +108,36 @@ export const RequestsPage = () => {
   };
 
   const onApprove = async (id: string) => {
-    await approveRequest(id);
-    // Invalidar la query para refrescar los datos
-    queryClient.invalidateQueries({ queryKey: ['provider-requests-list'] });
-    handleCloseModal();
+    try {
+      await approveRequest(id);
+      queryClient.invalidateQueries({ queryKey: ['provider-requests-list'] });
+      handleCloseModal();
+      feedback.showFeedback("success", FEEDBACK.SUCCESS.UPDATE.title, FEEDBACK.SUCCESS.UPDATE.message);
+    } catch {
+      feedback.showFeedback("error", FEEDBACK.ERROR.GENERIC.title, FEEDBACK.ERROR.GENERIC.message);
+    }
   };
 
   const handleOpenRejectModal = (request: ProviderRequest) => {
     setRequestToReject(request);
     setIsRejectModalOpen(true);
-    // Si el modal de detalles está abierto, cerrarlo
     if (isModalOpen) {
       handleCloseModal();
     }
   };
 
   const handleReject = async (id: string, reason: string) => {
-    await rejectRequest(id, reason);
-    // Invalidar la query para refrescar los datos
-    queryClient.invalidateQueries({ queryKey: ['provider-requests-list'] });
-    setIsRejectModalOpen(false);
-    setRequestToReject(null);
-    // Si el modal de detalles está abierto, cerrarlo
-    if (isModalOpen) {
-      handleCloseModal();
+    try {
+      await rejectRequest(id, reason);
+      queryClient.invalidateQueries({ queryKey: ['provider-requests-list'] });
+      setIsRejectModalOpen(false);
+      setRequestToReject(null);
+      if (isModalOpen) {
+        handleCloseModal();
+      }
+      feedback.showFeedback("success", FEEDBACK.SUCCESS.UPDATE.title, FEEDBACK.SUCCESS.UPDATE.message);
+    } catch {
+      feedback.showFeedback("error", FEEDBACK.ERROR.GENERIC.title, FEEDBACK.ERROR.GENERIC.message);
     }
   };
 
@@ -117,15 +147,10 @@ export const RequestsPage = () => {
 
   const handleExportCSV = () => {
     if (requests.length === 0) {
-      setSnackbar({
-        open: true,
-        message: "No hay datos para exportar",
-        severity: 'info'
-      });
+      feedback.showFeedback("info", "Sin datos", "No hay datos para exportar");
       return;
     }
 
-    // Definir las columnas del CSV
     const headers = [
       "ID",
       "Nombre del Proveedor",
@@ -141,7 +166,6 @@ export const RequestsPage = () => {
       "Motivo de Rechazo"
     ];
 
-    // Convertir los datos a filas CSV
     const rows = requests.map((request) => [
       request.id,
       request.providerName,
@@ -157,12 +181,10 @@ export const RequestsPage = () => {
       request.rejectionReason || ""
     ]);
 
-    // Crear el contenido CSV
     const csvContent = [
       headers.join(","),
       ...rows.map(row => 
         row.map(cell => {
-          // Escapar comillas y envolver en comillas si contiene comas o saltos de línea
           const cellStr = String(cell || "");
           if (cellStr.includes(",") || cellStr.includes("\n") || cellStr.includes('"')) {
             return `"${cellStr.replace(/"/g, '""')}"`;
@@ -172,15 +194,12 @@ export const RequestsPage = () => {
       )
     ].join("\n");
 
-    // Crear el BOM para UTF-8 (para que Excel abra correctamente caracteres especiales)
     const BOM = "\uFEFF";
     const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
     
-    // Crear el link de descarga
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     
-    // Nombre del archivo con fecha actual
     const date = new Date().toISOString().split("T")[0];
     const fileName = `solicitudes_proveedores_${date}.csv`;
     
@@ -192,14 +211,9 @@ export const RequestsPage = () => {
     link.click();
     document.body.removeChild(link);
     
-    // Limpiar el URL object
     URL.revokeObjectURL(url);
     
-    setSnackbar({
-      open: true,
-      message: `Archivo CSV exportado correctamente: ${fileName}`,
-      severity: 'success'
-    });
+    feedback.showFeedback("success", "Exportación completada", `Archivo CSV exportado correctamente: ${fileName}`);
   };
 
   // --- Definición de Columnas ---
@@ -283,6 +297,8 @@ export const RequestsPage = () => {
           icon = <AirportShuttle color="error" fontSize="small" />;
         if (type === "supplies")
           icon = <Inventory color="warning" fontSize="small" />;
+        if (type === "clinica")
+          icon = <Business color="secondary" fontSize="small" />;
 
         return (
           <Stack
@@ -376,106 +392,63 @@ export const RequestsPage = () => {
       notificationsVariant="professional"
       notificationsViewAllPath={notificationsViewAllPath}
     >
-      <Box sx={{ height: "100%", width: "100%", p: 1 }}>
-        {/* Header */}
-        <Stack
-          direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={3}
-        >
-          <Box>
-            <Typography variant="h5" fontWeight={700} color="text.primary">
-              Solicitudes de Proveedores
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Gestiona las solicitudes de registro y verificación.
-            </Typography>
-          </Box>
-          <Button 
-            variant="outlined" 
-            startIcon={<Download />}
-            onClick={handleExportCSV}
-            disabled={requests.length === 0 || isLoading}
-          >
-            Exportar CSV
-          </Button>
-        </Stack>
+      <TablePageLayout>
+        <TableToolbar
+          title="Solicitudes de Proveedores"
+          subtitle="Gestiona las solicitudes de registro y verificación."
+          searchValue={filters.searchText}
+          searchPlaceholder="Buscar por nombre o email..."
+          onSearchChange={setSearchText}
+          filters={[
+            {
+              key: "status",
+              label: "Estado",
+              value: filters.statusFilter,
+              onChange: handleStatusFilterChange,
+              options: [
+                { value: "all", label: "Todos" },
+                { value: "PENDING", label: "Pendientes" },
+                { value: "APPROVED", label: "Aprobados" },
+                { value: "REJECTED", label: "Rechazados" },
+              ],
+            },
+          ]}
+          extraFilters={
+            <TextField
+              type="date"
+              size="small"
+              sx={{ minWidth: 150 }}
+              slotProps={{ inputLabel: { shrink: true } }}
+              label="Desde fecha"
+              value={filters.dateFilter}
+              onChange={(e) => handleDateFilterChange(e.target.value)}
+            />
+          }
+          actions={[
+            {
+              label: "Exportar CSV",
+              icon: <Download />,
+              onClick: handleExportCSV,
+              disabled: requests.length === 0 || isLoading,
+              variant: "outlined",
+            },
+          ]}
+          sx={{ mb: 3 }}
+        />
 
-        {/* Filtros (Conectados al Hook) */}
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={2}
-          mb={3}
-          sx={{
-            bgcolor: "white",
-            p: 2,
-            borderRadius: 2,
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-          }}
-        >
-          <TextField
-            placeholder="Buscar por nombre o email..."
-            size="small"
-            sx={{ flexGrow: 1 }}
-            value={filters.searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-          <TextField
-            select
-            label="Estado"
-            size="small"
-            value={filters.statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            sx={{ minWidth: 150 }}
-          >
-            <MenuItem value="all">Todos</MenuItem>
-            <MenuItem value="PENDING">Pendientes</MenuItem>
-            <MenuItem value="APPROVED">Aprobados</MenuItem>
-            <MenuItem value="REJECTED">Rechazados</MenuItem>
-          </TextField>
-          <TextField
-            type="date"
-            size="small"
-            sx={{ minWidth: 150 }}
-            slotProps={{ inputLabel: { shrink: true } }}
-            label="Desde fecha"
-            value={filters.dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-          />
-        </Stack>
+        <DataTable<ProviderRequest>
+          rows={requests}
+          columns={columns}
+          rowCount={pagination.total}
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
+          pageSizeOptions={[5, 10, 20]}
+          loading={isLoading}
+          rowHeight={80}
+          emptyTitle="Sin solicitudes"
+          emptyDescription="No hay solicitudes de proveedores que coincidan con los filtros."
+        />
 
-        {/* DataGrid */}
-        <Box
-          sx={{
-            height: 600,
-            width: "100%",
-            bgcolor: "white",
-            borderRadius: 2,
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-          }}
-        >
-          <DataGrid
-            rows={requests}
-            columns={columns}
-            loading={isLoading}
-            rowHeight={80}
-            initialState={{
-              pagination: { paginationModel: { page: 0, pageSize: 10 } },
-            }}
-            pageSizeOptions={[5, 10, 20]}
-            disableColumnResize
-            disableRowSelectionOnClick
-            sx={{
-              border: "none",
-              "& .MuiDataGrid-cell": { display: "flex", alignItems: "center" },
-              "& .MuiDataGrid-cell:focus": { outline: "none" },
-              "& .MuiDataGrid-columnHeader:focus": { outline: "none" },
-            }}
-          />
-        </Box>
-
-        {/* Modal de Detalles */}
         <RequestDetailModal
           open={isModalOpen}
           onClose={handleCloseModal}
@@ -483,8 +456,6 @@ export const RequestsPage = () => {
           onApprove={onApprove}
           onReject={onReject}
         />
-
-        {/* Modal de Rechazo */}
         <RejectProviderRequestModal
           open={isRejectModalOpen}
           onClose={() => {
@@ -494,24 +465,7 @@ export const RequestsPage = () => {
           request={requestToReject}
           onConfirm={handleReject}
         />
-
-        {/* Snackbar para notificaciones */}
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        >
-          <Alert
-            onClose={() => setSnackbar({ ...snackbar, open: false })}
-            severity={snackbar.severity}
-            sx={{ width: '100%' }}
-            variant="filled"
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </Box>
+      </TablePageLayout>
     </DashboardLayout>
   );
 };

@@ -17,6 +17,7 @@ import { useState } from "react";
 import type { LaboratoryDashboard, WorkSchedule } from "../../domain/LaboratoryDashboard.entity";
 import { EditScheduleModal } from "./EditScheduleModal";
 import { updateLaboratoryProfileAPI } from "../../infrastructure/laboratories.repository";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 interface LaboratoryScheduleSectionProps {
   data: LaboratoryDashboard;
@@ -37,6 +38,7 @@ export const LaboratoryScheduleSection = ({
   data,
   onUpdate,
 }: LaboratoryScheduleSectionProps) => {
+  const feedback = useFeedbackStore();
   const [isEditOpen, setIsEditOpen] = useState(false);
 
   const schedule = data.laboratory.workSchedule || [];
@@ -135,7 +137,6 @@ export const LaboratoryScheduleSection = ({
         </TableContainer>
       </Paper>
 
-      {/* Modal de Edición */}
       <EditScheduleModal
         open={isEditOpen}
         onClose={() => setIsEditOpen(false)}
@@ -157,8 +158,10 @@ export const LaboratoryScheduleSection = ({
                 endTime: s.endTime,
               })),
             });
+            feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
           } catch (e) {
             console.error("Error guardando horarios laboratorio:", e);
+            feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
           }
 
           const updatedData = {
@@ -174,4 +177,3 @@ export const LaboratoryScheduleSection = ({
     </Box>
   );
 };
-

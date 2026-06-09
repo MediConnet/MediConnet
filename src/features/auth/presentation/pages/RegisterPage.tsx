@@ -44,6 +44,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import * as Yup from "yup";
 import { ROUTES } from "../../../../app/config/constants";
+import { getUserFriendlyMessage } from "../../../../shared/lib/api-error";
 import type { PharmacyChain } from "../../../../features/admin-dashboard/domain/pharmacy-chain.entity";
 import {
   handleBothInput,
@@ -60,6 +61,8 @@ import {
 import { useRegisterProfessional } from "../hooks/useRegisterProfessional";
 import { useCities } from "../hooks/useCities";
 import { useSpecialties } from "../hooks/useSpecialties";
+import { SuccessModal } from "../../../../shared/components/modals/SuccessModal";
+import { ErrorModal } from "../../../../shared/components/modals/ErrorModal";
 
 // Tipos
 type ServiceType =
@@ -116,12 +119,17 @@ export const RegisterPage = () => {
     (searchParams.get("tipo") as ServiceType | null) ||
     (searchParams.get("type") as ServiceType | null);
 
+  const invitationTokenFromQuery = searchParams.get("invitation");
+  const emailFromInvitation = searchParams.get("email") || "";
+
   const initialType = typeFromQuery;
   const [step, setStep] = useState(initialType ? 1 : 0);
   const [selectedType, setSelectedType] = useState<ServiceType | null>(
     initialType,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Estados para archivos
   const [licenses, setLicenses] = useState<File[]>([]);
@@ -136,11 +144,28 @@ export const RegisterPage = () => {
   const [pharmacyChains, setPharmacyChains] = useState<PharmacyChain[]>([]);
   
   // Usar hooks de React Query para ciudades y especialidades
-  const { data: citiesData = [], isLoading: citiesLoading } = useCities();
+  const {
+    data: citiesData = [],
+    isLoading: citiesLoading,
+    isError: citiesIsError,
+  } = useCities();
   const { data: specialtiesData = [], isLoading: specialtiesLoading } = useSpecialties();
   
   const cities = citiesData;
   const specialtiesList = selectedType === "doctor" ? specialtiesData : [];
+
+  const goHome = () => {
+    setShowSuccessModal(false);
+    navigate(ROUTES.HOME);
+  };
+
+  useEffect(() => {
+    if (!showSuccessModal) return;
+    const timer = setTimeout(() => {
+      goHome();
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [showSuccessModal]);
 
   // Carga de cadenas de farmacia
   useEffect(() => {
@@ -161,28 +186,28 @@ export const RegisterPage = () => {
   const personalInfoSchema = Yup.object({
     nombreCompleto: Yup.string()
       .min(3, "Mínimo 3 caracteres")
-      .required("Requerido"),
-    email: Yup.string().email("Email inválido").required("Requerido"),
+      .required("El nombre completo es obligatorio"),
+    email: Yup.string().email("Correo electrónico inválido").required("Debe ingresar el correo electrónico"),
     telefono: Yup.string()
-      .matches(/^\d{10}$/, "Debe tener 10 dígitos")
-      .required("Requerido"),
+      .matches(/^\d{10}$/, "El teléfono debe tener 10 dígitos")
+      .required("El número de teléfono es obligatorio"),
     whatsapp: Yup.string()
-      .matches(/^\d{10}$/, "Debe tener 10 dígitos")
-      .required("Requerido"),
-    password: Yup.string().min(6, "Mínimo 6 caracteres").required("Requerido"),
+      .matches(/^\d{10}$/, "El WhatsApp debe tener 10 dígitos")
+      .required("El número de WhatsApp es obligatorio"),
+    password: Yup.string().min(8, "La contraseña debe tener al menos 8 caracteres").max(20, "La contraseña debe tener máximo 20 caracteres").required("Debe ingresar una contraseña"),
     confirmPassword: Yup.string()
       .oneOf([Yup.ref("password")], "Las contraseñas no coinciden")
-      .required("Requerido"),
+      .required("Debe confirmar la contraseña"),
   });
 
   const getServiceInfoSchema = () => {
     const baseSchema: any = {
       descripcion: Yup.string()
-        .min(10, "Mínimo 10 caracteres")
-        .required("Requerido"),
+        .min(10, "La descripción debe tener al menos 10 caracteres")
+        .required("La descripción del servicio es obligatoria"),
       direccion: Yup.string()
-        .min(5, "Mínimo 5 caracteres")
-        .required("Requerido"),
+        .min(5, "La dirección debe tener al menos 5 caracteres")
+        .required("La dirección no puede estar vacía"),
       cityId: Yup.string().required("Selecciona una ciudad"),
       tarifaConsulta: Yup.string(),
     };
@@ -190,33 +215,33 @@ export const RegisterPage = () => {
     if (selectedType === "doctor") {
       baseSchema.yearsOfExperience = Yup.string()
         .matches(/^\d+$/, "Solo números")
-        .required("Requerido");
+        .required("Los años de experiencia son obligatorios");
 
       baseSchema.nombreServicio = Yup.string().notRequired();
 
       baseSchema.especialidad = Yup.array()
         .min(1, "Selecciona al menos una especialidad")
-        .required("Requerido");
+        .required("Debe seleccionar al menos una especialidad");
     }
     // Lógica para otros proveedores
     else {
       baseSchema.yearsOfExperience = Yup.string().notRequired();
 
       if (selectedType === "pharmacy") {
-        baseSchema.chainId = Yup.string().required("Selecciona una cadena");
+        baseSchema.chainId = Yup.string().required("Selecciona una cadena de farmacia");
         baseSchema.nombreServicio = Yup.string().when("chainId", {
           is: (chainId: string) => !chainId || chainId === "",
           then: (schema) =>
             schema
-              .min(3, "Mínimo 3 caracteres")
-              .required("El nombre del servicio es requerido"),
+              .min(3, "El nombre de la farmacia debe tener al menos 3 caracteres")
+              .required("El nombre de la farmacia es obligatorio"),
           otherwise: (schema) => schema.notRequired(),
         });
       } else {
         // Para Clínicas, Labs, Ambulancias, etc.
         baseSchema.nombreServicio = Yup.string()
-          .min(3, "Mínimo 3 caracteres")
-          .required("Requerido");
+          .min(3, "El nombre del servicio debe tener al menos 3 caracteres")
+          .required("El nombre del servicio es obligatorio");
       }
     }
 
@@ -226,7 +251,7 @@ export const RegisterPage = () => {
   const formik = useFormik({
     initialValues: {
       nombreCompleto: "",
-      email: "",
+      email: emailFromInvitation,
       telefono: "",
       whatsapp: "",
       password: "",
@@ -281,9 +306,13 @@ export const RegisterPage = () => {
           }
 
           // 4. Payload
+          const selectedCity = cities.find((c) => c.id === values.cityId);
           const professionalData = {
             email: values.email,
             password: values.password,
+            ...(invitationTokenFromQuery
+              ? { invitationToken: invitationTokenFromQuery }
+              : {}),
             firstName: firstName,
             lastName: lastName,
             name: values.nombreCompleto,
@@ -294,6 +323,7 @@ export const RegisterPage = () => {
             serviceName: finalServiceName,
             address: values.direccion,
             cityId: values.cityId,
+            city: selectedCity?.name || "",
             description: values.descripcion,
             price: selectedType === "doctor" ? values.tarifaConsulta : "",
 
@@ -313,8 +343,13 @@ export const RegisterPage = () => {
 
           // @ts-ignore
           await submit(professionalData);
-          setStep(3);
+          setShowSuccessModal(true);
         } catch (error) {
+          const msg = getUserFriendlyMessage(error, {
+            fallback: "Error al enviar la solicitud. Intenta nuevamente.",
+            allowBackendMessage: true,
+          });
+          setErrorMessage(msg);
           console.error("Error al enviar solicitud:", error);
         } finally {
           setIsSubmitting(false);
@@ -736,6 +771,7 @@ export const RegisterPage = () => {
                   }
                   helperText={formik.touched.password && formik.errors.password}
                   slotProps={{
+                    htmlInput: { maxLength: 20 },
                     input: {
                       startAdornment: (
                         <InputAdornment position="start">
@@ -763,6 +799,7 @@ export const RegisterPage = () => {
                     formik.errors.confirmPassword
                   }
                   slotProps={{
+                    htmlInput: { maxLength: 20 },
                     input: {
                       startAdornment: (
                         <InputAdornment position="start">
@@ -1043,41 +1080,53 @@ export const RegisterPage = () => {
                   }}
                 />
 
-                <FormControl
-                  fullWidth
-                  required
-                  error={formik.touched.cityId && Boolean(formik.errors.cityId)}
-                >
-                  <TextField
-                    select
-                    fullWidth
-                    required
-                    label="Ciudad"
-                    name="cityId"
-                    value={formik.values.cityId}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    error={
-                      formik.touched.cityId && Boolean(formik.errors.cityId)
-                    }
-                    helperText={formik.touched.cityId && formik.errors.cityId}
-                    slotProps={{
-                      input: {
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <MapIcon sx={{ color: "#9ca3af" }} />
-                          </InputAdornment>
-                        ),
-                      },
-                    }}
-                  >
-                    {cities.map((city) => (
-                      <MenuItem key={city.id} value={city.id}>
-                        {city.name}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </FormControl>
+                <Autocomplete
+                  options={cities}
+                  loading={citiesLoading}
+                  getOptionLabel={(option: City) => option.name}
+                  value={cities.find((city) => city.id === formik.values.cityId) || null}
+                  onChange={(_, selectedCity) => {
+                    formik.setFieldValue("cityId", selectedCity?.id || "");
+                  }}
+                  onBlur={() => formik.setFieldTouched("cityId", true)}
+                  noOptionsText={
+                    citiesIsError
+                      ? "No se pudieron cargar las ciudades"
+                      : "No hay ciudades disponibles"
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      fullWidth
+                      required
+                      label="Ciudad"
+                      error={formik.touched.cityId && Boolean(formik.errors.cityId)}
+                      helperText={
+                        (formik.touched.cityId && formik.errors.cityId) ||
+                        (citiesIsError ? "Error al cargar ciudades, intenta recargar la página." : "")
+                      }
+                      slotProps={{
+                        input: {
+                          ...params.InputProps,
+                          startAdornment: (
+                            <>
+                              <InputAdornment position="start">
+                                <MapIcon sx={{ color: "#9ca3af" }} />
+                              </InputAdornment>
+                              {params.InputProps.startAdornment}
+                            </>
+                          ),
+                          endAdornment: (
+                            <>
+                              {citiesLoading ? <CircularProgress color="inherit" size={18} /> : null}
+                              {params.InputProps.endAdornment}
+                            </>
+                          ),
+                        },
+                      }}
+                    />
+                  )}
+                />
 
                 {/* CAMPO EXPERIENCIA: Solo para Médicos */}
                 {selectedType === "doctor" && (
@@ -1351,7 +1400,7 @@ export const RegisterPage = () => {
           </Card>
         )}
 
-        {/* STEP 3: SUCCESS */}
+        {/* STEP 3: SUCCESS (no longer used — now handled by SuccessModal) */}
         {step === 3 && (
           <Box sx={{ textAlign: "center", animation: "scaleIn 0.5s ease-in" }}>
             <Box
@@ -1406,6 +1455,23 @@ export const RegisterPage = () => {
             </Button>
           </Box>
         )}
+
+        {/* Success Modal */}
+        <SuccessModal
+          open={showSuccessModal}
+          title="¡Solicitud Enviada!"
+          message="Tu solicitud será revisada por el administrador. Recibirás una notificación por correo cuando sea aprobada."
+          buttonText="Volver al inicio"
+          onAction={goHome}
+        />
+
+        {/* Error Modal */}
+        <ErrorModal
+          open={!!errorMessage}
+          title="Error al registrar"
+          message={errorMessage || ""}
+          onAction={() => setErrorMessage(null)}
+        />
       </Box>
     </Box>
   );

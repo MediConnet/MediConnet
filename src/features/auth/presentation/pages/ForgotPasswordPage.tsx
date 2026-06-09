@@ -20,8 +20,8 @@ import { Link as RouterLink, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import { ROUTES } from "../../../../app/config/constants";
 import { useSendResetPassword } from "../hooks/useSendResetPassword";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
-// Esquema de validación
 const forgotPasswordValidationSchema = Yup.object({
   email: Yup.string()
     .email("Correo electrónico inválido")
@@ -30,9 +30,9 @@ const forgotPasswordValidationSchema = Yup.object({
 
 export const ForgotPasswordPage = () => {
   const navigate = useNavigate();
+  const feedback = useFeedbackStore();
   const [success, setSuccess] = useState(false);
 
-  // Hook de Clean Architecture (TanStack Query)
   const sendResetPassword = useSendResetPassword();
 
   const formik = useFormik({
@@ -43,17 +43,22 @@ export const ForgotPasswordPage = () => {
     onSubmit: async (values) => {
       try {
         await sendResetPassword.mutateAsync({ email: values.email });
+        feedback.showFeedback('success', 'Correo enviado', `Hemos enviado las instrucciones para restablecer tu contraseña a ${values.email}.`);
         setSuccess(true);
       } catch (err: any) {
         console.error("Error sending reset link:", err);
-        
+
+        if (err?.code === "ERR_NETWORK") {
+          feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
+          return;
+        }
+
         let errorMessage = "Ocurrió un error. Verifica tu conexión o intenta más tarde.";
-        
-        // Si el backend devuelve 404, significa que el correo no existe
+
         if (err.response?.status === 404) {
           errorMessage = "El correo electrónico no está registrado.";
         }
-        
+
         formik.setFieldError("email", errorMessage);
       }
     },
@@ -72,7 +77,6 @@ export const ForgotPasswordPage = () => {
         backgroundColor: "#f9fafb",
       }}
     >
-      {/* --- EFECTOS DE FONDO --- */}
       <Box
         sx={{
           position: "absolute",
@@ -123,7 +127,6 @@ export const ForgotPasswordPage = () => {
           },
         }}
       >
-        {/* Botón Volver */}
         <Button
           component={RouterLink}
           to={ROUTES.LOGIN}
@@ -151,7 +154,6 @@ export const ForgotPasswordPage = () => {
           }}
         >
           <CardContent sx={{ textAlign: "center", p: { xs: 3, sm: 4 } }}>
-            {/* LOGO */}
             <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
               <Box
                 component="img"
@@ -166,7 +168,6 @@ export const ForgotPasswordPage = () => {
             </Box>
 
             {success ? (
-              // --- VISTA DE ÉXITO ---
               <Box sx={{ animation: "fadeIn 0.5s ease-in" }}>
                 <CheckCircleOutline
                   sx={{ fontSize: 60, color: "#14b8a6", mb: 2 }}
@@ -208,7 +209,6 @@ export const ForgotPasswordPage = () => {
                 </Button>
               </Box>
             ) : (
-              // --- FORMULARIO DE RECUPERACIÓN ---
               <>
                 <Typography
                   variant="h4"

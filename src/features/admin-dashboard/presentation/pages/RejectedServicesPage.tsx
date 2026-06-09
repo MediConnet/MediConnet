@@ -1,35 +1,31 @@
 import {
   AirportShuttle,
+  Business,
   CheckCircle,
   Close,
   History,
   Inventory,
   LocalPharmacy,
   MedicalServices,
+  Refresh,
   Science,
 } from "@mui/icons-material";
 import {
   Avatar,
   Box,
   Chip,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
-  TextField,
   Typography,
   Paper,
   Tabs,
   Tab,
+  TextField,
 } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
-import {
-  DataGrid,
-  type GridColDef,
-} from "@mui/x-data-grid";
-import { useState, useMemo } from "react";
+import { type GridColDef, type GridPaginationModel } from "@mui/x-data-grid";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
+import { DataTable, TableToolbar, TablePageLayout } from "../../../../shared/components/DataTable";
 import type { ProviderRequest } from "../../domain/provider-request.entity";
 import type { AdRequest } from "../../domain/ad-request.entity";
 import { useHistoryRequests } from "../hooks/useHistoryRequests";
@@ -47,6 +43,7 @@ const SERVICE_ICONS: Record<string, React.ReactNode> = {
   laboratory: <Science />,
   ambulance: <AirportShuttle />,
   supplies: <Inventory />,
+  clinica: <Business />,
 };
 
 const SERVICE_LABELS: Record<string, string> = {
@@ -55,180 +52,212 @@ const SERVICE_LABELS: Record<string, string> = {
   laboratory: "Laboratorio",
   ambulance: "Ambulancia",
   supplies: "Insumos Médicos",
+  clinica: "Clínica",
 };
 
-// Colores específicos para cada tipo de servicio
 const SERVICE_COLORS: Record<string, string> = {
-  doctor: "#f97316", // Naranja
-  pharmacy: "#10b981", // Verde
-  laboratory: "#ef4444", // Rojo
-  ambulance: "#06b6d4", // Cian
-  supplies: "#f59e0b", // Amarillo/Naranja
+  doctor: "#f97316",
+  pharmacy: "#10b981",
+  laboratory: "#ef4444",
+  ambulance: "#06b6d4",
+  supplies: "#f59e0b",
+  clinica: "#8b5cf6",
 };
+
+const STATUS_OPTIONS = [
+  { value: "all", label: "Todos" },
+  { value: "APPROVED", label: "Aprobados" },
+  { value: "REJECTED", label: "Rechazados" },
+  { value: "PENDING", label: "Pendientes" },
+];
+
+const SERVICE_TYPE_OPTIONS = [
+  { value: "", label: "Todos los servicios" },
+  { value: "doctor", label: "Médico" },
+  { value: "pharmacy", label: "Farmacia" },
+  { value: "laboratory", label: "Laboratorio" },
+  { value: "ambulance", label: "Ambulancia" },
+  { value: "supplies", label: "Insumos Médicos" },
+  { value: "clinica", label: "Clínica" },
+];
 
 export const HistoryPage = () => {
-  // Usar el endpoint optimizado GET /api/admin/history para historial de proveedores
-  const { data: historyRequests, isLoading: isLoadingProviders } = useHistoryRequests();
-  const { data: allAdRequests, isLoading: isLoadingAds } = useAdRequests();
-  const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "APPROVED" | "REJECTED" | "PENDING">("all");
   const [activeTab, setActiveTab] = useState<"providers" | "ads">("providers");
+  const [searchText, setSearchText] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [serviceTypeFilter, setServiceTypeFilter] = useState<string>("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
 
-  // Filtrar servicios según el estado seleccionado
-  // Nota: El endpoint /admin/history ya devuelve solo APPROVED y REJECTED, pero mantenemos el filtro por si acaso
-  const filteredByStatus = useMemo(() => {
-    if (activeTab === "providers") {
-      if (!historyRequests) return [];
-      // El endpoint /admin/history ya devuelve solo aprobadas y rechazadas, pero filtramos por si acaso
-      if (statusFilter === "all") return historyRequests;
-      // Si el filtro es PENDING, no debería haber resultados del historial, pero lo manejamos
-      if (statusFilter === "PENDING") return [];
-      return historyRequests.filter((req) => req.status === statusFilter);
-    } else {
-      if (!allAdRequests) return [];
-      if (statusFilter === "all") return allAdRequests;
-      return allAdRequests.filter((req) => req.status === statusFilter);
-    }
-  }, [historyRequests, allAdRequests, statusFilter, activeTab]);
+  // Debounce search input (400ms)
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      setDebouncedSearch(searchText);
+      setPaginationModel((prev) => ({ ...prev, page: 0 }));
+    }, 400);
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, [searchText]);
 
-  const filteredRequests = useMemo(() => {
-    if (!searchText) return filteredByStatus;
+  const searchOrDefault = debouncedSearch || undefined;
 
-    const searchLower = searchText.toLowerCase();
-    if (activeTab === "providers") {
-      return (filteredByStatus as ProviderRequest[]).filter(
-        (req) =>
-          req.providerName.toLowerCase().includes(searchLower) ||
-          req.email.toLowerCase().includes(searchLower) ||
-          (req.city && req.city.toLowerCase().includes(searchLower))
-      );
-    } else {
-      return (filteredByStatus as AdRequest[]).filter(
-        (req) =>
-          req.providerName.toLowerCase().includes(searchLower) ||
-          req.providerEmail.toLowerCase().includes(searchLower)
-      );
-    }
-  }, [filteredByStatus, searchText, activeTab]);
+  console.log(`📊 [HistoryPage] Filters: tab=${activeTab}, status=${statusFilter}, serviceType=${serviceTypeFilter}, dateFrom="${dateFrom}", dateTo="${dateTo}", search="${debouncedSearch}", page=${paginationModel.page + 1}`);
 
-  // Estadísticas
+  const { data: historyResult, isLoading: isLoadingProviders, isError: isErrorProviders, error: errorProviders, refetch: refetchHistory } = useHistoryRequests({
+    page: paginationModel.page + 1,
+    limit: paginationModel.pageSize,
+    status: statusFilter !== "all" ? statusFilter : undefined,
+    search: searchOrDefault,
+    serviceType: serviceTypeFilter || undefined,
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
+  });
+  const { data: adResult, isLoading: isLoadingAds, isError: isErrorAds, error: errorAds, refetch: refetchAds } = useAdRequests({
+    page: paginationModel.page + 1,
+    limit: paginationModel.pageSize,
+    status: statusFilter !== "all" ? statusFilter : undefined,
+    search: searchOrDefault,
+    serviceType: serviceTypeFilter || undefined,
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
+  });
+
+  const historyData = historyResult?.data ?? [];
+  const historyTotal = historyResult?.pagination?.total ?? 0;
+  const adData = adResult?.data ?? [];
+  const adTotal = adResult?.pagination?.total ?? 0;
+
+  const isLoading = activeTab === "providers" ? isLoadingProviders : isLoadingAds;
+  const currentRows = activeTab === "providers" ? historyData : adData;
+  const currentTotal = activeTab === "providers" ? historyTotal : adTotal;
+
   const stats = useMemo(() => {
-    const approved = filteredRequests.filter((r: any) => r.status === "APPROVED").length;
-    const rejected = filteredRequests.filter((r: any) => r.status === "REJECTED").length;
-    const pending = filteredRequests.filter((r: any) => r.status === "PENDING").length;
-    return { approved, rejected, pending, total: filteredRequests.length };
-  }, [filteredRequests]);
+    const approved = currentRows.filter((r) => r.status === "APPROVED").length;
+    const rejected = currentRows.filter((r) => r.status === "REJECTED").length;
+    const pending = currentRows.filter((r) => r.status === "PENDING").length;
+    return { approved, rejected, pending, total: currentTotal };
+  }, [currentRows, currentTotal]);
 
-  const isLoading = isLoadingProviders || isLoadingAds;
+  const resetPagination = useCallback(() => {
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+  }, []);
 
-  // Columnas para solicitudes de proveedores
+  const handleTabChange = (_: any, newValue: "providers" | "ads") => {
+    setActiveTab(newValue);
+    setSearchText("");
+    setDebouncedSearch("");
+    setServiceTypeFilter("");
+    setDateFrom("");
+    setDateTo("");
+    setStatusFilter("all");
+    resetPagination();
+  };
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    resetPagination();
+  };
+
+  const handleServiceTypeFilterChange = (value: string) => {
+    setServiceTypeFilter(value);
+    resetPagination();
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchText(value);
+  };
+
+  const handleDateFromChange = (value: string) => {
+    setDateFrom(value);
+    resetPagination();
+  };
+
+  const handleDateToChange = (value: string) => {
+    setDateTo(value);
+    resetPagination();
+  };
+
+  const handleRefresh = useCallback(() => {
+    if (activeTab === "providers") {
+      refetchHistory();
+    } else {
+      refetchAds();
+    }
+  }, [activeTab, refetchHistory, refetchAds]);
+
+  const renderProviderCell = (name: string, email: string, serviceType: string) => {
+    const color = SERVICE_COLORS[serviceType] || "#6b7280";
+    const initial = name.charAt(0).toUpperCase();
+    return (
+      <Stack direction="row" spacing={2} alignItems="center" sx={{ py: 1, height: "100%" }}>
+        <Avatar sx={{ bgcolor: color, width: 48, height: 48, fontSize: "1.1rem", fontWeight: 700, color: "white", flexShrink: 0, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+          {initial}
+        </Avatar>
+        <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", flex: 1, minWidth: 0, overflow: "hidden" }}>
+          <Typography variant="body2" fontWeight={600} sx={{ lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {name}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", mt: 0.5 }}>
+            {email}
+          </Typography>
+        </Box>
+      </Stack>
+    );
+  };
+
+  const renderServiceTypeCell = (value: string, status: string) => (
+    <Stack direction="row" spacing={1} alignItems="center">
+      <Box sx={{ color: status === "APPROVED" ? "success.main" : status === "REJECTED" ? "error.main" : "warning.main" }}>
+        {SERVICE_ICONS[value]}
+      </Box>
+      <Typography variant="body2">{SERVICE_LABELS[value]}</Typography>
+    </Stack>
+  );
+
+  const renderStatusChip = (status: string) => {
+    if (status === "APPROVED") return <Chip label="Aprobado" color="success" size="small" icon={<CheckCircle />} />;
+    if (status === "REJECTED") return <Chip label="Rechazado" color="error" size="small" icon={<Close />} />;
+    return <Chip label="Pendiente" color="warning" size="small" />;
+  };
+
+  const renderRejectionCell = (status: string, reason?: string) => (
+    <Typography variant="body2" color="text.secondary" sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+      {status === "REJECTED" ? (reason || "Sin motivo especificado") : status === "APPROVED" ? "Aprobado" : "Pendiente de revisión"}
+    </Typography>
+  );
+
   const providerColumns: GridColDef<ProviderRequest>[] = [
     {
       field: "providerName",
       headerName: "Proveedor",
-      width: 250,
-      renderCell: (params: any) => {
-        const serviceType = params.row.serviceType || "doctor";
-        const serviceColor = SERVICE_COLORS[serviceType] || "#6b7280";
-        const initial = params.row.providerName.charAt(0).toUpperCase();
-        
-        return (
-          <Stack direction="row" spacing={2} alignItems="center" sx={{ py: 1, height: "100%" }}>
-            <Avatar
-              sx={{
-                bgcolor: serviceColor,
-                width: 48,
-                height: 48,
-                fontSize: "1.1rem",
-                fontWeight: 700,
-                color: "white",
-                flexShrink: 0,
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              }}
-            >
-              {initial}
-            </Avatar>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                flex: 1,
-                minWidth: 0,
-                overflow: "hidden",
-              }}
-            >
-              <Typography
-                variant="body2"
-                fontWeight={600}
-                sx={{
-                  lineHeight: 1.2,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {params.row.providerName}
-              </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{
-                  lineHeight: 1.2,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  mt: 0.5,
-                }}
-              >
-                {params.row.email}
-              </Typography>
-            </Box>
-          </Stack>
-        );
-      },
+      flex: 1,
+      minWidth: 280,
+      renderCell: (params) => renderProviderCell(params.row.providerName, params.row.email, params.row.serviceType),
     },
     {
       field: "serviceType",
       headerName: "Tipo de Servicio",
       width: 180,
-      renderCell: (params: any) => (
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Box
-            sx={{
-              color:
-                params.row.status === "APPROVED"
-                  ? "success.main"
-                  : params.row.status === "REJECTED"
-                  ? "error.main"
-                  : "warning.main",
-            }}
-          >
-            {SERVICE_ICONS[params.value]}
-          </Box>
-          <Typography variant="body2">{SERVICE_LABELS[params.value]}</Typography>
-        </Stack>
-      ),
+      renderCell: (params) => renderServiceTypeCell(params.value, params.row.status),
     },
     {
       field: "city",
       headerName: "Ciudad",
       width: 150,
-      renderCell: (params: any) => (
-        <Typography variant="body2">{params.value || "N/A"}</Typography>
-      ),
+      renderCell: (params) => <Typography variant="body2">{params.value || "N/A"}</Typography>,
     },
     {
       field: "submissionDate",
       headerName: "Fecha de Solicitud",
       width: 180,
-      renderCell: (params: any) => (
+      renderCell: (params) => (
         <Typography variant="body2">
-          {new Date(params.value).toLocaleDateString("es-ES", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          })}
+          {new Date(params.value).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}
         </Typography>
       ),
     },
@@ -236,161 +265,37 @@ export const HistoryPage = () => {
       field: "rejectionReason",
       headerName: "Motivo / Observaciones",
       width: 300,
-      renderCell: (params: any) => (
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {params.row.status === "REJECTED"
-            ? params.value || "Sin motivo especificado"
-            : params.row.status === "APPROVED"
-            ? "Aprobado"
-            : "Pendiente de revisión"}
-        </Typography>
-      ),
+      renderCell: (params) => renderRejectionCell(params.row.status, params.value),
     },
     {
       field: "status",
       headerName: "Estado",
-      width: 150,
-      renderCell: (params: any) => {
-        const status = params.value;
-        if (status === "APPROVED") {
-          return (
-            <Chip
-              label="Aprobado"
-              color="success"
-              size="small"
-              icon={<CheckCircle />}
-            />
-          );
-        } else if (status === "REJECTED") {
-          return (
-            <Chip
-              label="Rechazado"
-              color="error"
-              size="small"
-              icon={<Close />}
-            />
-          );
-        } else {
-          return (
-            <Chip
-              label="Pendiente"
-              color="warning"
-              size="small"
-            />
-          );
-        }
-      },
+      width: 130,
+      renderCell: (params) => renderStatusChip(params.value),
     },
   ];
 
-  // Columnas para solicitudes de anuncios
   const adColumns: GridColDef<AdRequest>[] = [
     {
       field: "providerName",
       headerName: "Proveedor",
-      width: 250,
-      renderCell: (params: any) => {
-        const serviceType = params.row.serviceType || "doctor";
-        const serviceColor = SERVICE_COLORS[serviceType] || "#6b7280";
-        const initial = params.row.providerName.charAt(0).toUpperCase();
-        
-        return (
-          <Stack direction="row" spacing={2} alignItems="center" sx={{ py: 1, height: "100%" }}>
-            <Avatar
-              sx={{
-                bgcolor: serviceColor,
-                width: 48,
-                height: 48,
-                fontSize: "1.1rem",
-                fontWeight: 700,
-                color: "white",
-                flexShrink: 0,
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              }}
-            >
-              {initial}
-            </Avatar>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                flex: 1,
-                minWidth: 0,
-                overflow: "hidden",
-              }}
-            >
-              <Typography
-                variant="body2"
-                fontWeight={600}
-                sx={{
-                  lineHeight: 1.2,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {params.row.providerName}
-              </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{
-                  lineHeight: 1.2,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  mt: 0.5,
-                }}
-              >
-                {params.row.providerEmail}
-              </Typography>
-            </Box>
-          </Stack>
-        );
-      },
+      flex: 1,
+      minWidth: 280,
+      renderCell: (params) => renderProviderCell(params.row.providerName, params.row.providerEmail, params.row.serviceType),
     },
     {
       field: "serviceType",
       headerName: "Tipo de Servicio",
       width: 180,
-      renderCell: (params: any) => (
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Box
-            sx={{
-              color:
-                params.row.status === "APPROVED"
-                  ? "success.main"
-                  : params.row.status === "REJECTED"
-                  ? "error.main"
-                  : "warning.main",
-            }}
-          >
-            {SERVICE_ICONS[params.value]}
-          </Box>
-          <Typography variant="body2">{SERVICE_LABELS[params.value]}</Typography>
-        </Stack>
-      ),
+      renderCell: (params) => renderServiceTypeCell(params.value, params.row.status),
     },
     {
       field: "submissionDate",
       headerName: "Fecha de Solicitud",
       width: 180,
-      renderCell: (params: any) => (
+      renderCell: (params) => (
         <Typography variant="body2">
-          {new Date(params.value).toLocaleDateString("es-ES", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          })}
+          {new Date(params.value).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}
         </Typography>
       ),
     },
@@ -398,27 +303,18 @@ export const HistoryPage = () => {
       field: "adContent",
       headerName: "Contenido del Anuncio",
       width: 250,
-      renderCell: (params: any) => {
+      renderCell: (params) => {
         if (!params.row.adContent) {
           return <Typography variant="body2" color="text.secondary">Sin contenido</Typography>;
         }
+        const content = params.row.adContent;
         return (
           <Box>
             <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
-              {params.row.adContent.title}
+              {content.title || content.label}
             </Typography>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {params.row.adContent.description}
+            <Typography variant="caption" color="text.secondary" sx={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {content.description}
             </Typography>
           </Box>
         );
@@ -428,91 +324,80 @@ export const HistoryPage = () => {
       field: "rejectionReason",
       headerName: "Motivo / Observaciones",
       width: 300,
-      renderCell: (params: any) => (
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {params.row.status === "REJECTED"
-            ? params.value || "Sin motivo especificado"
-            : params.row.status === "APPROVED"
-            ? "Aprobado"
-            : "Pendiente de revisión"}
-        </Typography>
-      ),
+      renderCell: (params) => renderRejectionCell(params.row.status, params.value),
     },
     {
       field: "status",
       headerName: "Estado",
-      width: 150,
-      renderCell: (params: any) => {
-        const status = params.value;
-        if (status === "APPROVED") {
-          return (
-            <Chip
-              label="Aprobado"
-              color="success"
-              size="small"
-              icon={<CheckCircle />}
-            />
-          );
-        } else if (status === "REJECTED") {
-          return (
-            <Chip
-              label="Rechazado"
-              color="error"
-              size="small"
-              icon={<Close />}
-            />
-          );
-        } else {
-          return (
-            <Chip
-              label="Pendiente"
-              color="warning"
-              size="small"
-            />
-          );
-        }
-      },
+      width: 130,
+      renderCell: (params) => renderStatusChip(params.value),
     },
   ];
 
-  const columns = activeTab === "providers" ? providerColumns : adColumns;
+  const filterBarExtraFilters = useMemo(() => (
+    <Stack direction="row" spacing={1.5} alignItems="center">
+      <TextField
+        label="Fecha desde"
+        type="date"
+        size="small"
+        value={dateFrom}
+        onChange={(e) => handleDateFromChange(e.target.value)}
+        slotProps={{ inputLabel: { shrink: true } }}
+        sx={{ minWidth: 155 }}
+      />
+      <TextField
+        label="Fecha hasta"
+        type="date"
+        size="small"
+        value={dateTo}
+        onChange={(e) => handleDateToChange(e.target.value)}
+        slotProps={{ inputLabel: { shrink: true } }}
+        sx={{ minWidth: 155 }}
+      />
+    </Stack>
+  ), [dateFrom, dateTo]);
 
   return (
     <DashboardLayout role="ADMIN" userProfile={CURRENT_ADMIN}>
-      <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
-        <Stack direction="row" spacing={2} alignItems="center" mb={3}>
-          <History sx={{ fontSize: 32, color: "primary.main" }} />
-          <Box>
-            <Typography variant="h4" fontWeight={700}>
-              Historial de Solicitudes
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Historial completo de solicitudes aprobadas y rechazadas
-            </Typography>
-          </Box>
-        </Stack>
+      <TablePageLayout>
+        <TableToolbar
+          title="Historial de Solicitudes"
+          subtitle="Historial completo de solicitudes aprobadas y rechazadas"
+          titleIcon={<History sx={{ fontSize: 32 }} />}
+          searchValue={searchText}
+          searchPlaceholder={activeTab === "providers" ? "Buscar por nombre, email o ciudad..." : "Buscar por nombre o email del proveedor..."}
+          onSearchChange={handleSearchChange}
+          filters={[
+            {
+              key: "status",
+              label: "Estado",
+              value: statusFilter,
+              onChange: handleStatusFilterChange,
+              options: STATUS_OPTIONS,
+            },
+            {
+              key: "serviceType",
+              label: "Tipo de Servicio",
+              value: serviceTypeFilter,
+              onChange: handleServiceTypeFilterChange,
+              options: SERVICE_TYPE_OPTIONS,
+            },
+          ]}
+          extraFilters={filterBarExtraFilters}
+          actions={[
+            { label: "Refrescar", icon: <Refresh />, onClick: handleRefresh, variant: "outlined" },
+          ]}
+          sx={{ mb: 3 }}
+        />
 
-        {/* Pestañas */}
         <Box mb={3}>
           <Tabs
             value={activeTab}
-            onChange={(_, newValue) => setActiveTab(newValue)}
+            onChange={handleTabChange}
             sx={{
               borderBottom: 1,
               borderColor: "divider",
-              "& .MuiTab-root": {
-                textTransform: "none",
-                fontWeight: 600,
-                fontSize: "0.95rem",
-              },
+              "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "0.95rem" },
             }}
           >
             <Tab label="Solicitudes de Proveedores" value="providers" />
@@ -520,49 +405,14 @@ export const HistoryPage = () => {
           </Tabs>
         </Box>
 
-        {/* Filtros */}
-        <Box mb={3}>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <TextField
-              fullWidth
-              placeholder={
-                activeTab === "providers"
-                  ? "Buscar por nombre, email o ciudad..."
-                  : "Buscar por nombre o email del proveedor..."
-              }
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              sx={{ flex: 1 }}
-            />
-            <FormControl sx={{ minWidth: 200 }}>
-              <InputLabel>Estado</InputLabel>
-              <Select
-                value={statusFilter}
-                label="Estado"
-                onChange={(e) => setStatusFilter(e.target.value as any)}
-              >
-                <MenuItem value="all">Todos</MenuItem>
-                <MenuItem value="APPROVED">Aprobados</MenuItem>
-                <MenuItem value="REJECTED">Rechazados</MenuItem>
-                <MenuItem value="PENDING">Pendientes</MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
-        </Box>
-
-        {/* Resumen de Estadísticas */}
         <Grid2 container spacing={2} mb={3}>
           <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
             <Paper elevation={0} sx={{ p: 2, bgcolor: "#f0fdfa", border: "1px solid #d1fae5" }}>
               <Stack direction="row" spacing={2} alignItems="center">
                 <CheckCircle sx={{ color: "#10b981", fontSize: 28 }} />
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Aprobados
-                  </Typography>
-                  <Typography variant="h6" fontWeight={700} color="#10b981">
-                    {stats.approved}
-                  </Typography>
+                  <Typography variant="caption" color="text.secondary">Aprobados</Typography>
+                  <Typography variant="h6" fontWeight={700} color="#10b981">{stats.approved}</Typography>
                 </Box>
               </Stack>
             </Paper>
@@ -572,12 +422,8 @@ export const HistoryPage = () => {
               <Stack direction="row" spacing={2} alignItems="center">
                 <Close sx={{ color: "#ef4444", fontSize: 28 }} />
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Rechazados
-                  </Typography>
-                  <Typography variant="h6" fontWeight={700} color="#ef4444">
-                    {stats.rejected}
-                  </Typography>
+                  <Typography variant="caption" color="text.secondary">Rechazados</Typography>
+                  <Typography variant="h6" fontWeight={700} color="#ef4444">{stats.rejected}</Typography>
                 </Box>
               </Stack>
             </Paper>
@@ -587,12 +433,8 @@ export const HistoryPage = () => {
               <Stack direction="row" spacing={2} alignItems="center">
                 <History sx={{ color: "#f59e0b", fontSize: 28 }} />
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Pendientes
-                  </Typography>
-                  <Typography variant="h6" fontWeight={700} color="#f59e0b">
-                    {stats.pending}
-                  </Typography>
+                  <Typography variant="caption" color="text.secondary">Pendientes</Typography>
+                  <Typography variant="h6" fontWeight={700} color="#f59e0b">{stats.pending}</Typography>
                 </Box>
               </Stack>
             </Paper>
@@ -602,47 +444,46 @@ export const HistoryPage = () => {
               <Stack direction="row" spacing={2} alignItems="center">
                 <History sx={{ color: "#6b7280", fontSize: 28 }} />
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Total
-                  </Typography>
-                  <Typography variant="h6" fontWeight={700} color="#6b7280">
-                    {stats.total}
-                  </Typography>
+                  <Typography variant="caption" color="text.secondary">Total</Typography>
+                  <Typography variant="h6" fontWeight={700} color="#6b7280">{stats.total}</Typography>
                 </Box>
               </Stack>
             </Paper>
           </Grid2>
         </Grid2>
 
-        {/* Tabla */}
-        <Paper elevation={0} sx={{ border: "1px solid #e5e7eb" }}>
-          <DataGrid
-            rows={filteredRequests as any}
-            columns={columns as any}
+        {activeTab === "providers" ? (
+          <DataTable<ProviderRequest>
+            rows={historyData}
+            columns={providerColumns}
             getRowId={(row) => row.id}
-            loading={isLoading}
-            disableRowSelectionOnClick
-            autoHeight
+            rowCount={historyTotal}
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
             pageSizeOptions={[10, 25, 50]}
-            initialState={{
-              pagination: {
-                paginationModel: { pageSize: 10 },
-              },
-            }}
-            sx={{
-              border: "none",
-              "& .MuiDataGrid-cell": {
-                borderBottom: "1px solid #f3f4f6",
-              },
-              "& .MuiDataGrid-columnHeaders": {
-                bgcolor: "#f9fafb",
-                borderBottom: "2px solid #e5e7eb",
-              },
-            }}
+            loading={isLoadingProviders}
+            error={isErrorProviders ? String((errorProviders as any)?.message || 'Error al cargar solicitudes') : null}
+            rowHeight={72}
+            emptyTitle="Sin solicitudes de proveedores"
+            emptyDescription="No hay solicitudes de proveedores que coincidan con los filtros."
           />
-        </Paper>
-      </Box>
+        ) : (
+          <DataTable<AdRequest>
+            rows={adData}
+            columns={adColumns}
+            getRowId={(row) => row.id}
+            rowCount={adTotal}
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
+            pageSizeOptions={[10, 25, 50]}
+            loading={isLoadingAds}
+            error={isErrorAds ? String((errorAds as any)?.message || 'Error al cargar solicitudes de anuncios') : null}
+            rowHeight={72}
+            emptyTitle="Sin solicitudes de anuncios"
+            emptyDescription="No hay solicitudes de anuncios que coincidan con los filtros."
+          />
+        )}
+      </TablePageLayout>
     </DashboardLayout>
   );
 };
-

@@ -5,10 +5,7 @@ import {
   sendReceptionMessageAPI,
   markMessagesAsReadAPI,
 } from '../../infrastructure/clinic-associated.api';
-import {
-  getReceptionMessagesMock,
-  saveReceptionMessagesMock,
-} from '../../infrastructure/clinic-associated.mock';
+import { ensureArray } from '../../infrastructure/clinic-associated-list.utils';
 
 export const useReceptionMessages = (clinicId: string) => {
   const [messages, setMessages] = useState<ReceptionMessage[]>([]);
@@ -18,17 +15,11 @@ export const useReceptionMessages = (clinicId: string) => {
   const loadMessages = async () => {
     setLoading(true);
     try {
-      try {
-        const data = await getReceptionMessagesAPI();
-        setMessages(data);
-      } catch (error) {
-        // Fallback a mocks
-        console.warn('Usando mocks para mensajes de recepción');
-        const data = await getReceptionMessagesMock();
-        setMessages(data);
-      }
+      const data = await getReceptionMessagesAPI();
+      setMessages(ensureArray<ReceptionMessage>(data));
     } catch (error) {
       console.error('Error cargando mensajes:', error);
+      setMessages([]);
     } finally {
       setLoading(false);
     }
@@ -37,28 +28,8 @@ export const useReceptionMessages = (clinicId: string) => {
   const sendMessage = async (messageText: string) => {
     setSending(true);
     try {
-      try {
-        const newMessage = await sendReceptionMessageAPI(messageText);
-        setMessages((prev) => [...prev, newMessage]);
-        // Guardar en mocks también
-        await saveReceptionMessagesMock([...messages, newMessage]);
-      } catch (error) {
-        // Fallback a mocks
-        console.warn('Usando mocks para enviar mensaje');
-        const newMessage: ReceptionMessage = {
-          id: `msg-${Date.now()}`,
-          clinicId,
-          doctorId: 'doctor-1', // TODO: obtener del auth
-          from: 'doctor',
-          message: messageText,
-          timestamp: new Date().toISOString(),
-          isRead: false,
-          senderName: 'Dr. Usuario',
-        };
-        const updatedMessages = [...messages, newMessage];
-        setMessages(updatedMessages);
-        await saveReceptionMessagesMock(updatedMessages);
-      }
+      const newMessage = await sendReceptionMessageAPI(messageText);
+      setMessages((prev) => [...ensureArray<ReceptionMessage>(prev), newMessage]);
     } catch (error) {
       console.error('Error enviando mensaje:', error);
       throw error;
@@ -74,9 +45,8 @@ export const useReceptionMessages = (clinicId: string) => {
       } catch (error) {
         console.warn('Error marcando mensajes como leídos en backend');
       }
-      // Actualizar estado local
       setMessages((prev) =>
-        prev.map((msg) =>
+        ensureArray<ReceptionMessage>(prev).map((msg) =>
           messageIds.includes(msg.id) ? { ...msg, isRead: true } : msg
         )
       );

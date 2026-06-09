@@ -1,0 +1,106 @@
+import { extractData, httpClient } from "../../../shared/lib/http";
+import type { PaginatedResponse } from "../../../shared/types/pagination";
+import type { AppointmentStatus, Patient, PaymentMethodType } from "../types/Patient.entity";
+
+interface BackendAppointment {
+  id: string;
+  date: string;
+  reason: string;
+  status: string;
+  payment: {
+    amount: number;
+    method: string;
+    isPaid: boolean;
+  };
+}
+
+interface BackendPatient {
+  id: string;
+  full_name: string;
+  phone: string;
+  email: string | null;
+  birth_date: string | null;
+  total_appointments: number;
+  last_appointment_date: string | null;
+  appointment_history: BackendAppointment[];
+}
+
+interface PatientsApiResponse {
+  data: BackendPatient[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+const mapBackendStatusToFrontend = (status: string): AppointmentStatus => {
+  const validStatuses: AppointmentStatus[] = ['CONFIRMED', 'CANCELLED', 'COMPLETED', 'PENDING'];
+  return validStatuses.includes(status as any) ? (status as AppointmentStatus) : 'PENDING';
+};
+
+const mapBackendPaymentToFrontend = (method: string): PaymentMethodType => {
+  if (!method) return 'UNKNOWN';
+  if (method.toUpperCase().includes('CARD') || method.toUpperCase().includes('TARJETA')) return 'CARD';
+  return 'CASH';
+};
+
+const extractTimeFromISO = (isoDate: string): string => {
+  if (!isoDate) return "00:00";
+  try {
+    const date = new Date(isoDate);
+    return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
+  } catch (e) {
+    return "00:00";
+  }
+};
+
+const extractDateFromISO = (isoDate: string): string => {
+    if (!isoDate) return "";
+    return isoDate.split('T')[0];
+};
+
+export interface GetPatientsParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+}
+
+export const getPatientsAPI = async (
+  params?: GetPatientsParams
+): Promise<PaginatedResponse<Patient>> => {
+  const queryParams: Record<string, any> = { ...params };
+
+  const response = await httpClient.get<{ success: boolean; data: PatientsApiResponse }>(
+    '/doctors/patients',
+    { params: queryParams }
+  );
+
+  const { data: backendData, meta } = extractData(response);
+
+  const data: Patient[] = backendData.map(bp => ({
+    id: bp.id,
+    name: bp.full_name,
+    phone: bp.phone,
+    email: bp.email,
+    birthDate: bp.birth_date,
+
+    totalAppointments: bp.total_appointments,
+    lastAppointmentDate: bp.last_appointment_date,
+
+    profilePicture: null,
+
+    appointments: bp.appointment_history.map(apt => ({
+      id: apt.id,
+      date: extractDateFromISO(apt.date),
+      time: extractTimeFromISO(apt.date),
+      reason: apt.reason || "Consulta General",
+      status: mapBackendStatusToFrontend(apt.status),
+      paymentMethod: mapBackendPaymentToFrontend(apt.payment.method),
+      amount: apt.payment.amount
+    }))
+  }));
+
+  return { data, pagination: meta };
+};

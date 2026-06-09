@@ -23,21 +23,23 @@ import {
 import { useState, useEffect } from "react";
 import { getOrdersAPI, updateOrderStatusAPI } from "../../infrastructure/orders.api";
 import type { SupplyOrder } from "../../domain/Order.entity";
+import { getUserFriendlyMessage } from "../../../../shared/lib/api-error";
 import { onRealtimeEvent } from "../../../../shared/realtime/realtimeEvents";
+import { SUPPLY_ORDER_STATUS_LABELS } from "../../../../shared/config/domain.constants";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 export const OrdersSection = () => {
+  const feedback = useFeedbackStore();
   const [orders, setOrders] = useState<SupplyOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
-  // Cargar pedidos al montar el componente
   useEffect(() => {
     loadOrders();
   }, []);
 
-  // Realtime: recargar pedidos cuando el backend emita cambios
   useEffect(() => {
     return onRealtimeEvent(({ name }) => {
       if (name === "order:updated") {
@@ -54,7 +56,7 @@ export const OrdersSection = () => {
       setOrders(data);
     } catch (err: any) {
       console.error('Error loading orders:', err);
-      setError(err.message || 'Error al cargar pedidos');
+      setError(getUserFriendlyMessage(err, { fallback: 'No fue posible cargar los pedidos.' }));
     } finally {
       setLoading(false);
     }
@@ -81,18 +83,18 @@ export const OrdersSection = () => {
       setUpdatingStatus(orderId);
       setError(null);
       
-      // Actualizar en el backend
       const updated = await updateOrderStatusAPI(orderId, newStatus);
       
-      // Actualizar en el estado local
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order.id === orderId ? updated : order
         )
       );
+
+      feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
     } catch (err: any) {
       console.error('Error updating order status:', err);
-      setError(err.message || 'Error al actualizar estado');
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     } finally {
       setUpdatingStatus(null);
     }
@@ -225,12 +227,9 @@ export const OrdersSection = () => {
                               },
                             }}
                           >
-                            <MenuItem value="pending">Pendiente</MenuItem>
-                            <MenuItem value="confirmed">Confirmado</MenuItem>
-                            <MenuItem value="preparing">En Proceso</MenuItem>
-                            <MenuItem value="shipped">Enviado</MenuItem>
-                            <MenuItem value="delivered">Entregado</MenuItem>
-                            <MenuItem value="cancelled">Cancelado</MenuItem>
+                            {(Object.keys(SUPPLY_ORDER_STATUS_LABELS) as Array<keyof typeof SUPPLY_ORDER_STATUS_LABELS>).map((status) => (
+                              <MenuItem key={status} value={status}>{SUPPLY_ORDER_STATUS_LABELS[status]}</MenuItem>
+                            ))}
                           </Select>
                         </FormControl>
                         {isUpdating && (
@@ -251,7 +250,6 @@ export const OrdersSection = () => {
                       <TableRow>
                         <TableCell colSpan={9} className="bg-gray-50 p-4">
                           <Box className="space-y-4">
-                            {/* Productos */}
                             <div>
                               <Typography variant="subtitle2" className="font-semibold mb-2">
                                 Productos del Pedido
@@ -279,7 +277,6 @@ export const OrdersSection = () => {
                               </div>
                             </div>
 
-                            {/* Información adicional */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-gray-200">
                               <div>
                                 <Typography variant="caption" className="text-gray-500">

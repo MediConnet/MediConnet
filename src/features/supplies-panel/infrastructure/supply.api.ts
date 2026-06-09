@@ -1,4 +1,5 @@
 import { httpClient, extractData } from '../../../shared/lib/http';
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 import type { SupplyStore } from '../domain/SupplyStore.entity';
 import type { Review } from '../domain/Review.entity';
 
@@ -24,9 +25,12 @@ export interface SupplyProfile {
  * API: Obtener lista de tiendas de insumos
  * Endpoint: GET /api/supplies
  */
-export const getSuppliesAPI = async (): Promise<SupplyStore[]> => {
-  const response = await httpClient.get<{ success: boolean; data: SupplyStore[] }>(
-    '/supplies'
+export const getSuppliesAPI = async (
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<SupplyStore>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<SupplyStore> }>(
+    '/supplies',
+    { params }
   );
   return extractData(response);
 };
@@ -46,9 +50,13 @@ export const getSupplyAPI = async (id: string): Promise<SupplyStore> => {
  * API: Obtener reseñas de una tienda de insumos (vista pública)
  * Endpoint: GET /api/supplies/:id/reviews
  */
-export const getSupplyReviewsAPI = async (supplyStoreId: string): Promise<Review[]> => {
-  const response = await httpClient.get<{ success: boolean; data: Review[] }>(
-    `/supplies/${supplyStoreId}/reviews`
+export const getSupplyReviewsAPI = async (
+  supplyStoreId: string,
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<Review>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<Review> }>(
+    `/supplies/${supplyStoreId}/reviews`,
+    { params }
   );
   return extractData(response);
 };
@@ -58,30 +66,43 @@ export const getSupplyReviewsAPI = async (supplyStoreId: string): Promise<Review
  * Endpoint: GET /api/supplies/reviews
  * Requiere: Bearer token
  */
-export const getSupplyPanelReviewsAPI = async (): Promise<{
-  reviews: Review[];
-  averageRating: number;
-  totalReviews: number;
-}> => {
+export const getSupplyPanelReviewsAPI = async (
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<Review> & { reviews?: Review[]; averageRating: number; totalReviews: number }> => {
   const response = await httpClient.get<{
     success: boolean;
     data: {
       reviews: any[];
       averageRating: number;
       totalReviews: number;
+      pagination?: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      };
     };
-  }>('/supplies/reviews');
+  }>('/supplies/reviews', { params });
   const raw = extractData(response);
+  const mappedReviews = (raw.reviews || []).map((r: any): Review => ({
+    id: r.id,
+    userId: r.userId ?? r.patientId ?? r.patient?.id ?? '',
+    rating: r.rating ?? 0,
+    comment: r.comment ?? '',
+    userName: r.userName ?? r.patientName ?? r.patient?.fullName ?? 'Usuario',
+    createdAt: r.createdAt ?? r.date ?? new Date().toISOString(),
+  }));
   return {
-    ...raw,
-    reviews: (raw.reviews || []).map((r: any): Review => ({
-      id: r.id,
-      userId: r.userId ?? r.patientId ?? r.patient?.id ?? '',
-      rating: r.rating ?? 0,
-      comment: r.comment ?? '',
-      userName: r.userName ?? r.patientName ?? r.patient?.fullName ?? 'Usuario',
-      createdAt: r.createdAt ?? r.date ?? new Date().toISOString(),
-    })),
+    data: mappedReviews,
+    reviews: mappedReviews,
+    averageRating: raw.averageRating ?? 0,
+    totalReviews: raw.totalReviews ?? 0,
+    pagination: {
+      total: raw.pagination?.total ?? raw.totalReviews ?? 0,
+      page: raw.pagination?.page ?? params?.page ?? 1,
+      limit: raw.pagination?.limit ?? params?.limit ?? 20,
+      totalPages: raw.pagination?.totalPages ?? 1,
+    },
   };
 };
 

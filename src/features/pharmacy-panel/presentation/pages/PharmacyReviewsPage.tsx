@@ -1,9 +1,10 @@
 import { ContactPhone, Star, Visibility } from "@mui/icons-material";
 import { Box, Paper, Skeleton, Typography, useTheme } from "@mui/material";
+import { DataGrid, type GridColDef, type GridPaginationModel } from "@mui/x-data-grid";
 import Grid2 from "@mui/material/Grid2";
+import { useState } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { KPICard } from "../components/KPICard";
-import { PharmacyReviewItem } from "../components/PharmacyReviewItem";
 import { usePharmacyProfile } from "../hooks/usePharmacyProfile";
 import { usePharmacyReviews } from "../hooks/usePharmacyReviews";
 import { useAuthStore } from "../../../../app/store/auth.store";
@@ -11,11 +12,12 @@ import { useAuthStore } from "../../../../app/store/auth.store";
 export const PharmacyReviewsPage = () => {
   const theme = useTheme();
   const { profile, isLoading: isLoadingProfile } = usePharmacyProfile();
-  const { reviews, isLoading: isLoadingReviews } = usePharmacyReviews();
+  const { reviews, loading: isLoadingReviews, total, page, setPage, limit, setLimit } = usePharmacyReviews();
   const authStore = useAuthStore();
   const { user } = authStore;
 
-  // Obtener iniciales del usuario
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: limit });
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -34,6 +36,45 @@ export const PharmacyReviewsPage = () => {
 
   const isLoading = isLoadingProfile || isLoadingReviews;
 
+  const handlePaginationChange = (model: GridPaginationModel) => {
+    setPaginationModel(model);
+    setPage(model.page + 1);
+    setLimit(model.pageSize);
+  };
+
+  const columns: GridColDef[] = [
+    {
+      field: "userName",
+      headerName: "Paciente",
+      flex: 1,
+      minWidth: 180,
+    },
+    {
+      field: "rating",
+      headerName: "Calificación",
+      width: 130,
+      align: "center",
+      renderCell: (params) => (
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", width: "100%" }}>
+          <Star sx={{ color: "#FFC107", fontSize: 18, mr: 0.5 }} />
+          <Typography fontWeight={600}>{params.value}</Typography>
+        </Box>
+      ),
+    },
+    {
+      field: "comment",
+      headerName: "Comentario",
+      flex: 2,
+      minWidth: 300,
+    },
+    {
+      field: "date",
+      headerName: "Fecha",
+      width: 120,
+      valueGetter: (_value, row) => new Date(row.date).toLocaleDateString("es-ES"),
+    },
+  ];
+
   if (isLoading || !profile) {
     return (
       <DashboardLayout
@@ -44,11 +85,7 @@ export const PharmacyReviewsPage = () => {
         notificationsViewAllPath="/provider/pharmacy/reviews"
       >
         <Box p={3}>
-          <Skeleton
-            variant="rectangular"
-            height={150}
-            sx={{ mb: 3, borderRadius: 3 }}
-          />
+          <Skeleton variant="rectangular" height={150} sx={{ mb: 3, borderRadius: 3 }} />
           <Skeleton variant="rectangular" height={100} sx={{ mb: 2 }} />
           <Skeleton variant="rectangular" height={100} sx={{ mb: 2 }} />
         </Box>
@@ -65,7 +102,6 @@ export const PharmacyReviewsPage = () => {
       notificationsViewAllPath="/provider/pharmacy/reviews"
     >
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
-        {/* SECTION 1: KPIS (Resumen) */}
         <Grid2 container spacing={3} mb={4}>
           <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
             <KPICard
@@ -101,18 +137,7 @@ export const PharmacyReviewsPage = () => {
           </Grid2>
         </Grid2>
 
-        {/* SECTION 2: LISTA DE RESEÑAS */}
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            borderRadius: 3,
-            border: "1px solid",
-            borderColor: "grey.200",
-            bgcolor: "white",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
-          }}
-        >
+        <Paper elevation={0} sx={{ p: 4, borderRadius: 3, border: "1px solid", borderColor: "grey.200", bgcolor: "white", boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }}>
           <Box mb={3}>
             <Typography variant="h6" fontWeight={700} gutterBottom>
               Reseñas de Clientes
@@ -122,16 +147,20 @@ export const PharmacyReviewsPage = () => {
             </Typography>
           </Box>
 
-          <Box>
-            {reviews.map((review) => (
-              <PharmacyReviewItem key={review.id} review={review} />
-            ))}
-
-            {reviews.length === 0 && (
-              <Typography color="text.secondary" align="center" py={4}>
-                Aún no tienes reseñas.
-              </Typography>
-            )}
+          <Box sx={{ height: 500, width: "100%" }}>
+            <DataGrid
+              rows={reviews}
+              columns={columns}
+              loading={isLoadingReviews}
+              paginationMode="server"
+              rowCount={total}
+              paginationModel={paginationModel}
+              onPaginationModelChange={handlePaginationChange}
+              pageSizeOptions={[5, 10, 20]}
+              disableRowSelectionOnClick
+              getRowId={(row) => row.id}
+              sx={{ border: "none" }}
+            />
           </Box>
         </Paper>
       </Box>

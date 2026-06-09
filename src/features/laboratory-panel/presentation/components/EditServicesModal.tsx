@@ -22,6 +22,7 @@ import {
   updateLaboratoryExamAPI,
 } from "../../infrastructure/laboratories.repository";
 import { useQueryClient } from "@tanstack/react-query";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 interface EditServicesModalProps {
   open: boolean;
@@ -40,6 +41,7 @@ export const EditServicesModal = ({
   const [saving, setSaving] = useState(false);
   const queryClient = useQueryClient();
   const [initialIds, setInitialIds] = useState<string[]>([]);
+  const feedback = useFeedbackStore();
 
   useEffect(() => {
     if (studies && studies.length > 0) {
@@ -83,10 +85,8 @@ export const EditServicesModal = ({
     try {
       setSaving(true);
 
-      // Delete removed
       await Promise.all(removed.map((id) => deleteLaboratoryExamAPI(id)));
 
-      // Upsert current
       const saved: LaboratoryStudy[] = [];
       for (const s of validStudies) {
         if (s.id.startsWith("temp-")) {
@@ -128,10 +128,13 @@ export const EditServicesModal = ({
 
       queryClient.invalidateQueries({ queryKey: ["laboratories", "exams"] });
 
+      feedback.showFeedback('success', 'Servicios guardados', 'Los exámenes se han guardado correctamente.');
+
       onSave(saved);
       onClose();
     } catch (e) {
       console.error("Error guardando exámenes:", e);
+      feedback.showFeedback('error', 'Error', 'No se pudieron guardar los exámenes.');
     } finally {
       setSaving(false);
     }
@@ -322,4 +325,3 @@ export const EditServicesModal = ({
     </Dialog>
   );
 };
-

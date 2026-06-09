@@ -1,18 +1,11 @@
-import { AttachMoney, CreditCard, CheckCircle, HourglassEmpty, AccountBalance, Edit, Search, Info } from "@mui/icons-material";
+import { AttachMoney, CreditCard, CheckCircle, HourglassEmpty, AccountBalance, Edit, Info } from "@mui/icons-material";
 import {
   Box,
   Card,
   CardContent,
   Chip,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Typography,
-  Paper,
   Button,
   TextField,
   Dialog,
@@ -27,57 +20,41 @@ import {
   Alert,
   CircularProgress,
 } from "@mui/material";
+import { DataGrid, type GridColDef, type GridPaginationModel } from "@mui/x-data-grid";
 import Grid2 from "@mui/material/Grid2";
-import { useState, useMemo, useEffect } from "react";
-import { getDoctorPaymentsAPI, getDoctorBankAccountAPI, updateDoctorBankAccountAPI, type BankAccountData } from "../../infrastructure/payments.api";
-import type { Payment } from "../../domain/Payment.entity";
+import { useState, useEffect } from "react";
+import { getDoctorBankAccountAPI, updateDoctorBankAccountAPI, type BankAccountData } from "../../infrastructure/payments.api";
 import { formatMoney } from "../../../../shared/lib/formatMoney";
+import { getUserFriendlyMessage } from "../../../../shared/lib/api-error";
 import { useDoctorDashboard } from "../hooks/useDoctorDashboard";
+import { useDoctorPayments } from "../hooks/useDoctorPayments";
 
 import { handleLetterInput, handleNumberInput } from "../../../../shared/lib/inputValidation";
-
-// Lista de bancos de Ecuador
-const ECUADOR_BANKS = [
-  "Banco Pichincha",
-  "Banco de Guayaquil",
-  "Banco del Pacífico",
-  "Banco Internacional",
-  "Banco Produbanco",
-  "Banco Bolivariano",
-  "Banco General Rumiñahui",
-  "Banco de Loja",
-  "Banco Solidario",
-  "Banco del Austro",
-  "Banco Comercial de Manabí",
-  "Banco D-Miro",
-  "Banco Finca",
-  "Banco ProCredit",
-  "Banco Coopnacional",
-  "Banco Amazonas",
-  "Banco Capital",
-  "Banco Litoral",
-  "Banco Machala",
-  "Banco Unión",
-];
+import { ECUADOR_BANKS } from "../../../../shared/config/domain.constants";
 
 export const PaymentsSection = () => {
   const { data } = useDoctorDashboard();
   const doctorName = data?.doctor?.name || "Dr. Juan Pérez";
-  
+
   const isClinicAssociated = (data as any)?.doctor?.clinicId ? true : false;
   const clinicName = (data as any)?.doctor?.clinicName || '';
   const paymentSource = isClinicAssociated ? 'clinic' : 'admin';
-  
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [loadingPayments, setLoadingPayments] = useState(true);
-  const [paymentsError, setPaymentsError] = useState<string | null>(null);
-  
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid">("all");
-  const [searchQuery, setSearchQuery] = useState("");
+
+  const {
+    payments,
+    loading: loadingPayments,
+    total,
+    page,
+    setPage,
+    limit,
+    setLimit,
+  } = useDoctorPayments();
+
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: limit });
+
   const [bankDialogOpen, setBankDialogOpen] = useState(false);
   const [bankError, setBankError] = useState<string | null>(null);
 
-  // Datos bancarios desde endpoint dedicado
   const [bankAccount, setBankAccount] = useState<BankAccountData | null>(null);
   const [savingBank, setSavingBank] = useState(false);
   const [bankData, setBankData] = useState({
@@ -87,15 +64,6 @@ export const PaymentsSection = () => {
     accountHolder: "",
   });
 
-  // Cargar pagos
-  useEffect(() => {
-    getDoctorPaymentsAPI()
-      .then(setPayments)
-      .catch((err) => setPaymentsError(err.message || 'Error al cargar pagos'))
-      .finally(() => setLoadingPayments(false));
-  }, []);
-
-  // Cargar datos bancarios desde endpoint dedicado
   useEffect(() => {
     getDoctorBankAccountAPI()
       .then((data) => {
@@ -113,7 +81,6 @@ export const PaymentsSection = () => {
   }, []);
 
   const handleSaveBankData = async () => {
-    // Validación básica
     if (bankData.accountNumber.length < 10) {
       setBankError('El número de cuenta debe tener al menos 10 dígitos');
       return;
@@ -130,47 +97,76 @@ export const PaymentsSection = () => {
       setBankAccount(updated);
       setBankDialogOpen(false);
     } catch (err: any) {
-      setBankError(err.message || 'Error al guardar los datos bancarios');
+      setBankError(getUserFriendlyMessage(err, { fallback: 'No fue posible guardar los datos bancarios.' }));
     } finally {
       setSavingBank(false);
     }
   };
 
-  const filteredPayments = useMemo(() => {
-    let filtered = payments;
+  const totals = payments.reduce(
+    (acc, p) => ({
+      totalAmount: acc.totalAmount + p.amount,
+      totalCommission: acc.totalCommission + p.commission,
+      totalNet: acc.totalNet + p.netAmount,
+    }),
+    { totalAmount: 0, totalCommission: 0, totalNet: 0 },
+  );
 
-    // Filtrar por estado
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((p) => p.status === statusFilter);
-    }
+  const handlePaginationChange = (model: GridPaginationModel) => {
+    setPaginationModel(model);
+    setPage(model.page + 1);
+    setLimit(model.pageSize);
+  };
 
-    // Filtrar por búsqueda (nombre del paciente, fecha, o monto)
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      filtered = filtered.filter((p) => {
-        const patientName = p.patientName.toLowerCase();
-        const date = new Date(p.date).toLocaleDateString("es-ES").toLowerCase();
-        const amount = p.amount.toString();
-        const netAmount = p.netAmount.toString();
-        
-        return (
-          patientName.includes(query) ||
-          date.includes(query) ||
-          amount.includes(query) ||
-          netAmount.includes(query)
-        );
-      });
-    }
-
-    return filtered;
-  }, [payments, statusFilter, searchQuery]);
-
-  const totals = useMemo(() => {
-    const totalAmount = filteredPayments.reduce((sum, p) => sum + p.amount, 0);
-    const totalCommission = filteredPayments.reduce((sum, p) => sum + p.commission, 0);
-    const totalNet = filteredPayments.reduce((sum, p) => sum + p.netAmount, 0);
-    return { totalAmount, totalCommission, totalNet };
-  }, [filteredPayments]);
+  const columns: GridColDef[] = [
+    {
+      field: "patientName",
+      headerName: "Paciente",
+      flex: 1,
+      minWidth: 180,
+    },
+    {
+      field: "date",
+      headerName: "Fecha",
+      width: 120,
+      valueGetter: (_value, row) => new Date(row.date).toLocaleDateString("es-ES"),
+    },
+    {
+      field: "amount",
+      headerName: "Monto Cobrado",
+      width: 140,
+      align: "right",
+      renderCell: (params) => <Typography fontWeight={600}>{formatMoney(params.value)}</Typography>,
+    },
+    {
+      field: "commission",
+      headerName: "Comisión",
+      width: 120,
+      align: "right",
+      renderCell: (params) => <Typography color="text.secondary">{formatMoney(params.value)}</Typography>,
+    },
+    {
+      field: "netAmount",
+      headerName: "Total Neto",
+      width: 130,
+      align: "right",
+      renderCell: (params) => <Typography fontWeight={600} color="#10b981">{formatMoney(params.value)}</Typography>,
+    },
+    {
+      field: "status",
+      headerName: "Estado",
+      width: 120,
+      align: "center",
+      renderCell: (params) => (
+        <Chip
+          icon={params.value === "paid" ? <CheckCircle /> : <HourglassEmpty />}
+          label={params.value === "paid" ? "Pagado" : "Pendiente"}
+          color={params.value === "paid" ? "success" : "warning"}
+          size="small"
+        />
+      ),
+    },
+  ];
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
@@ -183,53 +179,18 @@ export const PaymentsSection = () => {
         </div>
       </div>
 
-      {/* Loading State */}
-      {loadingPayments && (
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-          <CircularProgress />
-        </Box>
-      )}
-
-      {/* Error State */}
-      {paymentsError && !loadingPayments && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {paymentsError}
-        </Alert>
-      )}
-
-      {/* Content - Only show when not loading */}
-      {!loadingPayments && !paymentsError && (
-        <>
-      {/* Banner Informativo según Fuente de Pago */}
       {paymentSource === 'admin' ? (
-        <Alert 
-          severity="info" 
-          icon={<Info />}
-          sx={{ mb: 3, bgcolor: '#eff6ff', border: '1px solid #bfdbfe' }}
-        >
-          <Typography variant="body2" fontWeight={600}>
-            Médico Independiente
-          </Typography>
-          <Typography variant="caption">
-            Recibes pagos directamente del administrador de la plataforma
-          </Typography>
+        <Alert severity="info" icon={<Info />} sx={{ mb: 3, bgcolor: '#eff6ff', border: '1px solid #bfdbfe' }}>
+          <Typography variant="body2" fontWeight={600}>Médico Independiente</Typography>
+          <Typography variant="caption">Recibes pagos directamente del administrador de la plataforma</Typography>
         </Alert>
       ) : (
-        <Alert 
-          severity="info" 
-          icon={<Info />}
-          sx={{ mb: 3, bgcolor: '#fef3c7', border: '1px solid #fde68a' }}
-        >
-          <Typography variant="body2" fontWeight={600}>
-            Médico Asociado a Clínica
-          </Typography>
-          <Typography variant="caption">
-            Tus pagos son gestionados por <strong>{clinicName}</strong>. Los montos que ves aquí son asignados por la clínica.
-          </Typography>
+        <Alert severity="info" icon={<Info />} sx={{ mb: 3, bgcolor: '#fef3c7', border: '1px solid #fde68a' }}>
+          <Typography variant="body2" fontWeight={600}>Médico Asociado a Clínica</Typography>
+          <Typography variant="caption">Tus pagos son gestionados por <strong>{clinicName}</strong>.</Typography>
         </Alert>
       )}
 
-      {/* Resumen de totales */}
       <Grid2 container spacing={3} mb={4}>
         <Grid2 size={{ xs: 12, sm: 4 }}>
           <Card elevation={0} sx={{ bgcolor: "#f0fdfa", border: "1px solid #d1fae5" }}>
@@ -237,12 +198,8 @@ export const PaymentsSection = () => {
               <Stack direction="row" spacing={2} alignItems="center">
                 <AttachMoney sx={{ color: "#14b8a6", fontSize: 32 }} />
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Total Cobrado
-                  </Typography>
-                  <Typography variant="h6" fontWeight={700} color="#14b8a6">
-                    {formatMoney(totals.totalAmount)}
-                  </Typography>
+                  <Typography variant="caption" color="text.secondary">Total Cobrado</Typography>
+                  <Typography variant="h6" fontWeight={700} color="#14b8a6">{formatMoney(totals.totalAmount)}</Typography>
                 </Box>
               </Stack>
             </CardContent>
@@ -254,12 +211,8 @@ export const PaymentsSection = () => {
               <Stack direction="row" spacing={2} alignItems="center">
                 <CreditCard sx={{ color: "#f59e0b", fontSize: 32 }} />
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Comisión App (15%)
-                  </Typography>
-                  <Typography variant="h6" fontWeight={700} color="#f59e0b">
-                    {formatMoney(totals.totalCommission)}
-                  </Typography>
+                  <Typography variant="caption" color="text.secondary">Comisión App (15%)</Typography>
+                  <Typography variant="h6" fontWeight={700} color="#f59e0b">{formatMoney(totals.totalCommission)}</Typography>
                 </Box>
               </Stack>
             </CardContent>
@@ -271,12 +224,8 @@ export const PaymentsSection = () => {
               <Stack direction="row" spacing={2} alignItems="center">
                 <CheckCircle sx={{ color: "#10b981", fontSize: 32 }} />
                 <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Total Neto
-                  </Typography>
-                  <Typography variant="h6" fontWeight={700} color="#10b981">
-                    {formatMoney(totals.totalNet)}
-                  </Typography>
+                  <Typography variant="caption" color="text.secondary">Total Neto</Typography>
+                  <Typography variant="h6" fontWeight={700} color="#10b981">{formatMoney(totals.totalNet)}</Typography>
                 </Box>
               </Stack>
             </CardContent>
@@ -284,41 +233,20 @@ export const PaymentsSection = () => {
         </Grid2>
       </Grid2>
 
-      {/* Datos Bancarios */}
       <Card elevation={0} sx={{ border: "1px solid #e5e7eb", mb: 4 }}>
         <CardContent>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <AccountBalance sx={{ color: "#06b6d4", fontSize: 28 }} />
               <div>
-                <Typography variant="h6" fontWeight={600}>
-                  Datos Bancarios
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Información para recibir pagos
-                </Typography>
+                <Typography variant="h6" fontWeight={600}>Datos Bancarios</Typography>
+                <Typography variant="body2" color="text.secondary">Información para recibir pagos</Typography>
               </div>
             </div>
-              <Button
-                variant="outlined"
-                startIcon={<Edit />}
-                onClick={() => {
-                  if (bankAccount) {
-                    setBankData({
-                      bankName: bankAccount.bankName,
-                      accountNumber: bankAccount.accountNumber,
-                      accountType: bankAccount.accountType === 'Corriente' ? 'checking' : bankAccount.accountType === 'Ahorros' ? 'savings' : bankAccount.accountType,
-                      accountHolder: bankAccount.accountHolder,
-                    });
-                  }
-                  setBankDialogOpen(true);
-                }}
-                sx={{ textTransform: "none" }}
-              >
-                {bankAccount ? "Editar" : "Agregar"}
-              </Button>
+            <Button variant="outlined" startIcon={<Edit />} onClick={() => { setBankDialogOpen(true); }} sx={{ textTransform: "none" }}>
+              {bankAccount ? "Editar" : "Agregar"}
+            </Button>
           </div>
-
           {bankAccount ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -331,9 +259,7 @@ export const PaymentsSection = () => {
               </div>
               <div>
                 <Typography variant="caption" color="text.secondary">Tipo de Cuenta</Typography>
-                <Typography variant="body1" fontWeight={600}>
-                  {bankAccount.accountType === 'checking' || bankAccount.accountType === 'Corriente' ? 'Corriente' : 'Ahorros'}
-                </Typography>
+                <Typography variant="body1" fontWeight={600}>{bankAccount.accountType === 'checking' || bankAccount.accountType === 'Corriente' ? 'Corriente' : 'Ahorros'}</Typography>
               </div>
               <div>
                 <Typography variant="caption" color="text.secondary">Titular</Typography>
@@ -348,191 +274,57 @@ export const PaymentsSection = () => {
         </CardContent>
       </Card>
 
-      {/* Barra de búsqueda y filtros */}
-      <Box mb={3}>
-        <Stack spacing={2}>
-          {/* Barra de búsqueda */}
-          <TextField
-            fullWidth
-            placeholder="Buscar por paciente, fecha o monto..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search sx={{ color: "text.secondary" }} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                backgroundColor: "#f9fafb",
-                "&:hover": {
-                  backgroundColor: "#f3f4f6",
-                },
-                "&.Mui-focused": {
-                  backgroundColor: "white",
-                },
-              },
-            }}
+      {loadingPayments ? (
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+          <CircularProgress />
+        </Box>
+      ) : (
+        <Box sx={{ height: 500, width: "100%", bgcolor: "white", borderRadius: 2, boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+          <DataGrid
+            rows={payments}
+            columns={columns}
+            loading={loadingPayments}
+            paginationMode="server"
+            rowCount={total}
+            paginationModel={paginationModel}
+            onPaginationModelChange={handlePaginationChange}
+            pageSizeOptions={[5, 10, 20]}
+            disableRowSelectionOnClick
+            getRowId={(row) => row.id}
+            sx={{ border: "none" }}
           />
-          
-          {/* Filtro de estado */}
-          <Stack direction="row" spacing={1}>
-            <Chip
-              label="Todos"
-              onClick={() => setStatusFilter("all")}
-              color={statusFilter === "all" ? "primary" : "default"}
-              clickable
-            />
-            <Chip
-              label="Pendientes"
-              onClick={() => setStatusFilter("pending")}
-              color={statusFilter === "pending" ? "primary" : "default"}
-              clickable
-            />
-            <Chip
-              label="Pagados"
-              onClick={() => setStatusFilter("paid")}
-              color={statusFilter === "paid" ? "primary" : "default"}
-              clickable
-            />
-          </Stack>
-        </Stack>
-      </Box>
+        </Box>
+      )}
 
-      {/* Tabla de pagos */}
-      <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #e5e7eb" }}>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ bgcolor: "#f9fafb" }}>
-              <TableCell sx={{ fontWeight: 600 }}>Paciente</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Fecha</TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                Monto Cobrado
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                Comisión
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                Total Neto
-              </TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="center">
-                Estado
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredPayments.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                  <Typography color="text.secondary">
-                    No hay pagos registrados
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredPayments.map((payment) => (
-                <TableRow key={payment.id} hover>
-                  <TableCell>
-                    <Typography fontWeight={600}>{payment.patientName}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(payment.date).toLocaleDateString("es-ES")}
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography fontWeight={600}>{formatMoney(payment.amount)}</Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography color="text.secondary">
-                      {formatMoney(payment.commission)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Typography fontWeight={600} color="#10b981">
-                      {formatMoney(payment.netAmount)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="center">
-                    <Chip
-                      icon={payment.status === "paid" ? <CheckCircle /> : <HourglassEmpty />}
-                      label={payment.status === "paid" ? "Pagado" : "Pendiente"}
-                      color={payment.status === "paid" ? "success" : "warning"}
-                      size="small"
-                    />
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Dialog para editar datos bancarios */}
       <Dialog open={bankDialogOpen} onClose={() => setBankDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Datos Bancarios</DialogTitle>
         <DialogContent>
           <Stack spacing={3} sx={{ mt: 2 }}>
             <FormControl fullWidth required>
               <InputLabel>Banco</InputLabel>
-              <Select
-                value={bankData.bankName}
-                onChange={(e) => setBankData({ ...bankData, bankName: e.target.value })}
-                label="Banco"
-              >
-                {ECUADOR_BANKS.map((bank) => (
-                  <MenuItem key={bank} value={bank}>
-                    {bank}
-                  </MenuItem>
-                ))}
+              <Select value={bankData.bankName} onChange={(e) => setBankData({ ...bankData, bankName: e.target.value })} label="Banco">
+                {ECUADOR_BANKS.map((bank) => (<MenuItem key={bank} value={bank}>{bank}</MenuItem>))}
               </Select>
             </FormControl>
-            <TextField
-              label="Número de Cuenta"
-              value={bankData.accountNumber}
-              onChange={(e) => handleNumberInput(e, (value) => setBankData({ ...bankData, accountNumber: value }))}
-              fullWidth
-              required
-              helperText="Solo números"
-            />
+            <TextField label="Número de Cuenta" value={bankData.accountNumber} onChange={(e) => handleNumberInput(e, (value) => setBankData({ ...bankData, accountNumber: value }))} fullWidth required helperText="Solo números" />
             <FormControl fullWidth>
               <InputLabel>Tipo de Cuenta</InputLabel>
-              <Select
-                value={bankData.accountType}
-                onChange={(e) => setBankData({ ...bankData, accountType: e.target.value })}
-                label="Tipo de Cuenta"
-              >
+              <Select value={bankData.accountType} onChange={(e) => setBankData({ ...bankData, accountType: e.target.value })} label="Tipo de Cuenta">
                 <MenuItem value="checking">Corriente</MenuItem>
                 <MenuItem value="savings">Ahorros</MenuItem>
               </Select>
             </FormControl>
-            <TextField
-              label="Titular de la Cuenta"
-              value={bankData.accountHolder}
-              onChange={(e) => handleLetterInput(e, (value) => setBankData({ ...bankData, accountHolder: value }))}
-              fullWidth
-              required
-              helperText="Solo letras y espacios"
-            />
+            <TextField label="Titular de la Cuenta" value={bankData.accountHolder} onChange={(e) => handleLetterInput(e, (value) => setBankData({ ...bankData, accountHolder: value }))} fullWidth required helperText="Solo letras y espacios" />
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setBankDialogOpen(false)} sx={{ textTransform: "none" }}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleSaveBankData}
-            variant="contained"
-            disabled={savingBank || !bankData.bankName || !bankData.accountNumber || !bankData.accountHolder}
-            sx={{ textTransform: "none", backgroundColor: "#06b6d4", "&:hover": { backgroundColor: "#0891b2" } }}
-          >
+          <Button onClick={() => setBankDialogOpen(false)} sx={{ textTransform: "none" }}>Cancelar</Button>
+          <Button onClick={handleSaveBankData} variant="contained" disabled={savingBank || !bankData.bankName || !bankData.accountNumber || !bankData.accountHolder}
+            sx={{ textTransform: "none", backgroundColor: "#06b6d4", "&:hover": { backgroundColor: "#0891b2" } }}>
             {savingBank ? "Guardando..." : "Guardar"}
           </Button>
         </DialogActions>
       </Dialog>
-      </>
-      )}
     </div>
   );
 };
-

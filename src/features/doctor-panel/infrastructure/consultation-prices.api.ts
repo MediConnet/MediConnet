@@ -1,12 +1,16 @@
 import { httpClient, extractData } from "../../../shared/lib/http";
+import type { PaginatedResponse } from "../../../shared/types/pagination";
 import type { ConsultationPrice, CreateConsultationPriceRequest, UpdateConsultationPriceRequest } from "../domain/ConsultationPrice.entity";
 
 /**
  * Obtiene todos los tipos de consulta del médico agrupados por especialidad
  */
-export const getConsultationPricesAPI = async (): Promise<ConsultationPrice[]> => {
-  const response = await httpClient.get<{ success: boolean; data: ConsultationPrice[] }>(
-    "/doctors/consultation-prices"
+export const getConsultationPricesAPI = async (
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<ConsultationPrice>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<ConsultationPrice> }>(
+    "/doctors/consultation-prices",
+    { params }
   );
   return extractData(response);
 };

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { env } from '../config/env';
 import { logger } from '../../shared/lib/logger';
+import { normalizeProviderType } from '../../shared/lib/normalizeProviderType';
 
 // 1. Definición de Tipos
 interface User {
@@ -43,9 +44,14 @@ export const useAuthStore = create<AuthState>()(
       // --- Acciones ---
       
       login: (user, token) => {
+        const normalizedUser = {
+          ...user,
+          tipo: user.tipo ? normalizeProviderType(user.tipo) : user.tipo,
+        };
+
         // 1. Actualizamos el estado de Zustand
         set({ 
-          user, 
+          user: normalizedUser, 
           token, 
           isAuthenticated: true 
         });
@@ -96,13 +102,22 @@ export const useAuthStore = create<AuthState>()(
       updateUser: (userData) => {
         const currentUser = get().user;
         if (currentUser) {
-          set({ user: { ...currentUser, ...userData } });
+          const merged = { ...currentUser, ...userData };
+          if (merged.tipo) {
+            merged.tipo = normalizeProviderType(merged.tipo);
+          }
+          set({ user: merged });
         }
       },
     }),
     {
-      name: 'auth-storage', 
-      storage: createJSONStorage(() => localStorage), 
+      name: 'auth-storage',
+      storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state) => {
+        if (state?.user?.tipo) {
+          state.user.tipo = normalizeProviderType(state.user.tipo);
+        }
+      },
     }
   )
 );

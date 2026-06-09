@@ -1,22 +1,30 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect, useCallback } from 'react';
 import { getLaboratoryPanelReviewsAPI } from '../../infrastructure/laboratories.repository';
 import type { LaboratoryReview } from '../../domain/LaboratoryReview.entity';
 
-interface LaboratoryReviewsResponse {
-  reviews: LaboratoryReview[];
-  averageRating: number;
-  totalReviews: number;
-}
-
-/**
- * Hook: Obtener reseñas del panel de laboratorio (proveedor autenticado)
- * Usa el endpoint: GET /api/laboratories/reviews
- */
 export const useLaboratoryReviews = () => {
-  return useQuery<LaboratoryReviewsResponse>({
-    queryKey: ['laboratory-panel-reviews'],
-    queryFn: () => getLaboratoryPanelReviewsAPI(),
-    staleTime: 2 * 60 * 1000, // 2 minutos
-    retry: 1,
-  });
+  const [reviews, setReviews] = useState<LaboratoryReview[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const result = await getLaboratoryPanelReviewsAPI({ page, limit });
+      setReviews(result.data);
+      setTotal(result.pagination.total);
+    } catch (error) {
+      console.error('Error cargando reseñas:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, limit]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  return { reviews, loading, total, page, setPage, limit, setLimit, refetch: loadData };
 };

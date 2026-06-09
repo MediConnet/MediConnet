@@ -6,45 +6,133 @@ import {
   Save,
   CheckCircle,
 } from "@mui/icons-material";
-import { Button, Chip, TextField, Box, Typography, Card, CardContent } from "@mui/material";
+import {
+  Button,
+  Chip,
+  TextField,
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+} from "@mui/material";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import { useUpdateDoctorProfile } from "../hooks/useUpdateDoctorProfile";
 import type { WorkSchedule, TimeSlot } from "../../domain/DoctorDashboard.entity";
 import { useDoctorDashboard } from "../hooks/useDoctorDashboard";
-import { handleNumberInput } from "../../../../shared/lib/inputValidation";
+import {
+  createDoctorBlockedSlotAPI,
+  deleteDoctorBlockedSlotAPI,
+  getDoctorBlockedSlotsAPI,
+  type BlockedSlot,
+} from "../../infrastructure/doctors.api";
 
 export const SettingsSection = () => {
   const authStore = useAuthStore();
   const { user } = authStore;
+  const feedback = useFeedbackStore();
   const { data, refetch } = useDoctorDashboard();
-  const { updateProfile, loading: saving } = useUpdateDoctorProfile();
+  const { mutateAsync: updateProfile, isPending: saving } = useUpdateDoctorProfile();
 
   const [consultationDuration, setConsultationDuration] = useState(30);
   const [workSchedule, setWorkSchedule] = useState<WorkSchedule[]>([]);
-  const [blockedDates, setBlockedDates] = useState<string[]>([]);
+  const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>([]);
+  const [loadingBlocked, setLoadingBlocked] = useState(false);
+  const [savingBlocked, setSavingBlocked] = useState(false);
   const [newBlockedDate, setNewBlockedDate] = useState("");
 
   useEffect(() => {
     if (data?.doctor) {
       setConsultationDuration(data.doctor.consultationDuration || 30);
-      setWorkSchedule(data.doctor.workSchedule || []);
-      setBlockedDates(data.doctor.blockedDates || []);
+      const duration = normalizeDuration(data.doctor.consultationDuration || 30);
+      const hydrated = (data.doctor.workSchedule || []).map((s) => {
+        const blockedHours = Array.isArray(s.blockedHours) ? s.blockedHours : [];
+        const builtSlots =
+          s.timeSlots && s.timeSlots.length > 0
+            ? s.timeSlots
+            : buildTimeSlots({
+                startTime: s.startTime || "09:00",
+                endTime: s.endTime || "17:00",
+                durationMin: duration,
+              });
+
+        return {
+          ...s,
+          blockedHours,
+          timeSlots: builtSlots.map((slot) => ({
+            ...slot,
+            available: blockedHours.includes(slot.startTime) ? false : slot.available,
+          })),
+        };
+      });
+      setWorkSchedule(hydrated);
     }
   }, [data]);
 
-  // Bloques horarios predefinidos
-  const timeSlots: TimeSlot[] = [
-    { startTime: "08:00", endTime: "09:00", available: true },
-    { startTime: "09:00", endTime: "10:00", available: true },
-    { startTime: "10:00", endTime: "11:00", available: true },
-    { startTime: "11:00", endTime: "12:00", available: true },
-    { startTime: "12:00", endTime: "13:00", available: true },
-    { startTime: "13:00", endTime: "14:00", available: true },
-    { startTime: "14:00", endTime: "15:00", available: true },
-    { startTime: "15:00", endTime: "16:00", available: true },
-    { startTime: "16:00", endTime: "17:00", available: true },
-    { startTime: "17:00", endTime: "18:00", available: true },
-  ];
+  useEffect(() => {
+    // Cargar bloqueos reales (solo doctores independientes)
+    let mounted = true;
+    (async () => {
+      setLoadingBlocked(true);
+      try {
+        const slots = await getDoctorBlockedSlotsAPI();
+        if (mounted) setBlockedSlots(slots);
+      } catch {
+        // Silencioso: algunos usuarios (médico de clínica) no tienen este endpoint aplicable.
+      } finally {
+        if (mounted) setLoadingBlocked(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const durationOptions = [30, 60] as const;
+  const normalizeDuration = (value: number) => (value === 60 ? 60 : 30);
+
+  const toMinutes = (hhmm: string) => {
+    const [h, m] = hhmm.split(":").map((n) => parseInt(n, 10));
+    return h * 60 + m;
+  };
+
+  const fromMinutes = (mins: number) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  };
+
+  const buildTimeSlots = (params: {
+    startTime: string;
+    endTime: string;
+    durationMin: number;
+    previousSlots?: TimeSlot[];
+  }): TimeSlot[] => {
+    const start = toMinutes(params.startTime);
+    const end = toMinutes(params.endTime);
+    const step = normalizeDuration(params.durationMin);
+    if (end <= start) return [];
+
+    const prevAvailability = new Map(
+      (params.previousSlots || []).map((s) => [s.startTime, Boolean(s.available)]),
+    );
+
+    const slots: TimeSlot[] = [];
+    for (let t = start; t + step <= end; t += step) {
+      const slotStart = fromMinutes(t);
+      const slotEnd = fromMinutes(t + step);
+      slots.push({
+        startTime: slotStart,
+        endTime: slotEnd,
+        available: prevAvailability.get(slotStart) ?? true,
+      });
+    }
+    return slots;
+  };
 
   const dayLabels: Record<string, string> = {
     monday: "Lunes",
@@ -71,7 +159,11 @@ export const SettingsSection = () => {
             enabled: true,
             startTime: "09:00",
             endTime: "17:00",
-            timeSlots: timeSlots.map((slot) => ({ ...slot })),
+            timeSlots: buildTimeSlots({
+              startTime: "09:00",
+              endTime: "17:00",
+              durationMin: consultationDuration,
+            }),
             blockedHours: [],
           },
         ];
@@ -83,7 +175,17 @@ export const SettingsSection = () => {
     setWorkSchedule((prev) =>
       prev.map((schedule) => {
         if (schedule.day === day) {
-          const slots = schedule.timeSlots || timeSlots.map((s) => ({ ...s }));
+          const slots =
+            schedule.timeSlots ||
+            buildTimeSlots({
+              startTime: schedule.startTime || "09:00",
+              endTime: schedule.endTime || "17:00",
+              durationMin: consultationDuration,
+            });
+          const target = slots[slotIndex];
+          if (schedule.blockedHours?.includes(target.startTime)) {
+            return schedule;
+          }
           slots[slotIndex].available = !slots[slotIndex].available;
           return { ...schedule, timeSlots: slots };
         }
@@ -98,8 +200,14 @@ export const SettingsSection = () => {
         if (schedule.day === day) {
           const blocked = schedule.blockedHours || [];
           const isBlocked = blocked.includes(hour);
+          const slots = (schedule.timeSlots || []).map((slot) =>
+            slot.startTime === hour
+              ? { ...slot, available: isBlocked ? true : false }
+              : slot,
+          );
           return {
             ...schedule,
+            timeSlots: slots,
             blockedHours: isBlocked
               ? blocked.filter((h) => h !== hour)
               : [...blocked, hour],
@@ -110,26 +218,97 @@ export const SettingsSection = () => {
     );
   };
 
-  const handleBlockDate = () => {
-    if (newBlockedDate && !blockedDates.includes(newBlockedDate)) {
-      setBlockedDates([...blockedDates, newBlockedDate]);
+  const isFullDayBlocked = (date: string) =>
+    blockedSlots.some(
+      (s) => s.date === date && s.startTime === "00:00" && s.endTime === "23:59",
+    );
+
+  const handleBlockDate = async () => {
+    if (!newBlockedDate) return;
+    if (isFullDayBlocked(newBlockedDate)) {
       setNewBlockedDate("");
+      return;
+    }
+
+    setSavingBlocked(true);
+    try {
+      const created = await createDoctorBlockedSlotAPI({
+        date: newBlockedDate,
+        startTime: "00:00",
+        endTime: "23:59",
+        reason: "Bloqueo día completo",
+      });
+      setBlockedSlots((prev) => [...prev, created]);
+      setNewBlockedDate("");
+      feedback.showFeedback('success', 'Operación completada', 'La información se guardó correctamente.');
+    } catch {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
+    } finally {
+      setSavingBlocked(false);
     }
   };
 
-  const handleRemoveBlockedDate = (date: string) => {
-    setBlockedDates(blockedDates.filter((d) => d !== date));
+  const handleRemoveBlockedDate = async (date: string) => {
+    const fullDayBlocks = blockedSlots.filter(
+      (s) => s.date === date && s.startTime === "00:00" && s.endTime === "23:59",
+    );
+    if (fullDayBlocks.length === 0) return;
+
+    setSavingBlocked(true);
+    try {
+      await Promise.all(fullDayBlocks.map((b) => deleteDoctorBlockedSlotAPI(b.id)));
+      setBlockedSlots((prev) =>
+        prev.filter((s) => !(s.date === date && s.startTime === "00:00" && s.endTime === "23:59")),
+      );
+      feedback.showFeedback('success', 'Registro eliminado', 'La acción se completó correctamente.');
+    } catch {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
+    } finally {
+      setSavingBlocked(false);
+    }
+  };
+
+  const handleConsultationDurationChange = (next: number) => {
+    const normalized = normalizeDuration(next);
+    setConsultationDuration(normalized);
+    setWorkSchedule((prev) =>
+      prev.map((s) => {
+        if (!s.enabled) return s;
+        const newSlots = buildTimeSlots({
+          startTime: s.startTime || "09:00",
+          endTime: s.endTime || "17:00",
+          durationMin: normalized,
+          previousSlots: s.timeSlots,
+        });
+        // Limpiar bloqueos de horas que ya no existan en la nueva granularidad
+        const allowedStarts = new Set(newSlots.map((ts) => ts.startTime));
+        const nextBlocked = (s.blockedHours || []).filter((h) => allowedStarts.has(h));
+        return { ...s, timeSlots: newSlots, blockedHours: nextBlocked };
+      }),
+    );
   };
 
   const handleSave = async () => {
-    if (!user?.id) return;
-
-    await updateProfile(user.id, {
-      consultationDuration,
-      workSchedule,
-      blockedDates,
-    });
-    refetch();
+    try {
+      await updateProfile({
+        consultationDuration: normalizeDuration(consultationDuration),
+        workSchedule: workSchedule.map((s) => ({
+          ...s,
+          timeSlots: s.enabled
+            ? buildTimeSlots({
+                startTime: s.startTime || "09:00",
+                endTime: s.endTime || "17:00",
+                durationMin: consultationDuration,
+                previousSlots: s.timeSlots,
+              })
+            : s.timeSlots,
+        })),
+      });
+      refetch();
+      feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
+    } catch {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
+    }
   };
 
   return (
@@ -143,25 +322,24 @@ export const SettingsSection = () => {
               Duración de Consulta
             </Typography>
           </div>
-          <TextField
-            type="text"
-            label="Duración en minutos"
-            value={consultationDuration}
-            onChange={(e) => {
-              handleNumberInput(e, (value) => {
-                const numValue = parseInt(value) || 0;
-                if (numValue >= 0 && numValue <= 480) {
-                  setConsultationDuration(numValue);
-                }
-              });
-            }}
-            InputProps={{
-              endAdornment: <Typography variant="body2" color="text.secondary">min</Typography>,
-            }}
-            fullWidth
-            sx={{ maxWidth: 300 }}
-            helperText="Solo números (máximo 480 minutos)"
-          />
+          <FormControl fullWidth sx={{ maxWidth: 300 }}>
+            <InputLabel id="consultation-duration-label">Duración</InputLabel>
+            <Select
+              labelId="consultation-duration-label"
+              label="Duración"
+              value={normalizeDuration(consultationDuration)}
+              onChange={(e) => handleConsultationDurationChange(Number(e.target.value))}
+            >
+              {durationOptions.map((opt) => (
+                <MenuItem key={opt} value={opt}>
+                  {opt} min
+                </MenuItem>
+              ))}
+            </Select>
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+              Solo puedes seleccionar 30 o 60 minutos.
+            </Typography>
+          </FormControl>
         </CardContent>
       </Card>
 
@@ -203,7 +381,13 @@ export const SettingsSection = () => {
       {workSchedule
         .filter((s) => s.enabled)
         .map((schedule) => {
-          const slots = schedule.timeSlots || timeSlots.map((s) => ({ ...s }));
+          const slots =
+            schedule.timeSlots ||
+            buildTimeSlots({
+              startTime: schedule.startTime || "09:00",
+              endTime: schedule.endTime || "17:00",
+              durationMin: consultationDuration,
+            });
           return (
             <Card key={schedule.day} elevation={0} sx={{ border: "1px solid #e5e7eb" }}>
               <CardContent>
@@ -212,17 +396,26 @@ export const SettingsSection = () => {
                 </Typography>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                   {slots.map((slot, index) => (
+                    (() => {
+                      const isBlockedByHour =
+                        schedule.blockedHours?.includes(slot.startTime) || false;
+                      return (
                     <button
                       key={index}
                       onClick={() => handleTimeSlotToggle(schedule.day, index)}
+                      disabled={isBlockedByHour}
                       className={`p-3 rounded-lg border-2 transition-all text-sm ${
-                        slot.available
+                        isBlockedByHour
+                          ? "border-red-300 bg-red-50 text-red-600 cursor-not-allowed"
+                          : slot.available
                           ? "border-teal-500 bg-teal-50 text-teal-700"
                           : "border-gray-200 bg-gray-50 text-gray-400"
                       }`}
                     >
                       {slot.startTime} - {slot.endTime}
                     </button>
+                      );
+                    })()
                   ))}
                 </div>
 
@@ -275,21 +468,34 @@ export const SettingsSection = () => {
             <Button
               variant="contained"
               onClick={handleBlockDate}
-              disabled={!newBlockedDate}
+              disabled={!newBlockedDate || savingBlocked}
               sx={{ textTransform: "none" }}
             >
-              Bloquear
+              {savingBlocked ? "Procesando..." : "Bloquear"}
             </Button>
           </div>
-          {blockedDates.length > 0 && (
+          {loadingBlocked && (
+            <Typography variant="body2" color="text.secondary">
+              Cargando bloqueos...
+            </Typography>
+          )}
+          {blockedSlots.filter((s) => s.startTime === "00:00" && s.endTime === "23:59").length >
+            0 && (
             <div className="flex flex-wrap gap-2">
-              {blockedDates.map((date) => (
+              {Array.from(
+                new Set(
+                  blockedSlots
+                    .filter((s) => s.startTime === "00:00" && s.endTime === "23:59")
+                    .map((s) => s.date),
+                ),
+              ).map((date) => (
                 <Chip
                   key={date}
                   label={new Date(date).toLocaleDateString("es-ES")}
                   onDelete={() => handleRemoveBlockedDate(date)}
                   color="error"
                   variant="outlined"
+                  disabled={savingBlocked}
                 />
               ))}
             </div>

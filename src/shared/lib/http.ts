@@ -4,7 +4,10 @@
 import axios, { AxiosError, type AxiosInstance, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import { env } from '../../app/config/env';
 import { useAuthStore } from '../../app/store/auth.store';
-import { logger } from './logger';
+import { getUserFriendlyMessage, logApiError, USER_MESSAGES } from './api-error';
+import { createLogger, logger } from './logger';
+
+const httpLog = createLogger('HTTP');
 
 // ⭐ Sistema de loading global (singleton)
 let globalLoadingCount = 0;
@@ -109,42 +112,47 @@ httpClient.interceptors.response.use(
     }
     return response;
   },
-  (error: AxiosError<{ success?: boolean; message?: string; errors?: any }>) => {
-    // ⭐ Desactivar loading en caso de error
-    const isQuickRequest = error.config?.url?.includes('/auth/me') || error.config?.url?.includes('/health');
+  (error: AxiosError<{ success?: boolean; message?: string; code?: string; errors?: { code?: string } }>) => {
+    const isQuickRequest =
+      error.config?.url?.includes('/auth/me') || error.config?.url?.includes('/health');
     if (!isQuickRequest) {
       loadingManager.stop();
     }
-    
+
+    const url = error.config?.url ?? 'unknown';
+    logApiError('HTTP', error, { url, method: error.config?.method });
+
     const status = error.response?.status;
-    const data = error.response?.data;
+    const backendCode = error.response?.data?.code ?? error.response?.data?.errors?.code;
+    const backendMessage = error.response?.data?.message;
 
-    // A. Manejo de Sesión Expirada (401)
-    if (status === 401) {
-      logger.warn('⚠️ Sesión expirada o token inválido. Cerrando sesión...');
-      
+    // No cerrar sesión en el endpoint de login — el usuario no está autenticado
+    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
+    if (status === 401 && !isAuthEndpoint) {
+      httpLog.warn('Sesión expirada o token inválido — cerrando sesión');
       useAuthStore.getState().logout();
-      
-      // Nota: El store ya se encarga de limpiar el localStorage, 
-      // así que no necesitamos repetir los removeItem aquí.
     }
 
-    // B. Manejo de Acceso Denegado (403)
     if (status === 403) {
-      logger.warn('⛔ Acceso denegado: No tienes permisos para esta acción');
+      httpLog.warn('Acceso denegado', { url });
     }
 
-    // C. Retornar el mensaje de error del backend si existe
-    if (data?.message) {
-      // Creamos un error limpio con el mensaje del backend
-      const customError = new Error(data.message);
-      // @ts-ignore: Adjuntamos el código para que la UI pueda leerlo
-      customError.code = data.errors?.code || 'API_ERROR';
-      return Promise.reject(customError);
+    // Usar mensaje del backend si tiene un código específico (ej. INVITED_NOT_REGISTERED)
+    let userMessage: string;
+    if (backendCode) {
+      userMessage = backendMessage || USER_MESSAGES.generic;
+    } else {
+      userMessage = getUserFriendlyMessage(error);
     }
 
-    // Error genérico de red o servidor
-    return Promise.reject(error);
+    const safeError = new Error(userMessage || USER_MESSAGES.generic);
+    Object.assign(safeError, {
+      status,
+      code: backendCode ?? 'API_ERROR',
+      isApiError: true,
+    });
+
+    return Promise.reject(safeError);
   }
 );
 
@@ -152,20 +160,23 @@ httpClient.interceptors.response.use(
  * Helper para extraer datos de respuestas del backend
  * El backend retorna: { success: true, data: ... }
  */
-export const extractData = <T>(response: AxiosResponse<{ success: boolean; data: T; message?: string }>): T => {
-  // Caso ideal: Backend responde con success: true y data
+export const extractData = <T>(
+  response: AxiosResponse<{ success: boolean; data: T; message?: string }>,
+  context = 'extractData',
+): T => {
   if (response.data?.success && response.data?.data !== undefined) {
     return response.data.data;
   }
-  
-  // Caso borde: Backend responde directo la data (a veces pasa en proxies)
-  // o el campo data es null pero success es true
+
   if (response.data?.success) {
-      // @ts-ignore: Manejo flexible
-      return response.data.data ?? (response.data as unknown as T);
+    return (response.data.data ?? response.data) as unknown as T;
   }
 
-  // Si llegamos aquí, la respuesta no tiene el formato esperado
-  // Retornamos la data completa como fallback para evitar pantallas blancas
+  httpLog.warn('Respuesta sin formato { success, data }', {
+    context,
+    url: response.config?.url,
+    keys: response.data != null ? Object.keys(response.data as object) : [],
+  });
+
   return response.data as unknown as T;
 };

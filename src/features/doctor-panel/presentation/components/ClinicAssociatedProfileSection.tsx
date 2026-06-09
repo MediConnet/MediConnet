@@ -23,6 +23,8 @@ import * as Yup from "yup";
 import type { ClinicAssociatedDoctorProfile } from "../../domain/ClinicAssociatedDoctor.entity";
 import { useClinicAssociatedDoctor } from "../hooks/useClinicAssociatedDoctor";
 import { updateClinicAssociatedProfileAPI } from "../../infrastructure/clinic-associated.api";
+import { useSpecialties } from "../../../auth/presentation/hooks/useSpecialties";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 interface ClinicAssociatedProfileSectionProps {
   clinicId: string;
@@ -35,34 +37,13 @@ const validationSchema = Yup.object({
   bio: Yup.string().max(500, "La descripción debe tener máximo 500 caracteres"),
 });
 
-const medicalSpecialties = [
-  "Medicina General",
-  "Cardiología",
-  "Dermatología",
-  "Ginecología",
-  "Pediatría",
-  "Oftalmología",
-  "Traumatología",
-  "Neurología",
-  "Psiquiatría",
-  "Urología",
-  "Endocrinología",
-  "Gastroenterología",
-  "Neumología",
-  "Otorrinolaringología",
-  "Oncología",
-  "Reumatología",
-  "Nefrología",
-  "Cirugía General",
-  "Anestesiología",
-  "Odontología",
-];
-
 export const ClinicAssociatedProfileSection = ({
   clinicId: _clinicId,
   clinicName,
 }: ClinicAssociatedProfileSectionProps) => {
   const { profile, loading, clinicInfo: _clinicInfo } = useClinicAssociatedDoctor();
+  const { data: specialties = [] } = useSpecialties();
+  const feedback = useFeedbackStore();
   const [saving, setSaving] = useState(false);
   const [educationItems, setEducationItems] = useState<Array<{ text: string; fileUrl?: string; fileName?: string }>>([]);
   const [certificationItems, setCertificationItems] = useState<Array<{ text: string; fileUrl?: string; fileName?: string }>>([]);
@@ -111,10 +92,10 @@ export const ClinicAssociatedProfileSection = ({
         };
 
         await updateClinicAssociatedProfileAPI(updatedProfile);
-        alert("Perfil actualizado correctamente");
+        feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
       } catch (error) {
         console.error("Error actualizando perfil:", error);
-        alert("Error al actualizar el perfil");
+        feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
       } finally {
         setSaving(false);
       }
@@ -137,12 +118,12 @@ export const ClinicAssociatedProfileSection = ({
     if (file) {
       // Validar que sea PDF
       if (file.type !== 'application/pdf') {
-        alert('Solo se permiten archivos PDF');
+        feedback.showFeedback('error', 'Archivo inválido', 'Solo se permiten archivos PDF.');
         return;
       }
       // Validar tamaño (máximo 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        alert('El archivo es demasiado grande. Máximo 5MB');
+        feedback.showFeedback('error', 'Archivo muy grande', 'El archivo es demasiado grande. Máximo 5MB.');
         return;
       }
 
@@ -161,7 +142,7 @@ export const ClinicAssociatedProfileSection = ({
         }
       } catch (error) {
         console.error('Error al procesar archivo:', error);
-        alert('Error al procesar el archivo PDF');
+        feedback.showFeedback('error', 'Error', 'No fue posible procesar el archivo PDF.');
       }
     }
   };
@@ -182,12 +163,12 @@ export const ClinicAssociatedProfileSection = ({
     if (file) {
       // Validar que sea PDF
       if (file.type !== 'application/pdf') {
-        alert('Solo se permiten archivos PDF');
+        feedback.showFeedback('error', 'Archivo inválido', 'Solo se permiten archivos PDF.');
         return;
       }
       // Validar tamaño (máximo 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        alert('El archivo es demasiado grande. Máximo 5MB');
+        feedback.showFeedback('error', 'Archivo muy grande', 'El archivo es demasiado grande. Máximo 5MB.');
         return;
       }
 
@@ -206,7 +187,7 @@ export const ClinicAssociatedProfileSection = ({
         }
       } catch (error) {
         console.error('Error al procesar archivo:', error);
-        alert('Error al procesar el archivo PDF');
+        feedback.showFeedback('error', 'Error', 'No fue posible procesar el archivo PDF.');
       }
     }
   };
@@ -278,9 +259,9 @@ export const ClinicAssociatedProfileSection = ({
                     <MenuItem value="">
                       <em>Selecciona una especialidad</em>
                     </MenuItem>
-                    {medicalSpecialties.map((spec) => (
-                      <MenuItem key={spec} value={spec}>
-                        {spec}
+                    {specialties.map((spec) => (
+                      <MenuItem key={spec.id} value={spec.name}>
+                        {spec.name}
                       </MenuItem>
                     ))}
                   </Select>

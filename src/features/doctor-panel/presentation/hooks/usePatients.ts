@@ -1,57 +1,59 @@
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuthStore } from "../../../../app/store/auth.store";
 import type { Patient } from "../../domain/Patient.entity";
 import { getPatientsAPI, type GetPatientsParams } from "../../infrastructure/patients.api";
 
-/**
- * Hook: Obtener lista de pacientes del doctor
- * Migrado a React Query para mejor gestión de caché y estados
- */
 export const usePatients = () => {
   const { user } = useAuthStore();
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [total, setTotal] = useState(0);
 
-  // Parámetros para la query (con debounce implícito de React Query)
   const queryParams: GetPatientsParams = useMemo(
-    () => ({
-      page,
-      limit: 10,
-      search,
-    }),
-    [page, search]
+    () => ({ page, limit, search }),
+    [page, limit, search]
   );
 
-  // Query con React Query
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ['doctors', 'patients', user?.id, queryParams],
-    queryFn: () => getPatientsAPI(queryParams),
-    enabled: !!user?.id,
-    staleTime: 1 * 60 * 1000, // 1 minuto
-  });
+  const loadData = useCallback(async () => {
+    if (!user?.id) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await getPatientsAPI(queryParams);
+      setPatients(result.data);
+      setTotal(result.pagination.total);
+    } catch (err: any) {
+      setError(err?.message || "Error al cargar pacientes");
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id, queryParams]);
 
-  // Función para manejar cambios en la búsqueda (resetear página)
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
   const handleSearchChange = (term: string) => {
     setSearch(term);
     setPage(1);
   };
 
   return {
-    patients: data?.patients || [],
-    loading: isLoading,
+    patients,
+    loading,
     error,
     page,
-    totalPages: data?.meta?.totalPages || 1,
-    totalPatients: data?.meta?.total || 0,
-    search,
     setPage,
+    limit,
+    setLimit,
+    total,
+    totalPages: Math.ceil(total / limit) || 1,
+    search,
     setSearch: handleSearchChange,
-    refetch,
+    refetch: loadData,
   };
 };

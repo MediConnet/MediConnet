@@ -6,12 +6,15 @@ import {
   getAppointmentsAPI,
   updateAppointmentStatusAPI,
 } from "../../infrastructure/appointments.api";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import { AppointmentDetailModal } from "./modals/AppointmentDetailModal";
 import { CreateDiagnosisModal } from "./modals/CreateDiagnosisModal";
 
 type ViewType = "month" | "week" | "day" | "list";
 
 export const AppointmentsSection = () => {
+  const feedback = useFeedbackStore();
+
   // --- ESTADOS ---
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0],
@@ -39,8 +42,8 @@ export const AppointmentsSection = () => {
   // 1. Cargar citas desde el Backend
   const fetchAppointments = async () => {
     try {
-      const data = await getAppointmentsAPI();
-      setAppointments(data);
+      const result = await getAppointmentsAPI();
+      setAppointments(result.data ?? []);
     } catch (error) {
       console.error("Error cargando citas:", error);
     } finally {
@@ -66,10 +69,8 @@ export const AppointmentsSection = () => {
       );
 
       if (success) {
-        // Recargar datos globales
         await fetchAppointments();
 
-        // Actualizar el objeto del modal abierto LOCALMENTE
         if (selectedAppointment && selectedAppointment.id === appointmentId) {
           const updatedAppt = { ...selectedAppointment, status: newStatus };
 
@@ -83,10 +84,11 @@ export const AppointmentsSection = () => {
 
           setSelectedAppointment(updatedAppt);
         }
+        feedback.showFeedback('success', 'Operación completada', 'La información se guardó correctamente.');
       }
     } catch (error) {
       console.error("Error actualizando estado:", error);
-      alert("No se pudo actualizar el estado de la cita");
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     } finally {
       setUpdatingStatus(false);
     }

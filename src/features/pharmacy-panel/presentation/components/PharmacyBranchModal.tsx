@@ -45,7 +45,6 @@ const INITIAL_STATE: any = {
   phone: "",
   whatsapp: "",
   openingHours: "",
-  hasHomeDelivery: false,
   isActive: true,
   imageUrl: null,
 };
@@ -495,17 +494,6 @@ export const PharmacyBranchModal = ({
 
           {/* Switches */}
           <Box display="flex" gap={4} flexWrap="wrap">
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.hasHomeDelivery}
-                  onChange={(e) =>
-                    handleChange("hasHomeDelivery", e.target.checked)
-                  }
-                />
-              }
-              label="Servicio a Domicilio"
-            />
             <FormControlLabel
               control={
                 <Switch

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { AccessTime, Person, Close, Email, Phone, CalendarToday, CheckCircle } from "@mui/icons-material";
-import { generateMockAppointments, type LaboratoryAppointment } from "../../infrastructure/appointments.mock";
+import type { LaboratoryAppointment } from "../../infrastructure/laboratory-appointments.api";
 
 type ViewType = "month" | "week" | "day" | "list";
 
@@ -230,23 +230,16 @@ export const AppointmentsSection = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [appointments, setAppointments] = useState<LaboratoryAppointment[]>([]);
 
-  // Cargar citas desde localStorage o generar mock
+  // Cargar citas desde localStorage
   useEffect(() => {
     const savedAppointments = localStorage.getItem("laboratory_appointments");
     if (savedAppointments) {
       setAppointments(JSON.parse(savedAppointments));
-    } else {
-      const mockAppointments = generateMockAppointments();
-      setAppointments(mockAppointments);
-      localStorage.setItem("laboratory_appointments", JSON.stringify(mockAppointments));
     }
   }, []);
 
-  // Generar citas mock basadas en el mes actual
-  const mockAppointments = appointments.length > 0 ? appointments : generateMockAppointments();
-
   // Filtrar citas finalizadas del calendario (no se muestran)
-  const activeAppointments = mockAppointments.filter(
+  const activeAppointments = appointments.filter(
     (apt) => apt.status !== "finalizada"
   );
 

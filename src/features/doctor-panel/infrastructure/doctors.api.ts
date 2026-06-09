@@ -1,5 +1,17 @@
 import { extractData, httpClient } from '../../../shared/lib/http';
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 import type { DoctorDashboard, PaymentMethod, ProfileStatus, WorkSchedule } from '../domain/DoctorDashboard.entity';
+import { PAYMENT_METHOD_BACKEND } from '../../../shared/config/domain.constants';
+
+export interface BlockedSlot {
+  id: string;
+  branchId: string;
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  reason?: string;
+  createdAt?: string;
+}
 
 // --- INTERFACES INTERNAS (Lo que devuelve el Backend realmente) ---
 
@@ -19,6 +31,7 @@ interface BackendSchedule {
   break_end?: string | null;
   breakStart?: string | null;
   breakEnd?: string | null;
+  blockedHours?: string[];
 
   is_active?: boolean;
   enabled?: boolean;
@@ -28,8 +41,8 @@ interface BackendProfileResponse {
   id: string;
   full_name: string;
   email: string;
-  specialty?: string; // String formateado "Cardiología, Pediatría"
-  specialties_list?: string[]; // Array crudo ["Cardiología", "Pediatría"]
+  specialty?: string;
+  specialties_list?: string[];
   category: string;
   years_of_experience: number;
   consultation_fee: number;
@@ -44,6 +57,9 @@ interface BackendProfileResponse {
   status: string; // "APPROVED", "PENDING"
   is_published: boolean;
   schedules: BackendSchedule[];
+  imageUrl?: string | null; // Imagen de portada/sucursal
+  profile_picture_url?: string | null; // Avatar del doctor
+  preview_images?: string[]; // Galería de vista previa
 }
 
 // Interface para la lista de especialidades disponibles (Select)
@@ -72,6 +88,8 @@ export interface UpdateDoctorProfileParams {
   consultationDuration?: number;
   blockedDates?: string[];
   imageUrl?: string | null;
+  profile_picture_url?: string | null;
+  preview_images?: string[];
   bankAccount?: {
     bankName: string;
     accountNumber: string;
@@ -98,30 +116,26 @@ export interface DoctorReview {
  * API: Obtener reseñas del doctor (panel profesional)
  * Endpoint: GET /api/doctors/reviews
  * Requiere: Bearer token
- *
- * Nota: backend puede responder placeholder con { reviews: [] }.
  */
-export const getDoctorPanelReviewsAPI = async (): Promise<{
-  reviews: DoctorReview[];
-  averageRating: number;
-  totalReviews: number;
-}> => {
+export const getDoctorPanelReviewsAPI = async (
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<DoctorReview>> => {
   const response = await httpClient.get<{
     success: boolean;
-    data: {
-      reviews: DoctorReview[];
-      averageRating?: number;
-      totalReviews?: number;
-    };
-  }>('/doctors/reviews');
+    data: PaginatedResponse<DoctorReview>;
+  }>('/doctors/reviews', { params });
 
   const data = extractData(response) as any;
-  const reviews = Array.isArray(data?.reviews) ? (data.reviews as DoctorReview[]) : [];
+  const reviews = Array.isArray(data?.data) ? (data.data as DoctorReview[]) : [];
 
   return {
-    reviews,
-    averageRating: Number(data?.averageRating ?? 0),
-    totalReviews: Number(data?.totalReviews ?? reviews.length),
+    data: reviews,
+    pagination: data?.pagination ?? {
+      total: reviews.length,
+      page: params?.page ?? 1,
+      limit: params?.limit ?? 10,
+      totalPages: Math.ceil(reviews.length / (params?.limit ?? 10)),
+    },
   };
 };
 
@@ -132,21 +146,18 @@ export const getDoctorPanelReviewsAPI = async (): Promise<{
  */
 const mapBackendPaymentsToFrontend = (methods: string[]): PaymentMethod => {
   if (!methods) return 'cash';
-  const hasCash = methods.some(m => m.toLowerCase().includes('efectivo'));
-  const hasCard = methods.some(m => m.toLowerCase().includes('tarjeta'));
-  
+  const hasCash = methods.some(m => m.toLowerCase().includes(PAYMENT_METHOD_BACKEND.CASH.toLowerCase()));
+  const hasCard = methods.some(m => m.toLowerCase().includes(PAYMENT_METHOD_BACKEND.CARD.toLowerCase()));
+
   if (hasCash && hasCard) return 'both';
   if (hasCard) return 'card';
-  return 'cash'; 
+  return 'cash';
 };
 
-/**
- * Convierte Frontend 'both' | 'card' | 'cash' -> Array del Backend
- */
 const mapFrontendPaymentsToBackend = (method: PaymentMethod): string[] => {
-  if (method === 'both') return ["Efectivo", "Tarjeta de Crédito"];
-  if (method === 'card') return ["Tarjeta de Crédito"];
-  return ["Efectivo"];
+  if (method === 'both') return [PAYMENT_METHOD_BACKEND.CASH, PAYMENT_METHOD_BACKEND.CARD];
+  if (method === 'card') return [PAYMENT_METHOD_BACKEND.CARD];
+  return [PAYMENT_METHOD_BACKEND.CASH];
 };
 
 /**
@@ -204,6 +215,9 @@ const mapBackendScheduleToFrontend = (backendSchedules: BackendSchedule[]): Work
         endTime,
         breakStart,
         breakEnd,
+        blockedHours: Array.isArray((found as any).blockedHours)
+          ? (found as any).blockedHours.filter((h: unknown) => typeof h === "string")
+          : [],
       };
     } else {
       // CASO B: El día NO vino del backend (hueco). Lo rellenamos como "Cerrado".
@@ -215,6 +229,7 @@ const mapBackendScheduleToFrontend = (backendSchedules: BackendSchedule[]): Work
         endTime: "17:00",
         breakStart: null,
         breakEnd: null,
+        blockedHours: [],
       };
     }
   });
@@ -316,7 +331,7 @@ export const getDoctorProfileAPI = async (): Promise<DoctorDashboard> => {
   if (backendData.specialties_list && backendData.specialties_list.length > 0) {
       specialtyValue = backendData.specialties_list;
   } else if (backendData.specialty) {
-      specialtyValue = backendData.specialty; // Puede ser un string "Cardiología, Pediatría"
+      specialtyValue = backendData.specialty;
   }
 
   return {
@@ -352,7 +367,9 @@ export const getDoctorProfileAPI = async (): Promise<DoctorDashboard> => {
       
       paymentMethods: mapBackendPaymentsToFrontend(backendData.payment_methods || []),
       workSchedule: mapBackendScheduleToFrontend(backendData.schedules || []),
-      imageUrl: (backendData as any).imageUrl || backendData.profile_picture_url || null,
+      imageUrl: (backendData as any).imageUrl || null,
+      profile_picture_url: backendData.profile_picture_url || null,
+      preview_images: (backendData as any).preview_images || [],
     },
     // ⭐ Información de clínica si el médico está asociado
     clinic: (backendData as any).clinic ? {
@@ -402,6 +419,14 @@ export const updateDoctorProfileAPI = async (
     backendPayload.imageUrl = params.imageUrl;
   }
 
+  if (params.profile_picture_url !== undefined) {
+    backendPayload.profile_picture_url = params.profile_picture_url;
+  }
+
+  if (params.preview_images !== undefined) {
+    backendPayload.preview_images = params.preview_images;
+  }
+
   // Datos bancarios del doctor (para pagos desde admin/clinica)
   if (params.bankAccount !== undefined) {
     backendPayload.bankAccount = {
@@ -425,6 +450,7 @@ export const updateDoctorProfileAPI = async (
         endTime: s.enabled ? s.endTime : null,
         breakStart: s.enabled && hasBreak ? (s.breakStart as string) : null,
         breakEnd: s.enabled && hasBreak ? (s.breakEnd as string) : null,
+        blockedHours: Array.isArray(s.blockedHours) ? s.blockedHours : [],
       };
     });
   }
@@ -469,7 +495,10 @@ export const updateDoctorProfileAPI = async (
       isActive: backendData.status === 'APPROVED',
       profileStatus: backendData.is_published ? 'published' : 'draft',
       paymentMethods: mapBackendPaymentsToFrontend(backendData.payment_methods || []),
-      workSchedule: mapBackendScheduleToFrontend(backendData.schedules || [])
+      workSchedule: mapBackendScheduleToFrontend(backendData.schedules || []),
+      imageUrl: (backendData as any).imageUrl || null,
+      profile_picture_url: backendData.profile_picture_url || null,
+      preview_images: (backendData as any).preview_images || [],
     }
   };
 };
@@ -537,4 +566,44 @@ export const updateDoctorScheduleAPI = async (
   );
   const data = extractData(response);
   return mapBackendScheduleToFrontend(data);
+};
+
+/**
+ * API: Obtener horarios bloqueados (médico independiente)
+ * Endpoint: GET /api/doctors/blocked-slots
+ */
+export const getDoctorBlockedSlotsAPI = async (): Promise<BlockedSlot[]> => {
+  const response = await httpClient.get<{ success: boolean; data: BlockedSlot[] }>(
+    '/doctors/blocked-slots'
+  );
+  const data = extractData(response) as any;
+  return Array.isArray(data) ? (data as BlockedSlot[]) : [];
+};
+
+/**
+ * API: Crear horario bloqueado (médico independiente)
+ * Endpoint: POST /api/doctors/blocked-slots
+ */
+export const createDoctorBlockedSlotAPI = async (params: {
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  reason?: string;
+}): Promise<BlockedSlot> => {
+  const response = await httpClient.post<{ success: boolean; data: BlockedSlot }>(
+    '/doctors/blocked-slots',
+    params
+  );
+  return extractData(response) as any;
+};
+
+/**
+ * API: Eliminar horario bloqueado (médico independiente)
+ * Endpoint: DELETE /api/doctors/blocked-slots/:id
+ */
+export const deleteDoctorBlockedSlotAPI = async (slotId: string): Promise<{ message?: string }> => {
+  const response = await httpClient.delete<{ success: boolean; data: { message?: string } }>(
+    `/doctors/blocked-slots/${slotId}`
+  );
+  return extractData(response) as any;
 };

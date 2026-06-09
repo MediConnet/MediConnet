@@ -12,7 +12,8 @@ import type {
   LaboratoryDashboard,
   WorkSchedule,
 } from "../../domain/LaboratoryDashboard.entity";
-import { handleLetterInput, handlePhoneInput, handleEmailInput, handleBothInput } from "../../../../shared/lib/inputValidation";
+import { handleLetterInput, handlePhoneInput, handleEmailInput, handleBothInput, handleEcuadorPhoneInput } from "../../../../shared/lib/inputValidation";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 interface ProfileSectionProps {
   data: LaboratoryDashboard;
@@ -181,11 +182,11 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.startsWith("image/")) {
-        alert("Por favor selecciona un archivo de imagen");
+        useFeedbackStore.getState().showFeedback('error', 'Error', 'Por favor selecciona un archivo de imagen.');
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
-        alert("La imagen debe ser menor a 5MB");
+        useFeedbackStore.getState().showFeedback('error', 'Error', 'La imagen debe ser menor a 5MB.');
         return;
       }
       const reader = new FileReader();
@@ -346,11 +347,13 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 <input
                   type="text"
                   value={formData.whatsapp}
-                  onChange={(e) => handlePhoneInput(e, (value) => handleChange("whatsapp", value))}
+                  onChange={(e) => handleEcuadorPhoneInput(e, (value) => handleChange("whatsapp", value))}
+                  maxLength={10}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="0991234567"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">Solo números, espacios, guiones y paréntesis</p>
+                <p className="text-xs text-gray-500 mt-1">Exactamente 10 dígitos</p>
               </div>
               <div>
                 <label className="text-sm text-gray-600 mb-1 block">

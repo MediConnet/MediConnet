@@ -38,6 +38,7 @@ import { useEffect, useRef, useState } from "react";
 import type { PharmacyProfile } from "../../domain/pharmacy-profile.entity";
 import { getPharmacyChains } from "../../../../shared/lib/pharmacy-chains";
 import type { PharmacyChain } from "../../../admin-dashboard/domain/pharmacy-chain.entity";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 interface Props {
   open: boolean;
@@ -244,7 +245,7 @@ export const EditPharmacyModal = ({
     if (file) {
       if (!file.type.startsWith("image/")) return;
       if (file.size > 5 * 1024 * 1024) {
-        alert("La imagen debe ser menor a 5MB");
+        useFeedbackStore.getState().showFeedback('error', 'Error', 'La imagen debe ser menor a 5MB.');
         return;
       }
       const reader = new FileReader();

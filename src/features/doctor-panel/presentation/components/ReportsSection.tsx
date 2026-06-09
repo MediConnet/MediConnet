@@ -27,12 +27,12 @@ export const ReportsSection = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [appointmentsData, paymentsData] = await Promise.all([
+        const [appointmentsResult, paymentsResult] = await Promise.all([
           getAppointmentsAPI(),
           getDoctorPaymentsAPI()
         ]);
-        setAppointments(appointmentsData);
-        setPayments(paymentsData);
+        setAppointments(appointmentsResult.data ?? []);
+        setPayments(paymentsResult.data ?? []);
       } catch (error) {
         console.error("Error loading data for reports:", error);
       } finally {

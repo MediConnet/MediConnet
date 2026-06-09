@@ -12,6 +12,7 @@ import {
   useDeletePharmacyBranch,
 } from "../hooks/usePharmacyBranches";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import { usePharmacyReviews } from "../hooks/usePharmacyReviews";
 
 export const PharmacyBranchesPage = () => {
@@ -36,12 +37,14 @@ export const PharmacyBranchesPage = () => {
     isActive: true,
   };
   // 1. Hook para obtener sucursales
-  const { branches, isLoading } = usePharmacyBranches();
+  const { branches, isLoading, total, page, setPage, limit, setLimit } = usePharmacyBranches();
   
   // 2. Hooks de mutations con optimistic updates
   const { mutateAsync: addBranch } = useCreatePharmacyBranch();
   const { mutateAsync: updateBranch } = useUpdatePharmacyBranch();
   const { mutateAsync: deleteBranch } = useDeletePharmacyBranch();
+
+  const feedback = useFeedbackStore();
 
   // 2. Estado local para el Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -62,13 +65,13 @@ export const PharmacyBranchesPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("¿Estás seguro de eliminar esta sucursal?")) {
+    feedback.showDelete("Eliminar sucursal", "¿Estás seguro de eliminar esta sucursal?", async () => {
       try {
         await deleteBranch(id);
       } catch (error) {
         console.error("Error eliminando sucursal:", error);
       }
-    }
+    });
   };
 
   const handleSave = async (
@@ -140,6 +143,11 @@ export const PharmacyBranchesPage = () => {
         <PharmacyBranchesTable
           branches={branches}
           isLoading={isLoading}
+          total={total}
+          page={page}
+          pageSize={limit}
+          onPageChange={setPage}
+          onPageSizeChange={setLimit}
           onEdit={handleEdit}
           onDelete={handleDelete}
         />

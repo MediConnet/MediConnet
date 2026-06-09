@@ -27,12 +27,13 @@ import { StatsCards } from "../components/StatsCards";
 import { ClinicAssociatedProfileSection } from "../components/ClinicAssociatedProfileSection";
 import { ClinicAssociatedAppointmentsSection } from "../components/ClinicAssociatedAppointmentsSection";
 import { ClinicReceptionMessages } from "../components/ClinicReceptionMessages";
-import { ClinicScheduleView } from "../components/ClinicScheduleView";
+import { ClinicAssociatedScheduleSection } from "../components/ClinicAssociatedScheduleSection";
 import { DoctorBankAccountSection } from "../components/DoctorBankAccountSection";
 import { DateBlockRequest } from "../components/DateBlockRequest";
 
 // Configuración de menú
 import { DOCTOR_MENU, CLINIC_ASSOCIATED_DOCTOR_MENU } from "../../../../shared/config/navigation.config";
+import { ErrorBoundary } from "../../../../shared/components/ErrorBoundary";
 
 // Entidades y APIs
 import type {
@@ -112,7 +113,8 @@ export const DoctorDashboardPage = () => {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const allAppointments = await getAppointmentsAPI();
+        const result = await getAppointmentsAPI();
+        const allAppointments = result.data ?? [];
         const upcoming = allAppointments
           .filter((a) => a.status === "CONFIRMED" || a.status === "PENDING")
           .slice(0, 5)
@@ -254,7 +256,7 @@ export const DoctorDashboardPage = () => {
         }
       >
         {isClinicAssociated ? (
-          // ⭐ PANEL DE MÉDICO ASOCIADO A CLÍNICA
+          <ErrorBoundary>
           <>
             {currentTab === "dashboard" && (
               <Box>
@@ -285,7 +287,7 @@ export const DoctorDashboardPage = () => {
             {currentTab === "appointments" && <ClinicAssociatedAppointmentsSection />}
             {currentTab === "patients" && <PatientsSection />}
             {currentTab === "reception" && finalClinicInfo && <ClinicReceptionMessages />}
-            {currentTab === "clinic-schedule" && <ClinicScheduleView />}
+            {currentTab === "clinic-schedule" && <ClinicAssociatedScheduleSection />}
             {currentTab === "date-blocks" && finalClinicInfo && <DateBlockRequest />}
             {currentTab === "bank-account" && <DoctorBankAccountSection />}
             {currentTab === "notifications" && (
@@ -341,8 +343,9 @@ export const DoctorDashboardPage = () => {
               </Box>
             )}
           </>
+          </ErrorBoundary>
         ) : (
-          // ⭐ PANEL DE MÉDICO INDEPENDIENTE (código original)
+          <ErrorBoundary>
           <>
             {currentTab === "dashboard" && (
               <Box>
@@ -392,6 +395,7 @@ export const DoctorDashboardPage = () => {
             {currentTab === "reports" && <ReportsSection />}
             {currentTab === "settings" && <SettingsSection />}
           </>
+          </ErrorBoundary>
         )}
       </div>
     </DashboardLayout>

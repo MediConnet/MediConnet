@@ -1,0 +1,228 @@
+import { Box, Typography, CircularProgress } from "@mui/material";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useAuthStore } from "../../../app/store/auth.store";
+import { DashboardLayout } from "../../../shared/layouts/DashboardLayout";
+import { useClinicDashboard } from "../hooks/useClinicDashboard";
+import { StatsCards } from "../components/StatsCards";
+import { DashboardCharts } from "../components/DashboardCharts";
+import { ProfileSection } from "../components/ProfileSection";
+import { ErrorBoundary } from "../../../shared/components/ErrorBoundary";
+import { LoadErrorState } from "../../../shared/components/LoadErrorState";
+import { DoctorsSection } from "../../association/components/DoctorsSection";
+import { AppointmentsSection } from "../components/AppointmentsSection";
+import { ReceptionSection } from "../../association/components/ReceptionSection";
+import { SchedulesSection } from "../components/SchedulesSection";
+import { ClinicPaymentsSection } from "../components/ClinicPaymentsSection";
+import { BankAccountPage } from "./BankAccountPage";
+import { ConsultationPricesPage } from "./ConsultationPricesPage";
+import { getClinicAppointmentsUseCase } from "../services/get-clinic-appointments.usecase";
+import type { ClinicAppointment } from "../types/appointment.entity";
+
+type TabType =
+  | "dashboard"
+  | "profile"
+  | "doctors"
+  | "consultationPrices"
+  | "appointments"
+  | "reception"
+  | "schedules"
+  | "payments"
+  | "bankAccount";
+
+export const ClinicDashboardPage = () => {
+  const [searchParams] = useSearchParams();
+  const { data, loading, error } = useClinicDashboard();
+  const authStore = useAuthStore();
+  const { user } = authStore;
+
+  const currentTab = (searchParams.get("tab") || "dashboard") as TabType;
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const defaultClinicProfile = {
+    id: user?.id || "",
+    name: user?.name || "Clínica",
+    logoUrl: undefined,
+    specialties: [],
+    address: "",
+    phone: "",
+    whatsapp: "",
+    generalSchedule: {
+      monday: { enabled: false, startTime: "", endTime: "" },
+      tuesday: { enabled: false, startTime: "", endTime: "" },
+      wednesday: { enabled: false, startTime: "", endTime: "" },
+      thursday: { enabled: false, startTime: "", endTime: "" },
+      friday: { enabled: false, startTime: "", endTime: "" },
+      saturday: { enabled: false, startTime: "", endTime: "" },
+      sunday: { enabled: false, startTime: "", endTime: "" },
+    },
+    description: "",
+    isActive: true,
+  };
+
+  const defaultData = {
+    totalDoctors: 0,
+    activeDoctors: 0,
+    totalAppointments: 0,
+    todayAppointments: 0,
+    pendingAppointments: 0,
+    completedAppointments: 0,
+    clinic: defaultClinicProfile,
+  };
+
+  const displayData = data || defaultData;
+  const clinic = displayData.clinic || defaultClinicProfile;
+
+  const today = useMemo(() => new Date().toISOString().split("T")[0], []);
+  const [agendaAppointments, setAgendaAppointments] = useState<ClinicAppointment[]>([]);
+
+  useEffect(() => {
+    const loadAgendaNotifications = async () => {
+      try {
+        if (!clinic?.id) return;
+        const result = await getClinicAppointmentsUseCase(clinic.id, { page: 1, limit: 50, date: today });
+        setAgendaAppointments(result?.data ?? []);
+      } catch (e) {
+        setAgendaAppointments([]);
+      }
+    };
+
+    loadAgendaNotifications();
+  }, [clinic?.id, today]);
+
+  const notificationAppointments = useMemo(
+    () =>
+      agendaAppointments
+        .slice()
+        .sort((a, b) => a.time.localeCompare(b.time))
+        .slice(0, 10)
+        .map((a) => ({
+          id: a.id,
+          patientName: a.patientName,
+          date: a.date,
+          time: a.time,
+          reason: a.reason || "Cita",
+        })),
+    [agendaAppointments],
+  );
+
+  const userProfile = {
+    name: user?.name || "Administrador",
+    roleLabel: clinic.name || "Clínica",
+    initials: getInitials(user?.name || "AD"),
+    isActive: true,
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout
+        role="PROVIDER"
+        userProfile={userProfile}
+        notificationsVariant="professional"
+        agendaPath="/clinic/dashboard?tab=appointments"
+        appointments={[]}
+      >
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
+          <CircularProgress />
+        </Box>
+      </DashboardLayout>
+    );
+  }
+
+  if (error && !data) {
+    return (
+      <DashboardLayout
+        role="PROVIDER"
+        userProfile={userProfile}
+        notificationsVariant="professional"
+        agendaPath="/clinic/dashboard?tab=appointments"
+        appointments={[]}
+      >
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
+          <LoadErrorState message="No fue posible cargar el dashboard." onRetry={() => window.location.reload()} />
+        </Box>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DashboardLayout
+      role="PROVIDER"
+      userProfile={userProfile}
+      notificationsVariant="professional"
+      agendaPath="/clinic/dashboard?tab=appointments"
+      appointments={notificationAppointments}
+      enableReviewAlerts={false}
+    >
+      <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
+        {currentTab === "dashboard" && (
+          <>
+            <Typography variant="h4" sx={{ fontWeight: 700, mb: 3 }}>
+              Dashboard - {clinic.name}
+            </Typography>
+            <StatsCards data={displayData} />
+            <Box sx={{ mt: 4 }}>
+              <DashboardCharts data={displayData} clinicId={clinic.id} />
+            </Box>
+          </>
+        )}
+
+        {currentTab === "profile" && (
+          <ErrorBoundary>
+            <ProfileSection clinicId={clinic.id} />
+          </ErrorBoundary>
+        )}
+
+        {currentTab === "doctors" && (
+          <ErrorBoundary>
+            <DoctorsSection clinicId={clinic.id} />
+          </ErrorBoundary>
+        )}
+
+        {currentTab === "consultationPrices" && (
+          <ErrorBoundary>
+            <ConsultationPricesPage clinicId={clinic.id} />
+          </ErrorBoundary>
+        )}
+
+        {currentTab === "appointments" && (
+          <ErrorBoundary>
+            <AppointmentsSection clinicId={clinic.id} />
+          </ErrorBoundary>
+        )}
+
+        {currentTab === "reception" && (
+          <ErrorBoundary>
+            <ReceptionSection clinicId={clinic.id} />
+          </ErrorBoundary>
+        )}
+
+        {currentTab === "schedules" && (
+          <ErrorBoundary>
+            <SchedulesSection clinicId={clinic.id} />
+          </ErrorBoundary>
+        )}
+
+        {currentTab === "payments" && (
+          <ErrorBoundary>
+            <ClinicPaymentsSection clinicId={clinic.id} />
+          </ErrorBoundary>
+        )}
+
+        {currentTab === "bankAccount" && (
+          <ErrorBoundary>
+            <BankAccountPage clinicId={clinic.id} />
+          </ErrorBoundary>
+        )}
+      </Box>
+    </DashboardLayout>
+  );
+};

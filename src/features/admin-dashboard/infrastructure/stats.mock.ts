@@ -6,6 +6,7 @@ export const MOCK_SERVICE_STATS: ServiceStats = {
   laboratoryCount: 18,
   ambulanceCount: 12,
   suppliesCount: 8,
+  clinicaCount: 5,
 };
 
 export const MOCK_ACTIVE_SERVICES: ActiveService[] = [
@@ -80,6 +81,12 @@ export const MOCK_ACTIVE_SERVICES: ActiveService[] = [
     name: "Dr. Ana Martínez",
     location: "Guayaquil",
     type: "doctor",
+  },
+  {
+    id: "13",
+    name: "Clínica Santa María",
+    location: "Quito",
+    type: "clinica",
   },
 ];
 

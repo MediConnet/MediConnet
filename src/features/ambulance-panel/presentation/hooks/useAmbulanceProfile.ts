@@ -3,6 +3,7 @@ import { useAuthStore } from "../../../../app/store/auth.store";
 import { getAmbulanceProfileUseCase } from "../../application/get-ambulance-profile.usecase";
 import { updateAmbulanceProfileAPI } from "../../infrastructure/ambulance.api";
 import type { AmbulanceProfile } from "../../domain/ambulance-profile.entity";
+import { getUserFriendlyMessage } from "../../../../shared/lib/api-error";
 
 /**
  * Hook: Obtener perfil de ambulancia
@@ -25,7 +26,9 @@ export const useAmbulanceProfile = () => {
   return {
     profile: profile || null,
     isLoading,
-    error: error ? (error as any)?.response?.data?.message || error.message || "Error al cargar el perfil" : null,
+    error: error
+      ? getUserFriendlyMessage(error, { fallback: "No fue posible cargar el perfil." })
+      : null,
   };
 };
 

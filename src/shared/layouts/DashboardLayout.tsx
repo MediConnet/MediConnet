@@ -58,12 +58,12 @@ export const DashboardLayout = ({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex overflow-hidden">
       <Sidebar role={role} isOpen={isSidebarOpen} menuItems={menuItems} />
 
-      {/* Contenedor Principal */}
+      {/* Contenedor Principal — overflow-hidden evita scroll horizontal en la página */}
       <div
-        className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${
+        className={`flex-1 flex flex-col min-h-screen transition-all duration-300 overflow-hidden min-w-0 ${
           isSidebarOpen ? "ml-64" : "ml-20"
         }`}
       >
@@ -83,7 +83,8 @@ export const DashboardLayout = ({
           notificationsViewAllPath={notificationsViewAllPath}
         />
 
-        <main className="flex-1 p-8 mt-20">{children}</main>
+        {/* min-w-0 + overflow-hidden garantizan que el contenido no desborde */}
+        <main className="flex-1 p-8 mt-20 min-w-0 overflow-hidden">{children}</main>
       </div>
     </div>
   );

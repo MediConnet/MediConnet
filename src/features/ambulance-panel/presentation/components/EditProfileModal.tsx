@@ -24,6 +24,8 @@ import Grid2 from "@mui/material/Grid2";
 import { useEffect, useRef, useState } from "react";
 import type { AmbulanceProfile } from "../../domain/ambulance-profile.entity";
 import { parseCoordinate } from "../../../../shared/lib/parseCoordinate";
+import { AMBULANCE_TYPE_LABELS, AMBULANCE_AVAILABILITY_LABELS } from "../../../../shared/config/domain.constants";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 interface Props {
   open: boolean;
@@ -104,7 +106,7 @@ export const EditProfileModal = ({
     if (file && formData) {
       if (!file.type.startsWith("image/")) return;
       if (file.size > 5 * 1024 * 1024) {
-        alert("La imagen debe ser menor a 5MB");
+        useFeedbackStore.getState().showFeedback('error', 'Error', 'La imagen debe ser menor a 5MB.');
         return;
       }
       const reader = new FileReader();
@@ -571,9 +573,9 @@ export const EditProfileModal = ({
                   label="Tipo de Ambulancia"
                   onChange={(e) => handleChange("ambulanceType", e.target.value)}
                 >
-                  <MenuItem value="basic">Básica</MenuItem>
-                  <MenuItem value="advanced">Avanzada</MenuItem>
-                  <MenuItem value="mobile-icu">UCI Móvil</MenuItem>
+                  {(Object.keys(AMBULANCE_TYPE_LABELS) as Array<keyof typeof AMBULANCE_TYPE_LABELS>).map((type) => (
+                    <MenuItem key={type} value={type}>{AMBULANCE_TYPE_LABELS[type]}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid2>
@@ -610,8 +612,9 @@ export const EditProfileModal = ({
                     }
                   }}
                 >
-                  <MenuItem value="24/7">24/7 (Todo el día)</MenuItem>
-                  <MenuItem value="scheduled">Por Horario</MenuItem>
+                  {(Object.keys(AMBULANCE_AVAILABILITY_LABELS) as Array<keyof typeof AMBULANCE_AVAILABILITY_LABELS>).map((avail) => (
+                    <MenuItem key={avail} value={avail}>{AMBULANCE_AVAILABILITY_LABELS[avail]}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid2>

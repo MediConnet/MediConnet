@@ -1,5 +1,7 @@
 import {
+  AddPhotoAlternate,
   AttachMoney,
+  Close,
   CloudUpload,
   CreditCard,
   Edit,
@@ -8,6 +10,7 @@ import {
   Phone,
   PhotoCamera,
   Publish,
+  Save,
   Visibility,
   VisibilityOff,
   WorkOutline,
@@ -26,6 +29,7 @@ import {
 } from "@mui/material";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuthStore } from "../../../../app/store/auth.store";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import {
   handleBothInput,
   handleEmailInput,
@@ -45,7 +49,9 @@ import type {
 } from "../../domain/DoctorDashboard.entity";
 import type { Specialty } from "../../infrastructure/doctors.api";
 import { useUpdateDoctorProfile } from "../hooks/useUpdateDoctorProfile";
+import { PAYMENT_METHOD_BACKEND, PROFILE_STATUS_LABELS } from "../../../../shared/config/domain.constants";
 import { useSpecialties } from "../../../auth/presentation/hooks/useSpecialties";
+import { ImageCropperModal } from "../../../../shared/components/ImageCropperModal";
 
 interface ProfileSectionProps {
   data: DoctorDashboard;
@@ -145,6 +151,13 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [newImageBase64, setNewImageBase64] = useState<string | null>(null);
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [initialPreviewImages, setInitialPreviewImages] = useState<string[]>([]);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropperSrc, setCropperSrc] = useState<string | null>(null);
+  const [cropperMode, setCropperMode] = useState<"avatar" | "gallery">("avatar");
+  const [carouselIndex, setCarouselIndex] = useState(0);
+  const [savingImages, setSavingImages] = useState(false);
 
   // Usar hook de React Query para especialidades
   const { data: specialtiesList = [], isLoading: loadingSpecialties } = useSpecialties();
@@ -152,9 +165,11 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   // Estado para detectar si estamos usando horarios por defecto (BD vacía)
   const [isUsingDefaultSchedule, setIsUsingDefaultSchedule] = useState(false);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const avatarFileRef = useRef<HTMLInputElement>(null);
+  const galleryFileRef = useRef<HTMLInputElement>(null);
   const authStore = useAuthStore();
   const { user } = authStore;
+  const feedback = useFeedbackStore();
   const { mutateAsync: updateProfile, isPending: saving } = useUpdateDoctorProfile();
 
   // Estado del formulario actual
@@ -175,6 +190,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     profileStatus: "draft" as ProfileStatus,
     paymentMethods: "both" as PaymentMethod,
   });
+
+  // Estado para errores de validación por campo
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   // Estado para guardar los datos originales y comparar cambios
   const [initialFormData, setInitialFormData] = useState<
@@ -244,11 +262,15 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     }
   }, [data]);
 
-  // Cargar imagen desde el backend (imageUrl del doctor)
+  // Cargar imagen de perfil y galería desde el backend
   useEffect(() => {
     if (data?.doctor) {
-      const imgUrl = (data.doctor as any).imageUrl || (data.doctor as any).profile_picture_url || null;
+      const imgUrl = (data.doctor as any).profile_picture_url || null;
       if (imgUrl) setProfileImage(imgUrl);
+      const imgs: string[] = (data.doctor as any).preview_images || [];
+      setPreviewImages(imgs);
+      setInitialPreviewImages(imgs);
+      setCarouselIndex(0);
     }
   }, [data]);
 
@@ -286,7 +308,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     return false;
   }, [formData, initialFormData]);
 
-  const isSaveDisabled = saving || (!isModified && !isUsingDefaultSchedule && !newImageBase64);
+  const hasErrors = Object.keys(formErrors).length > 0;
+  const previewImagesModified = JSON.stringify(previewImages) !== JSON.stringify(initialPreviewImages);
+  const isSaveDisabled = saving || hasErrors || (!isModified && !isUsingDefaultSchedule && !newImageBase64 && !previewImagesModified);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -295,6 +319,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const handleCancel = () => {
     setIsEditing(false);
     setNewImageBase64(null);
+    setPreviewImages(initialPreviewImages);
+    setCarouselIndex(0);
+    setFormErrors({});
     if (initialFormData) {
       setFormData(initialFormData);
     }
@@ -305,74 +332,128 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
     const newStatus: ProfileStatus =
       formData.profileStatus === "published" ? "draft" : "published";
-    const updatedData = await updateProfile({
-      profileStatus: newStatus,
-    });
+    try {
+      const updatedData = await updateProfile({
+        profileStatus: newStatus,
+      });
 
-    if (updatedData) {
-      const newData = { ...formData, profileStatus: newStatus };
-      setFormData(newData);
-      setInitialFormData(newData);
-      if (onUpdate) {
-        onUpdate(updatedData);
+      if (updatedData) {
+        const newData = { ...formData, profileStatus: newStatus };
+        setFormData(newData);
+        setInitialFormData(newData);
+        if (onUpdate) {
+          onUpdate(updatedData);
+        }
+        feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
       }
+    } catch {
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     }
   };
 
   const handleSave = async () => {
     if (!user?.id) return;
 
-    // Validación de horario + almuerzo (break time)
-    const timeLessThan = (a: string, b: string) => a < b; // HH:mm funciona lexicográficamente
+    const errors: Record<string, string> = {};
+
+    // Validar nombre
+    const nameTrimmed = formData.name.trim();
+    if (!nameTrimmed) errors.name = 'El nombre es obligatorio';
+    else if (nameTrimmed.length < 3) errors.name = 'El nombre debe tener al menos 3 caracteres';
+    else if (nameTrimmed.length > 100) errors.name = 'El nombre no puede exceder 100 caracteres';
+
+    // Validar especialidad
+    if (!formData.specialty || formData.specialty.length === 0) {
+      errors.specialty = 'Selecciona al menos una especialidad';
+    }
+
+    // Validar email
+    const emailTrimmed = formData.email.trim();
+    if (!emailTrimmed) errors.email = 'El email es obligatorio';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailTrimmed)) errors.email = 'Formato de email inválido';
+    else if (emailTrimmed.length > 255) errors.email = 'El email no puede exceder 255 caracteres';
+
+    // Validar WhatsApp
+    const whatsTrimmed = formData.whatsapp.trim();
+    if (!whatsTrimmed) errors.whatsapp = 'El WhatsApp es obligatorio';
+    else if (whatsTrimmed.replace(/\D/g, '').length < 10) errors.whatsapp = 'El WhatsApp debe tener exactamente 10 dígitos';
+    else if (whatsTrimmed.replace(/\D/g, '').length > 10) errors.whatsapp = 'El WhatsApp debe tener exactamente 10 dígitos';
+
+    // Validar dirección
+    const addrTrimmed = formData.address.trim();
+    if (!addrTrimmed) errors.address = 'La dirección es obligatoria';
+    else if (addrTrimmed.length < 5) errors.address = 'La dirección debe tener al menos 5 caracteres';
+    else if (addrTrimmed.length > 200) errors.address = 'La dirección no puede exceder 200 caracteres';
+
+    // Validar precio
+    const priceNum = parseFloat(formData.price);
+    if (isNaN(priceNum) || priceNum < 0) errors.price = 'Ingresa un precio válido (0 o más)';
+    else if (priceNum > 999999.99) errors.price = 'El precio no puede exceder 999,999.99';
+    else if (formData.price.replace(/[^0-9.]/g, '').length > 10) errors.price = 'El precio tiene demasiados dígitos';
+
+    // Validar experiencia
+    const expNum = parseInt(formData.experience);
+    if (isNaN(expNum) || expNum < 0) errors.experience = 'Ingresa un número válido de años';
+    else if (expNum > 99) errors.experience = 'La experiencia no puede ser mayor a 99 años';
+    else if (formData.experience.replace(/\D/g, '').length > 2) errors.experience = 'Máximo 2 dígitos';
+
+    // Validar descripción
+    const descTrimmed = formData.description.trim();
+    if (!descTrimmed) errors.description = 'La descripción es obligatoria';
+    else if (descTrimmed.length < 10) errors.description = 'La descripción debe tener al menos 10 caracteres';
+    else if (descTrimmed.length > 2000) errors.description = 'La descripción no puede exceder 2000 caracteres';
+
+    // Validar coordenadas
+    if (formData.latitude) {
+      const lat = parseCoordinate(formData.latitude);
+      if (lat === null || lat < -90 || lat > 90) errors.latitude = 'La latitud debe estar entre -90 y 90';
+    }
+    if (formData.longitude) {
+      const lng = parseCoordinate(formData.longitude);
+      if (lng === null || lng < -180 || lng > 180) errors.longitude = 'La longitud debe estar entre -180 y 180';
+    }
+
+    // Validar horario + almuerzo
+    const timeLessThan = (a: string, b: string) => a < b;
     for (const s of formData.workSchedule) {
       if (!s.enabled) continue;
-
       if (!s.startTime || !s.endTime) {
-        alert(`Completa el horario de ${dayLabels[s.day] || s.day}`);
-        return;
+        errors[`schedule_${s.day}`] = `Completa el horario de ${dayLabels[s.day] || s.day}`;
+        break;
       }
-
       if (!timeLessThan(s.startTime, s.endTime)) {
-        alert(`El horario de ${dayLabels[s.day] || s.day} es inválido: inicio debe ser menor que fin.`);
-        return;
+        errors[`schedule_${s.day}`] = `El horario de ${dayLabels[s.day] || s.day} debe terminar después de iniciar`;
+        break;
       }
-
       const hasBreakStart = Boolean(s.breakStart);
       const hasBreakEnd = Boolean(s.breakEnd);
-
       if (hasBreakStart !== hasBreakEnd) {
-        alert(`Almuerzo incompleto en ${dayLabels[s.day] || s.day}: selecciona inicio y fin, o elige "Sin almuerzo".`);
-        return;
+        errors[`schedule_${s.day}`] = `Almuerzo incompleto en ${dayLabels[s.day] || s.day}`;
+        break;
       }
-
       if (hasBreakStart && hasBreakEnd) {
         const bs = s.breakStart as string;
         const be = s.breakEnd as string;
-
         if (!timeLessThan(bs, be)) {
-          alert(`Almuerzo inválido en ${dayLabels[s.day] || s.day}: inicio debe ser menor que fin.`);
-          return;
+          errors[`schedule_${s.day}`] = `El almuerzo de ${dayLabels[s.day] || s.day} debe terminar después de iniciar`;
+          break;
         }
-
-        // Recomendado: break dentro del rango laboral
         if (!(timeLessThan(s.startTime, bs) && timeLessThan(be, s.endTime))) {
-          alert(`El almuerzo de ${dayLabels[s.day] || s.day} debe estar dentro del horario laboral.`);
-          return;
+          errors[`schedule_${s.day}`] = `El almuerzo de ${dayLabels[s.day] || s.day} debe estar dentro del horario laboral`;
+          break;
         }
       }
     }
 
-    // Validar datos de ubicación
-    try {
-      validateLocationData({
-        latitude: formData.latitude,
-        longitude: formData.longitude,
-        google_maps_url: formData.google_maps_url,
-      });
-    } catch (error: any) {
-      alert(error.message);
+    // Si hay errores, mostrar el primero como alerta y marcar todos
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      const firstError = Object.values(errors)[0];
+      feedback.showFeedback('error', 'Error de validación', firstError);
       return;
     }
+
+    setFormErrors({});
 
     // Extraer coordenadas automáticamente si hay Google Maps URL y no hay coordenadas
     let finalLatitude = formData.latitude ? parseCoordinate(formData.latitude) : null;
@@ -401,7 +482,8 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
       workSchedule: formData.workSchedule,
       profileStatus: formData.profileStatus,
       paymentMethods: formData.paymentMethods,
-      ...(newImageBase64 ? { imageUrl: newImageBase64 } : {}),
+      ...(newImageBase64 ? { profile_picture_url: newImageBase64 } : {}),
+      ...(previewImagesModified ? { preview_images: previewImages } : {}),
     };
     
     try {
@@ -412,19 +494,31 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
         setIsUsingDefaultSchedule(false);
         setInitialFormData(formData);
         setNewImageBase64(null);
-        // Actualizar imagen mostrada con la URL de Cloudinary si el backend la retorna
-        const returnedImage = (updatedData.doctor as any)?.imageUrl || (updatedData.doctor as any)?.profile_picture_url;
+        // Actualizar imagen de perfil con la URL de Cloudinary retornada
+        const returnedImage = (updatedData.doctor as any)?.profile_picture_url;
         if (returnedImage) setProfileImage(returnedImage);
+        // Actualizar galería con URLs de Cloudinary retornadas
+        const returnedPreviews: string[] = (updatedData.doctor as any)?.preview_images || previewImages;
+        setPreviewImages(returnedPreviews);
+        setInitialPreviewImages(returnedPreviews);
         if (onUpdate) onUpdate(updatedData);
       }
+      feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
     } catch (error: any) {
       console.error('Error al guardar el perfil:', error);
-      alert(error?.message || 'Error al guardar el perfil. Por favor, intenta de nuevo.');
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     }
   };
 
   const handleChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    if (formErrors[field]) {
+      setFormErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
   };
 
   const handleSpecialtyChange = (event: SelectChangeEvent<string[]>) => {
@@ -475,29 +569,68 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     sunday: "Domingo",
   };
 
-  const handleImageClick = () => {
-    fileInputRef.current?.click();
+  const handleAvatarFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      feedback.showFeedback('error', 'Archivo inválido', 'Por favor selecciona un archivo de imagen válido.');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      feedback.showFeedback('error', 'Archivo muy grande', 'La imagen debe ser menor a 10MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setCropperSrc(reader.result as string);
+      setCropperMode("avatar");
+      setCropperOpen(true);
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGalleryFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith("image/")) {
-        alert("Por favor selecciona un archivo de imagen");
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        alert("La imagen debe ser menor a 5MB");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
-        setProfileImage(base64String);
-        setNewImageBase64(base64String);
-      };
-      reader.readAsDataURL(file);
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      feedback.showFeedback('error', 'Archivo inválido', 'Por favor selecciona un archivo de imagen válido.');
+      return;
     }
+    if (file.size > 10 * 1024 * 1024) {
+      feedback.showFeedback('error', 'Archivo muy grande', 'La imagen debe ser menor a 10MB.');
+      return;
+    }
+    if (previewImages.length >= 10) {
+      feedback.showFeedback('error', 'Límite alcanzado', 'Has alcanzado el límite de 10 imágenes de vista previa.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setCropperSrc(reader.result as string);
+      setCropperMode("gallery");
+      setCropperOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = (croppedBase64: string) => {
+    if (cropperMode === "avatar") {
+      setProfileImage(croppedBase64);
+      setNewImageBase64(croppedBase64);
+    } else {
+      setPreviewImages((prev) => [...prev, croppedBase64]);
+    }
+    setCropperOpen(false);
+    setCropperSrc(null);
+  };
+
+  const handleRemovePreviewImage = (index: number) => {
+    setPreviewImages((prev) => prev.filter((_, i) => i !== index));
+    setCarouselIndex((prev) =>
+      prev >= previewImages.length - 1 ? Math.max(0, prev - 1) : prev
+    );
   };
 
   // Usar datos por defecto si no existen (para usuarios nuevos)
@@ -800,38 +933,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
               handleSave();
             }}
           >
-            {/* Campo de imagen dentro del formulario */}
-            <div className="mt-6 mb-4">
-              <label className="text-sm text-gray-600 mb-2 block font-medium">
-                Imagen de perfil
-              </label>
-              <div className="flex items-center gap-4">
-                <div
-                  className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200 flex items-center justify-center bg-gray-100 cursor-pointer hover:border-teal-400 transition-colors"
-                  onClick={handleImageClick}
-                >
-                  {profileImage ? (
-                    <img src={profileImage} alt="Perfil" className="w-full h-full object-cover" />
-                  ) : (
-                    <PhotoCamera style={{ fontSize: 32, color: "#9ca3af" }} />
-                  )}
-                </div>
-                <div>
-                  <button
-                    type="button"
-                    onClick={handleImageClick}
-                    className="px-3 py-1.5 text-sm border border-teal-500 text-teal-600 rounded-lg hover:bg-teal-50 transition-colors flex items-center gap-1"
-                  >
-                    <CloudUpload style={{ fontSize: 16 }} />
-                    {profileImage ? "Cambiar imagen" : "Subir imagen"}
-                  </button>
-                  <p className="text-xs text-gray-400 mt-1">JPG, PNG. Mín. 800x220px (proporción 4:1). En la app se muestra como banner de ancho completo. Máx. 5MB.</p>
-                  {newImageBase64 && (
-                    <p className="text-xs text-teal-600 mt-1">✓ Nueva imagen lista para guardar</p>
-                  )}
-                </div>
-              </div>
-            </div>
+
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               <div>
@@ -844,12 +946,19 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   onChange={(e) =>
                     handleLetterInput(e, (value) => handleChange("name", value))
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  maxLength={100}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                    formErrors.name ? "border-red-400 bg-red-50" : "border-gray-300"
+                  }`}
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Solo letras y espacios
-                </p>
+                {formErrors.name ? (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.name}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Solo letras y espacios — Máx. 100 caracteres
+                  </p>
+                )}
               </div>
 
               <div>
@@ -906,12 +1015,19 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   onChange={(e) =>
                     handleEmailInput(e, (value) => handleChange("email", value))
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  maxLength={255}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                    formErrors.email ? "border-red-400 bg-red-50" : "border-gray-300"
+                  }`}
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Formato: ejemplo@correo.com
-                </p>
+                {formErrors.email ? (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.email}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Formato: ejemplo@correo.com — Máx. 255 caracteres
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600 mb-1 block">
@@ -925,13 +1041,20 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                       handleChange("whatsapp", value),
                     )
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                  placeholder="+593 99 123 4567"
+                  maxLength={10}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                    formErrors.whatsapp ? "border-red-400 bg-red-50" : "border-gray-300"
+                  }`}
+                  placeholder="0991234567"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Solo números, espacios, guiones y paréntesis
-                </p>
+                {formErrors.whatsapp ? (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.whatsapp}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Exactamente 10 dígitos
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600 mb-1 block">
@@ -945,12 +1068,19 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                       handleChange("address", value),
                     )
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  maxLength={200}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                    formErrors.address ? "border-red-400 bg-red-50" : "border-gray-300"
+                  }`}
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Letras, números y caracteres especiales
-                </p>
+                {formErrors.address ? (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.address}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Dirección del consultorio — Máx. 200 caracteres
+                  </p>
+                )}
               </div>
 
               {/* Campos de ubicación */}
@@ -963,7 +1093,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   value={formData.google_maps_url}
                   onChange={(e) => {
                     handleChange("google_maps_url", e.target.value);
-                    // Intentar extraer coordenadas automáticamente
                     if (e.target.value) {
                       const coords = extractCoordinatesFromGoogleMapsUrl(e.target.value);
                       if (coords.lat !== null && coords.lng !== null) {
@@ -975,12 +1104,19 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                       }
                     }
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  maxLength={500}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                    formErrors.google_maps_url ? "border-red-400 bg-red-50" : "border-gray-300"
+                  }`}
                   placeholder="https://maps.app.goo.gl/..."
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Si pegas un link de Google Maps, las coordenadas se extraerán automáticamente
-                </p>
+                {formErrors.google_maps_url ? (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.google_maps_url}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Las coordenadas se extraerán automáticamente — Máx. 500 caracteres
+                  </p>
+                )}
               </div>
 
               <div>
@@ -991,12 +1127,17 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   type="text"
                   value={formData.latitude}
                   onChange={(e) => handleChange("latitude", e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  maxLength={20}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                    formErrors.latitude ? "border-red-400 bg-red-50" : "border-gray-300"
+                  }`}
                   placeholder="Ejemplo: -0.180653"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Entre -90 y 90
-                </p>
+                {formErrors.latitude ? (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.latitude}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">Entre -90 y 90</p>
+                )}
               </div>
 
               <div>
@@ -1007,12 +1148,17 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   type="text"
                   value={formData.longitude}
                   onChange={(e) => handleChange("longitude", e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  maxLength={20}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                    formErrors.longitude ? "border-red-400 bg-red-50" : "border-gray-300"
+                  }`}
                   placeholder="Ejemplo: -78.467834"
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Entre -180 y 180
-                </p>
+                {formErrors.longitude ? (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.longitude}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">Entre -180 y 180</p>
+                )}
               </div>
 
               <div>
@@ -1027,13 +1173,20 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                       handleChange("price", value),
                     )
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  maxLength={10}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                    formErrors.price ? "border-red-400 bg-red-50" : "border-gray-300"
+                  }`}
                   placeholder="0.00"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Solo números y punto decimal
-                </p>
+                {formErrors.price ? (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.price}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Solo números — Máx. $999,999.99
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-sm text-gray-600 mb-1 block">
@@ -1047,11 +1200,18 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                       handleChange("experience", value),
                     )
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  maxLength={2}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
+                    formErrors.experience ? "border-red-400 bg-red-50" : "border-gray-300"
+                  }`}
                   placeholder="0"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">Solo números</p>
+                {formErrors.experience ? (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.experience}</p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">Máx. 99 años</p>
+                )}
               </div>
             </div>
 
@@ -1067,12 +1227,17 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   )
                 }
                 rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+                maxLength={2000}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none ${
+                  formErrors.description ? "border-red-400 bg-red-50" : "border-gray-300"
+                }`}
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Letras, números y caracteres especiales
-              </p>
+              {formErrors.description ? (
+                <p className="text-xs text-red-500 mt-1">{formErrors.description}</p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">Máx. 2000 caracteres</p>
+              )}
             </div>
 
             <div className="mt-6">
@@ -1087,9 +1252,11 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   }
                   className="w-full"
                 >
-                  <MenuItem value="card">Solo Tarjeta</MenuItem>
-                  <MenuItem value="cash">Solo Presencial</MenuItem>
-                  <MenuItem value="both">Tarjeta y Presencial</MenuItem>
+                  {(['card', 'cash', 'both'] as const).map((method) => (
+                    <MenuItem key={method} value={method}>
+                      {method === 'card' ? 'Solo Tarjeta' : method === 'cash' ? 'Solo Presencial' : 'Tarjeta y Presencial'}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </div>
@@ -1106,9 +1273,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   }
                   className="w-full"
                 >
-                  <MenuItem value="draft">Borrador</MenuItem>
-                  <MenuItem value="published">Publicado</MenuItem>
-                  <MenuItem value="suspended">Suspendido</MenuItem>
+                  {(Object.keys(PROFILE_STATUS_LABELS) as Array<keyof typeof PROFILE_STATUS_LABELS>).map((status) => (
+                    <MenuItem key={status} value={status}>{PROFILE_STATUS_LABELS[status]}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
               <p className="text-xs text-gray-500 mt-2">
@@ -1241,73 +1408,283 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
         )}
       </div>
 
-      {/* --- COLUMNA DERECHA: Vista Previa y Carga de Imagen --- */}
+      {/* --- COLUMNA DERECHA: Imágenes y Vista Previa --- */}
       <div className="lg:col-span-1 space-y-6">
-        {/* 1. SECCIÓN DE CARGA DE IMAGEN */}
+
+        {/* 1. IMAGEN DE PERFIL */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">
-            Imagen de Perfil
-          </h3>
+          <h3 className="text-lg font-bold text-gray-800 mb-1">Imagen de Perfil</h3>
+          <p className="text-xs text-gray-500 mb-4">Foto principal que aparece en tu perfil</p>
+
+          <div className="flex flex-col items-center gap-4">
+            {/* Avatar circular */}
+            <div className="relative">
+              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-100 shadow-md bg-gray-100 flex items-center justify-center">
+                {profileImage ? (
+                  <img src={profileImage} alt="Perfil" className="w-full h-full object-cover" />
+                ) : (
+                  <PhotoCamera style={{ fontSize: 48, color: "#d1d5db" }} />
+                )}
+              </div>
+              <div
+                className="absolute bottom-1 right-1 bg-teal-500 rounded-full p-1.5 shadow-lg cursor-pointer hover:bg-teal-600 transition-colors"
+                onClick={() => avatarFileRef.current?.click()}
+              >
+                <PhotoCamera style={{ fontSize: 16, color: "white" }} />
+              </div>
+            </div>
+
+            {/* Recomendación de tamaño */}
+            <div className="w-full bg-blue-50 border border-blue-100 rounded-lg p-3">
+              <p className="text-xs font-semibold text-blue-700">📐 Tamaño recomendado</p>
+              <p className="text-xs text-blue-600 mt-0.5">400 × 400 px — Proporción 1:1</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Podrás ajustar el encuadre después de seleccionar
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => avatarFileRef.current?.click()}
+              className="w-full px-4 py-2 text-sm border border-teal-500 text-teal-600 rounded-lg hover:bg-teal-50 transition-colors flex items-center justify-center gap-2"
+            >
+              <CloudUpload style={{ fontSize: 18 }} />
+              {profileImage ? "Cambiar foto de perfil" : "Subir foto de perfil"}
+            </button>
+
+            {newImageBase64 && (
+              <p className="text-xs text-teal-600 text-center font-medium">
+                ✓ Nueva foto lista para guardar
+              </p>
+            )}
+          </div>
 
           <input
             type="file"
-            ref={fileInputRef}
-            onChange={handleImageChange}
+            ref={avatarFileRef}
+            onChange={handleAvatarFileSelect}
             accept="image/*"
             className="hidden"
           />
-
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-200">
-              {profileImage ? (
-                <img
-                  src={profileImage}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
-                  <PhotoCamera />
-                </div>
-              )}
-            </div>
-
-            <Button
-              variant="outlined"
-              startIcon={<CloudUpload />}
-              onClick={handleImageClick}
-              sx={{
-                textTransform: "none",
-                borderRadius: 2,
-                fontWeight: 600,
-                color: "text.primary",
-                borderColor: "grey.300",
-                "&:hover": {
-                  borderColor: "text.primary",
-                  backgroundColor: "rgba(0,0,0,0.04)",
-                },
-              }}
-            >
-              {profileImage ? "Cambiar foto" : "Subir foto"}
-            </Button>
-          </div>
-          <p className="text-xs text-gray-500 mt-3">
-            Se recomienda imagen rectangular de al menos 800x220px (proporción 4:1). En la app se muestra como banner de ancho completo. Máximo 5MB.
-          </p>
         </div>
 
-        {/* 2. CARD DE VISTA PREVIA (Rediseñada estilo App) */}
+        {/* 2. GALERÍA DE VISTA PREVIA */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">
-            Vista previa en App
-          </h3>
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-lg font-bold text-gray-800">Imágenes de Vista Previa</h3>
+            <span
+              className={`text-xs font-bold px-2 py-1 rounded-full ${
+                previewImages.length >= 10
+                  ? "bg-red-100 text-red-600"
+                  : "bg-teal-50 text-teal-600"
+              }`}
+            >
+              {previewImages.length}/10
+            </span>
+          </div>
+          <p className="text-xs text-gray-500 mb-4">
+            Galería deslizante que los pacientes ven en tu perfil
+          </p>
+
+          {/* Recomendación de tamaño */}
+          <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-4">
+            <p className="text-xs font-semibold text-blue-700">📐 Tamaño recomendado</p>
+            <p className="text-xs text-blue-600 mt-0.5">800 × 400 px — Proporción 2:1</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Podrás ajustar el encuadre al subir cada imagen
+            </p>
+          </div>
+
+          {/* Miniaturas */}
+          {previewImages.length > 0 ? (
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {previewImages.map((img, idx) => (
+                <div
+                  key={idx}
+                  className="relative group rounded-lg overflow-hidden bg-gray-100"
+                  style={{ aspectRatio: "2/1" }}
+                >
+                  <img
+                    src={img}
+                    alt={`Vista previa ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Overlay con botón eliminar */}
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePreviewImage(idx)}
+                      className="bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-colors"
+                    >
+                      <Close style={{ fontSize: 14 }} />
+                    </button>
+                  </div>
+                  {/* Número */}
+                  <div className="absolute bottom-1 left-1 bg-black/50 text-white text-xs px-1.5 py-0.5 rounded">
+                    {idx + 1}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center mb-4 flex flex-col items-center gap-2">
+              <AddPhotoAlternate style={{ fontSize: 40, color: "#d1d5db" }} />
+              <p className="text-sm text-gray-400">Sin imágenes de vista previa</p>
+              <p className="text-xs text-gray-400">Agrega hasta 10 imágenes</p>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => galleryFileRef.current?.click()}
+            disabled={previewImages.length >= 10}
+            className={`w-full px-4 py-2 text-sm rounded-lg flex items-center justify-center gap-2 transition-colors ${
+              previewImages.length >= 10
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
+                : "border border-teal-500 text-teal-600 hover:bg-teal-50"
+            }`}
+          >
+            <CloudUpload style={{ fontSize: 18 }} />
+            {previewImages.length >= 10
+              ? "Límite alcanzado (10/10)"
+              : "Agregar imagen de vista previa"}
+          </button>
+
+          <input
+            type="file"
+            ref={galleryFileRef}
+            onChange={handleGalleryFileSelect}
+            accept="image/*"
+            className="hidden"
+          />
+        </div>
+
+        {/* BOTÓN GUARDAR FOTOS — visible cuando hay cambios de imagen sin guardar */}
+        {(newImageBase64 || previewImagesModified) && (
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-teal-200">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2 text-teal-700">
+                <Save style={{ fontSize: 18 }} />
+                <span className="text-sm font-semibold">Cambios de imagen sin guardar</span>
+              </div>
+              <p className="text-xs text-gray-500">
+                {newImageBase64 && previewImagesModified
+                  ? "Has actualizado tu foto de perfil y la galería."
+                  : newImageBase64
+                    ? "Has actualizado tu foto de perfil."
+                    : "Has actualizado la galería de imágenes."}
+              </p>
+              <button
+                type="button"
+                disabled={savingImages}
+                onClick={async () => {
+                  if (!user?.id) return;
+                  setSavingImages(true);
+                  try {
+                    const payload: Record<string, any> = {};
+                    if (newImageBase64) payload.profile_picture_url = newImageBase64;
+                    if (previewImagesModified) payload.preview_images = previewImages;
+
+                    const updatedData = await updateProfile(payload);
+                    if (updatedData) {
+                      // Actualizar imagen de perfil con la URL de Cloudinary retornada
+                      const returnedImage = (updatedData.doctor as any)?.profile_picture_url;
+                      if (returnedImage) setProfileImage(returnedImage);
+                      setNewImageBase64(null);
+                      // Actualizar galería con URLs de Cloudinary retornadas
+                      const returnedPreviews: string[] = (updatedData.doctor as any)?.preview_images || previewImages;
+                      setPreviewImages(returnedPreviews);
+                      setInitialPreviewImages(returnedPreviews);
+                      if (onUpdate) onUpdate(updatedData);
+                    }
+                    feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
+                  } catch (error: any) {
+                    console.error('Error al guardar imágenes:', error);
+                    feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
+                  } finally {
+                    setSavingImages(false);
+                  }
+                }}
+                className={`w-full px-4 py-2.5 text-sm rounded-lg flex items-center justify-center gap-2 transition-colors font-semibold ${
+                  savingImages
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-teal-600 text-white hover:bg-teal-700 shadow-sm"
+                }`}
+              >
+                {savingImages ? (
+                  <>
+                    <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <Save style={{ fontSize: 18 }} />
+                    Guardar fotos
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 3. VISTA PREVIA EN APP */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Vista previa en App</h3>
 
           <div className="flex justify-center">
-            {/* --- EL CARD MÓVIL --- */}
+            {/* Card móvil */}
             <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] overflow-hidden w-full max-w-[300px] flex flex-col border border-gray-100 pb-4">
-              {/* Imagen (Cover) */}
-              <div className="h-44 w-full bg-gray-200 relative">
-                {profileImage ? (
+
+              {/* Carrusel de imágenes de vista previa */}
+              <div className="h-44 w-full bg-gray-200 relative overflow-hidden">
+                {previewImages.length > 0 ? (
+                  <>
+                    <img
+                      src={previewImages[carouselIndex]}
+                      alt="Vista previa"
+                      className="w-full h-full object-cover"
+                    />
+                    {previewImages.length > 1 && (
+                      <>
+                        {/* Indicadores (dots) */}
+                        <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-10">
+                          {previewImages.map((_, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => setCarouselIndex(i)}
+                              className={`h-1.5 rounded-full transition-all duration-300 ${
+                                i === carouselIndex ? "bg-white w-4" : "bg-white/60 w-1.5"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        {/* Flecha anterior */}
+                        <button
+                          type="button"
+                          className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 text-white rounded-full w-7 h-7 flex items-center justify-center hover:bg-black/50 transition-colors z-10 font-bold text-lg leading-none"
+                          onClick={() =>
+                            setCarouselIndex(
+                              (prev) => (prev - 1 + previewImages.length) % previewImages.length
+                            )
+                          }
+                        >
+                          ‹
+                        </button>
+                        {/* Flecha siguiente */}
+                        <button
+                          type="button"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 text-white rounded-full w-7 h-7 flex items-center justify-center hover:bg-black/50 transition-colors z-10 font-bold text-lg leading-none"
+                          onClick={() =>
+                            setCarouselIndex((prev) => (prev + 1) % previewImages.length)
+                          }
+                        >
+                          ›
+                        </button>
+                      </>
+                    )}
+                  </>
+                ) : profileImage ? (
                   <img
                     src={profileImage}
                     alt="Doctor Profile"
@@ -1316,22 +1693,20 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center bg-gray-100 text-gray-400">
                     <PhotoCamera style={{ fontSize: 40, opacity: 0.5 }} />
+                    <p className="text-xs mt-2">Sin imágenes</p>
                   </div>
                 )}
               </div>
 
-              {/* Contenido */}
+              {/* Contenido del card */}
               <div className="p-4 flex flex-col items-start gap-1">
                 {/* Nombre */}
                 <h4 className="font-extrabold text-gray-900 text-lg leading-tight mb-1">
-                  {isEditing
-                    ? formData.name || "Nombre del Doctor"
-                    : doctor.name}
+                  {isEditing ? formData.name || "Nombre del Doctor" : doctor.name}
                 </h4>
 
-                {/* Fila: Chips de Especialidades + Experiencia */}
+                {/* Especialidades + Experiencia */}
                 <div className="flex flex-wrap gap-2 items-center">
-                  {/* Renderizamos cada especialidad como un Chip */}
                   {(isEditing
                     ? formData.specialty
                     : Array.isArray(doctor.specialty)
@@ -1350,15 +1725,10 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                         </span>
                       ) : null,
                     )}
-
-                  {/* Icono Gris + Años */}
                   <div className="flex items-center gap-1 text-gray-500">
                     <WorkOutline sx={{ fontSize: 16 }} />
                     <span className="text-xs font-medium">
-                      {isEditing
-                        ? formData.experience || 0
-                        : doctor.experience || 0}{" "}
-                      años
+                      {isEditing ? formData.experience || 0 : doctor.experience || 0} años
                     </span>
                   </div>
                 </div>
@@ -1372,9 +1742,8 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   </p>
                 </div>
 
-                {/* Información de Contacto */}
+                {/* Email */}
                 <div className="mt-3 w-full space-y-2">
-                  {/* Email */}
                   <div className="flex items-center gap-2 text-sm text-gray-700">
                     <Email sx={{ fontSize: 16, color: "#6b7280" }} />
                     <span className="truncate">
@@ -1388,14 +1757,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 {/* Precio */}
                 <div className="mt-3 w-full">
                   <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                    <span className="text-xs text-gray-600">
-                      Tarifa de consulta
-                    </span>
+                    <span className="text-xs text-gray-600">Tarifa de consulta</span>
                     <span className="text-sm font-bold text-gray-900">
-                      $
-                      {isEditing
-                        ? parseFloat(formData.price) || 0
-                        : doctor.price || 0}
+                      ${isEditing ? parseFloat(formData.price) || 0 : doctor.price || 0}
                     </span>
                   </div>
                 </div>
@@ -1412,13 +1776,34 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 </div>
               </div>
             </div>
-            {/* --- FIN DEL CARD MÓVIL --- */}
           </div>
           <p className="text-xs text-center text-gray-400 mt-4">
             Así verán tu perfil los pacientes en la app
           </p>
         </div>
       </div>
+
+      {/* Modal de recorte de imagen */}
+      <ImageCropperModal
+        open={cropperOpen}
+        onClose={() => {
+          setCropperOpen(false);
+          setCropperSrc(null);
+        }}
+        imageSrc={cropperSrc}
+        aspectRatio={cropperMode === "avatar" ? 1 : 2}
+        onCrop={handleCropComplete}
+        title={
+          cropperMode === "avatar"
+            ? "Ajustar Foto de Perfil"
+            : "Ajustar Imagen de Vista Previa"
+        }
+        recommendationText={
+          cropperMode === "avatar"
+            ? "Encuadra tu foto. Se mostrará como imagen cuadrada (1:1). Recomendado: 400×400px."
+            : "Encuadra la imagen. Se mostrará en formato horizontal (2:1). Recomendado: 800×400px."
+        }
+      />
     </div>
   );
 };

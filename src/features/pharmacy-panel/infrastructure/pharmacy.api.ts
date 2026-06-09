@@ -1,4 +1,5 @@
 import { httpClient, extractData } from '../../../shared/lib/http';
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 import type { PharmacyProfile, WorkSchedule } from '../domain/pharmacy-profile.entity';
 import type { PharmacyBranch } from '../domain/pharmacy-branch.entity';
 import type { PharmacyReview } from '../domain/pharmacy-review.entity';
@@ -283,9 +284,12 @@ export const updatePharmacyProfileAPI = async (
  * API: Obtener sucursales de farmacia
  * Endpoint: GET /api/pharmacies/branches
  */
-export const getPharmacyBranchesAPI = async (): Promise<PharmacyBranch[]> => {
-  const response = await httpClient.get<{ success: boolean; data: PharmacyBranch[] }>(
-    '/pharmacies/branches'
+export const getPharmacyBranchesAPI = async (
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<PharmacyBranch>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<PharmacyBranch> }>(
+    '/pharmacies/branches',
+    { params }
   );
   return extractData(response);
 };
@@ -331,9 +335,12 @@ export const deletePharmacyBranchAPI = async (id: string): Promise<void> => {
  * API: Obtener reseñas de farmacia
  * Endpoint: GET /api/pharmacies/reviews
  */
-export const getPharmacyReviewsAPI = async (): Promise<PharmacyReview[]> => {
-  const response = await httpClient.get<{ success: boolean; data: PharmacyReview[] }>(
-    '/pharmacies/reviews'
+export const getPharmacyReviewsAPI = async (
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<PharmacyReview>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<PharmacyReview> }>(
+    '/pharmacies/reviews',
+    { params }
   );
   return extractData(response);
 };

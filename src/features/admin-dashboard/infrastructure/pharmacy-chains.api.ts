@@ -1,13 +1,15 @@
 import { httpClient, extractData } from '../../../shared/lib/http';
 import type { PharmacyChain } from '../domain/pharmacy-chain.entity';
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 
 /**
  * API: Obtener todas las cadenas de farmacias (Admin)
  * Endpoint: GET /api/admin/pharmacy-chains
  */
-export const getPharmacyChainsAPI = async (): Promise<PharmacyChain[]> => {
-  const response = await httpClient.get<{ success: boolean; data: PharmacyChain[] }>(
-    '/admin/pharmacy-chains'
+export const getPharmacyChainsAPI = async (params?: { page?: number; limit?: number }): Promise<PaginatedResponse<PharmacyChain>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<PharmacyChain> }>(
+    '/admin/pharmacy-chains',
+    { params }
   );
   return extractData(response);
 };

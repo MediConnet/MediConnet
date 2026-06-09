@@ -34,12 +34,12 @@ export const DashboardContent = ({}: DashboardContentProps) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [appointmentsData, paymentsData] = await Promise.all([
+        const [appointmentsResult, paymentsResult] = await Promise.all([
           getAppointmentsAPI(),
           getDoctorPaymentsAPI()
         ]);
-        setAppointments(appointmentsData);
-        setPayments(paymentsData);
+        setAppointments(appointmentsResult.data ?? []);
+        setPayments(paymentsResult.data ?? []);
       } catch (error) {
         console.error("Error cargando datos del dashboard:", error);
       }

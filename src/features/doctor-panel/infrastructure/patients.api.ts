@@ -1,4 +1,5 @@
 import { extractData, httpClient } from "../../../shared/lib/http";
+import type { PaginatedResponse } from "../../../shared/types/pagination";
 import type { AppointmentStatus, Patient, PaymentMethodType } from "../domain/Patient.entity";
 
 // Interfaces de respuesta del Backend (Raw)
@@ -67,28 +68,20 @@ const extractDateFromISO = (isoDate: string): string => {
 
 // --- API CALL ---
 
-export interface GetPatientsParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-}
-
-export const getPatientsAPI = async ({ page = 1, limit = 10, search = '' }: GetPatientsParams): Promise<{ patients: Patient[], meta: PatientsApiResponse['meta'] }> => {
-  
-  const query = new URLSearchParams({
-    page: page.toString(),
-    limit: limit.toString(),
-    search
-  }).toString();
+export const getPatientsAPI = async (
+  params?: { page?: number; limit?: number; search?: string }
+): Promise<PaginatedResponse<Patient>> => {
+  const queryParams: Record<string, any> = { ...params };
 
   const response = await httpClient.get<{ success: boolean; data: PatientsApiResponse }>(
-    `/doctors/patients?${query}`
+    '/doctors/patients',
+    { params: queryParams }
   );
 
   const { data: backendData, meta } = extractData(response);
 
   // Mapeo: Backend (Snake) -> Frontend (Camel)
-  const mappedPatients: Patient[] = backendData.map(bp => ({
+  const data: Patient[] = backendData.map(bp => ({
     id: bp.id,
     name: bp.full_name,
     phone: bp.phone,
@@ -99,8 +92,6 @@ export const getPatientsAPI = async ({ page = 1, limit = 10, search = '' }: GetP
     lastAppointmentDate: bp.last_appointment_date,
     
     profilePicture: null, 
-    // Nota: Si en el futuro el backend envía la foto real, usaríamos: 
-    // profilePicture: bp.profile_picture_url || null,
 
     appointments: bp.appointment_history.map(apt => ({
       id: apt.id,
@@ -113,5 +104,5 @@ export const getPatientsAPI = async ({ page = 1, limit = 10, search = '' }: GetP
     }))
   }));
 
-  return { patients: mappedPatients, meta };
+  return { data, pagination: meta };
 };

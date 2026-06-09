@@ -14,6 +14,7 @@ import { Close, CloudUpload } from "@mui/icons-material";
 import { useState, useRef } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { getUserFriendlyMessage } from "../../../../shared/lib/api-error";
 
 interface Props {
   open: boolean;
@@ -102,7 +103,7 @@ export const CreateAdModal = ({ open, onClose, onCreateAd }: Props) => {
         setImagePreview(null);
         onClose();
       } catch (err: any) {
-        setError(err.message || "Error al crear el anuncio");
+        setError(getUserFriendlyMessage(err, { fallback: "No fue posible crear el anuncio." }));
       } finally {
         setIsSubmitting(false);
       }

@@ -1,4 +1,5 @@
 import { extractData, httpClient } from '../../../shared/lib/http';
+import { normalizeProviderType } from '../../../shared/lib/normalizeProviderType';
 import type { ResetPasswordRequest, ResetPasswordResponse } from '../domain/ResetPasswordRequest.entity';
 
 /**
@@ -90,10 +91,19 @@ export const loginAPI = async (credentials: LoginRequest): Promise<LoginResponse
   );
   
   const data = extractData(response);
+
+  const normalizedUser = data.user
+    ? {
+        ...data.user,
+        tipo: normalizeProviderType(data.user.tipo ?? data.user.serviceType),
+        serviceType: normalizeProviderType(data.user.serviceType ?? data.user.tipo),
+      }
+    : data.user;
   
   // Normalización para asegurar que siempre haya un token usable
   return {
     ...data,
+    user: normalizedUser,
     token: data.token || data.accessToken || '',
   };
 };
@@ -118,7 +128,13 @@ export const getCurrentUserAPI = async (): Promise<User> => {
   const response = await httpClient.get<{ success: boolean; data: User }>(
     '/auth/me'
   );
-  return extractData(response);
+  const user = extractData(response);
+  const normalizedTipo = normalizeProviderType(user.tipo ?? user.serviceType);
+  return {
+    ...user,
+    tipo: normalizedTipo ?? undefined,
+    serviceType: normalizedTipo ?? undefined,
+  };
 };
 
 /**

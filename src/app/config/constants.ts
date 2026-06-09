@@ -37,12 +37,5 @@ export const USER_ROLES = {
   ADMIN: 'admin',
 } as const;
 
-export const AMBULANCE_STATUS = {
-  PENDING: 'pending',
-  ASSIGNED: 'assigned',
-  IN_TRANSIT: 'in_transit',
-  ARRIVED: 'arrived',
-  COMPLETED: 'completed',
-  CANCELLED: 'cancelled',
-} as const;
+export { AMBULANCE_STATUS } from '../../shared/config/domain.constants';
 

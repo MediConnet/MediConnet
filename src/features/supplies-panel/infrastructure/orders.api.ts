@@ -1,4 +1,5 @@
 import { httpClient, extractData } from '../../../shared/lib/http';
+import type { PaginatedResponse } from '../../../shared/types/pagination';
 import type { SupplyOrder } from '../domain/Order.entity';
 
 // ============================================================================
@@ -10,9 +11,13 @@ import type { SupplyOrder } from '../domain/Order.entity';
  * Endpoint: GET /api/supplies/orders
  * Query params opcionales: ?status=pending
  */
-export const getOrdersAPI = async (status?: string): Promise<SupplyOrder[]> => {
-  const url = status ? `/supplies/orders?status=${status}` : '/supplies/orders';
-  const response = await httpClient.get<{ success: boolean; data: SupplyOrder[] }>(url);
+export const getOrdersAPI = async (
+  params?: { page?: number; limit?: number; status?: string }
+): Promise<PaginatedResponse<SupplyOrder>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<SupplyOrder> }>(
+    '/supplies/orders',
+    { params }
+  );
   return extractData(response);
 };
 

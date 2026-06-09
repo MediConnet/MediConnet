@@ -18,6 +18,7 @@ import {
 import { useRef, useState, useEffect } from "react";
 import type { LaboratoryDashboard } from "../../domain/LaboratoryDashboard.entity";
 import { updateLaboratoryProfileAPI } from "../../infrastructure/laboratories.repository";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 interface EditLaboratoryProfileModalProps {
   open: boolean;
@@ -45,6 +46,7 @@ export const EditLaboratoryProfileModal = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+  const feedback = useFeedbackStore();
 
   useEffect(() => {
     if (data && open) {
@@ -71,7 +73,7 @@ export const EditLaboratoryProfileModal = ({
     const file = event.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) return;
-    if (file.size > 5 * 1024 * 1024) return; // 5MB
+    if (file.size > 5 * 1024 * 1024) return;
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -137,6 +139,8 @@ export const EditLaboratoryProfileModal = ({
         preview_images: previewImages,
       });
 
+      feedback.showFeedback('success', 'Perfil actualizado', 'La información del laboratorio se ha guardado correctamente.');
+
       const updatedData: LaboratoryDashboard = {
         ...data,
         laboratory: {
@@ -154,6 +158,7 @@ export const EditLaboratoryProfileModal = ({
       onClose();
     } catch (e) {
       console.error("Error guardando perfil de laboratorio:", e);
+      feedback.showFeedback('error', 'Error', 'No se pudo guardar la información del laboratorio.');
     } finally {
       setSaving(false);
     }
@@ -188,7 +193,6 @@ export const EditLaboratoryProfileModal = ({
 
       <DialogContent dividers>
         <Stack spacing={3} sx={{ mt: 1 }}>
-          {/* Logo */}
           <Box>
             <Typography variant="subtitle2" fontWeight={600} mb={1}>
               Logo del Laboratorio
@@ -394,7 +398,6 @@ export const EditLaboratoryProfileModal = ({
             }}
           />
 
-          {/* Estado del Servicio */}
           <Box
             sx={{
               p: 2,
@@ -455,4 +458,3 @@ export const EditLaboratoryProfileModal = ({
     </Dialog>
   );
 };
-

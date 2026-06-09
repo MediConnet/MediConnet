@@ -14,9 +14,12 @@ import { Send, Message as MessageIcon, Person } from "@mui/icons-material";
 import { useState, useEffect, useRef } from "react";
 import { useReceptionMessages } from "../hooks/useReceptionMessages";
 import { useClinicAssociatedDoctor } from "../hooks/useClinicAssociatedDoctor";
-// Formateo de fechas sin date-fns
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
+import { ensureArray } from "../../infrastructure/clinic-associated-list.utils";
+import type { ReceptionMessage } from "../../domain/ClinicAssociatedDoctor.entity";
 
 export const ClinicReceptionMessages = () => {
+  const feedback = useFeedbackStore();
   const { clinicInfo } = useClinicAssociatedDoctor();
   const [messageText, setMessageText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -24,28 +27,32 @@ export const ClinicReceptionMessages = () => {
   const { messages, loading, sending, sendMessage, markAsRead } = useReceptionMessages(
     clinicInfo?.id || ""
   );
+  const safeMessages = ensureArray<ReceptionMessage>(messages);
 
   useEffect(() => {
     // Scroll al final cuando hay nuevos mensajes
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [safeMessages]);
 
   useEffect(() => {
     // Marcar mensajes no leídos como leídos cuando se cargan
-    const unreadIds = messages.filter((msg) => !msg.isRead && msg.from === "reception").map((msg) => msg.id);
+    const unreadIds = safeMessages
+      .filter((msg) => !msg.isRead && msg.from === "reception")
+      .map((msg) => msg.id);
     if (unreadIds.length > 0) {
       markAsRead(unreadIds);
     }
-  }, [messages, markAsRead]);
+  }, [safeMessages, markAsRead]);
 
   const handleSend = async () => {
     if (!messageText.trim()) return;
     try {
       await sendMessage(messageText.trim());
       setMessageText("");
+      feedback.showFeedback('success', 'Operación completada', 'La información se guardó correctamente.');
     } catch (error) {
       console.error("Error enviando mensaje:", error);
-      alert("Error al enviar el mensaje");
+      feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
     }
   };
 
@@ -99,17 +106,17 @@ export const ClinicReceptionMessages = () => {
           >
             {loading ? (
               <Typography>Cargando mensajes...</Typography>
-            ) : messages.length === 0 ? (
+            ) : safeMessages.length === 0 ? (
               <Typography variant="body2" color="text.secondary" textAlign="center" py={3}>
                 No hay mensajes aún. Inicia una conversación con la recepción.
               </Typography>
             ) : (
               <Stack spacing={2}>
-                {messages.map((message, index) => {
+                {safeMessages.map((message, index) => {
                   const isDoctor = message.from === "doctor";
                   const showDate =
                     index === 0 ||
-                    formatDate(messages[index - 1].timestamp) !== formatDate(message.timestamp);
+                    formatDate(safeMessages[index - 1].timestamp) !== formatDate(message.timestamp);
 
                   return (
                     <Box key={message.id}>

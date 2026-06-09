@@ -1,39 +1,21 @@
 import {
   Box, Typography, Card, CardContent, Grid2, Alert,
-  CircularProgress, Divider, Chip, Button, TextField, MenuItem, Snackbar,
+  CircularProgress, Divider, Chip, Button, TextField, MenuItem,
 } from '@mui/material';
 import { AccountBalance, Info, Edit, Save, CheckCircle } from '@mui/icons-material';
 import { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
-import * as Yup from 'yup';
 import { getDoctorBankAccountAPI, updateDoctorBankAccountAPI, type BankAccountData } from '../../infrastructure/payments.api';
-
-const ECUADOR_BANKS = [
-  'Banco Pichincha', 'Banco del Pacífico', 'Banco de Guayaquil', 'Produbanco',
-  'Banco Bolivariano', 'Banco Internacional', 'Banco del Austro',
-  'Banco General Rumiñahui', 'Banco ProCredit', 'Banco Solidario',
-  'Banco Comercial de Manabí', 'Banco Coopnacional', 'Banco Capital',
-  'Banco Finca', 'Banco D-MIRO', 'Banco Diners Club',
-];
-
-const validationSchema = Yup.object({
-  bankName: Yup.string().required('El banco es requerido'),
-  accountNumber: Yup.string()
-    .required('El número de cuenta es requerido')
-    .min(10, 'El número de cuenta debe tener al menos 10 dígitos')
-    .matches(/^\d+$/, 'Solo se permiten números'),
-  accountType: Yup.string().required('El tipo de cuenta es requerido'),
-  accountHolder: Yup.string().required('El titular de la cuenta es requerido'),
-});
+import { ECUADOR_BANKS } from '../../../../shared/config/domain.constants';
+import { bankAccountValidationSchema } from '../../../../shared/validation/bank-account.validation';
+import { useFeedbackStore } from '../../../../app/store/feedback.store';
 
 export const DoctorBankAccountSection = () => {
   const [bankAccount, setBankAccount] = useState<BankAccountData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
-    open: false, message: '', severity: 'success',
-  });
+  const feedback = useFeedbackStore();
 
   useEffect(() => {
     getDoctorBankAccountAPI()
@@ -49,7 +31,7 @@ export const DoctorBankAccountSection = () => {
       accountType: bankAccount?.accountType || 'checking',
       accountHolder: bankAccount?.accountHolder || '',
     },
-    validationSchema,
+    validationSchema: bankAccountValidationSchema,
     enableReinitialize: true,
     onSubmit: async (values) => {
       setSaving(true);
@@ -57,9 +39,9 @@ export const DoctorBankAccountSection = () => {
         const updated = await updateDoctorBankAccountAPI(values);
         setBankAccount(updated);
         setIsEditing(false);
-        setSnackbar({ open: true, message: 'Datos bancarios guardados correctamente', severity: 'success' });
+        feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
       } catch {
-        setSnackbar({ open: true, message: 'Error al guardar los datos bancarios', severity: 'error' });
+        feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
       } finally {
         setSaving(false);
       }
@@ -205,14 +187,6 @@ export const DoctorBankAccountSection = () => {
         </Typography>
       </Alert>
 
-      <Snackbar open={snackbar.open} autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
-        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}
-          sx={{ width: '100%' }} variant="filled">
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };

@@ -16,69 +16,28 @@ import {
   Alert,
   Stack,
   Chip,
-  Snackbar,
 } from '@mui/material';
 import { AccountBalance, Edit, Add, CheckCircle, Warning } from '@mui/icons-material';
 import { useState } from 'react';
 import { useFormik } from 'formik';
-import * as Yup from 'yup';
 import type { BankAccount } from '../../domain/clinic.entity';
+import { ECUADOR_BANKS } from '../../../../shared/config/domain.constants';
+import { bankAccountValidationSchema } from '../../../../shared/validation/bank-account.validation';
 
 interface BankAccountSectionProps {
   clinicId: string;
   bankAccount?: BankAccount;
-  onUpdate: (bankAccount: BankAccount) => Promise<void>;
+  onUpdate: (account: BankAccount) => Promise<void>;
 }
 
-const bankAccountValidationSchema = Yup.object({
-  bankName: Yup.string().required('El nombre del banco es requerido'),
-  accountNumber: Yup.string()
-    .required('El número de cuenta es requerido')
-    .matches(/^[0-9]+$/, 'Solo se permiten números')
-    .min(10, 'El número de cuenta debe tener al menos 10 dígitos'),
-  accountType: Yup.string()
-    .oneOf(['checking', 'savings'], 'Tipo de cuenta inválido')
-    .required('El tipo de cuenta es requerido'),
-  accountHolder: Yup.string().required('El titular de la cuenta es requerido'),
-  identificationNumber: Yup.string()
-    .matches(/^[0-9]+$/, 'Solo se permiten números')
-    .min(10, 'Debe tener al menos 10 dígitos')
-    .max(13, 'Debe tener máximo 13 dígitos'),
-});
-
-const BANKS_ECUADOR = [
-  'Banco Pichincha',
-  'Banco del Pacífico',
-  'Banco de Guayaquil',
-  'Produbanco',
-  'Banco Bolivariano',
-  'Banco Internacional',
-  'Banco del Austro',
-  'Banco General Rumiñahui',
-  'Banco Solidario',
-  'Banco ProCredit',
-  'Banco de Loja',
-  'Banco Comercial de Manabí',
-  'Banco Coopnacional',
-  'Banco Capital',
-  'Banco Diners Club',
-  'Otro',
-];
-
-export const BankAccountSection = ({ clinicId, bankAccount, onUpdate }: BankAccountSectionProps) => {
+export const BankAccountSection = ({ clinicId: _clinicId, bankAccount, onUpdate }: BankAccountSectionProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
-    open: false,
-    message: '',
-    severity: 'error'
-  });
 
   const formik = useFormik({
     initialValues: {
       bankName: bankAccount?.bankName || '',
       accountNumber: bankAccount?.accountNumber || '',
-      // Si no hay datos aún, mantener vacío para que el usuario seleccione explícitamente.
       accountType: bankAccount?.accountType || '',
       accountHolder: bankAccount?.accountHolder || '',
       identificationNumber: bankAccount?.identificationNumber || '',
@@ -90,13 +49,8 @@ export const BankAccountSection = ({ clinicId, bankAccount, onUpdate }: BankAcco
         await onUpdate(values as BankAccount);
         setDialogOpen(false);
         formik.resetForm({ values });
-      } catch (error) {
-        console.error('Error al actualizar cuenta bancaria:', error);
-        setSnackbar({
-          open: true,
-          message: 'Error al actualizar la cuenta bancaria. Intenta nuevamente.',
-          severity: 'error'
-        });
+      } catch {
+        // Error handled by parent hook (useUpdateClinicProfile)
       } finally {
         setLoading(false);
       }
@@ -113,7 +67,6 @@ export const BankAccountSection = ({ clinicId, bankAccount, onUpdate }: BankAcco
         identificationNumber: bankAccount.identificationNumber || '',
       });
     } else {
-      // Asegura que al agregar por primera vez se abra siempre limpio
       formik.resetForm();
     }
     setDialogOpen(true);
@@ -220,7 +173,6 @@ export const BankAccountSection = ({ clinicId, bankAccount, onUpdate }: BankAcco
         </Card>
       )}
 
-      {/* Dialog para agregar/editar cuenta bancaria */}
       <Dialog open={dialogOpen} onClose={() => !loading && setDialogOpen(false)} maxWidth="sm" fullWidth>
         <form onSubmit={formik.handleSubmit}>
           <DialogTitle>
@@ -240,7 +192,7 @@ export const BankAccountSection = ({ clinicId, bankAccount, onUpdate }: BankAcco
                   error={formik.touched.bankName && Boolean(formik.errors.bankName)}
                   label="Banco *"
                 >
-                  {BANKS_ECUADOR.map((bank) => (
+                  {ECUADOR_BANKS.map((bank) => (
                     <MenuItem key={bank} value={bank}>
                       {bank}
                     </MenuItem>
@@ -331,23 +283,6 @@ export const BankAccountSection = ({ clinicId, bankAccount, onUpdate }: BankAcco
           </DialogActions>
         </form>
       </Dialog>
-
-      {/* Snackbar para notificaciones */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-          variant="filled"
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };

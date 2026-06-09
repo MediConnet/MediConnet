@@ -1,11 +1,13 @@
 import React from 'react';
 import { Box, Typography, Button, Paper } from '@mui/material';
 import { ErrorOutline } from '@mui/icons-material';
+import { createLogger } from '../lib/logger';
+import { USER_MESSAGES } from '../lib/api-error';
+
+const boundaryLog = createLogger('ErrorBoundary');
 
 interface ErrorBoundaryState {
   hasError: boolean;
-  error?: Error;
-  errorInfo?: React.ErrorInfo;
 }
 
 interface ErrorBoundaryProps {
@@ -19,20 +21,20 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error };
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error capturado por ErrorBoundary:', error, errorInfo);
-    this.setState({
-      error,
-      errorInfo,
+    boundaryLog.error('Error de renderizado capturado', {
+      message: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack,
     });
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+    this.setState({ hasError: false });
   };
 
   render() {
@@ -68,33 +70,19 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
               }}
             />
             <Typography variant="h5" gutterBottom fontWeight={700} color="error">
-              Algo salió mal
+              No fue posible mostrar esta sección
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-              {this.state.error?.message || 'Ocurrió un error inesperado'}
+              {USER_MESSAGES.generic}
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-              <Button
-                variant="contained"
-                onClick={this.handleReset}
-                sx={{ mr: 1 }}
-              >
+              <Button variant="contained" onClick={this.handleReset}>
                 Intentar de nuevo
               </Button>
-              <Button
-                variant="outlined"
-                onClick={() => window.location.reload()}
-              >
+              <Button variant="outlined" onClick={() => window.location.reload()}>
                 Recargar página
               </Button>
             </Box>
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <Box sx={{ mt: 3, textAlign: 'left' }}>
-                <Typography variant="caption" color="text.secondary" component="pre" sx={{ fontSize: '0.75rem', overflow: 'auto' }}>
-                  {this.state.error.stack}
-                </Typography>
-              </Box>
-            )}
           </Paper>
         </Box>
       );

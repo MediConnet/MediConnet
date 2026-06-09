@@ -8,6 +8,7 @@ import {
 import {
   Box,
   Button,
+  Alert,
   Card,
   CardContent,
   CircularProgress,
@@ -18,36 +19,59 @@ import {
   Typography,
 } from "@mui/material";
 import { useFormik } from "formik";
-import { useState } from "react";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
 import * as Yup from "yup";
 import { ROUTES } from "../../../../app/config/constants";
-import { env } from "../../../../app/config/env";
 import { useAuthStore } from "../../../../app/store/auth.store";
 import { loginAPI } from "../../infrastructure/auth.api";
+import { getUserFriendlyMessage, logApiError } from "../../../../shared/lib/api-error";
 import { logger } from "../../../../shared/lib/logger";
+import { normalizeProviderType } from "../../../../shared/lib/normalizeProviderType";
+import { associateClinicInvitationAPI } from "../../../association/api/clinic-doctors.api";
+import { PENDING_CLINIC_INVITATION_KEY } from "../../../association/types/clinic-invitation.constants";
+import { ErrorModal } from "../../../../shared/components/modals/ErrorModal";
 
 const loginValidationSchema = Yup.object({
   email: Yup.string()
     .email("Correo electrónico inválido")
     .required("El correo electrónico es requerido"),
   password: Yup.string()
-    .min(6, "La contraseña debe tener al menos 6 caracteres")
+    .min(8, "La contraseña debe tener al menos 8 caracteres")
+    .max(20, "La contraseña no puede exceder 20 caracteres")
     .required("La contraseña es requerida"),
 });
 
 export const LoginPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const login = useAuthStore((state) => state.login);
+
+  const pendingInvitationToken =
+    searchParams.get("invitation") ||
+    sessionStorage.getItem(PENDING_CLINIC_INVITATION_KEY);
+
+  const emailFromInvitation = searchParams.get("email") || "";
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorModal, setErrorModal] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+  }>({ open: false, title: "", message: "" });
+
+  const loginInitialValues = useMemo(
+    () => ({
+      email: emailFromInvitation,
+      password: "",
+    }),
+    [emailFromInvitation],
+  );
 
   const formik = useFormik({
-    initialValues: {
-      email: "",
-      password: "",
-    },
+    initialValues: loginInitialValues,
+    enableReinitialize: true,
     validationSchema: loginValidationSchema,
     onSubmit: async (values) => {
       setIsLoading(true);
@@ -68,11 +92,10 @@ export const LoginPage = () => {
         // 3. Normalización para el Store y Redirección
         const roleForStore = user.role.toLowerCase();
         // Prioridad: tipo (backend) > serviceType (backend)
-        const tipoForStore = (
-          user.tipo ||
-          user.serviceType ||
-          ""
-        ).toLowerCase();
+        // Normaliza legacy (clinica, clinic) → clinics para rutas y menús
+        const tipoForStore = normalizeProviderType(
+          user.tipo || user.serviceType || "",
+        );
 
         logger.log("✅ Login Exitoso:", {
           role: roleForStore,
@@ -98,6 +121,18 @@ export const LoginPage = () => {
           token,
         );
 
+        // Invitación de clínica pendiente (médico existente)
+        if (pendingInvitationToken && tipoForStore === "doctor") {
+          try {
+            logger.info("🔗 Completando asociación con clínica tras login");
+            await associateClinicInvitationAPI(pendingInvitationToken);
+            sessionStorage.removeItem(PENDING_CLINIC_INVITATION_KEY);
+            logger.info("✅ Asociación con clínica completada");
+          } catch (assocErr) {
+            logger.warn("⚠️ No se pudo completar la asociación con la clínica:", assocErr);
+          }
+        }
+
         // 5. Lógica de Redirección (Router Guards)
         if (roleForStore === "admin") {
           navigate("/admin/dashboard", { replace: true });
@@ -122,7 +157,7 @@ export const LoginPage = () => {
             case "supplies":
               navigate("/supply/dashboard", { replace: true });
               break;
-            case "clinic":
+            case "clinics":
               navigate("/clinic/dashboard", { replace: true });
               break;
             default:
@@ -134,20 +169,48 @@ export const LoginPage = () => {
         } else {
           navigate(ROUTES.HOME, { replace: true });
         }
-      } catch (error: any) {
-        logger.error("❌ Error al iniciar sesión:", error);
+      } catch (error: unknown) {
+        logApiError("Login", error);
 
-        let errorMessage =
-          "Error al iniciar sesión. Verifica tus credenciales.";
+        const apiError = error as { status?: number; code?: string; message?: string };
+        const errorCode = apiError.code;
 
-        if (error?.code === "ERR_NETWORK") {
-          errorMessage = `No se pudo conectar al servidor (${env.API_URL})`;
-        } else if (error?.response?.status === 401) {
-          errorMessage = "Credenciales incorrectas.";
-        } else if (error?.message) {
-          errorMessage = error.message;
+        if (errorCode === "USER_NOT_FOUND") {
+          setErrorModal({
+            open: true,
+            title: "Cuenta no encontrada",
+            message: "No existe una cuenta registrada con este correo electrónico. Verifica los datos o solicita un nuevo registro.",
+          });
+          return;
         }
 
+        if (errorCode === "INVITED_NOT_REGISTERED") {
+          setErrorModal({
+            open: true,
+            title: "Registro pendiente",
+            message: "Has sido invitado, pero aún debes completar tu registro antes de iniciar sesión. Revisa tu bandeja de entrada para continuar con el proceso.",
+          });
+          return;
+        }
+
+        if (errorCode === "USER_INACTIVE") {
+          setErrorModal({
+            open: true,
+            title: "Acceso no disponible",
+            message: "Tu cuenta ha sido desactivada. Contacta al administrador para más información.",
+          });
+          return;
+        }
+
+        if (errorCode === "WRONG_PASSWORD" || !errorCode) {
+          formik.setFieldError("password", "Credenciales incorrectas.");
+          return;
+        }
+
+        const errorMessage = getUserFriendlyMessage(error, {
+          fallback: "Error al iniciar sesión. Verifica tus credenciales.",
+          allowBackendMessage: true,
+        });
         formik.setFieldError("password", errorMessage);
       } finally {
         setIsLoading(false);
@@ -240,6 +303,11 @@ export const LoginPage = () => {
           }}
         >
           <CardContent sx={{ textAlign: "center", p: { xs: 2, sm: 4 } }}>
+            {pendingInvitationToken && (
+              <Alert severity="info" sx={{ mb: 2, textAlign: "left" }}>
+                Inicia sesión con el correo de la invitación para unirte a la clínica automáticamente.
+              </Alert>
+            )}
             {/* Logo */}
             <Box sx={{ display: "flex", justifyContent: "center", mb: { xs: 2, sm: 3 } }}>
               <Box
@@ -321,6 +389,7 @@ export const LoginPage = () => {
                   helperText={formik.touched.password && formik.errors.password}
                   size="small"
                   slotProps={{
+                    htmlInput: { maxLength: 20 },
                     input: {
                       startAdornment: (
                         <InputAdornment position="start">
@@ -403,6 +472,13 @@ export const LoginPage = () => {
           </CardContent>
         </Card>
       </Box>
+
+      <ErrorModal
+        open={errorModal.open}
+        title={errorModal.title}
+        message={errorModal.message}
+        onAction={() => setErrorModal({ open: false, title: "", message: "" })}
+      />
     </Box>
   );
 };

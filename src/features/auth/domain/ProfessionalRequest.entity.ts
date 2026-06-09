@@ -1,5 +1,5 @@
 export interface ProfessionalRequest {
-  type: "doctor" | "pharmacy" | "lab" | "ambulance" | "supplies" | "clinic";
+  type: "doctor" | "pharmacy" | "laboratory" | "ambulance" | "supplies" | "clinica";
   // Puede venir como nombre completo o razón social/representante según el tipo
   name: string;
   email: string;
@@ -24,6 +24,8 @@ export interface ProfessionalRequest {
   firstName?: string;
   lastName?: string;
   role?: string;
+  /** Token de invitación de clínica (registro desde enlace de invitación) */
+  invitationToken?: string;
   
   // Archivos (Se envían al backend para subir a S3/Local)
   files?: {

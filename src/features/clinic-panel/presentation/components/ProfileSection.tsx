@@ -1,4 +1,4 @@
-import { Box, Typography, Button, TextField, Grid2, Card, CardContent, Chip, Avatar, Snackbar, Alert } from "@mui/material";
+import { Box, Typography, Button, TextField, Grid2, Card, CardContent, Chip, Avatar } from "@mui/material";
 import { Save, CloudUpload, LocationOn, CameraAlt, LocalHospital } from "@mui/icons-material";
 import { useState, useEffect, useRef } from "react";
 import type { ClinicProfile } from "../../domain/clinic.entity";
@@ -12,33 +12,12 @@ import {
   formatCoordinateForInput,
   parseCoordinate,
 } from "../../../../shared/lib/parseCoordinate";
+import { useSpecialties } from "../../../auth/presentation/hooks/useSpecialties";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 interface ProfileSectionProps {
   clinicId: string;
 }
-
-const medicalSpecialties = [
-  "Medicina General",
-  "Cardiología",
-  "Dermatología",
-  "Ginecología",
-  "Pediatría",
-  "Oftalmología",
-  "Traumatología",
-  "Neurología",
-  "Psiquiatría",
-  "Urología",
-  "Endocrinología",
-  "Gastroenterología",
-  "Neumología",
-  "Otorrinolaringología",
-  "Oncología",
-  "Reumatología",
-  "Nefrología",
-  "Cirugía General",
-  "Anestesiología",
-  "Odontología",
-];
 
 const validationSchema = Yup.object({
   name: Yup.string().required("El nombre es requerido"),
@@ -66,22 +45,12 @@ const validationSchema = Yup.object({
 export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => {
   const { profile, loading } = useClinicProfile();
   const { mutateAsync: updateProfile } = useUpdateClinicProfile();
+  const { data: specialties = [] } = useSpecialties();
+  const feedback = useFeedbackStore();
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  // Estado para el Snackbar
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: 'success' | 'error' | 'warning' | 'info';
-  }>({
-    open: false,
-    message: '',
-    severity: 'success'
-  });
-  
-  // Actualizar especialidades cuando el perfil se carga
+
   useEffect(() => {
     if (profile?.specialties) {
       setSelectedSpecialties(profile.specialties);
@@ -95,7 +64,6 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
     fileInputRef.current?.click();
   };
 
-  // ⭐ Función para comprimir y redimensionar imagen
   const compressAndResizeImage = (
     file: File,
     maxWidth: number = 800,
@@ -107,7 +75,6 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
       reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
-          // Calcular nuevas dimensiones manteniendo la proporción
           let width = img.width;
           let height = img.height;
 
@@ -123,7 +90,6 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
             }
           }
 
-          // Crear canvas para redimensionar
           const canvas = document.createElement("canvas");
           canvas.width = width;
           canvas.height = height;
@@ -134,10 +100,8 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
             return;
           }
 
-          // Dibujar imagen redimensionada
           ctx.drawImage(img, 0, 0, width, height);
 
-          // Convertir a Base64 con compresión
           const base64String = canvas.toDataURL("image/jpeg", quality);
           resolve(base64String);
         };
@@ -152,45 +116,27 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
   const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validar tamaño del archivo (máximo 10MB antes de comprimir)
-      const maxSize = 10 * 1024 * 1024; // 10MB
+      const maxSize = 10 * 1024 * 1024;
       if (file.size > maxSize) {
-        setSnackbar({
-          open: true,
-          message: "La imagen es demasiado grande. Por favor, selecciona una imagen menor a 10MB.",
-          severity: 'error'
-        });
+        feedback.showFeedback('error', 'Error', 'La imagen es demasiado grande. Por favor, selecciona una imagen menor a 10MB.');
         return;
       }
 
-      // Validar tipo de archivo
       if (!file.type.startsWith("image/")) {
-        setSnackbar({
-          open: true,
-          message: "Por favor, selecciona un archivo de imagen válido.",
-          severity: 'error'
-        });
+        feedback.showFeedback('error', 'Error', 'Por favor, selecciona un archivo de imagen válido.');
         return;
       }
 
       try {
-        // ⭐ Comprimir y redimensionar antes de convertir a Base64
-        // Máximo 800x800px, calidad 80%
         const base64String = await compressAndResizeImage(file, 800, 800, 0.8);
 
-        // Mostrar preview inmediatamente
         setLogoPreview(base64String);
 
-        // Usar el endpoint dedicado para logo — evita problemas con el schema Zod del perfil
         await uploadClinicLogoAPI(base64String);
-        setSnackbar({ open: true, message: "Logo actualizado correctamente.", severity: 'success' });
+        feedback.showFeedback('success', 'Operación completada', 'La información se guardó correctamente.');
       } catch (error) {
         console.error("Error procesando logo:", error);
-        setSnackbar({
-          open: true,
-          message: "Error al procesar el logo. Por favor, intenta con otra imagen.",
-          severity: 'error'
-        });
+        feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');
         setLogoPreview(profile?.logoUrl || null);
       }
     }
@@ -208,11 +154,10 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
       description: profile?.description || "",
     },
     validationSchema,
-    enableReinitialize: !!profile, // Solo reinicializar cuando profile esté disponible
+    enableReinitialize: !!profile,
     onSubmit: async (values) => {
       if (!profile) return;
       try {
-        // Solo enviar los campos que este formulario maneja — sin logo (tiene su propio endpoint)
         const payload: Partial<ClinicProfile> = {
           name: values.name,
           address: values.address,
@@ -225,10 +170,8 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
           google_maps_url: values.google_maps_url || null,
         };
         await updateProfile(payload);
-        setSnackbar({ open: true, message: "Perfil actualizado correctamente.", severity: 'success' });
-      } catch (error: any) {
-        console.error("Error al guardar perfil:", error);
-        setSnackbar({ open: true, message: error?.message || "Error al guardar el perfil.", severity: 'error' });
+      } catch {
+        // Error handled by useUpdateClinicProfile hook
       }
     },
   });
@@ -247,7 +190,6 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
         <CardContent>
           <form onSubmit={formik.handleSubmit}>
             <Grid2 container spacing={3}>
-              {/* Logo en círculo */}
               <Grid2 size={{ xs: 12, md: 6 }}>
                 <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
                   <Box
@@ -271,7 +213,6 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
                     >
                       {!logoPreview && <LocalHospital sx={{ fontSize: { xs: 60, sm: 75, md: 90 }, color: "#14b8a6" }} />}
                     </Avatar>
-                    {/* Overlay con icono de cámara */}
                     <Box
                       className="overlay"
                       sx={{
@@ -339,19 +280,19 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
                   Especialidades que ofrece la clínica
                 </Typography>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
-                  {medicalSpecialties.map((specialty) => (
+                  {specialties.map((specialty) => (
                     <Chip
-                      key={specialty}
-                      label={specialty}
+                      key={specialty.id}
+                      label={specialty.name}
                       onClick={() => {
-                        if (selectedSpecialties.includes(specialty)) {
-                          setSelectedSpecialties(selectedSpecialties.filter((s) => s !== specialty));
+                        if (selectedSpecialties.includes(specialty.name)) {
+                          setSelectedSpecialties(selectedSpecialties.filter((s) => s !== specialty.name));
                         } else {
-                          setSelectedSpecialties([...selectedSpecialties, specialty]);
+                          setSelectedSpecialties([...selectedSpecialties, specialty.name]);
                         }
                       }}
-                      color={selectedSpecialties.includes(specialty) ? "primary" : "default"}
-                      variant={selectedSpecialties.includes(specialty) ? "filled" : "outlined"}
+                      color={selectedSpecialties.includes(specialty.name) ? "primary" : "default"}
+                      variant={selectedSpecialties.includes(specialty.name) ? "filled" : "outlined"}
                     />
                   ))}
                 </Box>
@@ -464,7 +405,6 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
         </CardContent>
       </Card>
 
-      {/* Mapa de Ubicación */}
       {profile?.latitude && profile?.longitude && (
         <Card sx={{ mt: 3 }}>
           <CardContent>
@@ -509,23 +449,6 @@ export const ProfileSection = ({ clinicId: _clinicId }: ProfileSectionProps) => 
           </CardContent>
         </Card>
       )}
-
-      {/* Snackbar para notificaciones */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-          variant="filled"
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };
