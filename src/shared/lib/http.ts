@@ -127,7 +127,12 @@ httpClient.interceptors.response.use(
     const backendMessage = error.response?.data?.message;
 
     // No cerrar sesión en el endpoint de login — el usuario no está autenticado
-    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
+    const isAuthEndpoint =
+      url.includes('/auth/login') ||
+      url.includes('/auth/register') ||
+      url.includes('/auth/change-password') ||
+      url.includes('/auth/forgot-password') ||
+      url.includes('/auth/reset-password');
     if (status === 401 && !isAuthEndpoint) {
       httpLog.warn('Sesión expirada o token inválido — cerrando sesión');
       useAuthStore.getState().logout();
@@ -142,7 +147,7 @@ httpClient.interceptors.response.use(
     if (backendCode) {
       userMessage = backendMessage || USER_MESSAGES.generic;
     } else {
-      userMessage = getUserFriendlyMessage(error);
+      userMessage = getUserFriendlyMessage(error, { allowBackendMessage: isAuthEndpoint });
     }
 
     const safeError = new Error(userMessage || USER_MESSAGES.generic);

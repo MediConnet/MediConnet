@@ -45,6 +45,7 @@ import { AdsManagementPage } from "../../features/admin-dashboard/presentation/p
 import { AdsOverviewPage } from "../../features/admin-dashboard/presentation/pages/AdsOverviewPage";
 import { SendEmailPage } from "../../features/email/presentation/pages/SendEmailPage";
 import { SpecialtiesPage } from "../../features/admin-dashboard/presentation/pages/SpecialtiesPage";
+import { CitiesPage } from "../../features/admin-dashboard/presentation/pages/CitiesPage";
 
 // Shared pages
 import { ProviderAdsPage } from "../../shared/pages/ProviderAdsPage";
@@ -139,6 +140,7 @@ export const AppRouter = () => {
           <Route path="comments" element={<CommentsPage />} />
           <Route path="pharmacy-chains" element={<PharmacyChainsPage />} />
           <Route path="specialties" element={<SpecialtiesPage />} />
+          <Route path="cities" element={<CitiesPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="send-email" element={<SendEmailPage />} />
           <Route path="ads" element={<AdsManagementPage />} />

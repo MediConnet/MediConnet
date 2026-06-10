@@ -14,6 +14,7 @@ import {
   LocalHospital,
   LocalPharmacy,
   LocalShipping,
+  Map,
   MedicalServices,
   Message,
   Notifications,
@@ -74,6 +75,11 @@ export const ADMIN_MENU: MenuItem[] = [
     icon: <LocalHospital />,
     label: "Especialidades",
     path: "/admin/specialties",
+  },
+  {
+    icon: <Map />,
+    label: "Ciudades",
+    path: "/admin/cities",
   },
   { icon: <Settings />, label: "Configuración", path: "/admin/settings" },
 ];

@@ -1,8 +1,10 @@
-import { Box, Divider, Paper, Skeleton, Typography } from "@mui/material";
+import { Box, Divider, Paper, Skeleton, Typography, Button } from "@mui/material";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import { SettingsItem } from "../../../admin-dashboard/presentation/components/SettingsItem";
 import { useAdminSettings } from "../../../admin-dashboard/presentation/hooks/useAdminSettings";
 import { useAdminNotificationsLayout } from "../../../admin-dashboard/presentation/hooks/useAdminNotificationsLayout";
+import { Save } from "@mui/icons-material";
+import { useFeedbackStore } from "../../../../app/store/feedback.store";
 
 const CURRENT_ADMIN = {
   name: "Administrador General",
@@ -11,8 +13,18 @@ const CURRENT_ADMIN = {
 };
 
 export const SettingsPage = () => {
-  const { settings, isLoading, toggleSetting } = useAdminSettings();
+  const { settings, isLoading, isSaving, toggleSetting, saveSettings } = useAdminSettings();
   const { appointments: adminAppointments, notificationsViewAllPath } = useAdminNotificationsLayout();
+  const feedback = useFeedbackStore();
+
+  const handleSave = async () => {
+    const success = await saveSettings();
+    if (success) {
+      feedback.showFeedback('success', 'Configuración guardada', 'Configuración guardada correctamente.');
+    } else {
+      feedback.showFeedback('error', 'Error', 'Error al guardar la configuración. Intenta nuevamente.');
+    }
+  };
 
   if (isLoading || !settings) {
     return (
@@ -101,6 +113,13 @@ export const SettingsPage = () => {
               checked={settings.maintenanceMode}
               onChange={() => toggleSetting("maintenanceMode")}
             />
+            <Divider sx={{ my: 1, opacity: 0.5 }} />
+            <SettingsItem
+              title="Documentos de respaldo obligatorios"
+              description="Exigir que los médicos carguen Licencias, Certificados y Títulos al registrarse"
+              checked={settings.requireBackupDocuments}
+              onChange={() => toggleSetting("requireBackupDocuments")}
+            />
           </Box>
 
           {/* SECCIÓN 3: Anuncios */}
@@ -164,6 +183,23 @@ export const SettingsPage = () => {
               checked={settings.allowServiceSelfActivation}
               onChange={() => toggleSetting("allowServiceSelfActivation")}
             />
+
+            <Divider sx={{ my: 3 }} />
+
+            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+              <Button
+                variant="contained"
+                startIcon={<Save />}
+                onClick={handleSave}
+                disabled={isSaving}
+                sx={{
+                  backgroundColor: "#14b8a6",
+                  "&:hover": { backgroundColor: "#0d9488" },
+                }}
+              >
+                {isSaving ? "Guardando..." : "Guardar Cambios"}
+              </Button>
+            </Box>
           </Box>
         </Paper>
       </Box>

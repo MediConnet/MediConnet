@@ -19,6 +19,7 @@ export interface AdminSettings {
   // Sección Estados
   allowServiceSelfActivation: boolean; // Permitir auto-activación de servicios
   allowAdSelfPublishing: boolean; // Permitir auto-publicación de anuncios
+  requireBackupDocuments: boolean; // Requerir documentos de respaldo obligatorios
 
   // Sección Comisiones (porcentajes)
   commissionDoctor: number; // Comisión para doctores (%)

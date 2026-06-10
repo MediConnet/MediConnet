@@ -61,6 +61,7 @@ import {
 import { useRegisterProfessional } from "../hooks/useRegisterProfessional";
 import { useCities } from "../hooks/useCities";
 import { useSpecialties } from "../hooks/useSpecialties";
+import { usePublicSettings } from "../hooks/usePublicSettings";
 import { SuccessModal } from "../../../../shared/components/modals/SuccessModal";
 import { ErrorModal } from "../../../../shared/components/modals/ErrorModal";
 
@@ -150,7 +151,9 @@ export const RegisterPage = () => {
     isError: citiesIsError,
   } = useCities();
   const { data: specialtiesData = [], isLoading: specialtiesLoading } = useSpecialties();
-  
+  const { data: publicSettings } = usePublicSettings();
+  const requireDocs = publicSettings?.requireBackupDocuments ?? true;
+
   const cities = citiesData;
   const specialtiesList = selectedType === "doctor" ? specialtiesData : [];
 
@@ -276,6 +279,17 @@ export const RegisterPage = () => {
       if (step === 1) {
         setStep(2);
       } else if (step === 2) {
+        if (selectedType === "doctor" && requireDocs) {
+          const missingDocs = [];
+          if (licenses.length === 0) missingDocs.push("Licencias");
+          if (certificates.length === 0) missingDocs.push("Certificados");
+          if (professionalTitles.length === 0) missingDocs.push("Títulos Profesionales");
+
+          if (missingDocs.length > 0) {
+            setErrorMessage(`Los documentos de respaldo son obligatorios. Falta subir archivos en: ${missingDocs.join(", ")}.`);
+            return;
+          }
+        }
         setIsSubmitting(true);
         try {
           // 1. Separar nombres
@@ -1009,6 +1023,7 @@ export const RegisterPage = () => {
                     id="especialidades-autocomplete"
                     options={specialtiesList}
                     disableCloseOnSelect
+                    ListboxProps={{ style: { maxHeight: 250, overflowY: 'auto' } }}
                     getOptionLabel={(option) => option.name}
                     value={specialtiesList.filter((s) =>
                       (formik.values.especialidad as string[]).includes(s.id),
@@ -1083,6 +1098,7 @@ export const RegisterPage = () => {
                 <Autocomplete
                   options={cities}
                   loading={citiesLoading}
+                  ListboxProps={{ style: { maxHeight: 250, overflowY: 'auto' } }}
                   getOptionLabel={(option: City) => option.name}
                   value={cities.find((city) => city.id === formik.values.cityId) || null}
                   onChange={(_, selectedCity) => {
@@ -1215,14 +1231,14 @@ export const RegisterPage = () => {
                     variant="subtitle2"
                     sx={{ fontWeight: 600, mb: 3 }}
                   >
-                    Documentos de respaldo
+                    Documentos de respaldo {requireDocs && "*"}
                   </Typography>
                   <Box sx={{ mb: 3 }}>
                     <Typography
                       variant="body2"
                       sx={{ fontWeight: 600, mb: 1.5, color: "text.secondary" }}
                     >
-                      Licencias
+                      Licencias {requireDocs && "*"}
                     </Typography>
                     <input
                       type="file"
@@ -1268,7 +1284,7 @@ export const RegisterPage = () => {
                       variant="body2"
                       sx={{ fontWeight: 600, mb: 1.5, color: "text.secondary" }}
                     >
-                      Certificados
+                      Certificados {requireDocs && "*"}
                     </Typography>
                     <input
                       type="file"
@@ -1313,7 +1329,7 @@ export const RegisterPage = () => {
                       variant="body2"
                       sx={{ fontWeight: 600, mb: 1.5, color: "text.secondary" }}
                     >
-                      Títulos Profesionales
+                      Títulos Profesionales {requireDocs && "*"}
                     </Typography>
                     <input
                       type="file"

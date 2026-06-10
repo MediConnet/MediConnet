@@ -80,6 +80,10 @@ export interface City {
   state?: string;
 }
 
+export interface PublicSettings {
+  requireBackupDocuments: boolean;
+}
+
 /**
  * API: Login de usuario
  * Endpoint: POST /api/auth/login
@@ -95,8 +99,8 @@ export const loginAPI = async (credentials: LoginRequest): Promise<LoginResponse
   const normalizedUser = data.user
     ? {
         ...data.user,
-        tipo: normalizeProviderType(data.user.tipo ?? data.user.serviceType),
-        serviceType: normalizeProviderType(data.user.serviceType ?? data.user.tipo),
+        tipo: normalizeProviderType(data.user.tipo ?? data.user.serviceType) ?? undefined,
+        serviceType: normalizeProviderType(data.user.serviceType ?? data.user.tipo) ?? undefined,
       }
     : data.user;
   
@@ -214,6 +218,13 @@ export const getCitiesAPI = async (): Promise<City[]> => {
 export const getSpecialtiesAPI = async (): Promise<Specialty[]> => {
   const response = await httpClient.get<{ success: boolean; data: Specialty[] }>(
     '/specialties' 
+  );
+  return extractData(response);
+};
+
+export const getPublicSettingsAPI = async (): Promise<PublicSettings> => {
+  const response = await httpClient.get<{ success: boolean; data: PublicSettings }>(
+    '/public/settings'
   );
   return extractData(response);
 };

@@ -60,6 +60,8 @@ export interface TableToolbarProps {
   filters?: TableFilterConfig[];
   /** Botones de acción (Crear, Exportar, etc.) */
   actions?: TableActionConfig[];
+  /** Contenido extra a la izquierda de los botones de acción */
+  extraActions?: ReactNode;
   /** Contenido extra en la barra de filtros */
   extraFilters?: ReactNode;
   /** Ocultar la barra de filtros completa */
@@ -87,6 +89,7 @@ export function TableToolbar({
   onSearchChange,
   filters = [],
   actions = [],
+  extraActions,
   extraFilters,
   hideFilterBar = false,
   sx = {},
@@ -98,7 +101,7 @@ export function TableToolbar({
   return (
     <Box sx={{ width: "100%", maxWidth: "100%", ...sx }}>
       {/* ── Encabezado ── */}
-      {(title || actions.length > 0) && (
+      {(title || actions.length > 0 || extraActions) && (
         <Stack
           direction={{ xs: "column", sm: "row" }}
           justifyContent="space-between"
@@ -128,22 +131,27 @@ export function TableToolbar({
           )}
 
           {/* Acciones */}
-          {actions.length > 0 && (
-            <Stack direction="row" spacing={1} flexShrink={0}>
-              {actions.map((action, i) => (
-                <Button
-                  key={i}
-                  variant={action.variant ?? "outlined"}
-                  color={action.color ?? "primary"}
-                  startIcon={action.icon}
-                  onClick={action.onClick}
-                  disabled={action.disabled}
-                  size="small"
-                  sx={{ textTransform: "none", fontWeight: 600, borderRadius: 2 }}
-                >
-                  {action.label}
-                </Button>
-              ))}
+          {(actions.length > 0 || extraActions) && (
+            <Stack direction="row" spacing={2} alignItems="center" flexShrink={0}>
+              {extraActions}
+              {actions.length > 0 && (
+                <Stack direction="row" spacing={1}>
+                  {actions.map((action, i) => (
+                    <Button
+                      key={i}
+                      variant={action.variant ?? "outlined"}
+                      color={action.color ?? "primary"}
+                      startIcon={action.icon}
+                      onClick={action.onClick}
+                      disabled={action.disabled}
+                      size="small"
+                      sx={{ textTransform: "none", fontWeight: 600, borderRadius: 2 }}
+                    >
+                      {action.label}
+                    </Button>
+                  ))}
+                </Stack>
+              )}
             </Stack>
           )}
         </Stack>
