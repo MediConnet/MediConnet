@@ -692,6 +692,20 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
         {!isEditing ? (
           // VISTA: Solo Lectura
           <>
+            {/* Banner de clínica asociada */}
+            {data?.clinic && (
+              <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
+                <span className="text-amber-500 text-xl mt-0.5">🏥</span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-amber-800">
+                    Estás asociado a la clínica: {data.clinic.name}
+                  </p>
+                  <p className="text-xs text-amber-700 mt-0.5">
+                    Los pagos son distribuidos por la clínica. Tu perfil individual no se publica de forma independiente.
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
               <div>
                 <label className="text-sm text-gray-600">Nombre completo</label>
@@ -828,41 +842,48 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   size="medium"
                   sx={{ fontWeight: 600 }}
                 />
-                <Button
-                  variant={
-                    doctor.profileStatus === "published"
-                      ? "outlined"
-                      : "contained"
-                  }
-                  startIcon={
-                    doctor.profileStatus === "published" ? (
-                      <VisibilityOff />
-                    ) : (
-                      <Publish />
-                    )
-                  }
-                  onClick={handleTogglePublish}
-                  sx={{
-                    textTransform: "none",
-                    ...(doctor.profileStatus === "published"
-                      ? {
-                          borderColor: "#ef4444",
-                          color: "#ef4444",
-                          "&:hover": {
-                            borderColor: "#dc2626",
-                            backgroundColor: "#fef2f2",
-                          },
-                        }
-                      : {
-                          backgroundColor: "#10b981",
-                          "&:hover": { backgroundColor: "#059669" },
-                        }),
-                  }}
-                >
-                  {doctor.profileStatus === "published"
-                    ? "Ocultar en la app"
-                    : "Publicar en la app"}
-                </Button>
+                {/* Si el doctor está en una clínica, no puede publicarse individualmente */}
+                {data?.clinic ? (
+                  <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg">
+                    Gestionado por la clínica
+                  </span>
+                ) : (
+                  <Button
+                    variant={
+                      doctor.profileStatus === "published"
+                        ? "outlined"
+                        : "contained"
+                    }
+                    startIcon={
+                      doctor.profileStatus === "published" ? (
+                        <VisibilityOff />
+                      ) : (
+                        <Publish />
+                      )
+                    }
+                    onClick={handleTogglePublish}
+                    sx={{
+                      textTransform: "none",
+                      ...(doctor.profileStatus === "published"
+                        ? {
+                            borderColor: "#ef4444",
+                            color: "#ef4444",
+                            "&:hover": {
+                              borderColor: "#dc2626",
+                              backgroundColor: "#fef2f2",
+                            },
+                          }
+                        : {
+                            backgroundColor: "#10b981",
+                            "&:hover": { backgroundColor: "#059669" },
+                          }),
+                    }}
+                  >
+                    {doctor.profileStatus === "published"
+                      ? "Ocultar en la app"
+                      : "Publicar en la app"}
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -1252,9 +1273,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   }
                   className="w-full"
                 >
-                  {(['card', 'cash', 'both'] as const).map((method) => (
+                  {(['card', 'both'] as const).map((method) => (
                     <MenuItem key={method} value={method}>
-                      {method === 'card' ? 'Solo Tarjeta' : method === 'cash' ? 'Solo Presencial' : 'Tarjeta y Presencial'}
+                      {method === 'card' ? 'Solo Tarjeta' : 'Tarjeta y Efectivo'}
                     </MenuItem>
                   ))}
                 </Select>

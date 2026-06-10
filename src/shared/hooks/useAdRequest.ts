@@ -41,10 +41,12 @@ export const useAdRequest = () => {
 
       if (ad) {
         // Validación de estados
-        if (ad.status === 'APPROVED' && ad.is_active === true) {
+        // Un anuncio APPROVED se considera activo independientemente de is_active,
+        // ya que el backend de solicitudes puede no sincronizar is_active automáticamente.
+        if (ad.status === 'APPROVED') {
           setActiveAd(ad);
           setHasActiveAd(true);
-          setHasApprovedRequest(true); 
+          setHasApprovedRequest(true);
         } else if (ad.status === 'PENDING') {
           setPendingRequest(ad);
         }

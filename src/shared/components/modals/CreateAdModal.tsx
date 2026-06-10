@@ -41,8 +41,10 @@ const validationSchema = Yup.object({
   label: Yup.string()
     .min(2, "El label debe tener al menos 2 caracteres")
     .required("El label es requerido"),
-  discount: Yup.string()
-    .min(2, "El descuento debe tener al menos 2 caracteres")
+  discount: Yup.number()
+    .typeError("El descuento debe ser un número")
+    .min(1, "El descuento mínimo es 1%")
+    .max(100, "El descuento máximo es 100%")
     .required("El descuento es requerido"),
   description: Yup.string()
     .min(10, "La descripción debe tener al menos 10 caracteres")
@@ -247,16 +249,18 @@ export const CreateAdModal = ({
           {/* Descuento */}
           <TextField
             fullWidth
-            label="Descuento"
+            label="Descuento (%)"
             name="discount"
-            placeholder="Ej: 20% OFF"
+            type="number"
+            inputProps={{ min: 1, max: 100 }}
+            placeholder="Ej: 20"
             value={formik.values.discount}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             error={formik.touched.discount && Boolean(formik.errors.discount)}
             helperText={
               (formik.touched.discount && formik.errors.discount) ||
-              "Ej: 20% OFF, 50% DESCUENTO, etc."
+              "Ingresa solo el número del porcentaje (1-100)"
             }
             required
             sx={{ mb: 3 }}

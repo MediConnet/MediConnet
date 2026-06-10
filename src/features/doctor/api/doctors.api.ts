@@ -126,13 +126,13 @@ export const getDoctorPanelReviewsAPI = async (
 };
 
 const mapBackendPaymentsToFrontend = (methods: string[]): PaymentMethod => {
-  if (!methods) return 'cash';
+  if (!methods || methods.length === 0) return 'both';
   const hasCash = methods.some(m => m.toLowerCase().includes(PAYMENT_METHOD_BACKEND.CASH.toLowerCase()));
   const hasCard = methods.some(m => m.toLowerCase().includes(PAYMENT_METHOD_BACKEND.CARD.toLowerCase()));
 
   if (hasCash && hasCard) return 'both';
   if (hasCard) return 'card';
-  return 'cash';
+  return 'both'; // Default: ambos (ya no se permite "solo efectivo")
 };
 
 const mapFrontendPaymentsToBackend = (method: PaymentMethod): string[] => {
