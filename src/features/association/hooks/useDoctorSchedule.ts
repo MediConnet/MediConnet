@@ -61,6 +61,7 @@ const normalizeDoctorSchedule = (schedule: any, doctorId: string): DoctorSchedul
 
 export const useDoctorSchedule = (doctorId: string) => {
   const [schedule, setSchedule] = useState<DoctorSchedule | null>(null);
+  const [clinicSchedule, setClinicSchedule] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -71,10 +72,12 @@ export const useDoctorSchedule = (doctorId: string) => {
       const data = await getDoctorScheduleUseCase(doctorId);
       const normalized = normalizeDoctorSchedule(data, doctorId);
       setSchedule(normalized);
+      setClinicSchedule(data.clinicSchedule || null);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Error al cargar horarios'));
       const defaultSchedule = normalizeDoctorSchedule(null, doctorId);
       setSchedule(defaultSchedule);
+      setClinicSchedule(null);
     } finally {
       setLoading(false);
     }
@@ -86,7 +89,9 @@ export const useDoctorSchedule = (doctorId: string) => {
     setError(null);
     try {
       const result = await updateDoctorScheduleUseCase(doctorId, updatedSchedule);
-      setSchedule(result);
+      const normalized = normalizeDoctorSchedule(result, doctorId);
+      setSchedule(normalized);
+      setClinicSchedule(result.clinicSchedule || null);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Error al actualizar horarios');
       setError(error);
@@ -102,6 +107,7 @@ export const useDoctorSchedule = (doctorId: string) => {
 
   return {
     schedule,
+    clinicSchedule,
     loading,
     error,
     updateSchedule,

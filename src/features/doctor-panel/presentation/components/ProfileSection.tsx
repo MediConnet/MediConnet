@@ -28,6 +28,7 @@ import {
   type SelectChangeEvent,
 } from "@mui/material";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAuthStore } from "../../../../app/store/auth.store";
 import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import {
@@ -149,6 +150,7 @@ const validateLocationData = (data: { latitude?: string; longitude?: string; goo
 
 export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [_, setSearchParams] = useSearchParams();
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [newImageBase64, setNewImageBase64] = useState<string | null>(null);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
@@ -871,8 +873,26 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                 Horario Laboral
               </label>
 
-              {/* --- VISTA: Muestra mensaje si no hay horarios --- */}
-              {doctor.workSchedule && doctor.workSchedule.length > 0 ? (
+              {data.clinic ? (
+                <div className="p-4 bg-teal-50 border border-teal-200 rounded-lg text-teal-800">
+                  <p className="text-sm font-medium">
+                    Tu horario laboral está vinculado a la clínica <strong>{data.clinic.name}</strong>.
+                  </p>
+                  <p className="text-xs mt-1">
+                    Para modificar o ajustar tu disponibilidad, ve a la sección de{" "}
+                    <a
+                      href="/doctor/dashboard?tab=clinic-schedule"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setSearchParams({ tab: "clinic-schedule" });
+                      }}
+                      className="font-semibold underline hover:text-teal-900 cursor-pointer"
+                    >
+                      Horarios
+                    </a>.
+                  </p>
+                </div>
+              ) : doctor.workSchedule && doctor.workSchedule.length > 0 ? (
                 <div className="space-y-2 min-w-0">
                   {doctor.workSchedule.map((schedule: WorkSchedule) => (
                     <div
@@ -901,7 +921,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   </p>
                 </div>
               )}
-              {/* ----------------------------------------------- */}
             </div>
 
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1292,107 +1311,128 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
               <label className="text-sm text-gray-600 mb-3 block font-semibold">
                 Horario Laboral
               </label>
-              <div className="space-y-3 min-w-0">
-                {formData.workSchedule.map((schedule: WorkSchedule) => (
-                  <div
-                    key={schedule.day}
-                    className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg"
-                  >
-                    <div className="flex items-center gap-2 w-24 flex-shrink-0">
-                      <input
-                        type="checkbox"
-                        checked={schedule.enabled}
-                        onChange={(e) =>
-                          handleScheduleChange(
-                            schedule.day,
-                            "enabled",
-                            e.target.checked,
-                          )
-                        }
-                        className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
-                      />
-                      <span className="text-sm font-medium text-gray-700">
-                        {dayLabels[schedule.day] || schedule.day}
-                      </span>
-                    </div>
-                    {schedule.enabled && (
-                      <div className="flex flex-col gap-2 flex-1">
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="time"
-                            step="1800"
-                            value={schedule.startTime}
-                            onChange={(e) =>
-                              handleScheduleChange(
-                                schedule.day,
-                                "startTime",
-                                e.target.value,
-                              )
-                            }
-                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                          />
-                          <span className="text-gray-500">-</span>
-                          <input
-                            type="time"
-                            step="1800"
-                            value={schedule.endTime}
-                            onChange={(e) =>
-                              handleScheduleChange(
-                                schedule.day,
-                                "endTime",
-                                e.target.value,
-                              )
-                            }
-                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                          />
-                        </div>
-
-                        {/* Break time / Almuerzo */}
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500 w-20">Almuerzo</span>
-                          <input
-                            type="time"
-                            step="1800"
-                            value={schedule.breakStart ?? ""}
-                            onChange={(e) =>
-                              handleScheduleChange(
-                                schedule.day,
-                                "breakStart",
-                                e.target.value,
-                              )
-                            }
-                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                          />
-                          <span className="text-gray-500">-</span>
-                          <input
-                            type="time"
-                            step="1800"
-                            value={schedule.breakEnd ?? ""}
-                            onChange={(e) =>
-                              handleScheduleChange(
-                                schedule.day,
-                                "breakEnd",
-                                e.target.value,
-                              )
-                            }
-                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleNoLunch(schedule.day)}
-                            className="ml-2 text-xs px-3 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100"
-                          >
-                            Sin almuerzo
-                          </button>
-                        </div>
+              {data.clinic ? (
+                <div className="p-4 bg-teal-50 border border-teal-200 rounded-lg text-teal-800">
+                  <p className="text-sm font-medium">
+                    Tu horario laboral está vinculado a la clínica <strong>{data.clinic.name}</strong>.
+                  </p>
+                  <p className="text-xs mt-1">
+                    Para modificar o ajustar tu disponibilidad, ve a la sección de{" "}
+                    <a
+                      href="/doctor/dashboard?tab=clinic-schedule"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setSearchParams({ tab: "clinic-schedule" });
+                      }}
+                      className="font-semibold underline hover:text-teal-900 cursor-pointer"
+                    >
+                      Horarios
+                    </a>.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3 min-w-0">
+                  {formData.workSchedule.map((schedule: WorkSchedule) => (
+                    <div
+                      key={schedule.day}
+                      className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg"
+                    >
+                      <div className="flex items-center gap-2 w-24 flex-shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={schedule.enabled}
+                          onChange={(e) =>
+                            handleScheduleChange(
+                              schedule.day,
+                              "enabled",
+                              e.target.checked,
+                            )
+                          }
+                          className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                        />
+                        <span className="text-sm font-medium text-gray-700">
+                          {dayLabels[schedule.day] || schedule.day}
+                        </span>
                       </div>
-                    )}
-                    {!schedule.enabled && (
-                      <span className="text-sm text-gray-400">Cerrado</span>
-                    )}
-                  </div>
-                ))}
-              </div>
+                      {schedule.enabled && (
+                        <div className="flex flex-col gap-2 flex-1">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="time"
+                              step="1800"
+                              value={schedule.startTime}
+                              onChange={(e) =>
+                                handleScheduleChange(
+                                  schedule.day,
+                                  "startTime",
+                                  e.target.value,
+                                )
+                              }
+                              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                            />
+                            <span className="text-gray-500">-</span>
+                            <input
+                              type="time"
+                              step="1800"
+                              value={schedule.endTime}
+                              onChange={(e) =>
+                                handleScheduleChange(
+                                  schedule.day,
+                                  "endTime",
+                                  e.target.value,
+                                )
+                              }
+                              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                            />
+                          </div>
+
+                          {/* Break time / Almuerzo */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500 w-20">Almuerzo</span>
+                            <input
+                              type="time"
+                              step="1800"
+                              value={schedule.breakStart ?? ""}
+                              onChange={(e) =>
+                                handleScheduleChange(
+                                  schedule.day,
+                                  "breakStart",
+                                  e.target.value,
+                                )
+                              }
+                              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                            />
+                            <span className="text-gray-500">-</span>
+                            <input
+                              type="time"
+                              step="1800"
+                              value={schedule.breakEnd ?? ""}
+                              onChange={(e) =>
+                                handleScheduleChange(
+                                  schedule.day,
+                                  "breakEnd",
+                                  e.target.value,
+                                )
+                              }
+                              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleNoLunch(schedule.day)}
+                              className="ml-2 text-xs px-3 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100"
+                            >
+                              Sin almuerzo
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      {!schedule.enabled && (
+                        <span className="text-sm text-gray-400">Cerrado</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="mt-4 flex justify-end gap-3">

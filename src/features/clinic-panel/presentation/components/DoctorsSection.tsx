@@ -17,13 +17,14 @@ import {
   DialogActions,
   TextField,
 } from "@mui/material";
-import { Email, Edit, ToggleOn, ToggleOff, Delete, Visibility } from "@mui/icons-material";
+import { Email, Edit, ToggleOn, ToggleOff, Delete, Visibility, Schedule } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 import { useClinicDoctors } from "../hooks/useClinicDoctors";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { clearClinicMocks } from "../../infrastructure/clear-clinic-mocks";
 import { DoctorProfileViewModal } from "./DoctorProfileViewModal";
+import { DoctorScheduleModal } from "./DoctorScheduleModal";
 import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import type { ClinicDoctor } from "../../domain/doctor.entity";
 
@@ -49,6 +50,8 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
   const [selectedDoctorForView, setSelectedDoctorForView] = useState<ClinicDoctor | null>(null);
   const [doctorEmail, setDoctorEmail] = useState<string>("");
   const [isInviting, setIsInviting] = useState(false);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [selectedDoctorForSchedule, setSelectedDoctorForSchedule] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     clearClinicMocks();
@@ -164,6 +167,11 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
     setProfileViewOpen(true);
   };
 
+  const handleOpenSchedule = (doctor: ClinicDoctor) => {
+    setSelectedDoctorForSchedule({ id: doctor.id, name: doctor.name || doctor.email });
+    setScheduleModalOpen(true);
+  };
+
   if (loading) {
     return <Typography>Cargando médicos...</Typography>;
   }
@@ -228,6 +236,13 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
                         color="primary"
                       >
                         <Visibility />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleOpenSchedule(doctor)}
+                        title="Configurar horario"
+                      >
+                        <Schedule />
                       </IconButton>
                       <IconButton
                         size="small"
@@ -394,6 +409,19 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
         }}
         doctor={selectedDoctorForView}
       />
+
+      {/* Modal Configurar Horario del Médico */}
+      {selectedDoctorForSchedule && (
+        <DoctorScheduleModal
+          open={scheduleModalOpen}
+          onClose={() => {
+            setScheduleModalOpen(false);
+            setSelectedDoctorForSchedule(null);
+          }}
+          doctorId={selectedDoctorForSchedule.id}
+          doctorName={selectedDoctorForSchedule.name}
+        />
+      )}
     </Box>
   );
 };
