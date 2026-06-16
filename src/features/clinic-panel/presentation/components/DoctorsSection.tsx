@@ -22,7 +22,6 @@ import { useState, useEffect } from "react";
 import { useClinicDoctors } from "../hooks/useClinicDoctors";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { generateInvitationLinkAPI } from "../../infrastructure/clinic-doctors.api";
 import { clearClinicMocks } from "../../infrastructure/clear-clinic-mocks";
 import { DoctorProfileViewModal } from "./DoctorProfileViewModal";
 import { useFeedbackStore } from "../../../../app/store/feedback.store";
@@ -49,7 +48,7 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
   const [profileViewOpen, setProfileViewOpen] = useState(false);
   const [selectedDoctorForView, setSelectedDoctorForView] = useState<ClinicDoctor | null>(null);
   const [doctorEmail, setDoctorEmail] = useState<string>("");
-  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [isInviting, setIsInviting] = useState(false);
 
   useEffect(() => {
     clearClinicMocks();
@@ -109,53 +108,25 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
     setDoctorEmail("");
   };
 
-  const handleGenerateAndOpenEmail = async () => {
+  const handleSendInvitation = async () => {
     if (!doctorEmail || !inviteValidationSchema.isValidSync({ email: doctorEmail })) {
       feedback.showFeedback('error', 'Error', 'Por favor ingresa un email válido');
       return;
     }
 
-    setIsGeneratingLink(true);
+    setIsInviting(true);
     try {
-      const { invitationLink } = await generateInvitationLinkAPI(doctorEmail);
-
-      let fullInvitationLink = invitationLink;
-
-      if (!invitationLink.startsWith('http://') && !invitationLink.startsWith('https://')) {
-        const frontendBaseUrl = window.location.origin;
-
-        if (invitationLink.startsWith('/')) {
-          fullInvitationLink = `${frontendBaseUrl}${invitationLink}`;
-        } else {
-          fullInvitationLink = `${frontendBaseUrl}/clinic/invite/${invitationLink}`;
-        }
-      }
-
-      try {
-        const url = new URL(fullInvitationLink);
-        if (url.searchParams.has('token')) {
-          const tokenValue = url.searchParams.get('token');
-          if (tokenValue) {
-            fullInvitationLink = `${url.origin}/clinic/invite/${tokenValue}`;
-          }
-        }
-      } catch (e) {
-        console.warn('No se pudo parsear la URL:', e);
-      }
-
-      await navigator.clipboard.writeText(fullInvitationLink);
+      await inviteDoctor(doctorEmail);
 
       setInviteDialogOpen(false);
       setDoctorEmail("");
 
-      window.location.href = "mailto:";
-
-      feedback.showFeedback('success', 'Operación completada', 'La información se guardó correctamente.');
+      feedback.showFeedback('success', 'Operación completada', 'La invitación ha sido enviada exitosamente.');
     } catch (err: any) {
       const message = err?.message || 'No fue posible completar la operación.';
       feedback.showFeedback('error', 'Error', message);
     } finally {
-      setIsGeneratingLink(false);
+      setIsInviting(false);
     }
   };
 
@@ -297,7 +268,7 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
         <DialogTitle>Invitar Médico por Email</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Ingresa el email del médico. Se generará un link de invitación que se copiará automáticamente al portapapeles.
+            Ingresa el email del médico. Se enviará un correo con la invitación automáticamente.
           </Typography>
           <TextField
             fullWidth
@@ -309,13 +280,13 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
             helperText={
               doctorEmail !== "" && !inviteValidationSchema.isValidSync({ email: doctorEmail })
                 ? "Email inválido"
-                : "El link se copiará automáticamente y se abrirá tu cliente de correo"
+                : "Se enviará un link de acceso único para que el médico se registre o asocie."
             }
             sx={{ mt: 1 }}
             autoFocus
             onKeyDown={(e) => {
               if (e.key === "Enter" && doctorEmail && inviteValidationSchema.isValidSync({ email: doctorEmail })) {
-                handleGenerateAndOpenEmail();
+                handleSendInvitation();
               }
             }}
           />
@@ -329,12 +300,12 @@ export const DoctorsSection = ({ clinicId }: DoctorsSectionProps) => {
           </Button>
           <Button
             variant="contained"
-            onClick={handleGenerateAndOpenEmail}
-            disabled={isGeneratingLink || !doctorEmail || !inviteValidationSchema.isValidSync({ email: doctorEmail })}
+            onClick={handleSendInvitation}
+            disabled={isInviting || !doctorEmail || !inviteValidationSchema.isValidSync({ email: doctorEmail })}
             sx={{ backgroundColor: "#14b8a6" }}
             startIcon={<Email />}
           >
-            {isGeneratingLink ? "Generando..." : "Generar y Abrir Correo"}
+            {isInviting ? "Enviando..." : "Enviar Invitación"}
           </Button>
         </DialogActions>
       </Dialog>
