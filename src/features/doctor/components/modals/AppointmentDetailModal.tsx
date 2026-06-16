@@ -44,24 +44,21 @@ export const AppointmentDetailModal = ({
 
   if (!appointment) return null;
 
-  const handleToggleStatus = () => {
+  const handleUpdateStatus = (newStatus: AppointmentStatus) => {
     if (!appointment.id) {
       console.error("ID de cita no disponible");
       return;
     }
 
-    const newStatus = currentStatus === "COMPLETED" ? "CONFIRMED" : "COMPLETED";
-
     if (appointment.paymentMethodRaw === "CASH") {
       if (newStatus === "COMPLETED") {
         setIsPaidLocal(true);
-      } else if (newStatus === "CONFIRMED") {
+      } else if (newStatus === "CONFIRMED" || newStatus === "PENDING" || newStatus === "PENDING_CONFIRMATION") {
         setIsPaidLocal(false);
       }
     }
 
     setCurrentStatus(newStatus);
-
     onStatusChange(appointment.id, newStatus);
   };
 
@@ -73,6 +70,12 @@ export const AppointmentDetailModal = ({
         return "bg-teal-100 text-teal-700 border-teal-300";
       case "CANCELLED":
         return "bg-red-100 text-red-700 border-red-300";
+      case "PENDING_CONFIRMATION":
+        return "bg-amber-100 text-amber-700 border-amber-300";
+      case "NO_SHOW":
+        return "bg-rose-100 text-rose-700 border-rose-300";
+      case "PENDING":
+        return "bg-yellow-100 text-yellow-700 border-yellow-300";
       default:
         return "bg-gray-100 text-gray-700 border-gray-300";
     }
@@ -86,6 +89,12 @@ export const AppointmentDetailModal = ({
         return "Atendida";
       case "CANCELLED":
         return "Cancelada";
+      case "PENDING_CONFIRMATION":
+        return "Pendiente confirmación";
+      case "NO_SHOW":
+        return "No asistió";
+      case "PENDING":
+        return "Pendiente";
       default:
         return status;
     }
@@ -211,50 +220,119 @@ export const AppointmentDetailModal = ({
                 </p>
                 {/* Chip de estado de pago DINÁMICO usando isPaidLocal */}
                 <span
-                  className={`text-xs px-2 py-0.5 rounded ${isPaidLocal ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}
+                  className={`text-xs px-2 py-0.5 rounded ${
+                    currentStatus === "CANCELLED"
+                      ? "bg-red-100 text-red-700"
+                      : currentStatus === "NO_SHOW"
+                        ? "bg-rose-100 text-rose-700"
+                        : isPaidLocal
+                          ? "bg-green-100 text-green-700"
+                          : "bg-orange-100 text-orange-700"
+                  }`}
                 >
-                  {isPaidLocal ? "Pagado" : "Pendiente"}
+                  {currentStatus === "CANCELLED"
+                    ? "Cancelado"
+                    : currentStatus === "NO_SHOW"
+                      ? "No asistió"
+                      : isPaidLocal
+                        ? "Pagado"
+                        : "Pendiente"}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Acciones - Botón de Toggle */}
+          {/* Acciones */}
           <div className="border border-gray-200 rounded-xl p-4">
             <h4 className="font-semibold text-gray-900 mb-3">Acciones</h4>
 
-            <button
-              onClick={handleToggleStatus}
-              disabled={loading}
-              className={`w-full flex items-center justify-center gap-3 p-3 rounded-lg border-2 transition-all font-bold cursor-pointer shadow-sm
-                ${
-                  currentStatus === "COMPLETED"
-                    ? "border-gray-300 text-gray-600 bg-gray-50 hover:bg-gray-100"
-                    : "border-teal-500 text-teal-600 hover:bg-teal-50"
-                }
-                ${loading ? "opacity-70 cursor-not-allowed" : ""}
-              `}
-            >
-              {loading ? (
-                "Actualizando..."
-              ) : currentStatus === "COMPLETED" ? (
+            <div className="space-y-2">
+              {(currentStatus === "PENDING" || currentStatus === "PENDING_CONFIRMATION") && (
                 <>
-                  <Undo fontSize="small" />
-                  Desmarcar como Atendida
-                </>
-              ) : (
-                <>
-                  <CheckCircle fontSize="small" />
-                  Marcar como Atendida
+                  <button
+                    onClick={() => handleUpdateStatus("CONFIRMED")}
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-3 p-3 rounded-lg border-2 border-green-500 text-green-600 hover:bg-green-50 transition-all font-bold cursor-pointer shadow-sm disabled:opacity-50"
+                  >
+                    <CheckCircle fontSize="small" />
+                    Confirmar Cita
+                  </button>
+                  <button
+                    onClick={() => handleUpdateStatus("NO_SHOW")}
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-3 p-3 rounded-lg border-2 border-rose-500 text-rose-600 hover:bg-rose-50 transition-all font-bold cursor-pointer shadow-sm disabled:opacity-50"
+                  >
+                    <Close fontSize="small" />
+                    Marcar como No Asistió
+                  </button>
+                  <button
+                    onClick={() => handleUpdateStatus("CANCELLED")}
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-3 p-3 rounded-lg border-2 border-red-500 text-red-600 hover:bg-red-50 transition-all font-bold cursor-pointer shadow-sm disabled:opacity-50"
+                  >
+                    <Close fontSize="small" />
+                    Cancelar Cita
+                  </button>
                 </>
               )}
-            </button>
 
-            <p className="text-xs text-gray-400 mt-2 text-center">
-              {currentStatus === "COMPLETED"
-                ? "Si desmarcas, la cita volverá a estado Confirmada."
-                : "Al marcar como atendida, se habilitará el diagnóstico."}
-            </p>
+              {currentStatus === "CONFIRMED" && (
+                <>
+                  <button
+                    onClick={() => handleUpdateStatus("COMPLETED")}
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-3 p-3 rounded-lg border-2 border-teal-500 text-teal-600 hover:bg-teal-50 transition-all font-bold cursor-pointer shadow-sm disabled:opacity-50"
+                  >
+                    <CheckCircle fontSize="small" />
+                    Marcar como Atendida
+                  </button>
+                  <button
+                    onClick={() => handleUpdateStatus("NO_SHOW")}
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-3 p-3 rounded-lg border-2 border-rose-500 text-rose-600 hover:bg-rose-50 transition-all font-bold cursor-pointer shadow-sm disabled:opacity-50"
+                  >
+                    <Close fontSize="small" />
+                    Marcar como No Asistió
+                  </button>
+                  <button
+                    onClick={() => handleUpdateStatus("CANCELLED")}
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-3 p-3 rounded-lg border-2 border-red-500 text-red-600 hover:bg-red-50 transition-all font-bold cursor-pointer shadow-sm disabled:opacity-50"
+                  >
+                    <Close fontSize="small" />
+                    Cancelar Cita
+                  </button>
+                </>
+              )}
+
+              {currentStatus === "COMPLETED" && (
+                <button
+                  onClick={() => handleUpdateStatus("CONFIRMED")}
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-3 p-3 rounded-lg border-2 border-gray-300 text-gray-600 bg-gray-50 hover:bg-gray-100 transition-all font-bold cursor-pointer shadow-sm disabled:opacity-50"
+                >
+                  <Undo fontSize="small" />
+                  Desmarcar como Atendida
+                </button>
+              )}
+
+              {(currentStatus === "CANCELLED" || currentStatus === "NO_SHOW") && (
+                <p className="text-sm text-gray-500 italic text-center py-2">
+                  No hay acciones adicionales para citas en estado {getStatusLabel(currentStatus).toLowerCase()}.
+                </p>
+              )}
+            </div>
+
+            {currentStatus === "CONFIRMED" && (
+              <p className="text-xs text-gray-400 mt-2 text-center">
+                Al marcar como atendida, se habilitará el diagnóstico.
+              </p>
+            )}
+            {currentStatus === "COMPLETED" && (
+              <p className="text-xs text-gray-400 mt-2 text-center">
+                Si desmarcas, la cita volverá a estado Confirmada.
+              </p>
+            )}
           </div>
         </div>
 

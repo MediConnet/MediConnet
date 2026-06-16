@@ -110,29 +110,29 @@ export const DoctorDashboardPage = () => {
       .slice(0, 2);
   };
 
-  // EFECTO: Cargar citas reales para el layout (Sidebar)
+  // Cargar citas reales para el layout (Sidebar)
+  const fetchAppointments = async () => {
+    try {
+      const result = await getAppointmentsAPI();
+      const allAppointments = result.data ?? [];
+      const upcoming = allAppointments
+        .filter((a) => a.status === "CONFIRMED" || a.status === "PENDING")
+        .slice(0, 50)
+        .map((apt) => ({
+          id: apt.id,
+          patientName: apt.patientName,
+          date: apt.date,
+          time: apt.time,
+          reason: apt.reason,
+        }));
+
+      setSidebarAppointments(upcoming);
+    } catch (error) {
+      console.error("Error cargando citas para sidebar:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        const result = await getAppointmentsAPI();
-        const allAppointments = result.data ?? [];
-        const upcoming = allAppointments
-          .filter((a) => a.status === "CONFIRMED" || a.status === "PENDING")
-          .slice(0, 5)
-          .map((apt) => ({
-            id: apt.id,
-            patientName: apt.patientName,
-            date: apt.date,
-            time: apt.time,
-            reason: apt.reason,
-          }));
-
-        setSidebarAppointments(upcoming);
-      } catch (error) {
-        console.error("Error cargando citas para sidebar:", error);
-      }
-    };
-
     fetchAppointments();
     const off = onRealtimeEvent(({ name }) => {
       if (name === "appointment:created" || name === "appointment:updated") {
@@ -244,6 +244,7 @@ export const DoctorDashboardPage = () => {
       reviewsPath="/doctor/dashboard?tab=reviews"
       reviewsCount={displayData?.reviews || 0}
       menuItems={menuItems}
+      onRefreshNotifications={fetchAppointments}
     >
       {/* Cards de Estadísticas - Solo mostrar en la pestaña de dashboard */}
       {currentTab === "dashboard" && <StatsCards data={displayData} />}

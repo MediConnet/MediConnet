@@ -84,17 +84,17 @@ export const ClinicDashboardPage = () => {
   const today = useMemo(() => new Date().toISOString().split("T")[0], []);
   const [agendaAppointments, setAgendaAppointments] = useState<ClinicAppointment[]>([]);
 
-  useEffect(() => {
-    const loadAgendaNotifications = async () => {
-      try {
-        if (!clinic?.id) return;
-        const result = await getClinicAppointmentsUseCase(clinic.id, { page: 1, limit: 50, date: today });
-        setAgendaAppointments(result?.data ?? []);
-      } catch (e) {
-        setAgendaAppointments([]);
-      }
-    };
+  const loadAgendaNotifications = async () => {
+    try {
+      if (!clinic?.id) return;
+      const result = await getClinicAppointmentsUseCase(clinic.id, { page: 1, limit: 50, date: today });
+      setAgendaAppointments(result?.data ?? []);
+    } catch (e) {
+      setAgendaAppointments([]);
+    }
+  };
 
+  useEffect(() => {
     loadAgendaNotifications();
   }, [clinic?.id, today]);
 
@@ -161,6 +161,7 @@ export const ClinicDashboardPage = () => {
       agendaPath="/clinic/dashboard?tab=appointments"
       appointments={notificationAppointments}
       enableReviewAlerts={false}
+      onRefreshNotifications={loadAgendaNotifications}
     >
       <Box sx={{ p: 3, maxWidth: 1400, margin: "0 auto" }}>
         {currentTab === "dashboard" && (

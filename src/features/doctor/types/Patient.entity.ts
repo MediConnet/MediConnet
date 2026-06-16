@@ -1,4 +1,4 @@
-export type AppointmentStatus = 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'PENDING';
+export type AppointmentStatus = 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'PENDING' | 'PENDING_CONFIRMATION' | 'NO_SHOW';
 export type PaymentMethodType = 'CASH' | 'CARD' | 'UNKNOWN';
 
 export interface AppointmentHistory {

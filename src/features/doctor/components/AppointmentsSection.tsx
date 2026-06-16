@@ -262,7 +262,11 @@ export const AppointmentsSection = () => {
                           ? "bg-teal-500"
                           : apt.status === "CANCELLED"
                             ? "bg-red-500"
-                            : "bg-blue-500"
+                            : apt.status === "PENDING_CONFIRMATION"
+                              ? "bg-amber-500"
+                              : apt.status === "NO_SHOW"
+                                ? "bg-rose-500"
+                                : "bg-blue-500"
                       }`}
                       title={`${apt.time} - ${apt.patientName}`}
                     >
@@ -373,9 +377,17 @@ export const AppointmentsSection = () => {
                       <div
                         key={apt.id}
                         onClick={() => handleAppointmentClick(apt)}
-                        className={`absolute left-1 right-1 p-1 text-xs rounded cursor-pointer overflow-hidden hover:z-10 hover:opacity-90 shadow-sm text-white
-                                            ${apt.status === "COMPLETED" ? "bg-teal-500" : "bg-blue-500"}
-                                        `}
+                        className={`absolute left-1 right-1 p-1 text-xs rounded cursor-pointer overflow-hidden hover:z-10 hover:opacity-90 shadow-sm text-white ${
+                          apt.status === "COMPLETED"
+                            ? "bg-teal-500"
+                            : apt.status === "CANCELLED"
+                              ? "bg-red-500"
+                              : apt.status === "PENDING_CONFIRMATION"
+                                ? "bg-amber-500"
+                                : apt.status === "NO_SHOW"
+                                  ? "bg-rose-500"
+                                  : "bg-blue-500"
+                        }`}
                         style={{
                           top: `${top}%`,
                           height: `${height}%`,
@@ -437,9 +449,29 @@ export const AppointmentsSection = () => {
                           {apt.time} - {apt.patientName}
                         </span>
                         <span
-                          className={`text-xs px-2 py-0.5 rounded ${apt.status === "COMPLETED" ? "bg-teal-200 text-teal-800" : "bg-blue-200 text-blue-800"}`}
+                          className={`text-xs px-2 py-0.5 rounded ${
+                            apt.status === "COMPLETED"
+                              ? "bg-teal-200 text-teal-800"
+                              : apt.status === "CANCELLED"
+                                ? "bg-red-200 text-red-800"
+                                : apt.status === "PENDING_CONFIRMATION"
+                                  ? "bg-amber-200 text-amber-800"
+                                  : apt.status === "NO_SHOW"
+                                    ? "bg-rose-200 text-rose-800"
+                                    : "bg-blue-200 text-blue-800"
+                          }`}
                         >
-                          {apt.status}
+                          {apt.status === "PENDING_CONFIRMATION"
+                            ? "Pendiente confirmación"
+                            : apt.status === "NO_SHOW"
+                              ? "No asistió"
+                              : apt.status === "COMPLETED"
+                                ? "Atendida"
+                                : apt.status === "CONFIRMED"
+                                  ? "Confirmada"
+                                  : apt.status === "CANCELLED"
+                                    ? "Cancelada"
+                                    : apt.status}
                         </span>
                       </div>
                       <p className="text-sm text-gray-600">{apt.reason}</p>
@@ -484,13 +516,29 @@ export const AppointmentsSection = () => {
                       {apt.patientName}
                     </h4>
                     <span
-                      className={`text-xs px-2 py-1 rounded font-medium ${apt.status === "COMPLETED" ? "bg-teal-100 text-teal-800" : "bg-blue-100 text-blue-800"}`}
+                      className={`text-xs px-2 py-1 rounded font-medium ${
+                        apt.status === "COMPLETED"
+                          ? "bg-teal-100 text-teal-800"
+                          : apt.status === "CANCELLED"
+                            ? "bg-red-100 text-red-800"
+                            : apt.status === "PENDING_CONFIRMATION"
+                              ? "bg-amber-100 text-amber-800"
+                              : apt.status === "NO_SHOW"
+                                ? "bg-rose-100 text-rose-800"
+                                : "bg-blue-100 text-blue-800"
+                      }`}
                     >
                       {apt.status === "COMPLETED"
                         ? "Atendida"
                         : apt.status === "CONFIRMED"
                           ? "Confirmada"
-                          : apt.status}
+                          : apt.status === "CANCELLED"
+                            ? "Cancelada"
+                            : apt.status === "PENDING_CONFIRMATION"
+                              ? "Pendiente confirmación"
+                              : apt.status === "NO_SHOW"
+                                ? "No asistió"
+                                : apt.status}
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-sm text-gray-600">
@@ -639,7 +687,17 @@ export const AppointmentsSection = () => {
                               </p>
                             </div>
                             <span
-                              className={`w-3 h-3 rounded-full ${apt.status === "COMPLETED" ? "bg-teal-500" : apt.status === "CANCELLED" ? "bg-red-500" : "bg-blue-500"}`}
+                              className={`w-3 h-3 rounded-full ${
+                                apt.status === "COMPLETED"
+                                  ? "bg-teal-500"
+                                  : apt.status === "CANCELLED"
+                                    ? "bg-red-500"
+                                    : apt.status === "PENDING_CONFIRMATION"
+                                      ? "bg-amber-500"
+                                      : apt.status === "NO_SHOW"
+                                        ? "bg-rose-500"
+                                        : "bg-blue-500"
+                              }`}
                             ></span>
                           </div>
                         </div>

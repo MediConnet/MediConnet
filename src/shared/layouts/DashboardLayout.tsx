@@ -37,6 +37,7 @@ interface DashboardLayoutProps {
   }>;
   notificationType?: "appointments" | "orders" | "reviews";
   menuItems?: MenuItem[]; // ⭐ Menú personalizado opcional
+  onRefreshNotifications?: () => void;
 }
 
 export const DashboardLayout = ({
@@ -54,6 +55,7 @@ export const DashboardLayout = ({
   reviews = [],
   notificationType = "appointments",
   menuItems,
+  onRefreshNotifications,
 }: DashboardLayoutProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -81,6 +83,7 @@ export const DashboardLayout = ({
           reviews={reviews}
           notificationType={notificationType}
           notificationsViewAllPath={notificationsViewAllPath}
+          onRefreshNotifications={onRefreshNotifications}
         />
 
         {/* min-w-0 + overflow-hidden garantizan que el contenido no desborde */}

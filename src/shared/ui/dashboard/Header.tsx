@@ -43,6 +43,7 @@ interface HeaderProps {
     date: string;
   }>;
   notificationType?: "appointments" | "orders" | "reviews";
+  onRefreshNotifications?: () => void;
 }
 
 export const Header = ({
@@ -59,10 +60,42 @@ export const Header = ({
   orders = [],
   reviews = [],
   notificationType = "appointments",
+  onRefreshNotifications,
 }: HeaderProps) => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [viewedNotifications, setViewedNotifications] = useState<Set<string>>(new Set());
   const { user: authUser } = useAuthStore();
+  const [clearedNotifications, setClearedNotifications] = useState<Set<string>>(new Set());
+
+  // Cargar notificaciones limpiadas de localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("cleared-appointments");
+    if (saved) {
+      try {
+        setClearedNotifications(new Set(JSON.parse(saved)));
+      } catch (error) {
+        console.error("Error loading cleared appointments:", error);
+      }
+    }
+  }, []);
+
+  const activeAppointments = useMemo(() => {
+    return appointments.filter((apt) => !clearedNotifications.has(apt.id));
+  }, [appointments, clearedNotifications]);
+
+  const handleClearNotification = (id: string) => {
+    const newCleared = new Set(clearedNotifications);
+    newCleared.add(id);
+    setClearedNotifications(newCleared);
+    localStorage.setItem("cleared-appointments", JSON.stringify(Array.from(newCleared)));
+  };
+
+  const handleClearAll = () => {
+    const newCleared = new Set(clearedNotifications);
+    appointments.forEach((apt) => newCleared.add(apt.id));
+    setClearedNotifications(newCleared);
+    localStorage.setItem("cleared-appointments", JSON.stringify(Array.from(newCleared)));
+  };
 
   // Validar que user existe, si no, usar valores por defecto
   const safeUser = user || {
@@ -153,7 +186,7 @@ export const Header = ({
 
   const notificationCount =
     notificationsVariant === "professional"
-      ? (appointments?.length || 0) + newReviewsCount
+      ? (activeAppointments?.length || 0) + newReviewsCount
       : unreadNotifications.length;
 
   // Separar notificaciones no vistas por tipo
@@ -244,9 +277,9 @@ export const Header = ({
             variant={notificationsVariant}
             appointments={
               notificationsVariant === "professional"
-                ? appointments
+                ? activeAppointments
                 : notificationType === "appointments"
-                ? appointments.filter((apt) => apt.date === today)
+                ? activeAppointments.filter((apt) => apt.date === today)
                 : []
             }
             orders={
@@ -272,6 +305,9 @@ export const Header = ({
             newReviewsCount={newReviewsCount}
             showReviewsSection={enableReviewAlerts}
             onAcknowledgeReviews={acknowledgeReviews}
+            onRefresh={onRefreshNotifications}
+            onClearAll={handleClearAll}
+            onClearNotification={handleClearNotification}
           />
         </div>
 

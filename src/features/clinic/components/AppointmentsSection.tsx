@@ -31,6 +31,7 @@ const statusColors: Record<AppointmentStatus, "default" | "primary" | "success" 
   attended: "success",
   cancelled: "error",
   no_show: "warning",
+  pending_confirmation: "warning",
 };
 
 const statusLabels: Record<AppointmentStatus, string> = {
@@ -39,6 +40,7 @@ const statusLabels: Record<AppointmentStatus, string> = {
   attended: "Atendida",
   cancelled: "Cancelada",
   no_show: "No asistió",
+  pending_confirmation: "Pendiente confirmación",
 };
 
 export const AppointmentsSection = ({ clinicId }: AppointmentsSectionProps) => {

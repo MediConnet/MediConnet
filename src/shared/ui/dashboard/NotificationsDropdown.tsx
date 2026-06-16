@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { AccessTime, Person, Close, CalendarToday, ShoppingCart, StarRate, PersonAdd, Campaign } from "@mui/icons-material";
+import { AccessTime, Person, Close, CalendarToday, ShoppingCart, StarRate, PersonAdd, Campaign, Refresh, DeleteSweep } from "@mui/icons-material";
 
 interface Appointment {
   id: string;
@@ -43,6 +43,9 @@ interface NotificationsDropdownProps {
   newReviewsCount?: number;
   onAcknowledgeReviews?: () => void;
   showReviewsSection?: boolean;
+  onRefresh?: () => void;
+  onClearAll?: () => void;
+  onClearNotification?: (id: string) => void;
 }
 
 export const NotificationsDropdown = ({
@@ -61,6 +64,9 @@ export const NotificationsDropdown = ({
   newReviewsCount = 0,
   onAcknowledgeReviews,
   showReviewsSection = true,
+  onRefresh,
+  onClearAll,
+  onClearNotification,
 }: NotificationsDropdownProps) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -131,22 +137,16 @@ export const NotificationsDropdown = ({
       ? appointments.filter(apt => apt.patientName === "Nuevo Anuncio")
       : [];
 
-    const ctaLabel = hasAgendaItems
-      ? isAdminNotifications 
-        ? "Ver pendientes"
-        : "Ver agenda"
+    const ctaLabel = isAdminNotifications 
+      ? "Ver pendientes"
       : hasNewReviews
       ? "Ver reseñas"
       : "Entendido";
 
     const handleCTA = () => {
-      if (hasAgendaItems) {
+      if (isAdminNotifications) {
         onClose();
-        if (isAdminNotifications) {
-          navigate(viewAllPath || "/admin/requests");
-        } else {
-          navigate(agendaPath || "/clinic/dashboard?tab=appointments");
-        }
+        navigate(viewAllPath || "/admin/requests");
         return;
       }
 
@@ -180,12 +180,32 @@ export const NotificationsDropdown = ({
                 })}
               </p>
             </div>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
-            >
-              <Close className="text-sm" />
-            </button>
+            <div className="flex items-center gap-1 shrink-0">
+              {onRefresh && (
+                <button
+                  onClick={onRefresh}
+                  title="Recargar"
+                  className="text-gray-400 hover:text-teal-600 transition-colors p-1.5 rounded-lg hover:bg-gray-100 flex items-center justify-center"
+                >
+                  <Refresh sx={{ fontSize: 20 }} />
+                </button>
+              )}
+              {appointments.length > 0 && onClearAll && (
+                <button
+                  onClick={onClearAll}
+                  title="Limpiar todas"
+                  className="text-gray-400 hover:text-red-600 transition-colors p-1.5 rounded-lg hover:bg-gray-100 flex items-center justify-center"
+                >
+                  <DeleteSweep sx={{ fontSize: 20 }} />
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1.5 rounded-lg hover:bg-gray-100 flex items-center justify-center"
+              >
+                <Close sx={{ fontSize: 20 }} />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -317,7 +337,17 @@ export const NotificationsDropdown = ({
               ) : (
                 <div className="divide-y divide-gray-100 rounded-lg border border-gray-100 overflow-hidden">
                   {appointments.slice(0, 8).map((apt) => (
-                    <div key={apt.id} className="p-3 hover:bg-gray-50 transition-colors">
+                    <div
+                      key={apt.id}
+                      className="p-3 hover:bg-teal-50 transition-colors cursor-pointer"
+                      onClick={() => {
+                        if (onClearNotification) {
+                          onClearNotification(apt.id);
+                        }
+                        onClose();
+                        navigate(agendaPath || "/doctor/dashboard?tab=appointments");
+                      }}
+                    >
                       <div className="flex items-start gap-3">
                         <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center shrink-0">
                           <Person className="text-teal-600" />
@@ -393,7 +423,7 @@ export const NotificationsDropdown = ({
         </div>
 
         {/* Footer CTA */}
-        {(hasAgendaItems || hasNewReviews) ? (
+        {(isAdminNotifications || hasNewReviews) ? (
           <div className="p-4 border-t border-gray-200 bg-gray-50">
             <button
               onClick={handleCTA}
