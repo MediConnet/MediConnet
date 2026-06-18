@@ -1,4 +1,4 @@
-import { Box, Typography, Button, Card, CardContent, Grid, Chip, Link } from '@mui/material';
+import { Box, Typography, Button, Card, CardContent, Grid, Chip, Link, SvgIcon } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { 
@@ -977,7 +977,7 @@ export const HomePage = () => {
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'rgba(255, 255, 255, 0.7)' }}>
                   <LocationOn sx={{ fontSize: 18 }} />
-                  <Typography sx={{ fontSize: '0.875rem' }}>Quito, Ecuador</Typography>
+                  <Typography sx={{ fontSize: '0.875rem' }}>Santo Domingo, Ecuador</Typography>
                 </Box>
               </Box>
             </Grid>
@@ -999,17 +999,16 @@ export const HomePage = () => {
               © 2026 DOCALINK. Todos los derechos reservados.
             </Typography>
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Link href="#" sx={{ color: 'rgba(255, 255, 255, 0.7)', '&:hover': { color: 'white' } }}>
+              <Link href="https://www.facebook.com/share/1Lmuf2rTyh/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" sx={{ color: 'rgba(255, 255, 255, 0.7)', '&:hover': { color: 'white' } }}>
                 <Facebook />
               </Link>
-              <Link href="#" sx={{ color: 'rgba(255, 255, 255, 0.7)', '&:hover': { color: 'white' } }}>
-                <Twitter />
-              </Link>
-              <Link href="#" sx={{ color: 'rgba(255, 255, 255, 0.7)', '&:hover': { color: 'white' } }}>
+              <Link href="https://www.instagram.com/docalink1?igsh=ZGs1Y2N4dHExMHl3&utm_source=qr" target="_blank" rel="noopener noreferrer" sx={{ color: 'rgba(255, 255, 255, 0.7)', '&:hover': { color: 'white' } }}>
                 <Instagram />
               </Link>
-              <Link href="#" sx={{ color: 'rgba(255, 255, 255, 0.7)', '&:hover': { color: 'white' } }}>
-                <LinkedIn />
+              <Link href="https://www.tiktok.com/@docalink4" target="_blank" rel="noopener noreferrer" sx={{ color: 'rgba(255, 255, 255, 0.7)', '&:hover': { color: 'white' } }}>
+                <SvgIcon viewBox="0 0 24 24">
+                  <path d="M16.6 5.82s.51.5 0 0A4.278 4.278 0 0 1 15.54 3h-3.09v12.4a2.592 2.592 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.603a2.6 2.6 0 0 1 2.6-2.602c.39 0 .76.09 1.1.25V9.89a5.55 5.55 0 0 0-1.1-.11c-3.15 0-5.7 2.5-5.7 5.61A5.62 5.62 0 0 0 9.85 21a5.62 5.62 0 0 0 5.61-5.61V7.93a7.848 7.848 0 0 0 3.73 1.54V6.44c-.95-.08-1.83-.43-2.59-.96v.34Z" fill="currentColor" />
+                </SvgIcon>
               </Link>
             </Box>
           </Box>
