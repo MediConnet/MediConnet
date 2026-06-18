@@ -59,5 +59,5 @@ export interface ClinicAssociatedAppointment {
   date: string;
   time: string;
   reason?: string;
-  status: 'CONFIRMED' | 'COMPLETED' | 'NO_SHOW' | 'CANCELLED';
+  status: 'CONFIRMED' | 'COMPLETED' | 'NO_SHOW' | 'CANCELLED' | 'PENDING' | 'PENDING_CONFIRMATION';
 }

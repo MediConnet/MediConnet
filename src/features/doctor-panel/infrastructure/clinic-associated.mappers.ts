@@ -70,12 +70,16 @@ export function normalizeClinicAppointmentStatus(
   if (s === "completed" || s === "attended") return "COMPLETED";
   if (s === "no_show") return "NO_SHOW";
   if (s === "cancelled") return "CANCELLED";
+  if (s === "pending") return "PENDING";
+  if (s === "pending_confirmation") return "PENDING_CONFIRMATION";
   const upper = status.toUpperCase();
   if (
     upper === "CONFIRMED" ||
     upper === "COMPLETED" ||
     upper === "NO_SHOW" ||
-    upper === "CANCELLED"
+    upper === "CANCELLED" ||
+    upper === "PENDING" ||
+    upper === "PENDING_CONFIRMATION"
   ) {
     return upper as ClinicAssociatedAppointment["status"];
   }

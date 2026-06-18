@@ -20,6 +20,7 @@ interface AppointmentDetailModalProps {
   onStatusChange: (appointmentId: string, newStatus: AppointmentStatus) => void;
   onOpenDiagnosisModal: () => void;
   loading?: boolean;
+  isClinicAssociated?: boolean;
 }
 
 export const AppointmentDetailModal = ({
@@ -29,6 +30,7 @@ export const AppointmentDetailModal = ({
   onStatusChange,
   onOpenDiagnosisModal,
   loading = false,
+  isClinicAssociated = false,
 }: AppointmentDetailModalProps) => {
   // Estado local para el status general
   const [currentStatus, setCurrentStatus] =
@@ -203,44 +205,46 @@ export const AppointmentDetailModal = ({
           </div>
 
           {/* Información de Pago */}
-          <div className="border border-gray-200 rounded-xl p-4">
-            <h4 className="font-semibold text-gray-900 mb-2">
-              Información de pago
-            </h4>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Payment className="text-gray-500" />
-                <span className="text-gray-700 font-medium">
-                  {appointment.paymentMethod}
-                </span>
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-bold text-gray-900">
-                  ${appointment.price.toFixed(2)}
-                </p>
-                {/* Chip de estado de pago DINÁMICO usando isPaidLocal */}
-                <span
-                  className={`text-xs px-2 py-0.5 rounded ${
-                    currentStatus === "CANCELLED"
-                      ? "bg-red-100 text-red-700"
+          {!isClinicAssociated && (
+            <div className="border border-gray-200 rounded-xl p-4">
+              <h4 className="font-semibold text-gray-900 mb-2">
+                Información de pago
+              </h4>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Payment className="text-gray-500" />
+                  <span className="text-gray-700 font-medium">
+                    {appointment.paymentMethod}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-gray-900">
+                    ${appointment.price.toFixed(2)}
+                  </p>
+                  {/* Chip de estado de pago DINÁMICO usando isPaidLocal */}
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded ${
+                      currentStatus === "CANCELLED"
+                        ? "bg-red-100 text-red-700"
+                        : currentStatus === "NO_SHOW"
+                          ? "bg-rose-100 text-rose-700"
+                          : isPaidLocal
+                            ? "bg-green-100 text-green-700"
+                            : "bg-orange-100 text-orange-700"
+                    }`}
+                  >
+                    {currentStatus === "CANCELLED"
+                      ? "Cancelado"
                       : currentStatus === "NO_SHOW"
-                        ? "bg-rose-100 text-rose-700"
+                        ? "No asistió"
                         : isPaidLocal
-                          ? "bg-green-100 text-green-700"
-                          : "bg-orange-100 text-orange-700"
-                  }`}
-                >
-                  {currentStatus === "CANCELLED"
-                    ? "Cancelado"
-                    : currentStatus === "NO_SHOW"
-                      ? "No asistió"
-                      : isPaidLocal
-                        ? "Pagado"
-                        : "Pendiente"}
-                </span>
+                          ? "Pagado"
+                          : "Pendiente"}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Acciones */}
           <div className="border border-gray-200 rounded-xl p-4">
@@ -305,7 +309,7 @@ export const AppointmentDetailModal = ({
                 </>
               )}
 
-              {currentStatus === "COMPLETED" && (
+              {currentStatus === "COMPLETED" && !isClinicAssociated && (
                 <button
                   onClick={() => handleUpdateStatus("CONFIRMED")}
                   disabled={loading}
@@ -316,7 +320,7 @@ export const AppointmentDetailModal = ({
                 </button>
               )}
 
-              {(currentStatus === "CANCELLED" || currentStatus === "NO_SHOW") && (
+              {(currentStatus === "CANCELLED" || currentStatus === "NO_SHOW" || (currentStatus === "COMPLETED" && isClinicAssociated)) && (
                 <p className="text-sm text-gray-500 italic text-center py-2">
                   No hay acciones adicionales para citas en estado {getStatusLabel(currentStatus).toLowerCase()}.
                 </p>

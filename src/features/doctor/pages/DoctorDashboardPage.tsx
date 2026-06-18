@@ -306,7 +306,7 @@ export const DoctorDashboardPage = () => {
               </Box>
             )}
 
-            {currentTab === "appointments" && <ClinicAssociatedAppointmentsSection />}
+            {currentTab === "appointments" && <AppointmentsSection isClinicAssociated={true} />}
             {currentTab === "patients" && <PatientsSection />}
             {currentTab === "reception" && finalClinicInfo && <ClinicReceptionMessages />}
             {currentTab === "clinic-schedule" && <ClinicAssociatedScheduleSection />}

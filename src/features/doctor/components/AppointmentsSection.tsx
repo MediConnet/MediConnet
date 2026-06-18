@@ -266,7 +266,9 @@ export const AppointmentsSection = () => {
                               ? "bg-amber-500"
                               : apt.status === "NO_SHOW"
                                 ? "bg-rose-500"
-                                : "bg-blue-500"
+                                : apt.status === "PENDING"
+                                  ? "bg-yellow-500 text-yellow-950 font-semibold"
+                                  : "bg-blue-500"
                       }`}
                       title={`${apt.time} - ${apt.patientName}`}
                     >
@@ -386,7 +388,9 @@ export const AppointmentsSection = () => {
                                 ? "bg-amber-500"
                                 : apt.status === "NO_SHOW"
                                   ? "bg-rose-500"
-                                  : "bg-blue-500"
+                                  : apt.status === "PENDING"
+                                    ? "bg-yellow-500 text-yellow-950 font-semibold"
+                                    : "bg-blue-500"
                         }`}
                         style={{
                           top: `${top}%`,
@@ -525,7 +529,9 @@ export const AppointmentsSection = () => {
                               ? "bg-amber-100 text-amber-800"
                               : apt.status === "NO_SHOW"
                                 ? "bg-rose-100 text-rose-800"
-                                : "bg-blue-100 text-blue-800"
+                                : apt.status === "PENDING"
+                                  ? "bg-yellow-100 text-yellow-800 font-semibold"
+                                  : "bg-blue-100 text-blue-800"
                       }`}
                     >
                       {apt.status === "COMPLETED"
@@ -538,7 +544,9 @@ export const AppointmentsSection = () => {
                               ? "Pendiente confirmación"
                               : apt.status === "NO_SHOW"
                                 ? "No asistió"
-                                : apt.status}
+                                : apt.status === "PENDING"
+                                  ? "Pendiente"
+                                  : apt.status}
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-sm text-gray-600">

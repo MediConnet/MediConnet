@@ -225,7 +225,7 @@ export const updateClinicAssociatedScheduleAPI = async (
 
 export const updateClinicAppointmentStatusAPI = async (
   appointmentId: string,
-  status: 'COMPLETED' | 'NO_SHOW'
+  status: 'CONFIRMED' | 'COMPLETED' | 'NO_SHOW' | 'CANCELLED'
 ): Promise<Pick<ClinicAssociatedAppointment, 'id' | 'status'>> => {
   const response = await httpClient.patch<{
     success: boolean;
