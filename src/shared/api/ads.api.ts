@@ -34,7 +34,7 @@ export const createAdAPI = async (params: CreateAdParams): Promise<void> => {
   // Enviar imagen tal cual — si es base64, el backend la sube a Cloudinary
   const payload: CreateAdPayload = {
     badge_text: params.label,
-    discount_title: params.discount,
+    discount_title: params.discount !== undefined && params.discount !== null ? String(params.discount) : "",
     description: params.description,
     button_text: params.buttonText,
     image_url: params.imageUrl || null,
@@ -81,7 +81,7 @@ export const updateAdAPI = async (
 ): Promise<void> => {
   const payload: Record<string, any> = {};
   if (params.label !== undefined) payload.badge_text = params.label;
-  if (params.discount !== undefined) payload.discount_title = params.discount;
+  if (params.discount !== undefined) payload.discount_title = params.discount !== null ? String(params.discount) : null;
   if (params.description !== undefined) payload.description = params.description;
   if (params.buttonText !== undefined) payload.button_text = params.buttonText;
   if (params.imageUrl !== undefined) payload.image_url = params.imageUrl;
@@ -101,7 +101,7 @@ export const getMyPaginatedAdsAPI = async (
   if (params?.status) searchParams.set("status", params.status);
 
   const response = await httpClient.get<any>(`/ads?${searchParams.toString()}`);
-  const raw = extractData(response);
+  const raw = extractData<any>(response);
 
   // Normalize: el backend puede devolver { data: [...], pagination } o un array plano
   if (Array.isArray(raw)) {

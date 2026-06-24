@@ -4,25 +4,15 @@ import {
   Button,
   Card,
   CardContent,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Alert,
   Stack,
   Chip,
 } from '@mui/material';
 import { AccountBalance, Edit, Add, CheckCircle, Warning } from '@mui/icons-material';
 import { useState } from 'react';
-import { useFormik } from 'formik';
 import type { BankAccount } from '../../domain/clinic.entity';
-import { ECUADOR_BANKS } from '../../../../shared/config/domain.constants';
-import { bankAccountValidationSchema } from '../../../../shared/validation/bank-account.validation';
+import { BankAccountModal } from '../../../../shared/components/BankAccountModal';
+import { useAuthStore } from '../../../../app/store/auth.store';
 
 interface BankAccountSectionProps {
   clinicId: string;
@@ -33,43 +23,18 @@ interface BankAccountSectionProps {
 export const BankAccountSection = ({ clinicId: _clinicId, bankAccount, onUpdate }: BankAccountSectionProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { user } = useAuthStore();
 
-  const formik = useFormik({
-    initialValues: {
-      bankName: bankAccount?.bankName || '',
-      accountNumber: bankAccount?.accountNumber || '',
-      accountType: bankAccount?.accountType || '',
-      accountHolder: bankAccount?.accountHolder || '',
-      identificationNumber: bankAccount?.identificationNumber || '',
-    },
-    validationSchema: bankAccountValidationSchema,
-    onSubmit: async (values) => {
-      try {
-        setLoading(true);
-        await onUpdate(values as BankAccount);
-        setDialogOpen(false);
-        formik.resetForm({ values });
-      } catch {
-        // Error handled by parent hook (useUpdateClinicProfile)
-      } finally {
-        setLoading(false);
-      }
-    },
-  });
-
-  const handleOpenDialog = () => {
-    if (bankAccount) {
-      formik.setValues({
-        bankName: bankAccount.bankName,
-        accountNumber: bankAccount.accountNumber,
-        accountType: bankAccount.accountType,
-        accountHolder: bankAccount.accountHolder,
-        identificationNumber: bankAccount.identificationNumber || '',
-      });
-    } else {
-      formik.resetForm();
+  const handleSave = async (values: any) => {
+    try {
+      setLoading(true);
+      await onUpdate(values as BankAccount);
+      setDialogOpen(false);
+    } catch {
+      // Error handled by parent hook
+    } finally {
+      setLoading(false);
     }
-    setDialogOpen(true);
   };
 
   return (
@@ -87,7 +52,7 @@ export const BankAccountSection = ({ clinicId: _clinicId, bankAccount, onUpdate 
         <Button
           variant="contained"
           startIcon={bankAccount ? <Edit /> : <Add />}
-          onClick={handleOpenDialog}
+          onClick={() => setDialogOpen(true)}
           sx={{ backgroundColor: '#14b8a6', '&:hover': { backgroundColor: '#0d9488' } }}
         >
           {bankAccount ? 'Editar Cuenta' : 'Agregar Cuenta'}
@@ -136,11 +101,13 @@ export const BankAccountSection = ({ clinicId: _clinicId, bankAccount, onUpdate 
                 <Typography variant="caption" color="text.secondary" fontWeight={600}>
                   Tipo de Cuenta
                 </Typography>
-                <Chip
-                  label={bankAccount.accountType === 'checking' ? 'Corriente' : 'Ahorros'}
-                  size="small"
-                  sx={{ mt: 0.5, bgcolor: '#14b8a6', color: 'white' }}
-                />
+                <div>
+                  <Chip
+                    label={bankAccount.accountType === 'checking' ? 'Corriente' : 'Ahorros'}
+                    size="small"
+                    sx={{ mt: 0.5, bgcolor: '#14b8a6', color: 'white' }}
+                  />
+                </div>
               </Box>
 
               <Box>
@@ -162,6 +129,17 @@ export const BankAccountSection = ({ clinicId: _clinicId, bankAccount, onUpdate 
                   </Typography>
                 </Box>
               )}
+
+              {bankAccount.email && (
+                <Box>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                    Correo Electrónico
+                  </Typography>
+                  <Typography variant="body1" fontWeight={600}>
+                    {bankAccount.email}
+                  </Typography>
+                </Box>
+              )}
             </Box>
 
             <Alert severity="info" sx={{ mt: 3 }}>
@@ -173,116 +151,14 @@ export const BankAccountSection = ({ clinicId: _clinicId, bankAccount, onUpdate 
         </Card>
       )}
 
-      <Dialog open={dialogOpen} onClose={() => !loading && setDialogOpen(false)} maxWidth="sm" fullWidth>
-        <form onSubmit={formik.handleSubmit}>
-          <DialogTitle>
-            <Typography variant="h6" fontWeight={700}>
-              {bankAccount ? 'Editar Cuenta Bancaria' : 'Agregar Cuenta Bancaria'}
-            </Typography>
-          </DialogTitle>
-
-          <DialogContent>
-            <Stack spacing={3} sx={{ mt: 2 }}>
-              <FormControl fullWidth>
-                <InputLabel>Banco *</InputLabel>
-                <Select
-                  name="bankName"
-                  value={formik.values.bankName}
-                  onChange={formik.handleChange}
-                  error={formik.touched.bankName && Boolean(formik.errors.bankName)}
-                  label="Banco *"
-                >
-                  {ECUADOR_BANKS.map((bank) => (
-                    <MenuItem key={bank} value={bank}>
-                      {bank}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {formik.touched.bankName && formik.errors.bankName && (
-                  <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
-                    {formik.errors.bankName}
-                  </Typography>
-                )}
-              </FormControl>
-
-              <TextField
-                fullWidth
-                label="Número de Cuenta *"
-                name="accountNumber"
-                value={formik.values.accountNumber}
-                onChange={formik.handleChange}
-                error={formik.touched.accountNumber && Boolean(formik.errors.accountNumber)}
-                helperText={formik.touched.accountNumber && formik.errors.accountNumber}
-                placeholder="1234567890"
-              />
-
-              <FormControl fullWidth>
-                <InputLabel>Tipo de Cuenta *</InputLabel>
-                <Select
-                  name="accountType"
-                  value={formik.values.accountType}
-                  onChange={formik.handleChange}
-                  error={formik.touched.accountType && Boolean(formik.errors.accountType)}
-                  label="Tipo de Cuenta *"
-                >
-                  <MenuItem value="" disabled>
-                    Selecciona un tipo
-                  </MenuItem>
-                  <MenuItem value="checking">Corriente</MenuItem>
-                  <MenuItem value="savings">Ahorros</MenuItem>
-                </Select>
-                {formik.touched.accountType && formik.errors.accountType && (
-                  <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
-                    {formik.errors.accountType}
-                  </Typography>
-                )}
-              </FormControl>
-
-              <TextField
-                fullWidth
-                label="Titular de la Cuenta *"
-                name="accountHolder"
-                value={formik.values.accountHolder}
-                onChange={formik.handleChange}
-                error={formik.touched.accountHolder && Boolean(formik.errors.accountHolder)}
-                helperText={formik.touched.accountHolder && formik.errors.accountHolder}
-                placeholder="Nombre completo o razón social"
-              />
-
-              <TextField
-                fullWidth
-                label="RUC / Cédula (Opcional)"
-                name="identificationNumber"
-                value={formik.values.identificationNumber}
-                onChange={formik.handleChange}
-                error={formik.touched.identificationNumber && Boolean(formik.errors.identificationNumber)}
-                helperText={formik.touched.identificationNumber && formik.errors.identificationNumber}
-                placeholder="1234567890001"
-              />
-
-              <Alert severity="info">
-                <Typography variant="body2">
-                  Asegúrate de que los datos sean correctos. El administrador utilizará esta información para realizar las transferencias.
-                </Typography>
-              </Alert>
-            </Stack>
-          </DialogContent>
-
-          <DialogActions>
-            <Button onClick={() => setDialogOpen(false)} disabled={loading}>
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={loading}
-              sx={{ backgroundColor: '#14b8a6', '&:hover': { backgroundColor: '#0d9488' } }}
-            >
-              {loading ? 'Guardando...' : 'Guardar Cuenta'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
+      <BankAccountModal
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        bankAccount={bankAccount}
+        onSave={handleSave}
+        loading={loading}
+        defaultEmail={user?.email}
+      />
     </Box>
   );
 };

@@ -218,8 +218,14 @@ export const PaymentsPage = () => {
   // Obtener datos bancarios del doctor seleccionado
   const selectedDoctorBankAccount = useMemo(() => {
     if (!selectedDoctor) return null;
+    const paymentWithBank = payments.find(
+      (p) => p.providerName === selectedDoctor && p.doctorBankAccount
+    );
+    if (paymentWithBank?.doctorBankAccount) {
+      return paymentWithBank.doctorBankAccount;
+    }
     return getDoctorBankAccount(selectedDoctor);
-  }, [selectedDoctor]);
+  }, [selectedDoctor, payments]);
 
   const filteredPayments = useMemo(() => {
     let filtered = payments;
@@ -912,7 +918,7 @@ export const PaymentsPage = () => {
                             <Box>
                               <Typography variant="caption" color="text.secondary" fontWeight={600}>Tipo de Cuenta</Typography>
                               <Typography variant="body1" fontWeight={700} color="#1f2937">
-                                {selectedDoctorBankAccount.accountType === "checking" ? "Corriente" : "Ahorros"}
+                                {selectedDoctorBankAccount.accountType === "checking" || selectedDoctorBankAccount.accountType === "Corriente" ? "Corriente" : "Ahorros"}
                               </Typography>
                             </Box>
                           </Grid2>
@@ -922,6 +928,22 @@ export const PaymentsPage = () => {
                               <Typography variant="body1" fontWeight={700} color="#1f2937">{selectedDoctorBankAccount.accountHolder}</Typography>
                             </Box>
                           </Grid2>
+                          {selectedDoctorBankAccount.identificationNumber && (
+                            <Grid2 size={{ xs: 12, sm: 6 }}>
+                              <Box>
+                                <Typography variant="caption" color="text.secondary" fontWeight={600}>RUC / Cédula</Typography>
+                                <Typography variant="body1" fontWeight={700} color="#1f2937">{selectedDoctorBankAccount.identificationNumber}</Typography>
+                              </Box>
+                            </Grid2>
+                          )}
+                          {selectedDoctorBankAccount.email && (
+                            <Grid2 size={{ xs: 12, sm: 6 }}>
+                              <Box>
+                                <Typography variant="caption" color="text.secondary" fontWeight={600}>Correo Electrónico</Typography>
+                                <Typography variant="body1" fontWeight={700} color="#1f2937">{selectedDoctorBankAccount.email}</Typography>
+                              </Box>
+                            </Grid2>
+                          )}
                         </Grid2>
                         <Divider sx={{ my: 2 }} />
                         <Box sx={{ bgcolor: "#fef3c7", p: 2, borderRadius: 1 }}>
@@ -977,7 +999,10 @@ export const PaymentsPage = () => {
               </DialogTitle>
               <DialogContent>
                 {doctorToPay && (() => {
-                  const bankAccount = getDoctorBankAccount(doctorToPay);
+                  const paymentWithBank = payments.find(
+                    (p) => p.providerName === doctorToPay && p.doctorBankAccount
+                  );
+                  const bankAccount = paymentWithBank?.doctorBankAccount || getDoctorBankAccount(doctorToPay);
                   return (
                     <Stack spacing={3}>
                       <Alert severity="info">¿Estás seguro de que deseas marcar todos los pagos pendientes de <strong>{doctorToPay}</strong> como pagados?</Alert>
@@ -1011,12 +1036,26 @@ export const PaymentsPage = () => {
                               </Stack>
                               <Stack direction="row" justifyContent="space-between">
                                 <Typography variant="body2" fontWeight={600}>Tipo:</Typography>
-                                <Typography variant="body2" fontWeight={700}>{bankAccount.accountType === "checking" ? "Corriente" : "Ahorros"}</Typography>
+                                <Typography variant="body2" fontWeight={700}>
+                                  {bankAccount.accountType === "checking" || bankAccount.accountType === "Corriente" ? "Corriente" : "Ahorros"}
+                                </Typography>
                               </Stack>
                               <Stack direction="row" justifyContent="space-between">
                                 <Typography variant="body2" fontWeight={600}>Titular:</Typography>
                                 <Typography variant="body2" fontWeight={700}>{bankAccount.accountHolder}</Typography>
                               </Stack>
+                              {bankAccount.identificationNumber && (
+                                <Stack direction="row" justifyContent="space-between">
+                                  <Typography variant="body2" fontWeight={600}>RUC / Cédula:</Typography>
+                                  <Typography variant="body2" fontWeight={700}>{bankAccount.identificationNumber}</Typography>
+                                </Stack>
+                              )}
+                              {bankAccount.email && (
+                                <Stack direction="row" justifyContent="space-between">
+                                  <Typography variant="body2" fontWeight={600}>Correo:</Typography>
+                                  <Typography variant="body2" fontWeight={700}>{bankAccount.email}</Typography>
+                                </Stack>
+                              )}
                             </Stack>
                           </Paper>
                         </Box>
@@ -1181,6 +1220,62 @@ export const PaymentsPage = () => {
                       </Grid2>
                     </Paper>
 
+                    {selectedClinic.clinicBankAccount && (
+                      <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: "#fff7ed", border: "2px solid #fbbf24", borderRadius: 2 }}>
+                        <Stack direction="row" spacing={1} alignItems="center" mb={2}>
+                          <AccountBalance sx={{ color: "#f59e0b", fontSize: 24 }} />
+                          <Typography variant="h6" fontWeight={700} color="#f59e0b">Datos Bancarios para Transferencia</Typography>
+                        </Stack>
+                        <Alert severity="info" sx={{ mb: 2 }}>
+                          Utiliza esta información para realizar la transferencia externa a la clínica.
+                        </Alert>
+                        <Grid2 container spacing={2}>
+                          <Grid2 size={{ xs: 12, sm: 6 }}>
+                            <Box>
+                              <Typography variant="caption" color="text.secondary" fontWeight={600}>Banco</Typography>
+                              <Typography variant="body1" fontWeight={700} color="#1f2937">{selectedClinic.clinicBankAccount.bankName}</Typography>
+                            </Box>
+                          </Grid2>
+                          <Grid2 size={{ xs: 12, sm: 6 }}>
+                            <Box>
+                              <Typography variant="caption" color="text.secondary" fontWeight={600}>Número de Cuenta</Typography>
+                              <Typography variant="body1" fontWeight={700} color="#1f2937" sx={{ fontFamily: "monospace" }}>{selectedClinic.clinicBankAccount.accountNumber}</Typography>
+                            </Box>
+                          </Grid2>
+                          <Grid2 size={{ xs: 12, sm: 6 }}>
+                            <Box>
+                              <Typography variant="caption" color="text.secondary" fontWeight={600}>Tipo de Cuenta</Typography>
+                              <Typography variant="body1" fontWeight={700} color="#1f2937">
+                                {selectedClinic.clinicBankAccount.accountType === "checking" || selectedClinic.clinicBankAccount.accountType === "Corriente" ? "Corriente" : "Ahorros"}
+                              </Typography>
+                            </Box>
+                          </Grid2>
+                          <Grid2 size={{ xs: 12, sm: 6 }}>
+                            <Box>
+                              <Typography variant="caption" color="text.secondary" fontWeight={600}>Titular de la Cuenta</Typography>
+                              <Typography variant="body1" fontWeight={700} color="#1f2937">{selectedClinic.clinicBankAccount.accountHolder}</Typography>
+                            </Box>
+                          </Grid2>
+                          {selectedClinic.clinicBankAccount.identificationNumber && (
+                            <Grid2 size={{ xs: 12, sm: 6 }}>
+                              <Box>
+                                <Typography variant="caption" color="text.secondary" fontWeight={600}>RUC / Cédula</Typography>
+                                <Typography variant="body1" fontWeight={700} color="#1f2937">{selectedClinic.clinicBankAccount.identificationNumber}</Typography>
+                              </Box>
+                            </Grid2>
+                          )}
+                          {selectedClinic.clinicBankAccount.email && (
+                            <Grid2 size={{ xs: 12, sm: 6 }}>
+                              <Box>
+                                <Typography variant="caption" color="text.secondary" fontWeight={600}>Correo Electrónico</Typography>
+                                <Typography variant="body1" fontWeight={700} color="#1f2937">{selectedClinic.clinicBankAccount.email}</Typography>
+                              </Box>
+                            </Grid2>
+                          )}
+                        </Grid2>
+                      </Paper>
+                    )}
+
                     {/* Lista de Citas */}
                     <Typography variant="subtitle1" fontWeight={600} mb={2}>
                       Citas Incluidas
@@ -1273,6 +1368,46 @@ export const PaymentsPage = () => {
                         </Stack>
                       </Paper>
                     </Box>
+
+                    {clinicToPay.clinicBankAccount && (
+                      <Box>
+                        <Typography variant="subtitle2" color="text.secondary" gutterBottom>Datos bancarios para transferencia:</Typography>
+                        <Paper elevation={0} sx={{ p: 2, bgcolor: "#fff7ed", border: "1px solid #fbbf24" }}>
+                          <Stack spacing={1}>
+                            <Stack direction="row" justifyContent="space-between">
+                              <Typography variant="body2" fontWeight={600}>Banco:</Typography>
+                              <Typography variant="body2" fontWeight={700}>{clinicToPay.clinicBankAccount.bankName}</Typography>
+                            </Stack>
+                            <Stack direction="row" justifyContent="space-between">
+                              <Typography variant="body2" fontWeight={600}>Número de Cuenta:</Typography>
+                              <Typography variant="body2" fontWeight={700} sx={{ fontFamily: "monospace" }}>{clinicToPay.clinicBankAccount.accountNumber}</Typography>
+                            </Stack>
+                            <Stack direction="row" justifyContent="space-between">
+                              <Typography variant="body2" fontWeight={600}>Tipo:</Typography>
+                              <Typography variant="body2" fontWeight={700}>
+                                {clinicToPay.clinicBankAccount.accountType === "checking" || clinicToPay.clinicBankAccount.accountType === "Corriente" ? "Corriente" : "Ahorros"}
+                              </Typography>
+                            </Stack>
+                            <Stack direction="row" justifyContent="space-between">
+                              <Typography variant="body2" fontWeight={600}>Titular:</Typography>
+                              <Typography variant="body2" fontWeight={700}>{clinicToPay.clinicBankAccount.accountHolder}</Typography>
+                            </Stack>
+                            {clinicToPay.clinicBankAccount.identificationNumber && (
+                              <Stack direction="row" justifyContent="space-between">
+                                <Typography variant="body2" fontWeight={600}>RUC / Cédula:</Typography>
+                                <Typography variant="body2" fontWeight={700}>{clinicToPay.clinicBankAccount.identificationNumber}</Typography>
+                              </Stack>
+                            )}
+                            {clinicToPay.clinicBankAccount.email && (
+                              <Stack direction="row" justifyContent="space-between">
+                                <Typography variant="body2" fontWeight={600}>Correo:</Typography>
+                                <Typography variant="body2" fontWeight={700}>{clinicToPay.clinicBankAccount.email}</Typography>
+                              </Stack>
+                            )}
+                          </Stack>
+                        </Paper>
+                      </Box>
+                    )}
 
                     <Alert severity="warning">
                       Esta acción marcará el pago como "Pagado". Asegúrate de haber realizado la transferencia bancaria antes de confirmar.

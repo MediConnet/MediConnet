@@ -25,6 +25,14 @@ export interface AdminClinicPayment {
   isDistributed: boolean;
   distributedAmount: number;
   remainingAmount: number;
+  clinicBankAccount?: {
+    bankName: string;
+    accountNumber: string;
+    accountType: string;
+    accountHolder: string;
+    identificationNumber?: string;
+    email?: string;
+  } | null;
 }
 
 /**
@@ -44,6 +52,14 @@ export interface AdminDoctorPayment {
   source: 'admin' | 'clinic';
   providerId: string;
   providerName: string;
+  doctorBankAccount?: {
+    bankName: string;
+    accountNumber: string;
+    accountType: string;
+    accountHolder: string;
+    identificationNumber?: string;
+    email?: string;
+  };
 }
 
 /**

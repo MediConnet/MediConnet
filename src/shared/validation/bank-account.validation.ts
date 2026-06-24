@@ -12,4 +12,7 @@ export const bankAccountValidationSchema = Yup.object({
     .required("El tipo de cuenta es requerido"),
   accountHolder: Yup.string().required("El titular de la cuenta es requerido"),
   identificationNumber: Yup.string().optional(),
+  email: Yup.string()
+    .email("Ingresa un correo electrónico válido")
+    .required("El correo electrónico es requerido"),
 });

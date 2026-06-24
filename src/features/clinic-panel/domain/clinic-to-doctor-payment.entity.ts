@@ -22,5 +22,7 @@ export interface ClinicToDoctorPayment {
     accountNumber: string;
     accountType: 'checking' | 'savings';
     accountHolder: string;
+    identificationNumber?: string;
+    email?: string;
   };
 }

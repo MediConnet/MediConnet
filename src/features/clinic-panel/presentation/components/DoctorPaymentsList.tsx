@@ -19,7 +19,7 @@ import {
   Alert,
   IconButton,
 } from '@mui/material';
-import { Payment as PaymentIcon, CheckCircle, HourglassEmpty, AccountBalance, Close } from '@mui/icons-material';
+import { Payment as PaymentIcon, CheckCircle, HourglassEmpty, AccountBalance, Close, Visibility } from '@mui/icons-material';
 import Grid2 from '@mui/material/Grid2';
 import { useState } from 'react';
 import type { ClinicToDoctorPayment } from '../../domain/clinic-to-doctor-payment.entity';
@@ -34,10 +34,17 @@ export const DoctorPaymentsList = ({ payments, onPayDoctor }: DoctorPaymentsList
   const [selectedPayment, setSelectedPayment] = useState<ClinicToDoctorPayment | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedDetailsPayment, setSelectedDetailsPayment] = useState<ClinicToDoctorPayment | null>(null);
 
   const handlePayClick = (payment: ClinicToDoctorPayment) => {
     setSelectedPayment(payment);
     setConfirmDialogOpen(true);
+  };
+
+  const handleDetailsClick = (payment: ClinicToDoctorPayment) => {
+    setSelectedDetailsPayment(payment);
+    setDetailsDialogOpen(true);
   };
 
   const handleConfirmPay = async () => {
@@ -56,6 +63,7 @@ export const DoctorPaymentsList = ({ payments, onPayDoctor }: DoctorPaymentsList
   };
 
   // Agrupar pagos por médico
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const paymentsByDoctor = payments.reduce((acc, payment) => {
     if (!acc[payment.doctorId]) {
       acc[payment.doctorId] = {
@@ -140,20 +148,32 @@ export const DoctorPaymentsList = ({ payments, onPayDoctor }: DoctorPaymentsList
                     </Typography>
                   </TableCell>
                   <TableCell align="center">
-                    {payment.status === 'pending' ? (
+                    <Stack direction="row" spacing={1} justifyContent="center" alignItems="center">
+                      {payment.status === 'pending' ? (
+                        <Button
+                          variant="contained"
+                          size="small"
+                          color="success"
+                          startIcon={<PaymentIcon />}
+                          onClick={() => handlePayClick(payment)}
+                          sx={{ textTransform: 'none' }}
+                        >
+                          Pagar
+                        </Button>
+                      ) : (
+                        <Chip label="Completado" color="success" size="small" />
+                      )}
                       <Button
-                        variant="contained"
+                        variant="outlined"
                         size="small"
-                        color="success"
-                        startIcon={<PaymentIcon />}
-                        onClick={() => handlePayClick(payment)}
+                        color="primary"
+                        startIcon={<Visibility />}
+                        onClick={() => handleDetailsClick(payment)}
                         sx={{ textTransform: 'none' }}
                       >
-                        Pagar
+                        Detalles
                       </Button>
-                    ) : (
-                      <Chip label="Completado" color="success" size="small" />
-                    )}
+                    </Stack>
                   </TableCell>
                 </TableRow>
               ))
@@ -251,6 +271,22 @@ export const DoctorPaymentsList = ({ payments, onPayDoctor }: DoctorPaymentsList
                         {selectedPayment.doctorBankAccount.accountHolder}
                       </Typography>
                     </Grid2>
+                    <Grid2 size={{ xs: 12, sm: 6 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Cédula / RUC
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        {selectedPayment.doctorBankAccount.identificationNumber || '-'}
+                      </Typography>
+                    </Grid2>
+                    <Grid2 size={{ xs: 12, sm: 6 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Correo Electrónico
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        {selectedPayment.doctorBankAccount.email || '-'}
+                      </Typography>
+                    </Grid2>
                   </Grid2>
                 </Box>
               )}
@@ -270,6 +306,146 @@ export const DoctorPaymentsList = ({ payments, onPayDoctor }: DoctorPaymentsList
             sx={{ textTransform: 'none' }}
           >
             {loading ? 'Procesando...' : 'Confirmar Pago Realizado'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog de Detalles de Pago */}
+      <Dialog
+        open={detailsDialogOpen}
+        onClose={() => setDetailsDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6" fontWeight={700}>
+              Detalles del Pago
+            </Typography>
+            <IconButton onClick={() => setDetailsDialogOpen(false)}>
+              <Close />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+
+        <DialogContent>
+          {selectedDetailsPayment && (
+            <Box>
+              <Box sx={{ bgcolor: '#f9fafb', p: 3, borderRadius: 2, mb: 3 }}>
+                <Grid2 container spacing={2}>
+                  <Grid2 size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Médico
+                    </Typography>
+                    <Typography variant="body1" fontWeight={600}>
+                      {selectedDetailsPayment.doctorName}
+                    </Typography>
+                  </Grid2>
+                  <Grid2 size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Estado
+                    </Typography>
+                    <Box mt={0.5}>
+                      <Chip
+                        icon={selectedDetailsPayment.status === 'paid' ? <CheckCircle /> : <HourglassEmpty />}
+                        label={selectedDetailsPayment.status === 'paid' ? 'Pagado' : 'Pendiente'}
+                        color={selectedDetailsPayment.status === 'paid' ? 'success' : 'warning'}
+                        size="small"
+                      />
+                    </Box>
+                  </Grid2>
+                  <Grid2 size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Monto
+                    </Typography>
+                    <Typography variant="h6" fontWeight={700} color="#10b981">
+                      {formatMoney(selectedDetailsPayment.amount)}
+                    </Typography>
+                  </Grid2>
+                  <Grid2 size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Fecha de Pago
+                    </Typography>
+                    <Typography variant="body1" fontWeight={600}>
+                      {selectedDetailsPayment.paymentDate
+                        ? new Date(selectedDetailsPayment.paymentDate).toLocaleDateString('es-ES')
+                        : '-'}
+                    </Typography>
+                  </Grid2>
+                </Grid2>
+              </Box>
+
+              {selectedDetailsPayment.doctorBankAccount ? (
+                <Box sx={{ bgcolor: '#eff6ff', p: 3, borderRadius: 2, border: '1px solid #bfdbfe' }}>
+                  <Stack direction="row" spacing={1} alignItems="center" mb={2}>
+                    <AccountBalance sx={{ color: '#3b82f6' }} />
+                    <Typography variant="subtitle1" fontWeight={700} color="#3b82f6">
+                      Cuenta Bancaria de Destino
+                    </Typography>
+                  </Stack>
+                  <Grid2 container spacing={2}>
+                    <Grid2 size={{ xs: 12, sm: 6 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Banco
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        {selectedDetailsPayment.doctorBankAccount.bankName}
+                      </Typography>
+                    </Grid2>
+                    <Grid2 size={{ xs: 12, sm: 6 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Número de Cuenta
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600} sx={{ fontFamily: 'monospace' }}>
+                        {selectedDetailsPayment.doctorBankAccount.accountNumber}
+                      </Typography>
+                    </Grid2>
+                    <Grid2 size={{ xs: 12, sm: 6 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Tipo
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        {selectedDetailsPayment.doctorBankAccount.accountType === 'checking' ? 'Corriente' : 'Ahorros'}
+                      </Typography>
+                    </Grid2>
+                    <Grid2 size={{ xs: 12, sm: 6 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Titular
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        {selectedDetailsPayment.doctorBankAccount.accountHolder}
+                      </Typography>
+                    </Grid2>
+                    <Grid2 size={{ xs: 12, sm: 6 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Cédula / RUC
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        {selectedDetailsPayment.doctorBankAccount.identificationNumber || '-'}
+                      </Typography>
+                    </Grid2>
+                    <Grid2 size={{ xs: 12, sm: 6 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        Correo Electrónico
+                      </Typography>
+                      <Typography variant="body2" fontWeight={600}>
+                        {selectedDetailsPayment.doctorBankAccount.email || '-'}
+                      </Typography>
+                    </Grid2>
+                  </Grid2>
+                </Box>
+              ) : (
+                <Alert severity="warning">
+                  Este médico aún no ha configurado sus datos bancarios en su perfil.
+                </Alert>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setDetailsDialogOpen(false)} variant="contained" color="primary">
+            Cerrar
           </Button>
         </DialogActions>
       </Dialog>

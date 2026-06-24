@@ -35,6 +35,7 @@ export interface BankAccountData {
   accountType: string;
   accountHolder: string;
   identificationNumber?: string | null;
+  email?: string | null;
 }
 
 /** Normaliza accountType del backend (puede venir en español o inglés) */
@@ -58,6 +59,7 @@ const extractBankAccount = (raw: any): BankAccountData | null => {
     accountType: normalizeAccountType(data.accountType),
     accountHolder: data.accountHolder,
     identificationNumber: data.identificationNumber ?? null,
+    email: data.email ?? null,
   };
 };
 
