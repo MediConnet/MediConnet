@@ -40,9 +40,24 @@ export const RequestDetailModal = ({
 }: Props) => {
   if (!request) return null;
 
-  const handleDownload = (url?: string) => {
+  const handleDownload = async (url?: string, name?: string) => {
     if (!url) return;
-    window.open(url, "_blank", "noopener,noreferrer");
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = name || url.split("/").pop() || "documento";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Error al descargar el archivo:", error);
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
   };
 
   return (
@@ -260,7 +275,7 @@ export const RequestDetailModal = ({
                     <IconButton
                       size="small"
                       color="primary"
-                      onClick={() => handleDownload(doc.url)}
+                      onClick={() => handleDownload(doc.url, doc.name)}
                       disabled={!doc.url}
                       title={doc.url ? "Descargar" : "URL no disponible"}
                     >
