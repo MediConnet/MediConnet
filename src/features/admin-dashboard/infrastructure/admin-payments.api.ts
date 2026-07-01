@@ -45,6 +45,7 @@ export interface AdminDoctorPayment {
   date: string;
   amount: number;
   commission: number;
+  gatewayFee: number;
   netAmount: number;
   status: 'pending' | 'paid';
   paymentMethod: string;

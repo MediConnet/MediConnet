@@ -244,8 +244,9 @@ export const PaymentsPage = () => {
   const totals = useMemo(() => {
     const totalAmount = filteredPayments.reduce((sum, p) => sum + p.amount, 0);
     const totalCommission = filteredPayments.reduce((sum, p) => sum + p.commission, 0);
+    const totalGateway = filteredPayments.reduce((sum, p) => sum + (p.gatewayFee || 0), 0);
     const totalNet = filteredPayments.reduce((sum, p) => sum + p.netAmount, 0);
-    return { totalAmount, totalCommission, totalNet };
+    return { totalAmount, totalCommission, totalGateway, totalNet };
   }, [filteredPayments]);
 
   // ── Columnas: Médicos agrupados ────────────────────────────────────────────
@@ -708,7 +709,7 @@ export const PaymentsPage = () => {
           <Box>
             {/* Resumen de totales */}
             <Grid2 container spacing={3} mb={4}>
-              <Grid2 size={{ xs: 12, sm: 4 }}>
+              <Grid2 size={{ xs: 12, sm: 3 }}>
                 <Card elevation={0} sx={{ bgcolor: "#f0fdfa", border: "1px solid #d1fae5" }}>
                   <CardContent>
                     <Stack direction="row" spacing={2} alignItems="center">
@@ -725,7 +726,7 @@ export const PaymentsPage = () => {
                   </CardContent>
                 </Card>
               </Grid2>
-              <Grid2 size={{ xs: 12, sm: 4 }}>
+              <Grid2 size={{ xs: 12, sm: 3 }}>
                 <Card elevation={0} sx={{ bgcolor: "#fef3c7", border: "1px solid #fde68a" }}>
                   <CardContent>
                     <Stack direction="row" spacing={2} alignItems="center">
@@ -742,7 +743,24 @@ export const PaymentsPage = () => {
                   </CardContent>
                 </Card>
               </Grid2>
-              <Grid2 size={{ xs: 12, sm: 4 }}>
+              <Grid2 size={{ xs: 12, sm: 3 }}>
+                <Card elevation={0} sx={{ bgcolor: "#eff6ff", border: "1px solid #bfdbfe" }}>
+                  <CardContent>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <PaymentIcon sx={{ color: "#3b82f6", fontSize: 32 }} />
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Comisiones Nuvei
+                        </Typography>
+                        <Typography variant="h6" fontWeight={700} color="#3b82f6">
+                          {formatMoney(totals.totalGateway)}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 3 }}>
                 <Card elevation={0} sx={{ bgcolor: "#ecfdf5", border: "1px solid #a7f3d0" }}>
                   <CardContent>
                     <Stack direction="row" spacing={2} alignItems="center">
