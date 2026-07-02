@@ -38,8 +38,10 @@ import {
   getAdminClinicPaymentsAPI,
   markDoctorPaymentsAsPaidAPI,
   markClinicPaymentAsPaidAPI,
+  getAdminTransactionsAPI,
   type AdminDoctorPayment,
-  type AdminClinicPayment
+  type AdminClinicPayment,
+  type AdminTransaction
 } from "../../infrastructure/admin-payments.api";
 
 const CURRENT_ADMIN = {
@@ -72,6 +74,18 @@ export const PaymentsPage = () => {
   const [isClinicPaymentConfirmDialogOpen, setIsClinicPaymentConfirmDialogOpen] = useState(false);
   const [clinicToPay, setClinicToPay] = useState<AdminClinicPayment | null>(null);
   const [doctorToPay, setDoctorToPay] = useState<string | null>(null);
+  const [clinicStatusFilter, setClinicStatusFilter] = useState<"all" | "pending" | "paid">("all");
+  const [clinicSearchFilter, setClinicSearchFilter] = useState<string>("all");
+  
+  // Estados para Auditoría de Transacciones (Nuvei)
+  const [transactions, setTransactions] = useState<AdminTransaction[]>([]);
+  const [transactionsTotal, setTransactionsTotal] = useState(0);
+  const [transactionsPagination, setTransactionsPagination] = useState({ page: 0, pageSize: 10 });
+  const [transactionsSearch, setTransactionsSearch] = useState("");
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<AdminTransaction | null>(null);
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+
   const feedback = useFeedbackStore();
 
   // Cargar pagos desde la API
@@ -94,6 +108,28 @@ export const PaymentsPage = () => {
     };
     loadPayments();
   }, []);
+
+  // Cargar transacciones de auditoría desde la API
+  useEffect(() => {
+    if (currentTab !== 2) return;
+    const fetchTransactions = async () => {
+      setLoadingTransactions(true);
+      try {
+        const res = await getAdminTransactionsAPI({
+          page: transactionsPagination.page + 1,
+          limit: transactionsPagination.pageSize,
+          search: transactionsSearch || undefined,
+        });
+        setTransactions(res.data);
+        setTransactionsTotal(res.pagination.total);
+      } catch (err: any) {
+        feedback.showFeedback('error', 'Error', 'No se pudieron cargar las transacciones para auditoría.');
+      } finally {
+        setLoadingTransactions(false);
+      }
+    };
+    fetchTransactions();
+  }, [currentTab, transactionsPagination.page, transactionsPagination.pageSize, transactionsSearch]);
 
   // Obtener lista única de doctores con pagos
   const doctors = useMemo(() => {
@@ -234,8 +270,11 @@ export const PaymentsPage = () => {
       filtered = filtered.filter((p) => p.status === statusFilter);
     }
 
-    if (doctorFilter !== "all") {
-      filtered = filtered.filter((p) => p.providerName === doctorFilter);
+    if (doctorFilter !== "all" && doctorFilter.trim() !== "") {
+      filtered = filtered.filter((p) => 
+        p.providerName.toLowerCase().includes(doctorFilter.toLowerCase()) ||
+        p.patientName.toLowerCase().includes(doctorFilter.toLowerCase())
+      );
     }
 
     return filtered;
@@ -248,6 +287,94 @@ export const PaymentsPage = () => {
     const totalNet = filteredPayments.reduce((sum, p) => sum + p.netAmount, 0);
     return { totalAmount, totalCommission, totalGateway, totalNet };
   }, [filteredPayments]);
+  const filteredClinicPayments = useMemo(() => {
+    let filtered = clinicPayments;
+
+    if (clinicStatusFilter !== "all") {
+      filtered = filtered.filter((p) => p.status === clinicStatusFilter);
+    }
+
+    if (clinicSearchFilter !== "all" && clinicSearchFilter.trim() !== "") {
+      filtered = filtered.filter((p) => 
+        p.clinicName.toLowerCase().includes(clinicSearchFilter.toLowerCase())
+      );
+    }
+
+    return filtered;
+  }, [clinicPayments, clinicStatusFilter, clinicSearchFilter]);
+
+  // Agrupar payouts por clínica
+  interface ClinicGroupRow {
+    id: string;
+    clinicId: string;
+    clinicName: string;
+    count: number;
+    totalAmount: number;
+    appCommission: number;
+    gatewayFee: number;
+    netAmount: number;
+    status: "pending" | "paid";
+    paymentDate: string | null;
+    createdAt: string;
+    appointments: any[];
+    isDistributed: boolean;
+    distributedAmount: number;
+    remainingAmount: number;
+    clinicBankAccount?: any;
+    payouts: AdminClinicPayment[];
+  }
+
+  const clinicGroupRows = useMemo<ClinicGroupRow[]>(() => {
+    const grouped = new Map<string, AdminClinicPayment[]>();
+    filteredClinicPayments.forEach((payment) => {
+      const key = payment.clinicId || "unknown";
+      if (!grouped.has(key)) {
+        grouped.set(key, []);
+      }
+      grouped.get(key)!.push(payment);
+    });
+
+    return Array.from(grouped.entries()).map(([clinicId, list]) => {
+      const totalAmount = list.reduce((sum, p) => sum + p.totalAmount, 0);
+      const appCommission = list.reduce((sum, p) => sum + p.appCommission, 0);
+      const gatewayFee = list.reduce((sum, p) => sum + (p.gatewayFee || 0), 0);
+      const netAmount = list.reduce((sum, p) => sum + p.netAmount, 0);
+      const remainingAmount = list.reduce((sum, p) => sum + p.remainingAmount, 0);
+      const distributedAmount = list.reduce((sum, p) => sum + p.distributedAmount, 0);
+      
+      const appointments = list.reduce<any[]>((all, p) => {
+        const mappedApts = p.appointments.map(apt => ({
+          ...apt,
+          gatewayFee: apt.gatewayFee || Number((apt.amount * 0.06345 + 0.046).toFixed(2)),
+        }));
+        return [...all, ...mappedApts];
+      }, []);
+
+      const pendingPayouts = list.filter((p) => p.status === "pending");
+      const status = pendingPayouts.length > 0 ? "pending" as const : "paid" as const;
+      const clinicBankAccount = list.find((p) => p.clinicBankAccount)?.clinicBankAccount;
+
+      return {
+        id: clinicId,
+        clinicId,
+        clinicName: list[0]?.clinicName || "Clínica",
+        count: list.length,
+        totalAmount,
+        appCommission,
+        gatewayFee,
+        netAmount,
+        status,
+        paymentDate: list.find(p => p.paymentDate)?.paymentDate || null,
+        createdAt: list[0]?.createdAt || new Date().toISOString(),
+        appointments,
+        isDistributed: list.some(p => p.isDistributed),
+        distributedAmount,
+        remainingAmount,
+        clinicBankAccount,
+        payouts: list,
+      };
+    });
+  }, [filteredClinicPayments]);
 
   // ── Columnas: Médicos agrupados ────────────────────────────────────────────
   interface DoctorGroupRow {
@@ -262,7 +389,12 @@ export const PaymentsPage = () => {
   }
 
   const doctorGroupRows: DoctorGroupRow[] = useMemo(() => {
-    const allDoctors = Array.from(new Set(payments.map((p) => p.providerName)));
+    let allDoctors = Array.from(new Set(payments.map((p) => p.providerName)));
+    if (doctorFilter !== "all" && doctorFilter.trim() !== "") {
+      allDoctors = allDoctors.filter((name) =>
+        name.toLowerCase().includes(doctorFilter.toLowerCase())
+      );
+    }
     return allDoctors.map((doctorName) => {
       const t = doctorTotals.get(doctorName) || { totalAmount: 0, totalCommission: 0, totalNet: 0, count: 0, pendingCount: 0 };
       return {
@@ -276,7 +408,7 @@ export const PaymentsPage = () => {
         pendingTotal: getDoctorPendingTotal(doctorName),
       };
     });
-  }, [payments, doctorTotals]);
+  }, [payments, doctorTotals, doctorFilter]);
 
   const doctorGroupColumns = useMemo(() => [
     {
@@ -322,14 +454,28 @@ export const PaymentsPage = () => {
       headerName: "Total Neto",
       width: 140,
       renderCell: (params: { row: DoctorGroupRow }) => (
-        <Box>
-          <Typography fontWeight={600} color="#10b981">{formatMoney(params.row.totalNet)}</Typography>
+        <Stack spacing={0.5} justifyContent="center" sx={{ height: "100%" }}>
+          <Typography fontWeight={600} color="#10b981" sx={{ lineHeight: 1.2 }}>
+            {formatMoney(params.row.totalNet)}
+          </Typography>
           {params.row.pendingCount > 0 && (
-            <Typography variant="caption" color="warning.main" fontWeight={600}>
+            <Typography variant="caption" color="warning.main" fontWeight={600} sx={{ lineHeight: 1 }}>
               {formatMoney(params.row.pendingTotal)} pendiente
             </Typography>
           )}
-        </Box>
+        </Stack>
+      ),
+    },
+    {
+      field: "status",
+      headerName: "Estado",
+      width: 110,
+      renderCell: (params: { row: DoctorGroupRow }) => (
+        <Chip
+          label={params.row.pendingCount > 0 ? "Pendiente" : "Pagado"}
+          color={params.row.pendingCount > 0 ? "warning" : "success"}
+          size="small"
+        />
       ),
     },
     {
@@ -462,6 +608,14 @@ export const PaymentsPage = () => {
       ),
     },
     {
+      field: "gatewayFee",
+      headerName: "Comisión Nuvei",
+      width: 130,
+      renderCell: (params: { row: AdminClinicPayment }) => (
+        <Typography color="text.secondary">{formatMoney(params.row.gatewayFee || 0)}</Typography>
+      ),
+    },
+    {
       field: "netAmount",
       headerName: "Total Neto",
       width: 140,
@@ -508,101 +662,94 @@ export const PaymentsPage = () => {
     },
   ], []);
 
-  // ── Columnas y filas: Historial ───────────────────────────────────────────
-  interface HistoryRow {
-    id: string;
-    type: "doctor" | "clinic";
-    beneficiary: string;
-    paymentDate: string;
-    netAmount: number;
-    avatarChar: string;
-  }
-
-  const historyRows: HistoryRow[] = useMemo(() => {
-    const doctorHistory = payments
-      .filter((p) => p.status === "paid")
-      .map((p) => ({
-        id: `doctor-${p.id}`,
-        type: "doctor" as const,
-        beneficiary: p.providerName,
-        paymentDate: p.date,
-        netAmount: p.netAmount,
-        avatarChar: p.providerName.charAt(0),
-      }));
-    const clinicHistory = clinicPayments
-      .filter((p) => p.status === "paid")
-      .map((p) => ({
-        id: `clinic-${p.id}`,
-        type: "clinic" as const,
-        beneficiary: p.clinicName,
-        paymentDate: p.paymentDate || p.date,
-        netAmount: p.netAmount,
-        avatarChar: p.clinicName.charAt(0),
-      }));
-    return [...doctorHistory, ...clinicHistory].sort(
-      (a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()
-    );
-  }, [payments, clinicPayments]);
-
-  const historyColumns = useMemo(() => [
+  // ── Columnas: Auditoría de Transacciones ──────────────────────────────────
+  const transactionColumns = useMemo(() => [
     {
-      field: "type",
-      headerName: "Tipo",
-      width: 110,
-      renderCell: (params: { row: HistoryRow }) => (
-        <Chip
-          icon={params.row.type === "doctor" ? <LocalHospital /> : <Business />}
-          label={params.row.type === "doctor" ? "Médico" : "Clínica"}
-          size="small"
-          color={params.row.type === "doctor" ? "primary" : "success"}
-          variant="outlined"
-        />
-      ),
-    },
-    {
-      field: "beneficiary",
-      headerName: "Beneficiario",
-      flex: 1,
+      field: "externalTransactionId",
+      headerName: "ID Transacción (Nuvei / UUID)",
+      flex: 1.2,
       minWidth: 200,
-      renderCell: (params: { row: HistoryRow }) => (
-        <Stack direction="row" spacing={2} alignItems="center">
-          <Avatar
-            sx={{
-              bgcolor: params.row.type === "doctor" ? "primary.light" : "success.light",
-              width: 32, height: 32,
-            }}
-          >
-            {params.row.type === "doctor" ? params.row.avatarChar : <Business />}
-          </Avatar>
-          <Typography fontWeight={600}>{params.row.beneficiary}</Typography>
-        </Stack>
+      renderCell: (params: { row: AdminTransaction }) => (
+        <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
+          <Typography fontWeight={700} color="primary.main" variant="body2">{params.row.externalTransactionId}</Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ fontFamily: "monospace", mt: 0.5 }}>{params.row.id}</Typography>
+        </Box>
       ),
     },
     {
-      field: "paymentDate",
-      headerName: "Fecha de Pago",
-      width: 130,
-      renderCell: (params: { row: HistoryRow }) => (
-        <Typography>{new Date(params.row.paymentDate).toLocaleDateString("es-ES")}</Typography>
+      field: "amount",
+      headerName: "Valor Pagado",
+      width: 120,
+      renderCell: (params: { row: AdminTransaction }) => (
+        <Typography fontWeight={600} color="#10b981">{formatMoney(params.row.amount)}</Typography>
       ),
     },
     {
-      field: "netAmount",
-      headerName: "Monto Pagado",
-      width: 130,
-      renderCell: (params: { row: HistoryRow }) => (
-        <Typography fontWeight={600} color="#10b981">{formatMoney(params.row.netAmount)}</Typography>
+      field: "patient",
+      headerName: "Paciente",
+      flex: 1,
+      minWidth: 180,
+      renderCell: (params: { row: AdminTransaction }) => (
+        <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
+          <Typography fontWeight={600} variant="body2">{params.row.patient.name}</Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>CI: {params.row.patient.identification}</Typography>
+        </Box>
       ),
     },
     {
-      field: "statusDisplay",
+      field: "doctor",
+      headerName: "Médico / Especialidad",
+      flex: 1,
+      minWidth: 180,
+      renderCell: (params: { row: AdminTransaction }) => (
+        <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
+          <Typography fontWeight={600} variant="body2">{params.row.doctor.name}</Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>{params.row.doctor.specialty}</Typography>
+        </Box>
+      ),
+    },
+    {
+      field: "createdAt",
+      headerName: "Fecha Pago",
+      width: 150,
+      renderCell: (params: { row: AdminTransaction }) => (
+        <Typography variant="body2">{new Date(params.row.createdAt).toLocaleString('es-ES')}</Typography>
+      ),
+    },
+    {
+      field: "status",
       headerName: "Estado",
-      width: 110,
-      renderCell: () => (
-        <Chip icon={<CheckCircle />} label="Pagado" color="success" size="small" />
+      width: 120,
+      renderCell: (params: { row: AdminTransaction }) => {
+        const isSuccess = ['PAID', 'paid', 'completed', 'COMPLETED', 'SUCCESS', 'success'].includes(params.row.status);
+        return (
+          <Chip
+            label={isSuccess ? "Completado" : params.row.status}
+            color={isSuccess ? "success" : "warning"}
+            size="small"
+          />
+        );
+      },
+    },
+    {
+      field: "actions",
+      headerName: "Acciones",
+      width: 130,
+      renderCell: (params: { row: AdminTransaction }) => (
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<Visibility />}
+          onClick={() => { setSelectedTransaction(params.row); setIsTransactionModalOpen(true); }}
+          sx={{ textTransform: "none" }}
+        >
+          Ver Detalle
+        </Button>
       ),
     },
   ], []);
+
+
 
   const handleRefresh = useCallback(() => {
     const loadPayments = async () => {
@@ -623,21 +770,7 @@ export const PaymentsPage = () => {
     loadPayments();
   }, []);
 
-  const handleExportHistory = () => {
-    const csvContent = [
-      ["Tipo", "Beneficiario", "Fecha de Pago", "Monto Pagado", "Estado"].join(","),
-      ...historyRows.map((r) =>
-        [r.type === "doctor" ? "Médico" : "Clínica", r.beneficiary, new Date(r.paymentDate).toLocaleDateString("es-ES"), r.netAmount, "Pagado"].join(",")
-      ),
-    ].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `historial-pagos-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+
 
   return (
     <DashboardLayout role="ADMIN" userProfile={CURRENT_ADMIN}>
@@ -682,7 +815,7 @@ export const PaymentsPage = () => {
             <Tab
               icon={<History />}
               iconPosition="start"
-              label="Historial"
+              label="Auditoría de Transacciones"
             />
           </Tabs>
         </Box>
@@ -709,7 +842,7 @@ export const PaymentsPage = () => {
           <Box>
             {/* Resumen de totales */}
             <Grid2 container spacing={3} mb={4}>
-              <Grid2 size={{ xs: 12, sm: 3 }}>
+              <Grid2 size={{ xs: 12, sm: 6, md: 2.4 }}>
                 <Card elevation={0} sx={{ bgcolor: "#f0fdfa", border: "1px solid #d1fae5" }}>
                   <CardContent>
                     <Stack direction="row" spacing={2} alignItems="center">
@@ -726,14 +859,14 @@ export const PaymentsPage = () => {
                   </CardContent>
                 </Card>
               </Grid2>
-              <Grid2 size={{ xs: 12, sm: 3 }}>
+              <Grid2 size={{ xs: 12, sm: 6, md: 2.4 }}>
                 <Card elevation={0} sx={{ bgcolor: "#fef3c7", border: "1px solid #fde68a" }}>
                   <CardContent>
                     <Stack direction="row" spacing={2} alignItems="center">
                       <CreditCard sx={{ color: "#f59e0b", fontSize: 32 }} />
                       <Box>
                         <Typography variant="caption" color="text.secondary">
-                          Comisiones Totales
+                          Comisión App
                         </Typography>
                         <Typography variant="h6" fontWeight={700} color="#f59e0b">
                           {formatMoney(totals.totalCommission)}
@@ -743,7 +876,7 @@ export const PaymentsPage = () => {
                   </CardContent>
                 </Card>
               </Grid2>
-              <Grid2 size={{ xs: 12, sm: 3 }}>
+              <Grid2 size={{ xs: 12, sm: 6, md: 2.4 }}>
                 <Card elevation={0} sx={{ bgcolor: "#eff6ff", border: "1px solid #bfdbfe" }}>
                   <CardContent>
                     <Stack direction="row" spacing={2} alignItems="center">
@@ -760,17 +893,34 @@ export const PaymentsPage = () => {
                   </CardContent>
                 </Card>
               </Grid2>
-              <Grid2 size={{ xs: 12, sm: 3 }}>
+              <Grid2 size={{ xs: 12, sm: 6, md: 2.4 }}>
+                <Card elevation={0} sx={{ bgcolor: "#fff7ed", border: "1px solid #fed7aa" }}>
+                  <CardContent>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <CreditCard sx={{ color: "#ea580c", fontSize: 32 }} />
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Pendientes
+                        </Typography>
+                        <Typography variant="h6" fontWeight={700} color="#ea580c">
+                          {formatMoney(filteredPayments.filter(p => p.status === 'pending').reduce((sum, p) => sum + p.netAmount, 0))}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 6, md: 2.4 }}>
                 <Card elevation={0} sx={{ bgcolor: "#ecfdf5", border: "1px solid #a7f3d0" }}>
                   <CardContent>
                     <Stack direction="row" spacing={2} alignItems="center">
-                      <AttachMoney sx={{ color: "#10b981", fontSize: 32 }} />
+                      <CheckCircle sx={{ color: "#10b981", fontSize: 32 }} />
                       <Box>
                         <Typography variant="caption" color="text.secondary">
-                          Total Neto Médicos
+                          Pagados
                         </Typography>
                         <Typography variant="h6" fontWeight={700} color="#10b981">
-                          {formatMoney(totals.totalNet)}
+                          {formatMoney(filteredPayments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.netAmount, 0))}
                         </Typography>
                       </Box>
                     </Stack>
@@ -1096,41 +1246,75 @@ export const PaymentsPage = () => {
           <Box>
             {/* Resumen de totales de clínicas */}
             <Grid2 container spacing={3} mb={4}>
-              <Grid2 size={{ xs: 12, sm: 4 }}>
+              <Grid2 size={{ xs: 12, sm: 6, md: 2.4 }}>
                 <Card elevation={0} sx={{ bgcolor: "#f0fdfa", border: "1px solid #d1fae5" }}>
                   <CardContent>
                     <Stack direction="row" spacing={2} alignItems="center">
                       <AttachMoney sx={{ color: "#14b8a6", fontSize: 32 }} />
                       <Box>
                         <Typography variant="caption" color="text.secondary">
-                          Total a Clínicas
+                          Total Cobrado
                         </Typography>
                         <Typography variant="h6" fontWeight={700} color="#14b8a6">
-                          {formatMoney(clinicPayments.reduce((sum, p) => sum + p.netAmount, 0))}
+                          {formatMoney(filteredClinicPayments.reduce((sum, p) => sum + p.totalAmount, 0))}
                         </Typography>
                       </Box>
                     </Stack>
                   </CardContent>
                 </Card>
               </Grid2>
-              <Grid2 size={{ xs: 12, sm: 4 }}>
+              <Grid2 size={{ xs: 12, sm: 6, md: 2.4 }}>
                 <Card elevation={0} sx={{ bgcolor: "#fef3c7", border: "1px solid #fde68a" }}>
                   <CardContent>
                     <Stack direction="row" spacing={2} alignItems="center">
                       <CreditCard sx={{ color: "#f59e0b", fontSize: 32 }} />
                       <Box>
                         <Typography variant="caption" color="text.secondary">
-                          Pendientes
+                          Comisión App
                         </Typography>
                         <Typography variant="h6" fontWeight={700} color="#f59e0b">
-                          {formatMoney(clinicPayments.filter(p => p.status === 'pending').reduce((sum, p) => sum + p.netAmount, 0))}
+                          {formatMoney(filteredClinicPayments.reduce((sum, p) => sum + p.appCommission, 0))}
                         </Typography>
                       </Box>
                     </Stack>
                   </CardContent>
                 </Card>
               </Grid2>
-              <Grid2 size={{ xs: 12, sm: 4 }}>
+              <Grid2 size={{ xs: 12, sm: 6, md: 2.4 }}>
+                <Card elevation={0} sx={{ bgcolor: "#eff6ff", border: "1px solid #bfdbfe" }}>
+                  <CardContent>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <PaymentIcon sx={{ color: "#3b82f6", fontSize: 32 }} />
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Comisiones Nuvei
+                        </Typography>
+                        <Typography variant="h6" fontWeight={700} color="#3b82f6">
+                          {formatMoney(filteredClinicPayments.reduce((sum, p) => sum + (p.gatewayFee || 0), 0))}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 6, md: 2.4 }}>
+                <Card elevation={0} sx={{ bgcolor: "#fff7ed", border: "1px solid #ffedd5" }}>
+                  <CardContent>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <CreditCard sx={{ color: "#f97316", fontSize: 32 }} />
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Pendientes
+                        </Typography>
+                        <Typography variant="h6" fontWeight={700} color="#f97316">
+                          {formatMoney(filteredClinicPayments.filter(p => p.status === 'pending').reduce((sum, p) => sum + p.netAmount, 0))}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 6, md: 2.4 }}>
                 <Card elevation={0} sx={{ bgcolor: "#ecfdf5", border: "1px solid #a7f3d0" }}>
                   <CardContent>
                     <Stack direction="row" spacing={2} alignItems="center">
@@ -1140,7 +1324,7 @@ export const PaymentsPage = () => {
                           Pagados
                         </Typography>
                         <Typography variant="h6" fontWeight={700} color="#10b981">
-                          {formatMoney(clinicPayments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.netAmount, 0))}
+                          {formatMoney(filteredClinicPayments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.netAmount, 0))}
                         </Typography>
                       </Box>
                     </Stack>
@@ -1151,29 +1335,45 @@ export const PaymentsPage = () => {
 
             {/* Toolbar + DataTable: Clínicas */}
             <TableToolbar
-              title="Clínicas con Pagos Pendientes"
+              title="Clínicas y Liquidaciones"
+              searchValue={clinicSearchFilter === "all" ? "" : clinicSearchFilter}
+              searchPlaceholder="Filtrar por clínica..."
+              onSearchChange={(v) => { setClinicSearchFilter(v || "all"); setClinicPagination((p) => ({ ...p, page: 0 })); }}
+              filters={[
+                {
+                  key: "status",
+                  label: "Estado",
+                  value: clinicStatusFilter,
+                  onChange: (v) => { setClinicStatusFilter(v as any); setClinicPagination((p) => ({ ...p, page: 0 })); },
+                  options: [
+                    { value: "all", label: "Todas" },
+                    { value: "pending", label: "Pendientes" },
+                    { value: "paid", label: "Pagadas" },
+                  ],
+                },
+              ]}
               actions={[
                 { label: "Refrescar", icon: <Refresh />, onClick: handleRefresh, variant: "outlined" },
               ]}
               sx={{ mb: 2 }}
             />
-            <Box mb={4}>
-              <DataTable
-                rows={(() => {
-                  const start = clinicPagination.page * clinicPagination.pageSize;
-                  return clinicPayments.slice(start, start + clinicPagination.pageSize);
-                })()}
-                columns={clinicColumns}
-                getRowId={(row) => row.id}
-                rowCount={clinicPayments.length}
-                paginationModel={clinicPagination}
-                onPaginationModelChange={setClinicPagination}
-                pageSizeOptions={[5, 10, 20]}
-                rowHeight={64}
-                emptyTitle="Sin pagos a clínicas"
-                emptyDescription="No hay pagos a clínicas registrados."
-              />
-            </Box>
+             <Box mb={4}>
+               <DataTable
+                 rows={(() => {
+                   const start = clinicPagination.page * clinicPagination.pageSize;
+                   return clinicGroupRows.slice(start, start + clinicPagination.pageSize);
+                 })()}
+                 columns={clinicColumns}
+                 getRowId={(row) => row.id}
+                 rowCount={clinicGroupRows.length}
+                 paginationModel={clinicPagination}
+                 onPaginationModelChange={setClinicPagination}
+                 pageSizeOptions={[5, 10, 20]}
+                 rowHeight={64}
+                 emptyTitle="Sin pagos a clínicas"
+                 emptyDescription="No hay pagos a clínicas registrados."
+               />
+             </Box>
 
             {/* Modal de Detalle de Clínica */}
             <Dialog
@@ -1211,7 +1411,7 @@ export const PaymentsPage = () => {
                     {/* Resumen */}
                     <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: "#f0fdfa", border: "1px solid #d1fae5" }}>
                       <Grid2 container spacing={3}>
-                        <Grid2 size={{ xs: 12, sm: 4 }}>
+                        <Grid2 size={{ xs: 12, sm: 3 }}>
                           <Typography variant="caption" color="text.secondary">
                             Total Cobrado
                           </Typography>
@@ -1219,15 +1419,23 @@ export const PaymentsPage = () => {
                             {formatMoney(selectedClinic.totalAmount)}
                           </Typography>
                         </Grid2>
-                        <Grid2 size={{ xs: 12, sm: 4 }}>
+                        <Grid2 size={{ xs: 12, sm: 3 }}>
                           <Typography variant="caption" color="text.secondary">
-                            Comisión App (15%)
+                            Comisión App
                           </Typography>
                           <Typography variant="h6" fontWeight={700} color="#f59e0b">
                             {formatMoney(selectedClinic.appCommission)}
                           </Typography>
                         </Grid2>
-                        <Grid2 size={{ xs: 12, sm: 4 }}>
+                        <Grid2 size={{ xs: 12, sm: 3 }}>
+                          <Typography variant="caption" color="text.secondary">
+                            Comisión Nuvei
+                          </Typography>
+                          <Typography variant="h6" fontWeight={700} color="#3b82f6">
+                            {formatMoney(selectedClinic.gatewayFee || 0)}
+                          </Typography>
+                        </Grid2>
+                        <Grid2 size={{ xs: 12, sm: 3 }}>
                           <Typography variant="caption" color="text.secondary">
                             Total Neto Clínica
                           </Typography>
@@ -1306,6 +1514,9 @@ export const PaymentsPage = () => {
                             <TableCell sx={{ fontWeight: 600 }}>Paciente</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Fecha</TableCell>
                             <TableCell sx={{ fontWeight: 600 }} align="right">
+                              Comisión Nuvei
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }} align="right">
                               Monto
                             </TableCell>
                           </TableRow>
@@ -1317,6 +1528,11 @@ export const PaymentsPage = () => {
                               <TableCell>{apt.patientName}</TableCell>
                               <TableCell>
                                 {new Date(apt.date).toLocaleDateString('es-ES')}
+                              </TableCell>
+                              <TableCell align="right">
+                                <Typography color="text.secondary">
+                                  {formatMoney(apt.gatewayFee || 0)}
+                                </Typography>
                               </TableCell>
                               <TableCell align="right">
                                 <Typography fontWeight={600}>
@@ -1447,14 +1663,21 @@ export const PaymentsPage = () => {
                   onClick={async () => {
                     if (!clinicToPay) return;
                     try {
-                      await markClinicPaymentAsPaidAPI(clinicToPay.id);
+                      const pendingPayouts = clinicToPay.payouts.filter((p) => p.status === "pending");
+                      const pendingIds = pendingPayouts.map((p) => p.id);
+                      
+                      // Marcar todos los payouts pendientes como pagados en paralelo
+                      await Promise.all(pendingIds.map(id => markClinicPaymentAsPaidAPI(id)));
+                      
+                      // Actualizar estado local
                       setClinicPayments((prev) =>
                         prev.map((p) =>
-                          p.id === clinicToPay.id
+                          pendingIds.includes(p.id)
                             ? { ...p, status: "paid" as const, paymentDate: new Date().toISOString() }
                             : p
                         )
                       );
+                      
                       setIsClinicPaymentConfirmDialogOpen(false);
                       setClinicToPay(null);
                     } catch (err: any) {
@@ -1473,77 +1696,171 @@ export const PaymentsPage = () => {
           </Box>
         )}
 
-        {/* Tab Content - Historial */}
+        {/* Tab Content - Auditoría de Transacciones */}
         {currentTab === 2 && (
           <Box>
-            {/* Resumen General */}
-            <Grid2 container spacing={3} mb={4}>
-              <Grid2 size={{ xs: 12, sm: 6 }}>
-                <Card elevation={0} sx={{ bgcolor: "#eff6ff", border: "1px solid #bfdbfe" }}>
-                  <CardContent>
-                    <Stack direction="row" spacing={2} alignItems="center">
-                      <LocalHospital sx={{ color: "#3b82f6", fontSize: 32 }} />
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">
-                          Total Pagado a Médicos
-                        </Typography>
-                        <Typography variant="h6" fontWeight={700} color="#3b82f6">
-                          {formatMoney(payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.netAmount, 0))}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {payments.filter(p => p.status === 'paid').length} pagos
-                        </Typography>
-                      </Box>
-                    </Stack>
-                  </CardContent>
-                </Card>
-              </Grid2>
-              <Grid2 size={{ xs: 12, sm: 6 }}>
-                <Card elevation={0} sx={{ bgcolor: "#f0fdf4", border: "1px solid #bbf7d0" }}>
-                  <CardContent>
-                    <Stack direction="row" spacing={2} alignItems="center">
-                      <Business sx={{ color: "#22c55e", fontSize: 32 }} />
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">
-                          Total Pagado a Clínicas
-                        </Typography>
-                        <Typography variant="h6" fontWeight={700} color="#22c55e">
-                          {formatMoney(clinicPayments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.netAmount, 0))}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {clinicPayments.filter(p => p.status === 'paid').length} pagos
-                        </Typography>
-                      </Box>
-                    </Stack>
-                  </CardContent>
-                </Card>
-              </Grid2>
-            </Grid2>
-
-            {/* Toolbar + DataTable: Historial */}
             <TableToolbar
-              title="Historial de Pagos Realizados"
+              title="Registro de Transacciones de Cobros (Nuvei)"
+              searchValue={transactionsSearch}
+              searchPlaceholder="Buscar por ID, CI, paciente o médico..."
+              onSearchChange={(v) => { setTransactionsSearch(v || ""); setTransactionsPagination((p) => ({ ...p, page: 0 })); }}
               actions={[
-                { label: "Exportar", icon: <Download />, onClick: handleExportHistory, variant: "outlined" },
-                { label: "Refrescar", icon: <Refresh />, onClick: handleRefresh, variant: "outlined" },
+                { label: "Refrescar", icon: <Refresh />, onClick: () => { setTransactionsSearch(""); setTransactionsPagination((p) => ({ ...p, page: 0 })); }, variant: "outlined" },
               ]}
               sx={{ mb: 2 }}
             />
-            <DataTable
-              rows={(() => {
-                const start = historyPagination.page * historyPagination.pageSize;
-                return historyRows.slice(start, start + historyPagination.pageSize);
-              })()}
-              columns={historyColumns}
-              getRowId={(row) => row.id}
-              rowCount={historyRows.length}
-              paginationModel={historyPagination}
-              onPaginationModelChange={setHistoryPagination}
-              pageSizeOptions={[5, 10, 20]}
-              rowHeight={64}
-              emptyTitle="Sin historial de pagos"
-              emptyDescription="No hay pagos realizados registrados en el historial."
-            />
+            
+            <Box mb={4}>
+              <DataTable
+                rows={transactions}
+                columns={transactionColumns}
+                getRowId={(row) => row.id}
+                rowCount={transactionsTotal}
+                paginationModel={transactionsPagination}
+                onPaginationModelChange={setTransactionsPagination}
+                pageSizeOptions={[5, 10, 20]}
+                rowHeight={80}
+                loading={loadingTransactions}
+                emptyTitle="Sin transacciones encontradas"
+                emptyDescription="No hay registros de transacciones para la búsqueda actual."
+              />
+            </Box>
+
+            {/* Modal de Detalle de Auditoría de Transacción */}
+            <Dialog
+              open={isTransactionModalOpen}
+              onClose={() => {
+                setIsTransactionModalOpen(false);
+                setSelectedTransaction(null);
+              }}
+              maxWidth="md"
+              fullWidth
+            >
+              <DialogTitle>
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Box>
+                    <Typography variant="h6" fontWeight={700}>
+                      Detalle de Auditoría de Transacción
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Respaldo legal de transacción de Nuvei
+                    </Typography>
+                  </Box>
+                  <IconButton
+                    onClick={() => {
+                      setIsTransactionModalOpen(false);
+                      setSelectedTransaction(null);
+                    }}
+                  >
+                    <Close />
+                  </IconButton>
+                </Stack>
+              </DialogTitle>
+              <DialogContent>
+                {selectedTransaction && (
+                  <Stack spacing={3} mt={1}>
+                    <Paper elevation={0} sx={{ p: 3, bgcolor: "#f8fafc", border: "1px solid #e2e8f0" }}>
+                      <Grid2 container spacing={2}>
+                        <Grid2 size={{ xs: 12, md: 6 }}>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>ID TRANSACCIÓN INTERNA (UUID)</Typography>
+                          <Typography variant="body2" sx={{ fontFamily: "monospace" }}>{selectedTransaction.id}</Typography>
+                        </Grid2>
+                        <Grid2 size={{ xs: 12, md: 6 }}>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>ID TRANSACCIÓN EXTERNA (NUVEI REFERENCE)</Typography>
+                          <Typography variant="body1" fontWeight={700} color="primary.main">{selectedTransaction.externalTransactionId}</Typography>
+                        </Grid2>
+                        
+                        <Grid2 size={{ xs: 12, sm: 4 }}>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>ESTADO TRANSACCIÓN</Typography>
+                          <Box mt={0.5}>
+                            <Chip
+                              label={['PAID', 'paid', 'completed', 'COMPLETED', 'SUCCESS', 'success'].includes(selectedTransaction.status) ? "Completado / Exitoso" : selectedTransaction.status}
+                              color={['PAID', 'paid', 'completed', 'COMPLETED', 'SUCCESS', 'success'].includes(selectedTransaction.status) ? "success" : "warning"}
+                              size="small"
+                            />
+                          </Box>
+                        </Grid2>
+                        <Grid2 size={{ xs: 12, sm: 4 }}>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>MONTO PAGADO</Typography>
+                          <Typography variant="body1" fontWeight={700} color="#10b981">
+                            {formatMoney(selectedTransaction.amount)}
+                          </Typography>
+                        </Grid2>
+                        <Grid2 size={{ xs: 12, sm: 4 }}>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>MÉTODO / ORIGEN DE PAGO</Typography>
+                          <Typography variant="body1" fontWeight={600}>
+                            {selectedTransaction.paymentMethod} ({selectedTransaction.paymentSource})
+                          </Typography>
+                        </Grid2>
+
+                        <Grid2 size={{ xs: 12, sm: 6 }}>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>FECHA Y HORA DE CREACIÓN (SOLICITUD)</Typography>
+                          <Typography variant="body2">
+                            {new Date(selectedTransaction.createdAt).toLocaleString('es-ES')}
+                          </Typography>
+                        </Grid2>
+                        <Grid2 size={{ xs: 12, sm: 6 }}>
+                          <Typography variant="caption" color="text.secondary" fontWeight={600}>FECHA Y HORA DE PAGO (CONFIRMACIÓN)</Typography>
+                          <Typography variant="body2" fontWeight={600}>
+                            {selectedTransaction.paidAt ? new Date(selectedTransaction.paidAt).toLocaleString('es-ES') : "Pendiente de confirmación"}
+                          </Typography>
+                        </Grid2>
+                      </Grid2>
+                    </Paper>
+
+                    <Typography variant="subtitle2" fontWeight={700} color="text.primary">Datos del Paciente</Typography>
+                    <Paper elevation={0} sx={{ p: 2, border: "1px solid #e2e8f0" }}>
+                      <Grid2 container spacing={2}>
+                        <Grid2 size={{ xs: 12, sm: 6 }}>
+                          <Typography variant="caption" color="text.secondary">Nombre Completo</Typography>
+                          <Typography variant="body2" fontWeight={600}>{selectedTransaction.patient.name}</Typography>
+                        </Grid2>
+                        <Grid2 size={{ xs: 12, sm: 6 }}>
+                          <Typography variant="caption" color="text.secondary">Cédula de Identidad / RUC / Pasaporte</Typography>
+                          <Typography variant="body2" fontWeight={700}>{selectedTransaction.patient.identification}</Typography>
+                        </Grid2>
+                      </Grid2>
+                    </Paper>
+
+                    <Typography variant="subtitle2" fontWeight={700} color="text.primary">Datos de la Consulta Médica</Typography>
+                    <Paper elevation={0} sx={{ p: 2, border: "1px solid #e2e8f0" }}>
+                      <Grid2 container spacing={2}>
+                        <Grid2 size={{ xs: 12, sm: 6 }}>
+                          <Typography variant="caption" color="text.secondary">Médico Especialista</Typography>
+                          <Typography variant="body2" fontWeight={600}>{selectedTransaction.doctor.name}</Typography>
+                        </Grid2>
+                        <Grid2 size={{ xs: 12, sm: 6 }}>
+                          <Typography variant="caption" color="text.secondary">Especialidad</Typography>
+                          <Typography variant="body2" fontWeight={600}>{selectedTransaction.doctor.specialty}</Typography>
+                        </Grid2>
+                        <Grid2 size={{ xs: 12, sm: 6 }}>
+                          <Typography variant="caption" color="text.secondary">Fecha y Hora de la Cita</Typography>
+                          <Typography variant="body2" fontWeight={700}>
+                            {selectedTransaction.appointment.date ? new Date(selectedTransaction.appointment.date).toLocaleString('es-ES') : "N/A"}
+                          </Typography>
+                        </Grid2>
+                        <Grid2 size={{ xs: 12, sm: 6 }}>
+                          <Typography variant="caption" color="text.secondary">Motivo de Consulta</Typography>
+                          <Typography variant="body2">{selectedTransaction.appointment.reason || "No especificado"}</Typography>
+                        </Grid2>
+                      </Grid2>
+                    </Paper>
+                  </Stack>
+                )}
+              </DialogContent>
+              <DialogActions sx={{ p: 2, pr: 3 }}>
+                <Button
+                  onClick={() => {
+                    setIsTransactionModalOpen(false);
+                    setSelectedTransaction(null);
+                  }}
+                  variant="contained"
+                  sx={{ textTransform: "none" }}
+                >
+                  Cerrar
+                </Button>
+              </DialogActions>
+            </Dialog>
           </Box>
         )}
         </>

@@ -10,6 +10,7 @@ export interface AdminClinicPayment {
   clinicName: string;
   totalAmount: number;
   appCommission: number;
+  gatewayFee: number;
   netAmount: number;
   status: 'pending' | 'paid';
   paymentDate: string | null;
@@ -20,6 +21,7 @@ export interface AdminClinicPayment {
     doctorName: string;
     patientName: string;
     amount: number;
+    gatewayFee: number;
     date: string;
   }[];
   isDistributed: boolean;
@@ -124,6 +126,43 @@ export const getPaymentHistoryAPI = async (
 ): Promise<PaginatedResponse<any>> => {
   const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<any> }>(
     '/admin/payments/history',
+    { params }
+  );
+  return extractData(response);
+};
+
+export interface AdminTransaction {
+  id: string;
+  externalTransactionId: string;
+  status: string;
+  createdAt: string;
+  paidAt: string | null;
+  amount: number;
+  paymentMethod: string;
+  paymentSource: string;
+  patient: {
+    name: string;
+    identification: string;
+  };
+  doctor: {
+    name: string;
+    specialty: string;
+  };
+  appointment: {
+    date: string | null;
+    reason: string;
+  };
+}
+
+/**
+ * API: Obtener auditoría de transacciones Nuvei
+ * Endpoint: GET /api/admin/payments/transactions
+ */
+export const getAdminTransactionsAPI = async (
+  params?: { page?: number; limit?: number; search?: string }
+): Promise<PaginatedResponse<AdminTransaction>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<AdminTransaction> }>(
+    '/admin/payments/transactions',
     { params }
   );
   return extractData(response);
