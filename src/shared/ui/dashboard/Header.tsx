@@ -236,9 +236,7 @@ export const Header = ({
 
   return (
     <header
-      className={`bg-white h-20 px-8 flex items-center justify-between border-b border-gray-200 fixed top-0 right-0 z-40 transition-all duration-300 ${
-        isMenuOpen ? "left-64" : "left-20"
-      }`}
+      className="bg-white h-20 px-8 flex items-center justify-between border-b border-gray-200 fixed top-0 right-0 z-40 transition-all duration-300 left-20"
     >
       <div className="flex items-center gap-4">
         <button

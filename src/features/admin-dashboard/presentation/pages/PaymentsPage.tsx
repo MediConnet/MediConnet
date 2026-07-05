@@ -85,6 +85,8 @@ export const PaymentsPage = () => {
   const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<AdminTransaction | null>(null);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  // Clave de refresco: incrementarla fuerza el useEffect a re-ejecutarse aunque los demás valores no cambien
+  const [transactionsRefreshKey, setTransactionsRefreshKey] = useState(0);
 
   const feedback = useFeedbackStore();
 
@@ -129,7 +131,7 @@ export const PaymentsPage = () => {
       }
     };
     fetchTransactions();
-  }, [currentTab, transactionsPagination.page, transactionsPagination.pageSize, transactionsSearch]);
+  }, [currentTab, transactionsPagination.page, transactionsPagination.pageSize, transactionsSearch, transactionsRefreshKey]);
 
   // Obtener lista única de doctores con pagos
   const doctors = useMemo(() => {
@@ -1705,7 +1707,7 @@ export const PaymentsPage = () => {
               searchPlaceholder="Buscar por ID, CI, paciente o médico..."
               onSearchChange={(v) => { setTransactionsSearch(v || ""); setTransactionsPagination((p) => ({ ...p, page: 0 })); }}
               actions={[
-                { label: "Refrescar", icon: <Refresh />, onClick: () => { setTransactionsSearch(""); setTransactionsPagination((p) => ({ ...p, page: 0 })); }, variant: "outlined" },
+                { label: "Refrescar", icon: <Refresh />, onClick: () => { setTransactionsSearch(""); setTransactionsPagination((p) => ({ ...p, page: 0 })); setTransactionsRefreshKey((k) => k + 1); }, variant: "outlined" },
               ]}
               sx={{ mb: 2 }}
             />

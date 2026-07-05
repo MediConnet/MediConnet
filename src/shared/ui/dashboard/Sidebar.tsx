@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Logout } from "@mui/icons-material";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ROUTES } from "../../../app/config/constants";
@@ -11,7 +12,7 @@ interface SidebarProps {
   menuItems?: MenuItem[]; // ⭐ Menú personalizado opcional
 }
 
-export const Sidebar = ({ role, isOpen, menuItems: customMenuItems }: SidebarProps) => {
+export const Sidebar = ({ role, isOpen: _isOpen, menuItems: customMenuItems }: SidebarProps) => {
   const authStore = useAuthStore();
   const { user } = authStore;
 
@@ -20,6 +21,9 @@ export const Sidebar = ({ role, isOpen, menuItems: customMenuItems }: SidebarPro
 
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Estado de expansión controlado por hover (no por prop externa)
+  const [expanded, setExpanded] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -33,25 +37,27 @@ export const Sidebar = ({ role, isOpen, menuItems: customMenuItems }: SidebarPro
 
   return (
     <aside
-      className={`bg-white h-screen fixed left-0 top-0 border-r border-gray-200 flex flex-col z-50 transition-all duration-300 ${
-        isOpen ? "w-64" : "w-20"
+      onMouseEnter={() => setExpanded(true)}
+      onMouseLeave={() => setExpanded(false)}
+      className={`bg-white h-screen fixed left-0 top-0 border-r border-gray-200 flex flex-col z-50 transition-all duration-300 ease-in-out ${
+        expanded ? "w-72 shadow-2xl" : "w-20"
       }`}
     >
       {/* ... LOGO ... */}
       <div
         className={`h-20 flex items-center ${
-          isOpen ? "px-6 gap-3" : "justify-center px-0"
+          expanded ? "px-6 gap-3" : "justify-center px-0"
         }`}
       >
         <img 
           src="/docalink-logo.png?v=2" 
           alt="DOCALINK"
           className="shrink-0 object-contain"
-          style={{ width: isOpen ? '48px' : '40px', height: isOpen ? '48px' : '40px' }}
+          style={{ width: expanded ? '48px' : '40px', height: expanded ? '48px' : '40px' }}
         />
         <div
           className={`overflow-hidden transition-all duration-300 ${
-            isOpen ? "w-auto opacity-100" : "w-0 opacity-0"
+            expanded ? "w-auto opacity-100" : "w-0 opacity-0"
           }`}
         >
           <h1 className="text-xl font-bold text-gray-800 whitespace-nowrap">
@@ -88,9 +94,9 @@ export const Sidebar = ({ role, isOpen, menuItems: customMenuItems }: SidebarPro
             <Link
               key={index}
               to={item.path}
-              title={!isOpen ? item.label : ""}
+              title={!expanded ? item.label : ""}
               className={`flex items-center rounded-lg transition-colors h-12 ${
-                isOpen ? "px-4 gap-3" : "justify-center px-0"
+                expanded ? "px-4 gap-3" : "justify-center px-0"
               } ${
                 isActive
                   ? "bg-teal-50 text-teal-600 font-medium"
@@ -100,7 +106,7 @@ export const Sidebar = ({ role, isOpen, menuItems: customMenuItems }: SidebarPro
               <span className="shrink-0">{item.icon}</span>
               <span
                 className={`whitespace-nowrap transition-all duration-300 ${
-                  isOpen
+                  expanded
                     ? "opacity-100 w-auto ml-3"
                     : "opacity-0 w-0 ml-0 overflow-hidden"
                 }`}
@@ -117,13 +123,13 @@ export const Sidebar = ({ role, isOpen, menuItems: customMenuItems }: SidebarPro
         <button
           onClick={handleLogout}
           className={`flex items-center w-full text-red-500 hover:bg-red-50 rounded-lg transition-colors h-12 cursor-pointer ${
-            isOpen ? "px-4 gap-3" : "justify-center px-0"
+            expanded ? "px-4 gap-3" : "justify-center px-0"
           }`}
         >
           <Logout className="shrink-0" />
           <span
             className={`whitespace-nowrap transition-all duration-300 ${
-              isOpen
+              expanded
                 ? "opacity-100 w-auto ml-3"
                 : "opacity-0 w-0 ml-0 overflow-hidden"
             }`}
