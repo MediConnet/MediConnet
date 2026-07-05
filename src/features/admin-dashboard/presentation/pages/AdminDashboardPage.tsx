@@ -29,7 +29,19 @@ export const AdminDashboardPage = () => {
   const { appointments: adminAppointments, notificationsViewAllPath } = useAdminNotificationsLayout();
 
   if (isLoading) {
-    return <div className="p-8">Cargando dashboard...</div>;
+    return (
+      <DashboardLayout 
+        role="ADMIN" 
+        userProfile={CURRENT_ADMIN}
+        appointments={adminAppointments}
+        notificationsVariant="professional"
+        notificationsViewAllPath={notificationsViewAllPath}
+      >
+        <div className="flex items-center justify-center h-[50vh]">
+          <p className="text-gray-500 font-medium">Cargando dashboard...</p>
+        </div>
+      </DashboardLayout>
+    );
   }
 
   // Validar que stats existe
