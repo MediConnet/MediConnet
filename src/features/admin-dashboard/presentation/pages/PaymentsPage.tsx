@@ -1,4 +1,4 @@
-import { AttachMoney, CreditCard, Visibility, CheckCircle, Payment as PaymentIcon, AccountBalance, Business, LocalHospital, History, Refresh, Download, Close } from "@mui/icons-material";
+import { AttachMoney, CreditCard, Visibility, CheckCircle, Payment as PaymentIcon, AccountBalance, Business, LocalHospital, History, Refresh, Download, Close, Undo } from "@mui/icons-material";
 import {
   Avatar,
   Box,
@@ -39,15 +39,42 @@ import {
   markDoctorPaymentsAsPaidAPI,
   markClinicPaymentAsPaidAPI,
   getAdminTransactionsAPI,
+  getAdminRefundRequestsAPI,
+  approveAdminRefundAPI,
+  rejectAdminRefundAPI,
   type AdminDoctorPayment,
   type AdminClinicPayment,
-  type AdminTransaction
+  type AdminTransaction,
+  type AdminRefundRequest
 } from "../../infrastructure/admin-payments.api";
 
 const CURRENT_ADMIN = {
   name: "Admin General",
   roleLabel: "Super Admin",
   initials: "AG",
+};
+
+const getStatusChipProps = (status: string) => {
+  const norm = (status || '').toUpperCase();
+  if (['PAID', 'COMPLETED', 'SUCCESS'].includes(norm)) {
+    return { label: 'Completado', color: 'success' as const };
+  }
+  if (['REFUNDED'].includes(norm)) {
+    return { label: 'Reembolsado', color: 'error' as const };
+  }
+  if (['REFUND_REQUESTED'].includes(norm)) {
+    return { label: 'Reembolso Solicitado', color: 'warning' as const };
+  }
+  if (['CANCELLED', 'CANCELED'].includes(norm)) {
+    return { label: 'Cancelado', color: 'default' as const };
+  }
+  if (['FAILED'].includes(norm)) {
+    return { label: 'Fallido', color: 'error' as const };
+  }
+  if (['PENDING'].includes(norm)) {
+    return { label: 'Pendiente', color: 'info' as const };
+  }
+  return { label: status, color: 'warning' as const };
 };
 
 export const PaymentsPage = () => {
@@ -88,6 +115,11 @@ export const PaymentsPage = () => {
   // Clave de refresco: incrementarla fuerza el useEffect a re-ejecutarse aunque los demás valores no cambien
   const [transactionsRefreshKey, setTransactionsRefreshKey] = useState(0);
 
+  // Estados para Solicitudes de Reembolso
+  const [refundRequests, setRefundRequests] = useState<AdminRefundRequest[]>([]);
+  const [loadingRefunds, setLoadingRefunds] = useState(false);
+  const [refundsRefreshKey, setRefundsRefreshKey] = useState(0);
+
   const feedback = useFeedbackStore();
 
   // Cargar pagos desde la API
@@ -111,9 +143,26 @@ export const PaymentsPage = () => {
     loadPayments();
   }, []);
 
-  // Cargar transacciones de auditoría desde la API
+  // Cargar solicitudes de reembolso desde la API
   useEffect(() => {
     if (currentTab !== 2) return;
+    const fetchRefundRequests = async () => {
+      setLoadingRefunds(true);
+      try {
+        const res = await getAdminRefundRequestsAPI();
+        setRefundRequests(res);
+      } catch (err: any) {
+        feedback.showFeedback('error', 'Error', 'No se pudieron cargar las solicitudes de reembolso.');
+      } finally {
+        setLoadingRefunds(false);
+      }
+    };
+    fetchRefundRequests();
+  }, [currentTab, refundsRefreshKey, feedback]);
+
+  // Cargar transacciones de auditoría desde la API
+  useEffect(() => {
+    if (currentTab !== 3) return;
     const fetchTransactions = async () => {
       setLoadingTransactions(true);
       try {
@@ -131,7 +180,7 @@ export const PaymentsPage = () => {
       }
     };
     fetchTransactions();
-  }, [currentTab, transactionsPagination.page, transactionsPagination.pageSize, transactionsSearch, transactionsRefreshKey]);
+  }, [currentTab, transactionsPagination.page, transactionsPagination.pageSize, transactionsSearch, transactionsRefreshKey, feedback]);
 
   // Obtener lista única de doctores con pagos
   const doctors = useMemo(() => {
@@ -723,11 +772,11 @@ export const PaymentsPage = () => {
       headerName: "Estado",
       width: 120,
       renderCell: (params: { row: AdminTransaction }) => {
-        const isSuccess = ['PAID', 'paid', 'completed', 'COMPLETED', 'SUCCESS', 'success'].includes(params.row.status);
+        const props = getStatusChipProps(params.row.status);
         return (
           <Chip
-            label={isSuccess ? "Completado" : params.row.status}
-            color={isSuccess ? "success" : "warning"}
+            label={props.label}
+            color={props.color}
             size="small"
           />
         );
@@ -753,24 +802,131 @@ export const PaymentsPage = () => {
 
 
 
+  const handleApproveRefund = useCallback(async (paymentId: string) => {
+    try {
+      feedback.showFeedback('info', 'Procesando...', 'Enviando solicitud de reembolso a Nuvei...');
+      await approveAdminRefundAPI(paymentId);
+      feedback.showFeedback('success', 'Éxito', 'El reembolso fue procesado y devuelto a la tarjeta real del paciente.');
+      setRefundsRefreshKey(prev => prev + 1);
+    } catch (err: any) {
+      feedback.showFeedback('error', 'Error al reembolsar', getUserFriendlyMessage(err, { fallback: 'No se pudo procesar el reembolso en la pasarela.' }));
+    }
+  }, [feedback]);
+
+  const handleRejectRefund = useCallback(async (paymentId: string) => {
+    try {
+      await rejectAdminRefundAPI(paymentId);
+      feedback.showFeedback('success', 'Éxito', 'La solicitud de reembolso fue rechazada.');
+      setRefundsRefreshKey(prev => prev + 1);
+    } catch (err: any) {
+      feedback.showFeedback('error', 'Error', 'No se pudo rechazar la solicitud.');
+    }
+  }, [feedback]);
+
+  const refundColumns = useMemo(() => [
+    {
+      field: "patient",
+      headerName: "Paciente",
+      flex: 1,
+      minWidth: 180,
+      renderCell: (params: { row: AdminRefundRequest }) => (
+        <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
+          <Typography fontWeight={600} variant="body2">{params.row.patient.name}</Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>CI: {params.row.patient.identification}</Typography>
+        </Box>
+      ),
+    },
+    {
+      field: "doctor",
+      headerName: "Médico / Especialidad",
+      flex: 1,
+      minWidth: 180,
+      renderCell: (params: { row: AdminRefundRequest }) => (
+        <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", height: "100%" }}>
+          <Typography fontWeight={600} variant="body2">{params.row.doctor.name}</Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>{params.row.doctor.specialty}</Typography>
+        </Box>
+      ),
+    },
+    {
+      field: "amount",
+      headerName: "Monto",
+      width: 110,
+      renderCell: (params: { row: AdminRefundRequest }) => (
+        <Typography fontWeight={600} color="#e11d48">{formatMoney(params.row.amount)}</Typography>
+      ),
+    },
+    {
+      field: "reason",
+      headerName: "Motivo del Reembolso",
+      flex: 1.5,
+      minWidth: 250,
+      renderCell: (params: { row: AdminRefundRequest }) => (
+        <Typography variant="body2" sx={{ whiteSpace: "normal", wordBreak: "break-word" }}>
+          {params.row.reason}
+        </Typography>
+      ),
+    },
+    {
+      field: "createdAt",
+      headerName: "Fecha Solicitud",
+      width: 150,
+      renderCell: (params: { row: AdminRefundRequest }) => (
+        <Typography variant="body2">{new Date(params.row.createdAt).toLocaleString('es-ES')}</Typography>
+      ),
+    },
+    {
+      field: "actions",
+      headerName: "Acciones",
+      width: 280,
+      renderCell: (params: { row: AdminRefundRequest }) => (
+        <Stack direction="row" spacing={1} sx={{ height: "100%", alignItems: "center" }}>
+          <Button
+            variant="contained"
+            size="small"
+            color="error"
+            onClick={() => handleApproveRefund(params.row.id)}
+            sx={{ textTransform: "none" }}
+          >
+            Aprobar Reembolso
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => handleRejectRefund(params.row.id)}
+            sx={{ textTransform: "none" }}
+          >
+            Rechazar
+          </Button>
+        </Stack>
+      ),
+    },
+  ], [handleApproveRefund, handleRejectRefund]);
+
   const handleRefresh = useCallback(() => {
-    const loadPayments = async () => {
-      setLoading(true);
-      try {
-        const [doctorPaymentsData, clinicPaymentsData] = await Promise.all([
-          getAdminDoctorPaymentsAPI({ page: 1, limit: 1000 }),
-          getAdminClinicPaymentsAPI({ page: 1, limit: 1000 })
-        ]);
-        setPayments(doctorPaymentsData.data);
-        setClinicPayments(clinicPaymentsData.data);
-      } catch (err: any) {
-        setError(getUserFriendlyMessage(err, { fallback: 'No fue posible cargar los pagos.' }));
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadPayments();
-  }, []);
+    if (currentTab === 0 || currentTab === 1) {
+      const loadPayments = async () => {
+        setLoading(true);
+        try {
+          const [doctorPaymentsData, clinicPaymentsData] = await Promise.all([
+            getAdminDoctorPaymentsAPI({ page: 1, limit: 1000 }),
+            getAdminClinicPaymentsAPI({ page: 1, limit: 1000 })
+          ]);
+          setPayments(doctorPaymentsData.data);
+          setClinicPayments(clinicPaymentsData.data);
+        } catch (err: any) {
+          setError(getUserFriendlyMessage(err, { fallback: 'No fue posible cargar los pagos.' }));
+        } finally {
+          setLoading(false);
+        }
+      };
+      loadPayments();
+    } else if (currentTab === 2) {
+      setRefundsRefreshKey(prev => prev + 1);
+    } else if (currentTab === 3) {
+      setTransactionsRefreshKey(prev => prev + 1);
+    }
+  }, [currentTab]);
 
 
 
@@ -813,6 +969,11 @@ export const PaymentsPage = () => {
               icon={<Business />}
               iconPosition="start"
               label="Pagos a Clínicas"
+            />
+            <Tab
+              icon={<Undo />}
+              iconPosition="start"
+              label="Solicitudes de Reembolso"
             />
             <Tab
               icon={<History />}
@@ -1698,8 +1859,33 @@ export const PaymentsPage = () => {
           </Box>
         )}
 
-        {/* Tab Content - Auditoría de Transacciones */}
+        {/* Tab Content - Solicitudes de Reembolso */}
         {currentTab === 2 && (
+          <Box>
+            <TableToolbar
+              title="Solicitudes de Reembolso de Pacientes (Nuvei)"
+              actions={[
+                { label: "Refrescar", icon: <Refresh />, onClick: () => { setRefundsRefreshKey((k) => k + 1); }, variant: "outlined" },
+              ]}
+              sx={{ mb: 2 }}
+            />
+            
+            <Box mb={4}>
+              <DataTable
+                rows={refundRequests}
+                columns={refundColumns}
+                getRowId={(row) => row.id}
+                loading={loadingRefunds}
+                rowHeight={90}
+                emptyTitle="Sin solicitudes de reembolso"
+                emptyDescription="No hay solicitudes de reembolso pendientes de aprobación en el sistema."
+              />
+            </Box>
+          </Box>
+        )}
+
+        {/* Tab Content - Auditoría de Transacciones */}
+        {currentTab === 3 && (
           <Box>
             <TableToolbar
               title="Registro de Transacciones de Cobros (Nuvei)"
@@ -1776,8 +1962,8 @@ export const PaymentsPage = () => {
                           <Typography variant="caption" color="text.secondary" fontWeight={600}>ESTADO TRANSACCIÓN</Typography>
                           <Box mt={0.5}>
                             <Chip
-                              label={['PAID', 'paid', 'completed', 'COMPLETED', 'SUCCESS', 'success'].includes(selectedTransaction.status) ? "Completado / Exitoso" : selectedTransaction.status}
-                              color={['PAID', 'paid', 'completed', 'COMPLETED', 'SUCCESS', 'success'].includes(selectedTransaction.status) ? "success" : "warning"}
+                              label={getStatusChipProps(selectedTransaction.status).label}
+                              color={getStatusChipProps(selectedTransaction.status).color}
                               size="small"
                             />
                           </Box>
