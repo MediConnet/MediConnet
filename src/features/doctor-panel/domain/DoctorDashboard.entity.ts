@@ -48,6 +48,7 @@ export interface DoctorDashboard {
     imageUrl?: string | null;
     profile_picture_url?: string | null;
     preview_images?: string[];
+    medical_center?: string;
     // bankAccount... (pendiente en backend)
   };
   // Información de clínica si el médico está asociado

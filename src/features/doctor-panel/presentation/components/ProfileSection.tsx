@@ -191,6 +191,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     isActive: true,
     profileStatus: "draft" as ProfileStatus,
     paymentMethods: "both" as PaymentMethod,
+    medicalCenter: "",
   });
 
   // Estado para errores de validación por campo
@@ -257,6 +258,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
         isActive: data.doctor.isActive !== false,
         profileStatus: (data.doctor.profileStatus || "draft") as ProfileStatus,
         paymentMethods: (data.doctor.paymentMethods || "both") as PaymentMethod,
+        medicalCenter: (data.doctor as any).medical_center || "",
       };
 
       setFormData(newFormData);
@@ -293,6 +295,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     if (formData.description !== initialFormData.description) return true;
     if (formData.profileStatus !== initialFormData.profileStatus) return true;
     if (formData.paymentMethods !== initialFormData.paymentMethods) return true;
+    if (formData.medicalCenter !== initialFormData.medicalCenter) return true;
 
     // 2. Comparar Arrays (Specialties)
     const currentSpecs = [...formData.specialty].sort();
@@ -484,6 +487,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
       workSchedule: formData.workSchedule,
       profileStatus: formData.profileStatus,
       paymentMethods: formData.paymentMethods,
+      medicalCenter: formData.medicalCenter,
       ...(newImageBase64 ? { profile_picture_url: newImageBase64 } : {}),
       ...(previewImagesModified ? { preview_images: previewImages } : {}),
     };
@@ -749,6 +753,12 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                     >
                       Ver en Google Maps →
                     </a>
+                  </div>
+                )}
+                {doctor.medical_center && (
+                  <div className="mt-2">
+                    <label className="text-sm text-gray-500 block font-semibold">Lugar de Atención</label>
+                    <p className="text-gray-800 font-medium">{doctor.medical_center}</p>
                   </div>
                 )}
                 {(doctor.latitude !== null && doctor.latitude !== undefined && 
@@ -1100,6 +1110,24 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                     Dirección del consultorio — Máx. 200 caracteres
                   </p>
                 )}
+              </div>
+              <div>
+                <label className="text-sm text-gray-600 mb-1 block font-semibold">
+                  Lugar de Atención (Clínica, Hospital, Centro Médico o Consultorio)
+                </label>
+                <input
+                  type="text"
+                  value={formData.medicalCenter}
+                  onChange={(e) =>
+                    handleChange("medicalCenter", e.target.value)
+                  }
+                  maxLength={150}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white"
+                  placeholder="Ej. Clínica Metropolitana, Hospital del Valle, etc."
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Nombre del lugar físico donde atiende — Máx. 150 caracteres
+                </p>
               </div>
 
               {/* Campos de ubicación */}

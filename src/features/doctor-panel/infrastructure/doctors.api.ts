@@ -60,6 +60,7 @@ interface BackendProfileResponse {
   imageUrl?: string | null; // Imagen de portada/sucursal
   profile_picture_url?: string | null; // Avatar del doctor
   preview_images?: string[]; // Galería de vista previa
+  medical_center?: string;
 }
 
 // Interface para la lista de especialidades disponibles (Select)
@@ -97,6 +98,7 @@ export interface UpdateDoctorProfileParams {
     accountHolder: string;
     identificationNumber?: string;
   };
+  medicalCenter?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -370,6 +372,7 @@ export const getDoctorProfileAPI = async (): Promise<DoctorDashboard> => {
       imageUrl: (backendData as any).imageUrl || null,
       profile_picture_url: backendData.profile_picture_url || null,
       preview_images: (backendData as any).preview_images || [],
+      medical_center: backendData.medical_center || "",
     },
     // ⭐ Información de clínica si el médico está asociado
     clinic: (backendData as any).clinic ? {
@@ -421,6 +424,10 @@ export const updateDoctorProfileAPI = async (
 
   if (params.profile_picture_url !== undefined) {
     backendPayload.profile_picture_url = params.profile_picture_url;
+  }
+
+  if (params.medicalCenter !== undefined) {
+    backendPayload.medicalCenter = params.medicalCenter;
   }
 
   if (params.preview_images !== undefined) {

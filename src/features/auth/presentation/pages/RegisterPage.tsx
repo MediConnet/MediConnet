@@ -76,7 +76,6 @@ type ServiceType =
 
 const serviceTypes: ServiceType[] = [
   "doctor",
-  "clinic",
   "pharmacy",
   "lab",
   "ambulance",
@@ -123,7 +122,8 @@ export const RegisterPage = () => {
   const invitationTokenFromQuery = searchParams.get("invitation");
   const emailFromInvitation = searchParams.get("email") || "";
 
-  const initialType = typeFromQuery;
+  // Omitir clínica si viene por parámetro de consulta
+  const initialType = typeFromQuery === "clinic" ? null : typeFromQuery;
   const [step, setStep] = useState(initialType ? 1 : 0);
   const [selectedType, setSelectedType] = useState<ServiceType | null>(
     initialType,
@@ -225,6 +225,10 @@ export const RegisterPage = () => {
       baseSchema.especialidad = Yup.array()
         .min(1, "Selecciona al menos una especialidad")
         .required("Debe seleccionar al menos una especialidad");
+
+      baseSchema.medicalCenter = Yup.string()
+        .min(3, "Mínimo 3 caracteres")
+        .optional();
     }
     // Lógica para otros proveedores
     else {
@@ -267,6 +271,7 @@ export const RegisterPage = () => {
       tarifaConsulta: "",
       chainId: "",
       yearsOfExperience: "",
+      medicalCenter: "",
     },
     validationSchema:
       step === 1
@@ -347,6 +352,7 @@ export const RegisterPage = () => {
             chainId: selectedType === "pharmacy" ? values.chainId : undefined,
 
             specialties: selectedType === "doctor" ? values.especialidad : [],
+            medicalCenter: selectedType === "doctor" ? values.medicalCenter : undefined,
 
             files: {
               licenses: selectedType === "doctor" ? licenses : [],
@@ -1171,6 +1177,35 @@ export const RegisterPage = () => {
                         startAdornment: (
                           <InputAdornment position="start">
                             <WorkHistoryIcon sx={{ color: "#9ca3af" }} />
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                )}
+
+                {/* CAMPO LUGAR DE ATENCIÓN: Solo para Médicos */}
+                {selectedType === "doctor" && (
+                  <TextField
+                    fullWidth
+                    label="Lugar de atención (Clínica, Hospital o Consultorio)"
+                    name="medicalCenter"
+                    value={formik.values.medicalCenter}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={
+                      formik.touched.medicalCenter &&
+                      Boolean(formik.errors.medicalCenter)
+                    }
+                    helperText={
+                      formik.touched.medicalCenter &&
+                      formik.errors.medicalCenter
+                    }
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <BusinessIcon sx={{ color: "#9ca3af" }} />
                           </InputAdornment>
                         ),
                       },
