@@ -12,7 +12,11 @@ import { CreateDiagnosisModal } from "./modals/CreateDiagnosisModal";
 
 type ViewType = "month" | "week" | "day" | "list";
 
-export const AppointmentsSection = () => {
+interface Props {
+  isAesthetic?: boolean;
+}
+
+export const AppointmentsSection = ({ isAesthetic = false }: Props) => {
   const feedback = useFeedbackStore();
 
   // --- ESTADOS ---
@@ -241,14 +245,14 @@ export const AppointmentsSection = () => {
                 onClick={() => setSelectedDate(dateStr)}
                 className={`
                   bg-white min-h-[120px] p-2 cursor-pointer transition-all border-r border-b border-gray-200 last:border-r-0 relative
-                  ${isSelected ? "bg-blue-50 ring-2 ring-blue-500 ring-inset" : ""}
+                  ${isSelected ? (isAesthetic ? "bg-pink-50 ring-2 ring-pink-500 ring-inset" : "bg-blue-50 ring-2 ring-blue-500 ring-inset") : ""}
                   ${isToday && !isSelected ? "bg-yellow-50" : ""}
                   hover:bg-gray-50
                 `}
               >
                 <div className="flex justify-end mb-1">
                   <span
-                    className={`text-sm font-semibold px-1.5 py-0.5 rounded ${isSelected ? "text-blue-700 bg-blue-100" : isToday ? "text-yellow-700 bg-yellow-100" : "text-gray-800"}`}
+                    className={`text-sm font-semibold px-1.5 py-0.5 rounded ${isSelected ? (isAesthetic ? "text-pink-700 bg-pink-100" : "text-blue-700 bg-blue-100") : isToday ? "text-yellow-700 bg-yellow-100" : "text-gray-800"}`}
                   >
                     {d}
                   </span>
@@ -262,7 +266,9 @@ export const AppointmentsSection = () => {
                           ? "bg-teal-500"
                           : apt.status === "CANCELLED"
                             ? "bg-red-500"
-                            : "bg-blue-500"
+                            : isAesthetic
+                              ? "bg-[#db2777]"
+                              : "bg-blue-500"
                       }`}
                       title={`${apt.time} - ${apt.patientName}`}
                     >
@@ -576,7 +582,13 @@ export const AppointmentsSection = () => {
               <button
                 key={v}
                 onClick={() => setView(v)}
-                className={`px-4 py-2 text-sm rounded-md transition-all font-medium ${view === v ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                className={`px-4 py-2 text-sm rounded-md transition-all font-medium ${
+                  view === v
+                    ? isAesthetic
+                      ? "bg-[#db2777] text-white shadow-sm font-bold"
+                      : "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
               >
                 {v === "month"
                   ? "Mes"
@@ -593,7 +605,7 @@ export const AppointmentsSection = () => {
         {/* Contenido Principal */}
         {loading ? (
           <div className="p-20 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${isAesthetic ? "border-pink-600" : "border-blue-500"} mx-auto mb-4`}></div>
             <p className="text-gray-500">Cargando citas...</p>
           </div>
         ) : (

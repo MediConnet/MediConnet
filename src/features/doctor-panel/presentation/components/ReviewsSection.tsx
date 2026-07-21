@@ -4,7 +4,11 @@ import { DataGrid, type GridColDef, type GridPaginationModel } from "@mui/x-data
 import { useState } from "react";
 import { useDoctorReviews } from "../hooks/useDoctorReviews";
 
-export const ReviewsSection = () => {
+interface Props {
+  isAesthetic?: boolean;
+}
+
+export const ReviewsSection = ({ isAesthetic = false }: Props) => {
   const {
     reviews = [],
     loading,
@@ -30,7 +34,7 @@ export const ReviewsSection = () => {
   const columns: GridColDef[] = [
     {
       field: "userName",
-      headerName: "Paciente",
+      headerName: isAesthetic ? "Cliente" : "Paciente",
       flex: 1,
       minWidth: 180,
     },
@@ -74,7 +78,7 @@ export const ReviewsSection = () => {
   if (loading) {
     return (
       <Box className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex justify-center items-center min-h-[200px]">
-        <CircularProgress />
+        <CircularProgress sx={{ color: isAesthetic ? "#db2777" : undefined }} />
       </Box>
     );
   }
@@ -83,7 +87,9 @@ export const ReviewsSection = () => {
     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-bold text-gray-800">Reseñas de Pacientes</h3>
+          <h3 className={`text-xl font-bold ${isAesthetic ? "text-[#831843]" : "text-gray-800"}`}>
+            {isAesthetic ? "Reseñas de Clientes" : "Reseñas de Pacientes"}
+          </h3>
           <p className="text-sm text-gray-500 mt-1">
             Valoraciones recibidas desde la aplicación móvil
           </p>
@@ -106,7 +112,7 @@ export const ReviewsSection = () => {
             Aún no tienes reseñas
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Las reseñas de tus pacientes aparecerán aquí
+            {isAesthetic ? "Las reseñas de tus clientes aparecerán aquí" : "Las reseñas de tus pacientes aparecerán aquí"}
           </Typography>
         </Box>
       ) : (

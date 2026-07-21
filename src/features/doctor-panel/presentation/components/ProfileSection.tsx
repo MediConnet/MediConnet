@@ -57,6 +57,7 @@ import { ImageCropperModal } from "../../../../shared/components/ImageCropperMod
 interface ProfileSectionProps {
   data: DoctorDashboard;
   onUpdate?: (updatedData: DoctorDashboard) => void;
+  isAesthetic?: boolean;
 }
 
 // Configuración del menú desplegable del Select
@@ -148,7 +149,7 @@ const validateLocationData = (data: { latitude?: string; longitude?: string; goo
   }
 };
 
-export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
+export const ProfileSection = ({ data, onUpdate, isAesthetic }: ProfileSectionProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [_, setSearchParams] = useSearchParams();
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -160,6 +161,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const [cropperMode, setCropperMode] = useState<"avatar" | "gallery">("avatar");
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [savingImages, setSavingImages] = useState(false);
+  const [localDoctor, setLocalDoctor] = useState<any>(null);
 
   // Usar hook de React Query para especialidades
   const { data: specialtiesList = [], isLoading: loadingSpecialties } = useSpecialties();
@@ -173,6 +175,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const { user } = authStore;
   const feedback = useFeedbackStore();
   const { mutateAsync: updateProfile, isPending: saving } = useUpdateDoctorProfile();
+  const appThemeColor = isAesthetic ? "#db2777" : "#0d9488";
 
   // Estado del formulario actual
   const [formData, setFormData] = useState({
@@ -204,6 +207,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
   useEffect(() => {
     if (data?.doctor) {
+      setLocalDoctor(data.doctor);
       // --- LÓGICA DE ESPECIALIDADES ROBUSTA ---
       let incomingSpecialty: string[] = [];
 
@@ -500,6 +504,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
         setIsUsingDefaultSchedule(false);
         setInitialFormData(formData);
         setNewImageBase64(null);
+        if (updatedData.doctor) {
+          setLocalDoctor(updatedData.doctor);
+        }
         // Actualizar imagen de perfil con la URL de Cloudinary retornada
         const returnedImage = (updatedData.doctor as any)?.profile_picture_url;
         if (returnedImage) setProfileImage(returnedImage);
@@ -641,7 +648,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
   // Usar datos por defecto si no existen (para usuarios nuevos)
   // Esto permite que el formulario se muestre vacío en lugar de "Cargando..."
-  const doctor = data?.doctor || {
+  const doctor = localDoctor || data?.doctor || {
     name: user?.name || "",
     specialty: "",
     email: user?.email || "",
@@ -653,7 +660,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     profileStatus: "draft" as ProfileStatus,
     paymentMethods: "both" as PaymentMethod,
   };
-  const appThemeColor = "#06b6d4";
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -671,7 +677,11 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
           {!isEditing ? (
             <button
               onClick={handleEdit}
-              className="bg-teal-50 text-teal-600 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-teal-100 transition-colors"
+              className={
+                isAesthetic
+                  ? "bg-pink-50 text-pink-600 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-pink-100 transition-colors font-semibold"
+                  : "bg-teal-50 text-teal-600 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-teal-100 transition-colors"
+              }
             >
               <Edit className="text-sm" />
               <span className="text-sm font-medium">Editar</span>
@@ -680,10 +690,12 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
             <button
               onClick={handleSave}
               disabled={isSaveDisabled}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-semibold ${
                 isSaveDisabled
                   ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : "bg-teal-600 text-white hover:bg-teal-700"
+                  : isAesthetic
+                    ? "bg-pink-600 text-white hover:bg-pink-700"
+                    : "bg-teal-600 text-white hover:bg-teal-700"
               }`}
             >
               {saving ? (
@@ -719,7 +731,11 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                         key={idx}
                         label={spec}
                         size="small"
-                        sx={{ backgroundColor: "#e0f2f1", color: "#00695c" }}
+                        sx={
+                          isAesthetic
+                            ? { backgroundColor: "#fce4ec", color: "#be185d", fontWeight: 600 }
+                            : { backgroundColor: "#e0f2f1", color: "#00695c" }
+                        }
                       />
                     ) : (
                       <span>-</span>
@@ -1299,7 +1315,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   }
                   className="w-full"
                 >
-                  {(['card', 'cash', 'both'] as const).map((method) => (
+                  {(isAesthetic ? (['cash'] as const) : (['card', 'cash', 'both'] as const)).map((method) => (
                     <MenuItem key={method} value={method}>
                       {method === 'card' ? 'Solo Tarjeta' : method === 'cash' ? 'Solo Presencial' : 'Tarjeta y Presencial'}
                     </MenuItem>
@@ -1839,7 +1855,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                     style={{ backgroundColor: appThemeColor }}
                   >
                     <Visibility sx={{ fontSize: 20 }} />
-                    <span>Ver Médico</span>
+                    <span>{isAesthetic ? "Ver Centro Estético" : "Ver Médico"}</span>
                   </div>
                 </div>
               </div>

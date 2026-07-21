@@ -20,6 +20,7 @@ export function normalizeProviderType(
   const key = value.trim().toLowerCase();
   if (CLINIC_PROVIDER_ALIASES.has(key)) return CLINICS_PROVIDER_TYPE;
   if (key === "lab") return "laboratory";
+  if (key === "estetica" || key === "centro_estetico" || key === "aesthetic") return "aesthetic";
   return key;
 }
 

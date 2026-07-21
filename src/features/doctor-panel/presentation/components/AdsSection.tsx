@@ -6,7 +6,7 @@ import {
   Refresh,
   Send,
 } from "@mui/icons-material";
-import { Box, Typography, Chip } from "@mui/material";
+import { Box, Typography, Chip, TextField, Stack } from "@mui/material";
 import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import { DataGrid, type GridColDef, type GridPaginationModel } from "@mui/x-data-grid";
 import { useState } from "react";
@@ -21,13 +21,24 @@ import { PromotionalBanner } from "../../../../shared/components/PromotionalBann
 import { useAdRequest } from "../../../../shared/hooks/useAdRequest";
 import { useDoctorAds } from "../hooks/useDoctorAds";
 
+const STATUS_TABS = [
+  { value: "", label: "Todos" },
+  { value: "PENDING", label: "Pendientes" },
+  { value: "APPROVED", label: "Aprobados" },
+  { value: "REJECTED", label: "Rechazados" },
+];
+
 const STATUS_LABELS: Record<string, { label: string; color: "success" | "warning" | "error" | "default" }> = {
   APPROVED: { label: "Aprobado", color: "success" },
   PENDING: { label: "Pendiente", color: "warning" },
   REJECTED: { label: "Rechazado", color: "error" },
 };
 
-export const AdsSection = () => {
+interface Props {
+  isAesthetic?: boolean;
+}
+
+export const AdsSection = ({ isAesthetic = false }: Props) => {
   const {
     pendingRequest,
     hasActiveAd,
@@ -71,7 +82,26 @@ export const AdsSection = () => {
     setLimit(model.pageSize);
   };
 
-  const adsList = ads.length > 0 ? ads : activeAd ? [activeAd] : [];
+  const [selectedStatusTab, setSelectedStatusTab] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+
+  const rawAdsList = ads.length > 0 ? ads : activeAd ? [activeAd] : [];
+
+  const filteredAds = rawAdsList.filter((ad) => {
+    if (selectedStatusTab && ad.status !== selectedStatusTab) {
+      return false;
+    }
+    const dStart = ad.start_date || ad.startDate;
+    if (dateFrom && dStart && new Date(dStart) < new Date(dateFrom)) {
+      return false;
+    }
+    const dEnd = ad.end_date || ad.endDate;
+    if (dateTo && dEnd && new Date(dEnd) > new Date(dateTo)) {
+      return false;
+    }
+    return true;
+  });
 
   const handleRequestPermission = async (adData: {
     label: string;
@@ -163,7 +193,7 @@ export const AdsSection = () => {
     return (
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div className="flex items-center justify-center py-16">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+          <div className={`animate-spin rounded-full h-8 w-8 border-b-2 ${isAesthetic ? "border-pink-600" : "border-teal-600"}`}></div>
         </div>
       </div>
     );
@@ -174,8 +204,8 @@ export const AdsSection = () => {
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-xl font-bold text-gray-800">
-              Anuncios Promocionales
+            <h3 className={`text-xl font-bold ${isAesthetic ? "text-[#831843]" : "text-gray-800"}`}>
+              {isAesthetic ? "Anuncios y Promociones del Centro Estético" : "Anuncios Promocionales"}
             </h3>
             <p className="text-sm text-gray-500 mt-1">
               Gestiona los anuncios que aparecerán en la app móvil
@@ -199,7 +229,9 @@ export const AdsSection = () => {
                 ${
                   hasActiveAd || pendingRequest || isCreating
                     ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-teal-600 text-white hover:bg-teal-700 shadow-sm"
+                    : isAesthetic
+                      ? "bg-[#db2777] text-white hover:bg-[#be185d] shadow-sm"
+                      : "bg-teal-600 text-white hover:bg-teal-700 shadow-sm"
                 }
               `}
             >
@@ -223,6 +255,66 @@ export const AdsSection = () => {
             </button>
           </div>
         </div>
+
+        {/* BARRA DE FILTROS (ESTADOS Y FECHAS) */}
+        <Box sx={{ mb: 4, display: "flex", flexDirection: "column", gap: 2 }}>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            {STATUS_TABS.map((tab) => {
+              const isSelected = selectedStatusTab === tab.value;
+              return (
+                <Chip
+                  key={tab.value}
+                  label={tab.label}
+                  onClick={() => setSelectedStatusTab(tab.value)}
+                  sx={{
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    backgroundColor: isSelected
+                      ? isAesthetic
+                        ? "#db2777"
+                        : "#0d9488"
+                      : "#ffffff",
+                    color: isSelected ? "#ffffff" : "#4b5563",
+                    border: "1px solid",
+                    borderColor: isSelected
+                      ? isAesthetic
+                        ? "#db2777"
+                        : "#0d9488"
+                      : "#e5e7eb",
+                    "&:hover": {
+                      backgroundColor: isSelected
+                        ? isAesthetic
+                          ? "#be185d"
+                          : "#0f766e"
+                        : "#f9fafb",
+                    },
+                  }}
+                />
+              );
+            })}
+          </Stack>
+
+          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap>
+            <TextField
+              label="Desde"
+              type="date"
+              size="small"
+              InputLabelProps={{ shrink: true }}
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              sx={{ width: 170 }}
+            />
+            <TextField
+              label="Hasta"
+              type="date"
+              size="small"
+              InputLabelProps={{ shrink: true }}
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              sx={{ width: 170 }}
+            />
+          </Stack>
+        </Box>
 
         {pendingRequest && (
           <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
@@ -252,14 +344,14 @@ export const AdsSection = () => {
           </div>
         )}
 
-        {adsList.length === 0 && !isLoading ? (
+        {filteredAds.length === 0 && !isLoading ? (
           <div className="mt-2">
             <AdsEmptyState />
           </div>
         ) : (
           <Box sx={{ height: 450, width: "100%" }}>
             <DataGrid
-              rows={adsList}
+              rows={filteredAds}
               columns={columns}
               loading={adsLoading}
               paginationMode="server"

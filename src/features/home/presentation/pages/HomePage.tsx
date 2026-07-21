@@ -26,6 +26,7 @@ import {
   Lock,
   Description,
   Shield,
+  Spa as SpaIcon,
 } from '@mui/icons-material';
 import { ROUTES } from '../../../../app/config/constants';
 import { TermsModal } from '../../../../shared/components/TermsModal';
@@ -438,11 +439,11 @@ export const HomePage = () => {
                 borderColor: '#06b6d4',
               },
               {
-                icon: <LocalHospital sx={{ fontSize: 40 }} />,
-                title: 'Clínicas',
-                description: 'Administra médicos, agenda centralizada y recepción',
-                color: '#14b8a6',
-                borderColor: '#14b8a6',
+                icon: <SpaIcon sx={{ fontSize: 40 }} />,
+                title: 'Centros Estéticos',
+                description: 'Tratamientos estéticos, faciales, corporales y bienestar',
+                color: '#ec4899',
+                borderColor: '#ec4899',
               },
               {
                 icon: <LocalPharmacy sx={{ fontSize: 40 }} />,

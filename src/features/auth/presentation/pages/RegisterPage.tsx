@@ -20,6 +20,7 @@ import {
   Science,
   WhatsApp as WhatsAppIcon,
   WorkHistory as WorkHistoryIcon,
+  Spa as SpaIcon,
 } from "@mui/icons-material";
 import {
   Autocomplete,
@@ -72,10 +73,12 @@ type ServiceType =
   | "lab"
   | "ambulance"
   | "supplies"
-  | "clinic";
+  | "clinic"
+  | "aesthetic";
 
 const serviceTypes: ServiceType[] = [
   "doctor",
+  "aesthetic",
   "pharmacy",
   "lab",
   "ambulance",
@@ -89,6 +92,7 @@ const serviceLabels: Record<ServiceType, string> = {
   lab: "Laboratorio",
   ambulance: "Ambulancia",
   supplies: "Insumos Médicos",
+  aesthetic: "Centro Estético",
 };
 
 const serviceDescriptions: Record<ServiceType, string> = {
@@ -98,6 +102,7 @@ const serviceDescriptions: Record<ServiceType, string> = {
   lab: "Análisis clínicos y estudios de laboratorio",
   ambulance: "Servicios de emergencia y traslados médicos",
   supplies: "Equipos médicos, suministros y material sanitario",
+  aesthetic: "Tratamientos estéticos, faciales, corporales y bienestar",
 };
 
 const serviceIcons: Record<ServiceType, React.ReactNode> = {
@@ -107,6 +112,7 @@ const serviceIcons: Record<ServiceType, React.ReactNode> = {
   lab: <Science sx={{ fontSize: 40 }} />,
   ambulance: <LocalShipping sx={{ fontSize: 40 }} />,
   supplies: <Inventory sx={{ fontSize: 40 }} />,
+  aesthetic: <SpaIcon sx={{ fontSize: 40 }} />,
 };
 
 export const RegisterPage = () => {

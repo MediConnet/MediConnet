@@ -280,7 +280,7 @@ export const getDoctorDashboardAPI = async (userId: string): Promise<DoctorDashb
     : (provider.specialty || provider.specialties || "Médico");
 
   return {
-    visits: backendData.totalAppointments || 0,
+    visits: provider.profile_views ?? backendData.totalAppointments ?? 0,
     contacts: 0,
     reviews: backendData.totalReviews || 0,
     rating: backendData.averageRating || 0,
@@ -299,7 +299,9 @@ export const getDoctorDashboardAPI = async (userId: string): Promise<DoctorDashb
       isActive: provider.verification_status === 'APPROVED',
       profileStatus: provider.is_active ? 'published' : 'draft',
       paymentMethods: mapBackendPaymentsToFrontend(provider.payment_methods || []),
-      workSchedule: mapBackendScheduleToFrontend(provider.schedules || []), 
+      workSchedule: mapBackendScheduleToFrontend(provider.schedules || []),
+      profile_picture_url: provider.profile_picture_url || provider.logoUrl || provider.logo_url || null,
+      preview_images: provider.preview_images || provider.documents || [],
     },
     // ⭐ Información de clínica si el médico está asociado
     clinic: (backendData as any).clinic ? {
