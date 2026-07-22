@@ -1,3 +1,4 @@
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   Box,
@@ -37,8 +38,10 @@ import { AestheticServicesTab } from "../components/AestheticServicesTab";
 import { AdsSection } from "../../../doctor-panel/presentation/components/AdsSection";
 import { ReviewsSection } from "../../../doctor-panel/presentation/components/ReviewsSection";
 import { AppointmentsSection } from "../../../doctor-panel/presentation/components/AppointmentsSection";
+import { onRealtimeEvent } from "../../../../shared/realtime/realtimeEvents";
 import { PatientsSection } from "../../../doctor-panel/presentation/components/PatientsSection";
 import { SettingsSection } from "../../../doctor-panel/presentation/components/SettingsSection";
+import { getAppointmentsAPI } from "../../../doctor-panel/infrastructure/appointments.api";
 
 type TabType =
   | "dashboard"
@@ -57,6 +60,28 @@ export const AestheticDashboardPage = () => {
   const { data: dashboardData, refetch: refetchDashboard } = useDoctorDashboard();
   const { profileData, refetch: refetchProfile } = useDoctorProfile();
 
+  // Estado dinámico para citas reales
+  const [appointments, setAppointments] = useState<any[]>([]);
+
+  const fetchAestheticAppointments = async () => {
+    try {
+      const res = await getAppointmentsAPI();
+      setAppointments(res.data ?? []);
+    } catch (err) {
+      console.error("Error cargando citas para el dashboard:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchAestheticAppointments();
+    const off = onRealtimeEvent(({ name }) => {
+      if (name === "appointment:created" || name === "appointment:updated") {
+        fetchAestheticAppointments();
+      }
+    });
+    return off;
+  }, []);
+
   const currentTab = (searchParams.get("tab") || "dashboard") as TabType;
 
   const displayData =
@@ -72,59 +97,81 @@ export const AestheticDashboardPage = () => {
     isActive: true,
   };
 
+  // Citas para la campana de notificaciones del Header
+  const headerAppointments = useMemo(() => {
+    return appointments
+      .filter((apt) => apt.status === "CONFIRMED" || apt.status === "PENDING")
+      .map((apt) => ({
+        id: apt.id,
+        patientName: apt.patientName || apt.patient_name || apt.patient?.user?.name || "Cliente",
+        date: apt.date || (apt.scheduledFor ? new Date(apt.scheduledFor).toISOString().split("T")[0] : ""),
+        time: apt.time || (apt.scheduledFor ? new Date(apt.scheduledFor).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }) : ""),
+        reason: apt.service_name || apt.specialty || apt.reason || "Tratamiento Estético",
+      }));
+  }, [appointments]);
+
   // Métricas reales del proveedor
   const visits = (user as any)?.provider?.profile_views || 0;
   const contacts = 0;
   const reviews = 0;
   const rating = 5.0;
 
-  const appointmentsByWeek = [2, 14, 8, 3];
+  // Cálculo dinámico de citas por semana
+  const appointmentsByWeek = useMemo(() => {
+    const weekData = [0, 0, 0, 0];
+    appointments.forEach((apt) => {
+      const date = new Date(apt.date || apt.created_at);
+      const weekAgo = Math.floor(
+        (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24 * 7),
+      );
+      if (weekAgo >= 0 && weekAgo < 4) {
+        weekData[weekAgo] = (weekData[weekAgo] || 0) + 1;
+      }
+    });
+    return weekData.reverse();
+  }, [appointments]);
+
   const maxAppointments = Math.max(...appointmentsByWeek, 1);
 
-  const appointmentStatus = {
-    completed: 18,
-    pending: 7,
-    cancelled: 2,
-  };
-  const totalAppointments = 27;
+  // Distribución dinámica de estados
+  const appointmentStatus = useMemo(() => {
+    const statusCount = {
+      completed: 0,
+      pending: 0,
+      cancelled: 0,
+    };
+    appointments.forEach((apt) => {
+      if (apt.status === "COMPLETED") statusCount.completed++;
+      else if (apt.status === "CONFIRMED" || apt.status === "PENDING")
+        statusCount.pending++;
+      else if (apt.status === "CANCELLED") statusCount.cancelled++;
+    });
+    return statusCount;
+  }, [appointments]);
 
-  const recentAppointments = [
-    {
-      id: "1",
-      clientName: "María Fernánda López",
-      service: "Limpieza Facial Profunda",
-      date: "2026-07-21",
-      time: "10:30 AM",
-      status: "CONFIRMED",
-    },
-    {
-      id: "2",
-      clientName: "Carla Benítez",
-      service: "Masaje Relajante Corporal",
-      date: "2026-07-21",
-      time: "03:00 PM",
-      status: "COMPLETED",
-    },
-    {
-      id: "3",
-      clientName: "Valeria Gómez",
-      service: "Peeling Químico Renovador",
-      date: "2026-07-20",
-      time: "11:00 AM",
-      status: "COMPLETED",
-    },
-    {
-      id: "4",
-      clientName: "Andrea Morales",
-      service: "Depilación Láser Diodo",
-      date: "2026-07-19",
-      time: "04:30 PM",
-      status: "CANCELLED",
-    },
-  ];
+  const totalAppointments = appointments.length;
+
+  // Citas recientes dinámicas
+  const recentAppointments = useMemo(() => {
+    return appointments.slice(0, 5).map((apt) => ({
+      id: apt.id,
+      clientName: apt.patientName || apt.patient_name || apt.patient?.user?.name || "Cliente",
+      service: apt.service_name || apt.specialty || apt.reason || "Tratamiento Estético",
+      date: apt.date,
+      time: apt.time,
+      status: apt.status,
+    }));
+  }, [appointments]);
 
   return (
-    <DashboardLayout role="PROVIDER" userProfile={userProfile}>
+    <DashboardLayout
+      role="PROVIDER"
+      userProfile={userProfile}
+      appointments={headerAppointments}
+      notificationsVariant="professional"
+      agendaPath="/dashboard/estetica?tab=agenda"
+      onRefreshNotifications={fetchAestheticAppointments}
+    >
       {/* ── TOP STATS CARDS (Matching Doctor Dashboard Style) ── */}
       {currentTab === "dashboard" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">

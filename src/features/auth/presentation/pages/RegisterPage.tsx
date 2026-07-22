@@ -161,7 +161,7 @@ export const RegisterPage = () => {
   const requireDocs = publicSettings?.requireBackupDocuments ?? true;
 
   const cities = citiesData;
-  const specialtiesList = selectedType === "doctor" ? specialtiesData : [];
+  const specialtiesList = (selectedType === "doctor" || selectedType === "aesthetic") ? specialtiesData : [];
 
   const goHome = () => {
     setShowSuccessModal(false);
@@ -221,7 +221,7 @@ export const RegisterPage = () => {
       tarifaConsulta: Yup.string(),
     };
 
-    if (selectedType === "doctor") {
+    if (selectedType === "doctor" || selectedType === "aesthetic") {
       baseSchema.yearsOfExperience = Yup.string()
         .matches(/^\d+$/, "Solo números")
         .required("Los años de experiencia son obligatorios");
@@ -324,7 +324,7 @@ export const RegisterPage = () => {
           // 3. Lógica de Nombre del Servicio
           let finalServiceName: string | undefined = values.nombreServicio;
 
-          if (selectedType === "doctor") {
+          if (selectedType === "doctor" || selectedType === "aesthetic") {
             finalServiceName = values.nombreCompleto;
           } else if (selectedType === "pharmacy" && values.chainId) {
             finalServiceName = undefined;
@@ -350,20 +350,20 @@ export const RegisterPage = () => {
             cityId: values.cityId,
             city: selectedCity?.name || "",
             description: values.descripcion,
-            price: selectedType === "doctor" ? values.tarifaConsulta : "",
+            price: (selectedType === "doctor" || selectedType === "aesthetic") ? values.tarifaConsulta : "",
 
             yearsOfExperience:
-              selectedType === "doctor" ? values.yearsOfExperience : "",
+              (selectedType === "doctor" || selectedType === "aesthetic") ? values.yearsOfExperience : "",
 
             chainId: selectedType === "pharmacy" ? values.chainId : undefined,
 
-            specialties: selectedType === "doctor" ? values.especialidad : [],
+            specialties: (selectedType === "doctor" || selectedType === "aesthetic") ? values.especialidad : [],
             medicalCenter: selectedType === "doctor" ? values.medicalCenter : undefined,
 
             files: {
-              licenses: selectedType === "doctor" ? licenses : [],
-              certificates: selectedType === "doctor" ? certificates : [],
-              titles: selectedType === "doctor" ? professionalTitles : [],
+              licenses: (selectedType === "doctor" || selectedType === "aesthetic") ? licenses : [],
+              certificates: (selectedType === "doctor" || selectedType === "aesthetic") ? certificates : [],
+              titles: (selectedType === "doctor" || selectedType === "aesthetic") ? professionalTitles : [],
             },
           };
 
@@ -1029,7 +1029,7 @@ export const RegisterPage = () => {
                   )}
 
                 {/* SECCIÓN ESPECIALIDADES*/}
-                {selectedType === "doctor" && (
+                {(selectedType === "doctor" || selectedType === "aesthetic") && (
                   <Autocomplete
                     multiple
                     id="especialidades-autocomplete"
@@ -1156,8 +1156,8 @@ export const RegisterPage = () => {
                   )}
                 />
 
-                {/* CAMPO EXPERIENCIA: Solo para Médicos */}
-                {selectedType === "doctor" && (
+                {/* CAMPO EXPERIENCIA: Para Médicos y Centros Estéticos */}
+                {(selectedType === "doctor" || selectedType === "aesthetic") && (
                   <TextField
                     fullWidth
                     required
@@ -1219,7 +1219,7 @@ export const RegisterPage = () => {
                   />
                 )}
 
-                {selectedType === "doctor" && (
+                {(selectedType === "doctor" || selectedType === "aesthetic") && (
                   <TextField
                     fullWidth
                     label="Tarifa de consulta ($)"

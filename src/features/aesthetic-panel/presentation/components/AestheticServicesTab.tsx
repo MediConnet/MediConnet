@@ -158,6 +158,7 @@ export const AestheticServicesTab = () => {
       await updateService({
         id: item.id,
         dto: { is_available: !item.is_available },
+        showFeedback: false,
       });
     } catch (error) {
       console.error("Error al cambiar estado:", error);

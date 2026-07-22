@@ -47,15 +47,49 @@ export const useAestheticServices = () => {
 
   // Mutation: Actualizar tratamiento
   const updateMutation = useMutation({
-    mutationFn: ({ id, dto }: { id: string; dto: Partial<CreateAestheticServiceDTO> }) =>
+    mutationFn: ({ id, dto }: { id: string; dto: Partial<CreateAestheticServiceDTO>; showFeedback?: boolean }) =>
       updateAestheticServiceAPI(id, dto),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["aesthetic", "services"] });
-      feedback.showFeedback("success", "Cambios guardados", "Tratamiento actualizado correctamente.");
+    onMutate: async (newService) => {
+      await queryClient.cancelQueries({ queryKey: ["aesthetic", "services"] });
+      const previousData = queryClient.getQueryData<AestheticServicesResponse>([
+        "aesthetic",
+        "services",
+        user?.id,
+        page,
+        limit,
+      ]);
+
+      if (previousData) {
+        queryClient.setQueryData<AestheticServicesResponse>(
+          ["aesthetic", "services", user?.id, page, limit],
+          {
+            ...previousData,
+            data: previousData.data.map((item) =>
+              item.id === newService.id ? { ...item, ...newService.dto } : item
+            ),
+          }
+        );
+      }
+
+      return { previousData };
     },
-    onError: (err: any) => {
+    onSuccess: (_, variables) => {
+      if (variables.showFeedback !== false) {
+        feedback.showFeedback("success", "Cambios guardados", "Tratamiento actualizado correctamente.");
+      }
+    },
+    onError: (err: any, _, context: any) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(
+          ["aesthetic", "services", user?.id, page, limit],
+          context.previousData
+        );
+      }
       console.error("Error al actualizar tratamiento:", err);
       feedback.showFeedback("error", "Error", "No fue posible actualizar el tratamiento.");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["aesthetic", "services"] });
     },
   });
 
@@ -79,7 +113,7 @@ export const useAestheticServices = () => {
     setPage,
     limit,
     setLimit,
-    isLoading: isLoading || isRefetching,
+    isLoading: isLoading,
     refetch,
     createService: createMutation.mutateAsync,
     isCreating: createMutation.isPending,
