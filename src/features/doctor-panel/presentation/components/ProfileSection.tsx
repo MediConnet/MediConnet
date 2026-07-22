@@ -206,32 +206,33 @@ export const ProfileSection = ({ data, onUpdate, isAesthetic }: ProfileSectionPr
   >(null);
 
   useEffect(() => {
-    if (data?.doctor) {
-      setLocalDoctor(data.doctor);
+    const targetDoctor = data?.doctor || (data && (data.id || data.name || data.commercial_name) ? data : null);
+    if (targetDoctor) {
+      setLocalDoctor(targetDoctor);
       // --- LÓGICA DE ESPECIALIDADES ROBUSTA ---
       let incomingSpecialty: string[] = [];
 
-      if (Array.isArray(data.doctor.specialty)) {
+      if (Array.isArray(targetDoctor.specialty)) {
         // Si ya es un array, lo usamos tal cual
-        incomingSpecialty = data.doctor.specialty as unknown as string[];
+        incomingSpecialty = targetDoctor.specialty as unknown as string[];
       } else if (
-        typeof data.doctor.specialty === "string" &&
-        data.doctor.specialty
+        typeof targetDoctor.specialty === "string" &&
+        targetDoctor.specialty
       ) {
         // Si es un string separado por comas, lo convertimos a array
-        incomingSpecialty = data.doctor.specialty.includes(",")
-          ? data.doctor.specialty.split(",").map((s) => s.trim())
-          : [data.doctor.specialty];
+        incomingSpecialty = targetDoctor.specialty.includes(",")
+          ? targetDoctor.specialty.split(",").map((s: string) => s.trim())
+          : [targetDoctor.specialty];
       }
 
-      const backendSchedule = data.doctor.workSchedule;
+      const backendSchedule = targetDoctor.workSchedule || targetDoctor.schedules;
 
       // Iteramos sobre la plantilla base (Lunes a Viernes)
       const scheduleToUse = DEFAULT_SCHEDULE_TEMPLATE.map((defaultDay) => {
         if (!backendSchedule || backendSchedule.length === 0) return defaultDay;
 
         const found = backendSchedule.find(
-          (s) => s.day.toLowerCase() === defaultDay.day.toLowerCase(),
+          (s: any) => (s.day || "").toLowerCase() === defaultDay.day.toLowerCase(),
         );
 
         if (found) {
@@ -245,24 +246,24 @@ export const ProfileSection = ({ data, onUpdate, isAesthetic }: ProfileSectionPr
       setIsUsingDefaultSchedule(isDefault);
 
       const newFormData = {
-        name: data.doctor.name || "",
+        name: targetDoctor.name || targetDoctor.commercial_name || "",
         specialty: incomingSpecialty,
-        email: data.doctor.email || "",
-        whatsapp: data.doctor.whatsapp || "",
-        address: data.doctor.address || "",
-        latitude: formatCoordinateForInput(data.doctor.latitude, "lat") || "",
-        longitude: formatCoordinateForInput(data.doctor.longitude, "lng") || "",
-        google_maps_url: data.doctor.google_maps_url || "",
-        price: (data.doctor.price || 0).toString(),
-        experience: (data.doctor.experience || 0).toString(),
-        description: data.doctor.description || "",
+        email: targetDoctor.email || "",
+        whatsapp: targetDoctor.whatsapp || targetDoctor.phone || "",
+        address: targetDoctor.address || targetDoctor.address_text || "",
+        latitude: formatCoordinateForInput(targetDoctor.latitude, "lat") || "",
+        longitude: formatCoordinateForInput(targetDoctor.longitude, "lng") || "",
+        google_maps_url: targetDoctor.google_maps_url || "",
+        price: (targetDoctor.price !== undefined ? targetDoctor.price : 0).toString(),
+        experience: (targetDoctor.experience || 0).toString(),
+        description: targetDoctor.description || "",
 
         workSchedule: scheduleToUse,
 
-        isActive: data.doctor.isActive !== false,
-        profileStatus: (data.doctor.profileStatus || "draft") as ProfileStatus,
-        paymentMethods: (data.doctor.paymentMethods || "both") as PaymentMethod,
-        medicalCenter: (data.doctor as any).medical_center || "",
+        isActive: targetDoctor.isActive !== false,
+        profileStatus: (targetDoctor.profileStatus || "published") as ProfileStatus,
+        paymentMethods: (targetDoctor.paymentMethods || "both") as PaymentMethod,
+        medicalCenter: (targetDoctor as any).medical_center || "",
       };
 
       setFormData(newFormData);
@@ -272,10 +273,11 @@ export const ProfileSection = ({ data, onUpdate, isAesthetic }: ProfileSectionPr
 
   // Cargar imagen de perfil y galería desde el backend
   useEffect(() => {
-    if (data?.doctor) {
-      const imgUrl = (data.doctor as any).profile_picture_url || null;
+    const targetDoctor = data?.doctor || (data && (data.id || data.name || data.commercial_name) ? data : null);
+    if (targetDoctor) {
+      const imgUrl = (targetDoctor as any).profile_picture_url || (targetDoctor as any).logo_url || null;
       if (imgUrl) setProfileImage(imgUrl);
-      const imgs: string[] = (data.doctor as any).preview_images || [];
+      const imgs: string[] = (targetDoctor as any).preview_images || (targetDoctor as any).images || [];
       setPreviewImages(imgs);
       setInitialPreviewImages(imgs);
       setCarouselIndex(0);
@@ -648,7 +650,8 @@ export const ProfileSection = ({ data, onUpdate, isAesthetic }: ProfileSectionPr
 
   // Usar datos por defecto si no existen (para usuarios nuevos)
   // Esto permite que el formulario se muestre vacío en lugar de "Cargando..."
-  const doctor = localDoctor || data?.doctor || {
+  const targetDoctor = data?.doctor || (data && (data.id || data.name || data.commercial_name) ? data : null);
+  const doctor = localDoctor || targetDoctor || {
     name: user?.name || "",
     specialty: "",
     email: user?.email || "",
@@ -719,17 +722,20 @@ export const ProfileSection = ({ data, onUpdate, isAesthetic }: ProfileSectionPr
               {/* Especialidades */}
               <div>
                 <label className="text-sm text-gray-600">
-                  Especialidad(es)
+                  {isAesthetic ? "Especialidad(es) / Categoría" : "Especialidad(es)"}
                 </label>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {(Array.isArray(doctor.specialty)
                     ? doctor.specialty
                     : [doctor.specialty]
-                  ).map((spec: any, idx: number) =>
-                    spec ? (
+                  ).map((spec: any, idx: number) => {
+                    const displayLabel = isAesthetic && (spec === "Medicina General" || !spec)
+                      ? "Centro Estético & Spa"
+                      : spec;
+                    return displayLabel ? (
                       <Chip
                         key={idx}
-                        label={spec}
+                        label={displayLabel}
                         size="small"
                         sx={
                           isAesthetic
@@ -738,9 +744,9 @@ export const ProfileSection = ({ data, onUpdate, isAesthetic }: ProfileSectionPr
                         }
                       />
                     ) : (
-                      <span>-</span>
-                    ),
-                  )}
+                      <span key={idx}>-</span>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -786,7 +792,7 @@ export const ProfileSection = ({ data, onUpdate, isAesthetic }: ProfileSectionPr
               </div>
               <div>
                 <label className="text-sm text-gray-600">
-                  Tarifa de consulta
+                  {isAesthetic ? "Tarifa promedio de servicio" : "Tarifa de consulta"}
                 </label>
                 <p className="text-gray-800 font-medium mt-1">
                   ${doctor.price.toFixed(2)}
@@ -1226,7 +1232,7 @@ export const ProfileSection = ({ data, onUpdate, isAesthetic }: ProfileSectionPr
 
               <div>
                 <label className="text-sm text-gray-600 mb-1 block">
-                  Tarifa de consulta ($)
+                  {isAesthetic ? "Tarifa promedio de servicio ($)" : "Tarifa de consulta ($)"}
                 </label>
                 <input
                   type="text"

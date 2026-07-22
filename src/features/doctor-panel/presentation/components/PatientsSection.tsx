@@ -28,7 +28,11 @@ import { useState } from "react";
 import { CustomAvatar } from "../../../../shared/components/CustomAvatar";
 import { usePatients } from "../hooks/usePatients";
 
-export const PatientsSection = () => {
+interface Props {
+  isAesthetic?: boolean;
+}
+
+export const PatientsSection = ({ isAesthetic = false }: Props) => {
   const {
     patients,
     loading,
@@ -92,9 +96,13 @@ export const PatientsSection = () => {
     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-xl font-bold text-gray-800">Pacientes</h3>
+          <h3 className={`text-xl font-bold ${isAesthetic ? "text-[#831843]" : "text-gray-800"}`}>
+            {isAesthetic ? "Recepción y Registro de Clientes" : "Pacientes"}
+          </h3>
           <p className="text-sm text-gray-500 mt-1">
-            Historial de pacientes atendidos y sus citas
+            {isAesthetic
+              ? "Historial de clientes atendidos, reservas y su registro de asistencia"
+              : "Historial de pacientes atendidos y sus citas"}
           </p>
         </div>
       </div>
@@ -102,7 +110,7 @@ export const PatientsSection = () => {
       {/* Buscador */}
       <TextField
         fullWidth
-        placeholder="Buscar por nombre, teléfono o email..."
+        placeholder={isAesthetic ? "Buscar cliente por nombre, teléfono o email..." : "Buscar por nombre, teléfono o email..."}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         sx={{ mb: 3 }}
@@ -125,16 +133,20 @@ export const PatientsSection = () => {
       >
         <Table>
           <TableHead>
-            <TableRow sx={{ bgcolor: "#f9fafb" }}>
-              <TableCell sx={{ fontWeight: 600 }}>Paciente</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Contacto</TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="center">
+            <TableRow sx={{ bgcolor: isAesthetic ? "#fdf2f8" : "#f9fafb" }}>
+              <TableCell sx={{ fontWeight: 600, color: isAesthetic ? "#831843" : undefined }}>
+                {isAesthetic ? "Cliente" : "Paciente"}
+              </TableCell>
+              <TableCell sx={{ fontWeight: 600, color: isAesthetic ? "#831843" : undefined }}>
+                Contacto
+              </TableCell>
+              <TableCell sx={{ fontWeight: 600, color: isAesthetic ? "#831843" : undefined }} align="center">
                 Total Citas
               </TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="center">
+              <TableCell sx={{ fontWeight: 600, color: isAesthetic ? "#831843" : undefined }} align="center">
                 Última Cita
               </TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="center">
+              <TableCell sx={{ fontWeight: 600, color: isAesthetic ? "#831843" : undefined }} align="center">
                 Acciones
               </TableCell>
             </TableRow>
@@ -143,9 +155,9 @@ export const PatientsSection = () => {
             {loading ? (
               <TableRow>
                 <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
-                  <CircularProgress size={30} />
+                  <CircularProgress size={30} sx={{ color: isAesthetic ? "#db2777" : undefined }} />
                   <Typography variant="body2" color="text.secondary" mt={2}>
-                    Cargando pacientes...
+                    {isAesthetic ? "Cargando clientes..." : "Cargando pacientes..."}
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -153,7 +165,7 @@ export const PatientsSection = () => {
               <TableRow>
                 <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
                   <Typography color="text.secondary">
-                    No se encontraron pacientes
+                    {isAesthetic ? "No se encontraron clientes" : "No se encontraron pacientes"}
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -375,12 +387,12 @@ export const PatientsSection = () => {
       <div className="flex flex-col md:flex-row items-center justify-between mt-4 gap-4">
         <Box
           p={1.5}
-          bgcolor="#f0fdfa"
+          bgcolor={isAesthetic ? "#fdf2f8" : "#f0fdfa"}
           borderRadius={2}
-          border="1px solid #ccfbf1"
+          border={isAesthetic ? "1px solid #fbcfe8" : "1px solid #ccfbf1"}
         >
           <Typography variant="body2" color="text.secondary">
-            Total pacientes encontrados: <strong>{totalPatients}</strong>
+            {isAesthetic ? "Total clientes encontrados:" : "Total pacientes encontrados:"} <strong>{totalPatients}</strong>
           </Typography>
         </Box>
 
@@ -392,6 +404,17 @@ export const PatientsSection = () => {
           showFirstButton
           showLastButton
           disabled={loading}
+          sx={
+            isAesthetic
+              ? {
+                  "& .MuiPaginationItem-root.Mui-selected": {
+                    backgroundColor: "#db2777",
+                    color: "#ffffff",
+                    "&:hover": { backgroundColor: "#be185d" },
+                  },
+                }
+              : undefined
+          }
         />
       </div>
     </div>

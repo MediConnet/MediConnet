@@ -37,6 +37,8 @@ import { AestheticServicesTab } from "../components/AestheticServicesTab";
 import { AdsSection } from "../../../doctor-panel/presentation/components/AdsSection";
 import { ReviewsSection } from "../../../doctor-panel/presentation/components/ReviewsSection";
 import { AppointmentsSection } from "../../../doctor-panel/presentation/components/AppointmentsSection";
+import { PatientsSection } from "../../../doctor-panel/presentation/components/PatientsSection";
+import { SettingsSection } from "../../../doctor-panel/presentation/components/SettingsSection";
 
 type TabType =
   | "dashboard"
@@ -506,7 +508,7 @@ export const AestheticDashboardPage = () => {
         )}
 
         {/* TAB 2: PROFILE */}
-        {currentTab === "profile" && (
+        {currentTab === "profile" && displayData && (
           <ProfileSection
             data={displayData}
             isAesthetic={true}
@@ -529,43 +531,11 @@ export const AestheticDashboardPage = () => {
         {/* TAB 6: REVIEWS / RESEÑAS */}
         {currentTab === "reviews" && <ReviewsSection isAesthetic={true} />}
 
-        {/* TAB 5: RECEPTION */}
-        {currentTab === "reception" && (
-          <Paper sx={{ p: 4, borderRadius: 3, border: "1px solid #e5e7eb" }} elevation={0}>
-            <Typography variant="h5" fontWeight={700} mb={2} color="#831843">
-              Recepción y Control Diario de Asistencia
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Registra el ingreso de los clientes al centro estético y confirma el cobro directo presencial.
-            </Typography>
-          </Paper>
-        )}
+        {/* TAB 7: RECEPTION (PATIENTS & CLIENTS CONTROL) */}
+        {currentTab === "reception" && <PatientsSection isAesthetic={true} />}
 
-        {/* TAB 6: SCHEDULES */}
-        {currentTab === "schedules" && (
-          <Paper sx={{ p: 4, borderRadius: 3, border: "1px solid #e5e7eb" }} elevation={0}>
-            <Typography variant="h5" fontWeight={700} mb={2} color="#831843">
-              Configuración de Horarios de Atención y Descansos
-            </Typography>
-            <Typography variant="body2" color="text.secondary" mb={3}>
-              Define la jornada de trabajo diaria y los turnos de receso/almuerzo del centro estético.
-            </Typography>
-
-            <Grid container spacing={2}>
-              {["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"].map((day, idx) => (
-                <Grid item xs={12} sm={6} key={idx}>
-                  <Box p={2} border="1px solid #E5E7EB" borderRadius={2} display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography fontWeight={600}>{day}</Typography>
-                    <Box textAlign="right">
-                      <Typography variant="body2" color="#059669" fontWeight={600}>09:00 - 19:00</Typography>
-                      <Typography variant="caption" color="text.secondary">Receso: 13:00 - 14:00</Typography>
-                    </Box>
-                  </Box>
-                </Grid>
-              ))}
-            </Grid>
-          </Paper>
-        )}
+        {/* TAB 8: SCHEDULES / CONFIGURACIÓN DE HORARIOS */}
+        {currentTab === "schedules" && <SettingsSection isAesthetic={true} />}
       </Box>
     </DashboardLayout>
   );

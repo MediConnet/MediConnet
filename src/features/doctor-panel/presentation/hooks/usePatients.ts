@@ -51,6 +51,7 @@ export const usePatients = () => {
     limit,
     setLimit,
     total,
+    totalPatients: total,
     totalPages: Math.ceil(total / limit) || 1,
     search,
     setSearch: handleSearchChange,
