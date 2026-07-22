@@ -75,6 +75,7 @@ import { SupplyStoreDetailPage } from "../../features/supplies-panel/presentatio
 // Pages - Clínica
 import { ClinicDashboardPage } from "../../features/clinic/pages/ClinicDashboardPage";
 import { ClinicInvitationPage } from "../../features/association/pages/ClinicInvitationPage";
+import { AestheticDashboardPage } from "../../features/aesthetic-panel/presentation/pages/AestheticDashboardPage";
 import { httpClient } from "../../shared/lib/http";
 
 export const AppRouter = () => {
@@ -196,6 +197,19 @@ export const AppRouter = () => {
           }
         >
           <Route path="dashboard" element={<ClinicDashboardPage />} />
+          <Route path="ads" element={<ProviderAdsPage />} />
+        </Route>
+
+        {/* --- Panel de Centro Estético --- */}
+        <Route
+          path="/aesthetic"
+          element={
+            <RoleRoute allowedRoles={["provider", "profesional", "admin"]}>
+              <Outlet />
+            </RoleRoute>
+          }
+        >
+          <Route path="dashboard" element={<AestheticDashboardPage />} />
           <Route path="ads" element={<ProviderAdsPage />} />
         </Route>
 

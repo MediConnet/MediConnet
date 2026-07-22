@@ -167,3 +167,51 @@ export const getAdminTransactionsAPI = async (
   );
   return extractData(response);
 };
+
+export interface AdminRefundRequest {
+  id: string;
+  appointmentId: string | null;
+  externalTransactionId: string;
+  amount: number;
+  createdAt: string;
+  patient: {
+    name: string;
+    identification: string;
+  };
+  doctor: {
+    name: string;
+    specialty: string;
+  };
+  reason: string;
+}
+
+/**
+ * API: Obtener solicitudes de reembolso pendientes
+ * Endpoint: GET /api/admin/payments/refund-requests
+ */
+export const getAdminRefundRequestsAPI = async (): Promise<AdminRefundRequest[]> => {
+  const response = await httpClient.get<{ success: boolean; data: AdminRefundRequest[] }>(
+    '/admin/payments/refund-requests'
+  );
+  return extractData(response) as any; // devuelven array directamente
+};
+
+/**
+ * API: Aprobar reembolso en Nuvei
+ * Endpoint: POST /api/admin/payments/refund-requests/:paymentId/approve
+ */
+export const approveAdminRefundAPI = async (paymentId: string): Promise<void> => {
+  await httpClient.post<{ success: boolean }>(
+    `/admin/payments/refund-requests/${paymentId}/approve`
+  );
+};
+
+/**
+ * API: Rechazar solicitud de reembolso (no devolver fondos)
+ * Endpoint: POST /api/admin/payments/refund-requests/:paymentId/reject
+ */
+export const rejectAdminRefundAPI = async (paymentId: string): Promise<void> => {
+  await httpClient.post<{ success: boolean }>(
+    `/admin/payments/refund-requests/${paymentId}/reject`
+  );
+};

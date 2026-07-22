@@ -20,6 +20,7 @@ import {
   Science,
   WhatsApp as WhatsAppIcon,
   WorkHistory as WorkHistoryIcon,
+  Spa as SpaIcon,
 } from "@mui/icons-material";
 import {
   Autocomplete,
@@ -72,11 +73,12 @@ type ServiceType =
   | "lab"
   | "ambulance"
   | "supplies"
-  | "clinic";
+  | "clinic"
+  | "aesthetic";
 
 const serviceTypes: ServiceType[] = [
   "doctor",
-  "clinic",
+  "aesthetic",
   "pharmacy",
   "lab",
   "ambulance",
@@ -90,6 +92,7 @@ const serviceLabels: Record<ServiceType, string> = {
   lab: "Laboratorio",
   ambulance: "Ambulancia",
   supplies: "Insumos Médicos",
+  aesthetic: "Centro Estético",
 };
 
 const serviceDescriptions: Record<ServiceType, string> = {
@@ -99,6 +102,7 @@ const serviceDescriptions: Record<ServiceType, string> = {
   lab: "Análisis clínicos y estudios de laboratorio",
   ambulance: "Servicios de emergencia y traslados médicos",
   supplies: "Equipos médicos, suministros y material sanitario",
+  aesthetic: "Tratamientos estéticos, faciales, corporales y bienestar",
 };
 
 const serviceIcons: Record<ServiceType, React.ReactNode> = {
@@ -108,6 +112,7 @@ const serviceIcons: Record<ServiceType, React.ReactNode> = {
   lab: <Science sx={{ fontSize: 40 }} />,
   ambulance: <LocalShipping sx={{ fontSize: 40 }} />,
   supplies: <Inventory sx={{ fontSize: 40 }} />,
+  aesthetic: <SpaIcon sx={{ fontSize: 40 }} />,
 };
 
 export const RegisterPage = () => {
@@ -123,7 +128,8 @@ export const RegisterPage = () => {
   const invitationTokenFromQuery = searchParams.get("invitation");
   const emailFromInvitation = searchParams.get("email") || "";
 
-  const initialType = typeFromQuery;
+  // Omitir clínica si viene por parámetro de consulta
+  const initialType = typeFromQuery === "clinic" ? null : typeFromQuery;
   const [step, setStep] = useState(initialType ? 1 : 0);
   const [selectedType, setSelectedType] = useState<ServiceType | null>(
     initialType,
@@ -155,7 +161,7 @@ export const RegisterPage = () => {
   const requireDocs = publicSettings?.requireBackupDocuments ?? true;
 
   const cities = citiesData;
-  const specialtiesList = selectedType === "doctor" ? specialtiesData : [];
+  const specialtiesList = (selectedType === "doctor" || selectedType === "aesthetic") ? specialtiesData : [];
 
   const goHome = () => {
     setShowSuccessModal(false);
@@ -215,7 +221,7 @@ export const RegisterPage = () => {
       tarifaConsulta: Yup.string(),
     };
 
-    if (selectedType === "doctor") {
+    if (selectedType === "doctor" || selectedType === "aesthetic") {
       baseSchema.yearsOfExperience = Yup.string()
         .matches(/^\d+$/, "Solo números")
         .required("Los años de experiencia son obligatorios");
@@ -225,6 +231,10 @@ export const RegisterPage = () => {
       baseSchema.especialidad = Yup.array()
         .min(1, "Selecciona al menos una especialidad")
         .required("Debe seleccionar al menos una especialidad");
+
+      baseSchema.medicalCenter = Yup.string()
+        .min(3, "Mínimo 3 caracteres")
+        .optional();
     }
     // Lógica para otros proveedores
     else {
@@ -267,6 +277,7 @@ export const RegisterPage = () => {
       tarifaConsulta: "",
       chainId: "",
       yearsOfExperience: "",
+      medicalCenter: "",
     },
     validationSchema:
       step === 1
@@ -313,7 +324,7 @@ export const RegisterPage = () => {
           // 3. Lógica de Nombre del Servicio
           let finalServiceName: string | undefined = values.nombreServicio;
 
-          if (selectedType === "doctor") {
+          if (selectedType === "doctor" || selectedType === "aesthetic") {
             finalServiceName = values.nombreCompleto;
           } else if (selectedType === "pharmacy" && values.chainId) {
             finalServiceName = undefined;
@@ -339,19 +350,20 @@ export const RegisterPage = () => {
             cityId: values.cityId,
             city: selectedCity?.name || "",
             description: values.descripcion,
-            price: selectedType === "doctor" ? values.tarifaConsulta : "",
+            price: (selectedType === "doctor" || selectedType === "aesthetic") ? values.tarifaConsulta : "",
 
             yearsOfExperience:
-              selectedType === "doctor" ? values.yearsOfExperience : "",
+              (selectedType === "doctor" || selectedType === "aesthetic") ? values.yearsOfExperience : "",
 
             chainId: selectedType === "pharmacy" ? values.chainId : undefined,
 
-            specialties: selectedType === "doctor" ? values.especialidad : [],
+            specialties: (selectedType === "doctor" || selectedType === "aesthetic") ? values.especialidad : [],
+            medicalCenter: selectedType === "doctor" ? values.medicalCenter : undefined,
 
             files: {
-              licenses: selectedType === "doctor" ? licenses : [],
-              certificates: selectedType === "doctor" ? certificates : [],
-              titles: selectedType === "doctor" ? professionalTitles : [],
+              licenses: (selectedType === "doctor" || selectedType === "aesthetic") ? licenses : [],
+              certificates: (selectedType === "doctor" || selectedType === "aesthetic") ? certificates : [],
+              titles: (selectedType === "doctor" || selectedType === "aesthetic") ? professionalTitles : [],
             },
           };
 
@@ -1017,7 +1029,7 @@ export const RegisterPage = () => {
                   )}
 
                 {/* SECCIÓN ESPECIALIDADES*/}
-                {selectedType === "doctor" && (
+                {(selectedType === "doctor" || selectedType === "aesthetic") && (
                   <Autocomplete
                     multiple
                     id="especialidades-autocomplete"
@@ -1144,8 +1156,8 @@ export const RegisterPage = () => {
                   )}
                 />
 
-                {/* CAMPO EXPERIENCIA: Solo para Médicos */}
-                {selectedType === "doctor" && (
+                {/* CAMPO EXPERIENCIA: Para Médicos y Centros Estéticos */}
+                {(selectedType === "doctor" || selectedType === "aesthetic") && (
                   <TextField
                     fullWidth
                     required
@@ -1178,7 +1190,36 @@ export const RegisterPage = () => {
                   />
                 )}
 
+                {/* CAMPO LUGAR DE ATENCIÓN: Solo para Médicos */}
                 {selectedType === "doctor" && (
+                  <TextField
+                    fullWidth
+                    label="Lugar de atención (Clínica, Hospital o Consultorio)"
+                    name="medicalCenter"
+                    value={formik.values.medicalCenter}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={
+                      formik.touched.medicalCenter &&
+                      Boolean(formik.errors.medicalCenter)
+                    }
+                    helperText={
+                      formik.touched.medicalCenter &&
+                      formik.errors.medicalCenter
+                    }
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <BusinessIcon sx={{ color: "#9ca3af" }} />
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                )}
+
+                {(selectedType === "doctor" || selectedType === "aesthetic") && (
                   <TextField
                     fullWidth
                     label="Tarifa de consulta ($)"

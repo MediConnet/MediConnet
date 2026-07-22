@@ -363,6 +363,50 @@ export const CLINIC_MENU: MenuItem[] = [
   },
 ];
 
+// --- 8. MENÚ CENTRO ESTÉTICO ---
+export const AESTHETIC_MENU: MenuItem[] = [
+  {
+    icon: <Dashboard />,
+    label: "Dashboard",
+    path: "/aesthetic/dashboard",
+  },
+  {
+    icon: <Person />,
+    label: "Mi Centro Estético",
+    path: "/aesthetic/dashboard?tab=profile",
+  },
+  {
+    icon: <Inventory />,
+    label: "Catálogo de Servicios",
+    path: "/aesthetic/dashboard?tab=services",
+  },
+  {
+    icon: <Campaign />,
+    label: "Anuncios",
+    path: "/aesthetic/dashboard?tab=ads",
+  },
+  {
+    icon: <StarRate />,
+    label: "Reseñas",
+    path: "/aesthetic/dashboard?tab=reviews",
+  },
+  {
+    icon: <CalendarToday />,
+    label: "Agenda y Citas",
+    path: "/aesthetic/dashboard?tab=appointments",
+  },
+  {
+    icon: <Message />,
+    label: "Recepción",
+    path: "/aesthetic/dashboard?tab=reception",
+  },
+  {
+    icon: <Settings />,
+    label: "Configuración de Horarios",
+    path: "/aesthetic/dashboard?tab=schedules",
+  },
+];
+
 // --- FUNCIÓN HELPER ---
 export const getMenuByRole = (
   role: UserRole,
@@ -391,6 +435,9 @@ export const getMenuByRole = (
           return SUPPLIES_MENU;
         case "clinics":
           return CLINIC_MENU;
+        case "aesthetic":
+        case "estetica":
+          return AESTHETIC_MENU;
         default:
           return [];
       }

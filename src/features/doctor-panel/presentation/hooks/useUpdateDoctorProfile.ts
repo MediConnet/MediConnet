@@ -20,8 +20,7 @@ export const useUpdateDoctorProfile = () => {
     mutationFn: updateDoctorProfileAPI,
     onSuccess: () => {
       feedback.showFeedback('success', 'Cambios guardados', 'La información fue actualizada correctamente.');
-      queryClient.invalidateQueries({ queryKey: ['doctors', 'profile', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['doctors', 'dashboard', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['doctors'] });
     },
     onError: (error) => {
       feedback.showFeedback('error', 'Error', 'No fue posible completar la operación.');

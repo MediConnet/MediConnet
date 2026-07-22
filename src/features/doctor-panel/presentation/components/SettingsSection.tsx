@@ -31,7 +31,11 @@ import {
   type BlockedSlot,
 } from "../../infrastructure/doctors.api";
 
-export const SettingsSection = () => {
+interface Props {
+  isAesthetic?: boolean;
+}
+
+export const SettingsSection = ({ isAesthetic = false }: Props) => {
   const authStore = useAuthStore();
   const { user } = authStore;
   const feedback = useFeedbackStore();
@@ -317,9 +321,9 @@ export const SettingsSection = () => {
       <Card elevation={0} sx={{ border: "1px solid #e5e7eb" }}>
         <CardContent>
           <div className="flex items-center gap-3 mb-4">
-            <AccessTime sx={{ color: "#06b6d4" }} />
+            <AccessTime sx={{ color: isAesthetic ? "#db2777" : "#06b6d4" }} />
             <Typography variant="h6" fontWeight={600}>
-              Duración de Consulta
+              Duración de Consulta / Cita
             </Typography>
           </div>
           <FormControl fullWidth sx={{ maxWidth: 300 }}>
@@ -347,7 +351,7 @@ export const SettingsSection = () => {
       <Card elevation={0} sx={{ border: "1px solid #e5e7eb" }}>
         <CardContent>
           <div className="flex items-center gap-3 mb-4">
-            <CalendarToday sx={{ color: "#06b6d4" }} />
+            <CalendarToday sx={{ color: isAesthetic ? "#db2777" : "#06b6d4" }} />
             <Typography variant="h6" fontWeight={600}>
               Días Laborales
             </Typography>
@@ -362,7 +366,9 @@ export const SettingsSection = () => {
                   onClick={() => handleDayToggle(day)}
                   className={`p-4 rounded-lg border-2 transition-all ${
                     isEnabled
-                      ? "border-teal-500 bg-teal-50 text-teal-700"
+                      ? isAesthetic
+                        ? "border-pink-500 bg-pink-50 text-pink-700 font-bold"
+                        : "border-teal-500 bg-teal-50 text-teal-700"
                       : "border-gray-200 bg-white text-gray-500"
                   }`}
                 >
@@ -408,7 +414,9 @@ export const SettingsSection = () => {
                         isBlockedByHour
                           ? "border-red-300 bg-red-50 text-red-600 cursor-not-allowed"
                           : slot.available
-                          ? "border-teal-500 bg-teal-50 text-teal-700"
+                          ? isAesthetic
+                            ? "border-pink-500 bg-pink-50 text-pink-700 font-semibold"
+                            : "border-teal-500 bg-teal-50 text-teal-700"
                           : "border-gray-200 bg-gray-50 text-gray-400"
                       }`}
                     >
@@ -469,7 +477,11 @@ export const SettingsSection = () => {
               variant="contained"
               onClick={handleBlockDate}
               disabled={!newBlockedDate || savingBlocked}
-              sx={{ textTransform: "none" }}
+              sx={{
+                textTransform: "none",
+                backgroundColor: isAesthetic ? "#db2777" : undefined,
+                "&:hover": { backgroundColor: isAesthetic ? "#be185d" : undefined },
+              }}
             >
               {savingBlocked ? "Procesando..." : "Bloquear"}
             </Button>
@@ -511,11 +523,12 @@ export const SettingsSection = () => {
           onClick={handleSave}
           disabled={saving}
           sx={{
-            backgroundColor: "#06b6d4",
+            backgroundColor: isAesthetic ? "#db2777" : "#06b6d4",
             textTransform: "none",
             px: 4,
             py: 1.5,
-            "&:hover": { backgroundColor: "#0891b2" },
+            fontWeight: 700,
+            "&:hover": { backgroundColor: isAesthetic ? "#be185d" : "#0891b2" },
           }}
         >
           {saving ? "Guardando..." : "Guardar Cambios"}

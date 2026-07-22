@@ -64,6 +64,7 @@ export const AppLayout = () => {
       if (tipo === 'pharmacy') return '/provider/pharmacy/dashboard';
       if (tipo === 'ambulance') return '/provider/ambulance/dashboard';
       if (tipo === 'supplies') return '/supply/dashboard';
+      if (tipo === 'aesthetic' || tipo === 'estetica') return '/aesthetic/dashboard';
       return '/doctor/dashboard'; // Default fallback
     }
 

@@ -95,13 +95,22 @@ export const NotificationsDropdown = ({
   }, [open, onClose]);
 
   // Legacy: Obtener solo las citas o pedidos de hoy (mostrar todas, no solo las no vistas)
-  const today = new Date().toISOString().split("T")[0];
+  const todayISO = new Date().toISOString().split("T")[0];
+  const todayLocal = new Date().toLocaleDateString("sv");
   const todayAppointments = appointments
-    .filter((apt) => apt.date === today)
-    .sort((a, b) => a.time.localeCompare(b.time));
+    .filter((apt) => {
+      if (!apt.date) return false;
+      const aptDateOnly = apt.date.includes("T") ? apt.date.split("T")[0] : apt.date;
+      return aptDateOnly === todayISO || aptDateOnly === todayLocal;
+    })
+    .sort((a, b) => (a.time || "").localeCompare(b.time || ""));
   const todayOrders = orders
-    .filter((order) => order.orderDate === today)
-    .sort((a, b) => a.orderNumber.localeCompare(b.orderNumber));
+    .filter((order) => {
+      if (!order.orderDate) return false;
+      const orderDateOnly = order.orderDate.includes("T") ? order.orderDate.split("T")[0] : order.orderDate;
+      return orderDateOnly === todayISO || orderDateOnly === todayLocal;
+    })
+    .sort((a, b) => (a.orderNumber || "").localeCompare(b.orderNumber || ""));
 
   // Para reseñas: mostrar las más recientes (no limitar solo a hoy)
   const recentReviews = safeReviews

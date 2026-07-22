@@ -160,6 +160,10 @@ export const LoginPage = () => {
             case "clinics":
               navigate("/clinic/dashboard", { replace: true });
               break;
+            case "aesthetic":
+            case "estetica":
+              navigate("/aesthetic/dashboard", { replace: true });
+              break;
             default:
               console.warn(`⚠️ Tipo de proveedor desconocido: ${tipoForStore}`);
               navigate(ROUTES.HOME);

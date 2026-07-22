@@ -14,6 +14,14 @@ import {
   TableRow,
   CircularProgress,
   Stack,
+  FormControlLabel,
+  Switch,
+  InputAdornment,
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import { DataGrid, type GridColDef, type GridPaginationModel } from "@mui/x-data-grid";
@@ -56,6 +64,7 @@ export const ConsultationPricesSection = ({ specialties }: Props) => {
   const [formData, setFormData] = useState({
     consultationType: "",
     price: "",
+    isActive: true,
   });
 
   const feedback = useFeedbackStore();
@@ -67,11 +76,12 @@ export const ConsultationPricesSection = ({ specialties }: Props) => {
       setFormData({
         consultationType: item.consultationType,
         price: item.price.toString(),
+        isActive: item.isActive ?? true,
       });
     } else {
       setEditingItem(null);
       setSelectedSpecialty(null);
-      setFormData({ consultationType: "", price: "" });
+      setFormData({ consultationType: "", price: "", isActive: true });
     }
     setOpenDialog(true);
   };
@@ -80,7 +90,7 @@ export const ConsultationPricesSection = ({ specialties }: Props) => {
     setOpenDialog(false);
     setEditingItem(null);
     setSelectedSpecialty(null);
-    setFormData({ consultationType: "", price: "" });
+    setFormData({ consultationType: "", price: "", isActive: true });
   };
 
   const handleSave = async () => {
@@ -98,10 +108,18 @@ export const ConsultationPricesSection = ({ specialties }: Props) => {
       }
 
       if (editingItem) {
-        await updateConsultationPrice({ id: editingItem.id, data: { consultationType: formData.consultationType, price } });
+        await updateConsultationPrice({
+          id: editingItem.id,
+          data: { consultationType: formData.consultationType, price, isActive: formData.isActive }
+        });
         feedback.showFeedback("success", "Cambios guardados", "Tipo de consulta actualizado correctamente.");
       } else if (selectedSpecialty) {
-        await createConsultationPrice({ specialtyId: selectedSpecialty.id, consultationType: formData.consultationType, price });
+        await createConsultationPrice({
+          specialtyId: selectedSpecialty.id,
+          consultationType: formData.consultationType,
+          price,
+          isActive: formData.isActive
+        });
         feedback.showFeedback("success", "Operación completada", "Tipo de consulta creado correctamente.");
       }
 
@@ -109,6 +127,19 @@ export const ConsultationPricesSection = ({ specialties }: Props) => {
     } catch (error) {
       console.error("Error al guardar:", error);
       feedback.showFeedback("error", "Error", "Error al guardar. Intenta nuevamente.");
+    }
+  };
+
+  const handleToggleStatus = async (item: ConsultationPrice) => {
+    try {
+      await updateConsultationPrice({
+        id: item.id,
+        data: { isActive: !item.isActive }
+      });
+      feedback.showFeedback("success", "Estado actualizado", item.isActive ? "Consulta pausada para reservas." : "Consulta activada para reservas.");
+    } catch (error) {
+      console.error("Error al cambiar estado:", error);
+      feedback.showFeedback("error", "Error", "Error al cambiar el estado de la consulta.");
     }
   };
 
@@ -154,6 +185,30 @@ export const ConsultationPricesSection = ({ specialties }: Props) => {
           <AttachMoney sx={{ fontSize: 18, color: "text.secondary" }} />
           <Typography variant="body1" fontWeight={500}>
             {params.value.toFixed(2)}
+          </Typography>
+        </Box>
+      ),
+    },
+    {
+      field: "isActive",
+      headerName: "Estado",
+      width: 150,
+      renderCell: (params) => (
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <Switch
+            checked={params.row.isActive ?? true}
+            onChange={() => handleToggleStatus(params.row)}
+            size="small"
+          />
+          <Typography
+            variant="caption"
+            sx={{
+              ml: 0.5,
+              fontWeight: 500,
+              color: (params.row.isActive ?? true) ? "#15803d" : "#6b7280",
+            }}
+          >
+            {(params.row.isActive ?? true) ? "Disponible" : "Pausado"}
           </Typography>
         </Box>
       ),
@@ -274,6 +329,16 @@ export const ConsultationPricesSection = ({ specialties }: Props) => {
               required
               fullWidth
               InputProps={{ startAdornment: <InputAdornment position="start"><AttachMoney /></InputAdornment> }}
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                  color="primary"
+                />
+              }
+              label="Disponible para reservas en la aplicación móvil"
             />
           </Box>
         </DialogContent>

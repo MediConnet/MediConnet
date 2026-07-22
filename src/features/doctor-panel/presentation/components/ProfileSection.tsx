@@ -57,6 +57,7 @@ import { ImageCropperModal } from "../../../../shared/components/ImageCropperMod
 interface ProfileSectionProps {
   data: DoctorDashboard;
   onUpdate?: (updatedData: DoctorDashboard) => void;
+  isAesthetic?: boolean;
 }
 
 // Configuración del menú desplegable del Select
@@ -148,7 +149,7 @@ const validateLocationData = (data: { latitude?: string; longitude?: string; goo
   }
 };
 
-export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
+export const ProfileSection = ({ data, onUpdate, isAesthetic }: ProfileSectionProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [_, setSearchParams] = useSearchParams();
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -160,6 +161,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const [cropperMode, setCropperMode] = useState<"avatar" | "gallery">("avatar");
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [savingImages, setSavingImages] = useState(false);
+  const [localDoctor, setLocalDoctor] = useState<any>(null);
 
   // Usar hook de React Query para especialidades
   const { data: specialtiesList = [], isLoading: loadingSpecialties } = useSpecialties();
@@ -173,6 +175,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   const { user } = authStore;
   const feedback = useFeedbackStore();
   const { mutateAsync: updateProfile, isPending: saving } = useUpdateDoctorProfile();
+  const appThemeColor = isAesthetic ? "#db2777" : "#0d9488";
 
   // Estado del formulario actual
   const [formData, setFormData] = useState({
@@ -191,6 +194,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     isActive: true,
     profileStatus: "draft" as ProfileStatus,
     paymentMethods: "both" as PaymentMethod,
+    medicalCenter: "",
   });
 
   // Estado para errores de validación por campo
@@ -202,31 +206,33 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
   >(null);
 
   useEffect(() => {
-    if (data?.doctor) {
+    const targetDoctor = data?.doctor || (data && (data.id || data.name || data.commercial_name) ? data : null);
+    if (targetDoctor) {
+      setLocalDoctor(targetDoctor);
       // --- LÓGICA DE ESPECIALIDADES ROBUSTA ---
       let incomingSpecialty: string[] = [];
 
-      if (Array.isArray(data.doctor.specialty)) {
+      if (Array.isArray(targetDoctor.specialty)) {
         // Si ya es un array, lo usamos tal cual
-        incomingSpecialty = data.doctor.specialty as unknown as string[];
+        incomingSpecialty = targetDoctor.specialty as unknown as string[];
       } else if (
-        typeof data.doctor.specialty === "string" &&
-        data.doctor.specialty
+        typeof targetDoctor.specialty === "string" &&
+        targetDoctor.specialty
       ) {
         // Si es un string separado por comas, lo convertimos a array
-        incomingSpecialty = data.doctor.specialty.includes(",")
-          ? data.doctor.specialty.split(",").map((s) => s.trim())
-          : [data.doctor.specialty];
+        incomingSpecialty = targetDoctor.specialty.includes(",")
+          ? targetDoctor.specialty.split(",").map((s: string) => s.trim())
+          : [targetDoctor.specialty];
       }
 
-      const backendSchedule = data.doctor.workSchedule;
+      const backendSchedule = targetDoctor.workSchedule || targetDoctor.schedules;
 
       // Iteramos sobre la plantilla base (Lunes a Viernes)
       const scheduleToUse = DEFAULT_SCHEDULE_TEMPLATE.map((defaultDay) => {
         if (!backendSchedule || backendSchedule.length === 0) return defaultDay;
 
         const found = backendSchedule.find(
-          (s) => s.day.toLowerCase() === defaultDay.day.toLowerCase(),
+          (s: any) => (s.day || "").toLowerCase() === defaultDay.day.toLowerCase(),
         );
 
         if (found) {
@@ -240,23 +246,24 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
       setIsUsingDefaultSchedule(isDefault);
 
       const newFormData = {
-        name: data.doctor.name || "",
+        name: targetDoctor.name || targetDoctor.commercial_name || "",
         specialty: incomingSpecialty,
-        email: data.doctor.email || "",
-        whatsapp: data.doctor.whatsapp || "",
-        address: data.doctor.address || "",
-        latitude: formatCoordinateForInput(data.doctor.latitude, "lat") || "",
-        longitude: formatCoordinateForInput(data.doctor.longitude, "lng") || "",
-        google_maps_url: data.doctor.google_maps_url || "",
-        price: (data.doctor.price || 0).toString(),
-        experience: (data.doctor.experience || 0).toString(),
-        description: data.doctor.description || "",
+        email: targetDoctor.email || "",
+        whatsapp: targetDoctor.whatsapp || targetDoctor.phone || "",
+        address: targetDoctor.address || targetDoctor.address_text || "",
+        latitude: formatCoordinateForInput(targetDoctor.latitude, "lat") || "",
+        longitude: formatCoordinateForInput(targetDoctor.longitude, "lng") || "",
+        google_maps_url: targetDoctor.google_maps_url || "",
+        price: (targetDoctor.price !== undefined ? targetDoctor.price : 0).toString(),
+        experience: (targetDoctor.experience || 0).toString(),
+        description: targetDoctor.description || "",
 
         workSchedule: scheduleToUse,
 
-        isActive: data.doctor.isActive !== false,
-        profileStatus: (data.doctor.profileStatus || "draft") as ProfileStatus,
-        paymentMethods: (data.doctor.paymentMethods || "both") as PaymentMethod,
+        isActive: targetDoctor.isActive !== false,
+        profileStatus: (targetDoctor.profileStatus || "published") as ProfileStatus,
+        paymentMethods: (targetDoctor.paymentMethods || "both") as PaymentMethod,
+        medicalCenter: (targetDoctor as any).medical_center || "",
       };
 
       setFormData(newFormData);
@@ -266,10 +273,11 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
   // Cargar imagen de perfil y galería desde el backend
   useEffect(() => {
-    if (data?.doctor) {
-      const imgUrl = (data.doctor as any).profile_picture_url || null;
+    const targetDoctor = data?.doctor || (data && (data.id || data.name || data.commercial_name) ? data : null);
+    if (targetDoctor) {
+      const imgUrl = (targetDoctor as any).profile_picture_url || (targetDoctor as any).logo_url || null;
       if (imgUrl) setProfileImage(imgUrl);
-      const imgs: string[] = (data.doctor as any).preview_images || [];
+      const imgs: string[] = (targetDoctor as any).preview_images || (targetDoctor as any).images || [];
       setPreviewImages(imgs);
       setInitialPreviewImages(imgs);
       setCarouselIndex(0);
@@ -293,6 +301,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     if (formData.description !== initialFormData.description) return true;
     if (formData.profileStatus !== initialFormData.profileStatus) return true;
     if (formData.paymentMethods !== initialFormData.paymentMethods) return true;
+    if (formData.medicalCenter !== initialFormData.medicalCenter) return true;
 
     // 2. Comparar Arrays (Specialties)
     const currentSpecs = [...formData.specialty].sort();
@@ -484,6 +493,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
       workSchedule: formData.workSchedule,
       profileStatus: formData.profileStatus,
       paymentMethods: formData.paymentMethods,
+      medicalCenter: formData.medicalCenter,
       ...(newImageBase64 ? { profile_picture_url: newImageBase64 } : {}),
       ...(previewImagesModified ? { preview_images: previewImages } : {}),
     };
@@ -496,6 +506,9 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
         setIsUsingDefaultSchedule(false);
         setInitialFormData(formData);
         setNewImageBase64(null);
+        if (updatedData.doctor) {
+          setLocalDoctor(updatedData.doctor);
+        }
         // Actualizar imagen de perfil con la URL de Cloudinary retornada
         const returnedImage = (updatedData.doctor as any)?.profile_picture_url;
         if (returnedImage) setProfileImage(returnedImage);
@@ -637,7 +650,8 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
   // Usar datos por defecto si no existen (para usuarios nuevos)
   // Esto permite que el formulario se muestre vacío en lugar de "Cargando..."
-  const doctor = data?.doctor || {
+  const targetDoctor = data?.doctor || (data && (data.id || data.name || data.commercial_name) ? data : null);
+  const doctor = localDoctor || targetDoctor || {
     name: user?.name || "",
     specialty: "",
     email: user?.email || "",
@@ -649,7 +663,6 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
     profileStatus: "draft" as ProfileStatus,
     paymentMethods: "both" as PaymentMethod,
   };
-  const appThemeColor = "#06b6d4";
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -667,7 +680,11 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
           {!isEditing ? (
             <button
               onClick={handleEdit}
-              className="bg-teal-50 text-teal-600 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-teal-100 transition-colors"
+              className={
+                isAesthetic
+                  ? "bg-pink-50 text-pink-600 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-pink-100 transition-colors font-semibold"
+                  : "bg-teal-50 text-teal-600 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-teal-100 transition-colors"
+              }
             >
               <Edit className="text-sm" />
               <span className="text-sm font-medium">Editar</span>
@@ -676,10 +693,12 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
             <button
               onClick={handleSave}
               disabled={isSaveDisabled}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-semibold ${
                 isSaveDisabled
                   ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : "bg-teal-600 text-white hover:bg-teal-700"
+                  : isAesthetic
+                    ? "bg-pink-600 text-white hover:bg-pink-700"
+                    : "bg-teal-600 text-white hover:bg-teal-700"
               }`}
             >
               {saving ? (
@@ -703,24 +722,31 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
               {/* Especialidades */}
               <div>
                 <label className="text-sm text-gray-600">
-                  Especialidad(es)
+                  {isAesthetic ? "Especialidad(es) / Categoría" : "Especialidad(es)"}
                 </label>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {(Array.isArray(doctor.specialty)
                     ? doctor.specialty
                     : [doctor.specialty]
-                  ).map((spec: any, idx: number) =>
-                    spec ? (
+                  ).map((spec: any, idx: number) => {
+                    const displayLabel = isAesthetic && (spec === "Medicina General" || !spec)
+                      ? "Centro Estético & Spa"
+                      : spec;
+                    return displayLabel ? (
                       <Chip
                         key={idx}
-                        label={spec}
+                        label={displayLabel}
                         size="small"
-                        sx={{ backgroundColor: "#e0f2f1", color: "#00695c" }}
+                        sx={
+                          isAesthetic
+                            ? { backgroundColor: "#fce4ec", color: "#be185d", fontWeight: 600 }
+                            : { backgroundColor: "#e0f2f1", color: "#00695c" }
+                        }
                       />
                     ) : (
-                      <span>-</span>
-                    ),
-                  )}
+                      <span key={idx}>-</span>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -751,6 +777,12 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                     </a>
                   </div>
                 )}
+                {doctor.medical_center && (
+                  <div className="mt-2">
+                    <label className="text-sm text-gray-500 block font-semibold">Lugar de Atención</label>
+                    <p className="text-gray-800 font-medium">{doctor.medical_center}</p>
+                  </div>
+                )}
                 {(doctor.latitude !== null && doctor.latitude !== undefined && 
                   doctor.longitude !== null && doctor.longitude !== undefined) && (
                   <p className="text-xs text-gray-500 mt-1">
@@ -760,7 +792,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
               </div>
               <div>
                 <label className="text-sm text-gray-600">
-                  Tarifa de consulta
+                  {isAesthetic ? "Tarifa promedio de servicio" : "Tarifa de consulta"}
                 </label>
                 <p className="text-gray-800 font-medium mt-1">
                   ${doctor.price.toFixed(2)}
@@ -1101,6 +1133,24 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   </p>
                 )}
               </div>
+              <div>
+                <label className="text-sm text-gray-600 mb-1 block font-semibold">
+                  Lugar de Atención (Clínica, Hospital, Centro Médico o Consultorio)
+                </label>
+                <input
+                  type="text"
+                  value={formData.medicalCenter}
+                  onChange={(e) =>
+                    handleChange("medicalCenter", e.target.value)
+                  }
+                  maxLength={150}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white"
+                  placeholder="Ej. Clínica Metropolitana, Hospital del Valle, etc."
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Nombre del lugar físico donde atiende — Máx. 150 caracteres
+                </p>
+              </div>
 
               {/* Campos de ubicación */}
               <div className="md:col-span-2">
@@ -1182,7 +1232,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
 
               <div>
                 <label className="text-sm text-gray-600 mb-1 block">
-                  Tarifa de consulta ($)
+                  {isAesthetic ? "Tarifa promedio de servicio ($)" : "Tarifa de consulta ($)"}
                 </label>
                 <input
                   type="text"
@@ -1271,7 +1321,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                   }
                   className="w-full"
                 >
-                  {(['card', 'cash', 'both'] as const).map((method) => (
+                  {(isAesthetic ? (['cash'] as const) : (['card', 'cash', 'both'] as const)).map((method) => (
                     <MenuItem key={method} value={method}>
                       {method === 'card' ? 'Solo Tarjeta' : method === 'cash' ? 'Solo Presencial' : 'Tarjeta y Presencial'}
                     </MenuItem>
@@ -1811,7 +1861,7 @@ export const ProfileSection = ({ data, onUpdate }: ProfileSectionProps) => {
                     style={{ backgroundColor: appThemeColor }}
                   >
                     <Visibility sx={{ fontSize: 20 }} />
-                    <span>Ver Médico</span>
+                    <span>{isAesthetic ? "Ver Centro Estético" : "Ver Médico"}</span>
                   </div>
                 </div>
               </div>
