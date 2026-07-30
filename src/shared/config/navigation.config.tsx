@@ -401,6 +401,16 @@ export const AESTHETIC_MENU: MenuItem[] = [
     path: "/aesthetic/dashboard?tab=reception",
   },
   {
+    icon: <Receipt />,
+    label: "Pagos e Ingresos",
+    path: "/aesthetic/dashboard?tab=payments",
+  },
+  {
+    icon: <Timeline />,
+    label: "Reportes",
+    path: "/aesthetic/dashboard?tab=reports",
+  },
+  {
     icon: <Settings />,
     label: "Configuración de Horarios",
     path: "/aesthetic/dashboard?tab=schedules",

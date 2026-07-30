@@ -20,6 +20,7 @@ export const MOCK_ADMIN_SETTINGS: AdminSettings = {
   commissionPharmacy: 8,
   commissionSupplies: 10,
   commissionAmbulance: 15,
+  commissionAesthetic: 15,
 };
 
 export const getAdminSettingsMock = (): Promise<AdminSettings> => {

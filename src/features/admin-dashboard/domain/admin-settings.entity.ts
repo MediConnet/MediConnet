@@ -28,4 +28,5 @@ export interface AdminSettings {
   commissionPharmacy: number; // Comisión para farmacias (%)
   commissionSupplies: number; // Comisión para insumos médicos (%)
   commissionAmbulance: number; // Comisión para ambulancias (%)
+  commissionAesthetic: number; // Comisión para centros estéticos (%)
 }

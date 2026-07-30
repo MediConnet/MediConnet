@@ -15,7 +15,11 @@ import { getDoctorPaymentsAPI } from "../../infrastructure/payments.api";
 import type { Payment } from "../../domain/Payment.entity";
 import { formatMoney } from "../../../../shared/lib/formatMoney";
 
-export const ReportsSection = () => {
+interface Props {
+  isAesthetic?: boolean;
+}
+
+export const ReportsSection = ({ isAesthetic = false }: Props = {}) => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [appointments, setAppointments] = useState<DoctorAppointment[]>([]);

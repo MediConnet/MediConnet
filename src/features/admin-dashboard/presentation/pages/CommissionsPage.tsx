@@ -109,6 +109,7 @@ export const CommissionsPage = () => {
             <Tab label="Pagos a Farmacias" />
             <Tab label="Pagos a Insumos" />
             <Tab label="Pagos a Ambulancias" />
+            <Tab label="Pagos a Estética" />
           </Tabs>
 
           {/* Tab 1: Médicos */}
@@ -310,6 +311,40 @@ export const CommissionsPage = () => {
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   • Pago a la ambulancia: ${(300 - (300 * settings.commissionAmbulance / 100)).toFixed(2)}
+                </Typography>
+              </Box>
+            </Box>
+          </TabPanel>
+
+          {/* Tab 7: Centros Estéticos */}
+          <TabPanel value={activeTab} index={6}>
+            <Box sx={{ px: 4 }}>
+              <Typography variant="h6" fontWeight={700} gutterBottom>
+                Comisión para Centros Estéticos
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Configura el porcentaje de comisión que se cobra por tratamientos estéticos
+              </Typography>
+
+              <CommissionSettingItem
+                title="Porcentaje de Comisión"
+                description="Comisión que la plataforma cobra por cada tratamiento estético realizado"
+                value={settings.commissionAesthetic}
+                onChange={(value) => handleCommissionChange("commissionAesthetic", value)}
+              />
+
+              <Box sx={{ mt: 3, p: 3, bgcolor: "#f0f9ff", borderRadius: 2 }}>
+                <Typography variant="body2" fontWeight={600} gutterBottom>
+                  Ejemplo de cálculo:
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Si un tratamiento cuesta $100 y la comisión es {settings.commissionAesthetic}%:
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  • Comisión plataforma: ${(100 * settings.commissionAesthetic / 100).toFixed(2)}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  • Pago al centro estético: ${(100 - (100 * settings.commissionAesthetic / 100)).toFixed(2)}
                 </Typography>
               </Box>
             </Box>
