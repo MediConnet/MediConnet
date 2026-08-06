@@ -1,4 +1,4 @@
-import { Close, CloudUpload, CheckCircle } from "@mui/icons-material";
+import { Close, CloudUpload, CheckCircle, Straighten } from "@mui/icons-material";
 import {
   Alert,
   Box,
@@ -16,6 +16,9 @@ import { useFormik } from "formik";
 import { useRef, useState } from "react";
 import * as Yup from "yup";
 import { getUserFriendlyMessage } from "../../lib/api-error";
+import { ImageCropperModal } from "../ImageCropperModal";
+
+const AD_IMAGE_ASPECT_RATIO = 2; // 800x400 — igual que las imágenes de vista previa del perfil
 
 interface AdFormData {
   label: string;
@@ -93,6 +96,8 @@ export const CreateAdModal = ({
   const [error, setError] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(initialData?.imageUrl || null);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropperSrc, setCropperSrc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formik = useFormik({
@@ -164,13 +169,19 @@ export const CreateAdModal = ({
     }
     const reader = new FileReader();
     reader.onloadend = () => {
-      const base64 = reader.result as string;
-      setImageBase64(base64);
-      setImagePreview(base64);
-      // Limpiar el campo URL si se sube archivo
-      formik.setFieldValue("imageUrl", "");
+      setCropperSrc(reader.result as string);
+      setCropperOpen(true);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = (croppedBase64: string) => {
+    setImageBase64(croppedBase64);
+    setImagePreview(croppedBase64);
+    // Limpiar el campo URL si se sube archivo
+    formik.setFieldValue("imageUrl", "");
+    setCropperOpen(false);
+    setCropperSrc(null);
   };
 
   const handleClose = () => {
@@ -314,6 +325,33 @@ export const CreateAdModal = ({
             <Typography variant="subtitle2" fontWeight={600} mb={1}>
               Imagen del anuncio (opcional)
             </Typography>
+
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: 1,
+                bgcolor: "#eff6ff",
+                border: "1px solid #bfdbfe",
+                borderRadius: 2,
+                p: 1.5,
+                mb: 1.5,
+              }}
+            >
+              <Straighten sx={{ fontSize: 18, color: "#1d4ed8", mt: 0.2 }} />
+              <Box>
+                <Typography variant="caption" fontWeight={700} color="#1d4ed8" display="block">
+                  Tamaño recomendado
+                </Typography>
+                <Typography variant="caption" color="#1e40af" display="block">
+                  800 × 400 px — Proporción 2:1 (igual que las imágenes de vista previa del perfil)
+                </Typography>
+                <Typography variant="caption" color="#1e40af">
+                  Podrás ajustar el encuadre al subir la imagen.
+                </Typography>
+              </Box>
+            </Box>
+
             <input
               type="file"
               accept="image/*"
@@ -340,17 +378,40 @@ export const CreateAdModal = ({
               {imagePreview ? (
                 <Stack alignItems="center" spacing={1}>
                   <Box
-                    component="img"
-                    src={imagePreview}
-                    alt="Preview"
-                    sx={{ maxHeight: 120, borderRadius: 1, objectFit: "cover" }}
-                  />
+                    sx={{
+                      width: "100%",
+                      maxWidth: 320,
+                      aspectRatio: `${AD_IMAGE_ASPECT_RATIO} / 1`,
+                      borderRadius: 1,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={imagePreview}
+                      alt="Preview"
+                      sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                    />
+                  </Box>
                   <Stack direction="row" alignItems="center" spacing={0.5} color="success.main">
                     <CheckCircle fontSize="small" />
                     <Typography variant="caption" fontWeight={600}>
-                      Imagen lista
+                      Imagen lista — así se verá en el banner
                     </Typography>
                   </Stack>
+                  {imageBase64 && !readOnly && (
+                    <Button
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCropperSrc(imageBase64);
+                        setCropperOpen(true);
+                      }}
+                      sx={{ textTransform: "none" }}
+                    >
+                      Reajustar encuadre
+                    </Button>
+                  )}
                 </Stack>
               ) : (
                 <Stack alignItems="center" spacing={0.5}>
@@ -359,7 +420,7 @@ export const CreateAdModal = ({
                     Click para subir imagen
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    JPG, PNG. Mín. 1200x400px (proporción 3:1). En la app se muestra como banner horizontal de ancho completo. Máx. 5MB.
+                    JPG, PNG. Máx. 5MB. Podrás recortarla antes de aplicarla.
                   </Typography>
                 </Stack>
               )}
@@ -460,6 +521,16 @@ export const CreateAdModal = ({
           )}
         </DialogActions>
       </form>
+
+      <ImageCropperModal
+        open={cropperOpen}
+        onClose={() => setCropperOpen(false)}
+        imageSrc={cropperSrc}
+        aspectRatio={AD_IMAGE_ASPECT_RATIO}
+        onCrop={handleCropComplete}
+        title="Ajustar Imagen del Anuncio"
+        recommendationText="Encuadra la imagen. Se mostrará en formato horizontal (2:1) en el banner de la app."
+      />
     </Dialog>
   );
 };

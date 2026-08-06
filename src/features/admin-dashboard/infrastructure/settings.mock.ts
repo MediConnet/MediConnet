@@ -12,7 +12,8 @@ export const MOCK_ADMIN_SETTINGS: AdminSettings = {
   serviceApprovalRequired: true, // Aprobación requerida para servicios
   allowServiceSelfActivation: false, // No permitir auto-activación
   allowAdSelfPublishing: false, // No permitir auto-publicación (solo admin)
-  
+  requireBackupDocuments: true, // Requerir documentos de respaldo obligatorios
+
   // Comisiones por defecto (%)
   commissionDoctor: 15,
   commissionClinic: 10,

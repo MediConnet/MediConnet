@@ -140,7 +140,7 @@ export const getActiveServicesAPI = async (params?: {
       id: item.id || item._id || `service-${Math.random()}`,
       name: item.providerName || item.name || 'Sin nombre',
       location: item.city || item.location || 'Sin ubicación',
-      type: (item.serviceType || item.type || 'doctor') as "ambulance" | "doctor" | "pharmacy" | "laboratory" | "supplies" | "clinica",
+      type: (item.serviceType || item.type || 'doctor') as "ambulance" | "doctor" | "pharmacy" | "laboratory" | "supplies" | "clinica" | "aesthetic",
     }));
     
     console.log('✅ getActiveServicesAPI - Final result:', { data: mappedServices.length, pagination });

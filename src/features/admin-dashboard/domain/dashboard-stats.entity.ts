@@ -21,6 +21,8 @@ export interface DashboardStats {
     laboratories: number;
     ambulances: number;
     supplies: number;
+    clinicas: number;
+    aesthetic: number;
   };
   recentActivity: ActivityItem[];
 }

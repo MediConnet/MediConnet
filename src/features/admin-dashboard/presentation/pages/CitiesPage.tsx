@@ -94,7 +94,7 @@ export const CitiesPage = () => {
   const handleDelete = async (id: string) => {
     feedback.showDelete(
       "Eliminar ciudad", 
-      "¿Estás seguro de eliminar esta ciudad? Esta acción no se puede deshacer si tiene clínicas asociadas.", 
+      "¿Estás seguro de eliminar esta ciudad? Esta acción no se puede deshacer si tiene proveedores asociados.",
       async () => {
         try {
           await deleteCity(id);

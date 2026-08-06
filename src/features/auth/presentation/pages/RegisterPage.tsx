@@ -156,12 +156,12 @@ export const RegisterPage = () => {
     isLoading: citiesLoading,
     isError: citiesIsError,
   } = useCities();
-  const { data: specialtiesData = [], isLoading: specialtiesLoading } = useSpecialties();
+  const { data: specialtiesData = [] } = useSpecialties();
   const { data: publicSettings } = usePublicSettings();
   const requireDocs = publicSettings?.requireBackupDocuments ?? true;
 
   const cities = citiesData;
-  const specialtiesList = (selectedType === "doctor" || selectedType === "aesthetic") ? specialtiesData : [];
+  const specialtiesList = selectedType === "doctor" ? specialtiesData : [];
 
   const goHome = () => {
     setShowSuccessModal(false);
@@ -221,7 +221,7 @@ export const RegisterPage = () => {
       tarifaConsulta: Yup.string(),
     };
 
-    if (selectedType === "doctor" || selectedType === "aesthetic") {
+    if (selectedType === "doctor") {
       baseSchema.yearsOfExperience = Yup.string()
         .matches(/^\d+$/, "Solo números")
         .required("Los años de experiencia son obligatorios");
@@ -235,10 +235,31 @@ export const RegisterPage = () => {
       baseSchema.medicalCenter = Yup.string()
         .min(3, "Mínimo 3 caracteres")
         .optional();
+
+      baseSchema.googleMapsUrl = Yup.string().notRequired();
+    }
+    // Centros estéticos: nombre de establecimiento propio, sin especialidades médicas
+    else if (selectedType === "aesthetic") {
+      baseSchema.yearsOfExperience = Yup.string()
+        .matches(/^\d+$/, "Solo números")
+        .required("Los años de funcionamiento son obligatorios");
+
+      baseSchema.nombreServicio = Yup.string()
+        .min(3, "El nombre del establecimiento debe tener al menos 3 caracteres")
+        .required("El nombre del establecimiento es obligatorio");
+
+      baseSchema.especialidad = Yup.array().notRequired();
+
+      baseSchema.medicalCenter = Yup.string().notRequired();
+
+      baseSchema.googleMapsUrl = Yup.string()
+        .url("Ingresa un enlace de Google Maps válido")
+        .notRequired();
     }
     // Lógica para otros proveedores
     else {
       baseSchema.yearsOfExperience = Yup.string().notRequired();
+      baseSchema.googleMapsUrl = Yup.string().notRequired();
 
       if (selectedType === "pharmacy") {
         baseSchema.chainId = Yup.string().required("Selecciona una cadena de farmacia");
@@ -278,6 +299,7 @@ export const RegisterPage = () => {
       chainId: "",
       yearsOfExperience: "",
       medicalCenter: "",
+      googleMapsUrl: "",
     },
     validationSchema:
       step === 1
@@ -324,7 +346,7 @@ export const RegisterPage = () => {
           // 3. Lógica de Nombre del Servicio
           let finalServiceName: string | undefined = values.nombreServicio;
 
-          if (selectedType === "doctor" || selectedType === "aesthetic") {
+          if (selectedType === "doctor") {
             finalServiceName = values.nombreCompleto;
           } else if (selectedType === "pharmacy" && values.chainId) {
             finalServiceName = undefined;
@@ -350,20 +372,21 @@ export const RegisterPage = () => {
             cityId: values.cityId,
             city: selectedCity?.name || "",
             description: values.descripcion,
-            price: (selectedType === "doctor" || selectedType === "aesthetic") ? values.tarifaConsulta : "",
+            price: selectedType === "doctor" ? values.tarifaConsulta : "",
 
             yearsOfExperience:
               (selectedType === "doctor" || selectedType === "aesthetic") ? values.yearsOfExperience : "",
 
             chainId: selectedType === "pharmacy" ? values.chainId : undefined,
 
-            specialties: (selectedType === "doctor" || selectedType === "aesthetic") ? values.especialidad : [],
+            specialties: selectedType === "doctor" ? values.especialidad : [],
             medicalCenter: selectedType === "doctor" ? values.medicalCenter : undefined,
+            googleMapsUrl: selectedType === "aesthetic" ? values.googleMapsUrl : undefined,
 
             files: {
-              licenses: (selectedType === "doctor" || selectedType === "aesthetic") ? licenses : [],
-              certificates: (selectedType === "doctor" || selectedType === "aesthetic") ? certificates : [],
-              titles: (selectedType === "doctor" || selectedType === "aesthetic") ? professionalTitles : [],
+              licenses: selectedType === "doctor" ? licenses : [],
+              certificates: selectedType === "doctor" ? certificates : [],
+              titles: selectedType === "doctor" ? professionalTitles : [],
             },
           };
 
@@ -999,7 +1022,11 @@ export const RegisterPage = () => {
                     <TextField
                       fullWidth
                       required
-                      label="Nombre del servicio"
+                      label={
+                        selectedType === "aesthetic"
+                          ? "Nombre del establecimiento"
+                          : "Nombre del servicio"
+                      }
                       name="nombreServicio"
                       value={formik.values.nombreServicio}
                       onChange={(e) =>
@@ -1028,8 +1055,8 @@ export const RegisterPage = () => {
                     />
                   )}
 
-                {/* SECCIÓN ESPECIALIDADES*/}
-                {(selectedType === "doctor" || selectedType === "aesthetic") && (
+                {/* SECCIÓN ESPECIALIDADES: Solo Médicos (no aplica a centros estéticos) */}
+                {selectedType === "doctor" && (
                   <Autocomplete
                     multiple
                     id="especialidades-autocomplete"
@@ -1156,12 +1183,47 @@ export const RegisterPage = () => {
                   )}
                 />
 
+                {/* CAMPO UBICACIÓN GOOGLE MAPS: Solo Centros Estéticos (opcional) */}
+                {selectedType === "aesthetic" && (
+                  <TextField
+                    fullWidth
+                    label="Ubicación en Google Maps (opcional)"
+                    name="googleMapsUrl"
+                    placeholder="https://maps.google.com/..."
+                    value={formik.values.googleMapsUrl}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={
+                      formik.touched.googleMapsUrl &&
+                      Boolean(formik.errors.googleMapsUrl)
+                    }
+                    helperText={
+                      (formik.touched.googleMapsUrl &&
+                        formik.errors.googleMapsUrl) ||
+                      "Pega el enlace para compartir la ubicación desde Google Maps"
+                    }
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <MapIcon sx={{ color: "#9ca3af" }} />
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                )}
+
                 {/* CAMPO EXPERIENCIA: Para Médicos y Centros Estéticos */}
                 {(selectedType === "doctor" || selectedType === "aesthetic") && (
                   <TextField
                     fullWidth
                     required
-                    label="Años de experiencia"
+                    label={
+                      selectedType === "aesthetic"
+                        ? "Años de funcionamiento"
+                        : "Años de experiencia"
+                    }
                     name="yearsOfExperience"
                     value={formik.values.yearsOfExperience}
                     onChange={(e) =>
@@ -1219,7 +1281,8 @@ export const RegisterPage = () => {
                   />
                 )}
 
-                {(selectedType === "doctor" || selectedType === "aesthetic") && (
+                {/* CAMPO TARIFA: Solo Médicos (los centros estéticos fijan precio por tratamiento) */}
+                {selectedType === "doctor" && (
                   <TextField
                     fullWidth
                     label="Tarifa de consulta ($)"
@@ -1249,7 +1312,11 @@ export const RegisterPage = () => {
                 required
                 multiline
                 rows={4}
-                label="Descripción"
+                label={
+                  selectedType === "aesthetic"
+                    ? "Descripción del establecimiento"
+                    : "Descripción"
+                }
                 name="descripcion"
                 value={formik.values.descripcion}
                 onChange={(e) =>

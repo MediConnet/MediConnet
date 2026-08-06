@@ -103,13 +103,15 @@ export const CommissionsPage = () => {
               },
             }}
           >
-            <Tab label="Pagos a Médicos" />
-            <Tab label="Pagos a Clínicas" />
-            <Tab label="Pagos a Laboratorios" />
-            <Tab label="Pagos a Farmacias" />
-            <Tab label="Pagos a Insumos" />
-            <Tab label="Pagos a Ambulancias" />
-            <Tab label="Pagos a Estética" />
+            {/* value explícito en cada Tab: al ocultar "Pagos a Clínicas" (value=1) sin
+                borrarlo, los TabPanel de abajo conservan su index original sin reindexar */}
+            <Tab label="Pagos a Médicos" value={0} />
+            {/* Oculto: módulo de clínicas fuera de uso (no se borra, ver TabPanel index={1} abajo) */}
+            <Tab label="Pagos a Laboratorios" value={2} />
+            <Tab label="Pagos a Farmacias" value={3} />
+            <Tab label="Pagos a Insumos" value={4} />
+            <Tab label="Pagos a Ambulancias" value={5} />
+            <Tab label="Pagos a Estética" value={6} />
           </Tabs>
 
           {/* Tab 1: Médicos */}

@@ -1,7 +1,7 @@
 import {
-  Business, Category, FileDownload, LocalHospital, LocalPharmacy, LocationOn, Science, AirportShuttle,
-  Inventory, MedicalServices, Refresh, TrendingUp, People, CalendarMonth,
-  LocationCity, CheckCircle, Close, History,
+  Business, Category, FileDownload, LocalPharmacy, LocationOn, Science, AirportShuttle,
+  Inventory, MedicalServices, Refresh, Spa,
+  CheckCircle,
 } from "@mui/icons-material";
 import { Box, Typography, Avatar, Stack, Chip } from "@mui/material";
 import Grid2 from "@mui/material/Grid2";
@@ -27,6 +27,7 @@ const SERVICE_ICONS: Record<string, React.ReactNode> = {
   ambulance: <AirportShuttle />,
   supplies: <Inventory />,
   clinica: <Business />,
+  aesthetic: <Spa />,
 };
 
 const SERVICE_LABELS: Record<string, string> = {
@@ -36,6 +37,7 @@ const SERVICE_LABELS: Record<string, string> = {
   ambulance: "Ambulancia",
   supplies: "Insumos Médicos",
   clinica: "Clínica",
+  aesthetic: "Centro Estético",
 };
 
 const SERVICE_COLORS: Record<string, string> = {
@@ -45,6 +47,7 @@ const SERVICE_COLORS: Record<string, string> = {
   ambulance: "#06b6d4",
   supplies: "#f59e0b",
   clinica: "#8b5cf6",
+  aesthetic: "#d81b60",
 };
 
 export const ServicesDashboardPage = () => {
@@ -190,7 +193,7 @@ export const ServicesDashboardPage = () => {
         {/* --- SECCIÓN 1: Tarjetas de Estadísticas --- */}
         <Box mb={4}>
           <Grid2 container spacing={3}>
-            <Grid2 size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <Grid2 size={{ xs: 12, sm: 6, md: 2 }}>
               <ServiceStatCard
                 title="Médico"
                 count={stats?.doctorCount}
@@ -200,7 +203,7 @@ export const ServicesDashboardPage = () => {
                 iconColorText={themeColors.tealText}
               />
             </Grid2>
-            <Grid2 size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <Grid2 size={{ xs: 12, sm: 6, md: 2 }}>
               <ServiceStatCard
                 title="Farmacia"
                 count={stats?.pharmacyCount}
@@ -210,7 +213,7 @@ export const ServicesDashboardPage = () => {
                 iconColorText={themeColors.tealText}
               />
             </Grid2>
-            <Grid2 size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <Grid2 size={{ xs: 12, sm: 6, md: 2 }}>
               <ServiceStatCard
                 title="Laboratorio"
                 count={stats?.laboratoryCount}
@@ -220,7 +223,7 @@ export const ServicesDashboardPage = () => {
                 iconColorText={themeColors.tealText}
               />
             </Grid2>
-            <Grid2 size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <Grid2 size={{ xs: 12, sm: 6, md: 2 }}>
               <ServiceStatCard
                 title="Ambulancia"
                 count={stats?.ambulanceCount}
@@ -230,12 +233,22 @@ export const ServicesDashboardPage = () => {
                 iconColorText={themeColors.tealText}
               />
             </Grid2>
-            <Grid2 size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <Grid2 size={{ xs: 12, sm: 6, md: 2 }}>
               <ServiceStatCard
                 title="Insumos Médicos"
                 count={stats?.suppliesCount}
                 isLoading={statsLoading}
                 icon={<Inventory />}
+                iconColorBg={themeColors.tealBg}
+                iconColorText={themeColors.tealText}
+              />
+            </Grid2>
+            <Grid2 size={{ xs: 12, sm: 6, md: 2 }}>
+              <ServiceStatCard
+                title="Centros Estéticos"
+                count={stats?.aestheticCount}
+                isLoading={statsLoading}
+                icon={<Spa />}
                 iconColorBg={themeColors.tealBg}
                 iconColorText={themeColors.tealText}
               />
@@ -264,7 +277,9 @@ export const ServicesDashboardPage = () => {
                 { value: "laboratory", label: "Laboratorio" },
                 { value: "ambulance", label: "Ambulancia" },
                 { value: "supplies", label: "Insumos Médicos" },
-                { value: "clinica", label: "Clínica" },
+                { value: "aesthetic", label: "Centro Estético" },
+                // Oculto: módulo de clínicas fuera de uso (no se borra)
+                // { value: "clinica", label: "Clínica" },
               ],
               minWidth: 180,
             },
