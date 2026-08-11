@@ -32,7 +32,11 @@ import { useDoctorPayments } from "../hooks/useDoctorPayments";
 import { handleLetterInput, handleNumberInput } from "../../../../shared/lib/inputValidation";
 import { ECUADOR_BANKS } from "../../../../shared/config/domain.constants";
 
-export const PaymentsSection = () => {
+interface Props {
+  isAesthetic?: boolean;
+}
+
+export const PaymentsSection = ({ isAesthetic = false }: Props = {}) => {
   const { data } = useDoctorDashboard();
   const doctorName = data?.doctor?.name || "Dr. Juan Pérez";
 

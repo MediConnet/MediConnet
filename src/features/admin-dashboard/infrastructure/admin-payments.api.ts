@@ -66,6 +66,35 @@ export interface AdminDoctorPayment {
 }
 
 /**
+ * Pago pendiente a centro estético (mismo shape que AdminDoctorPayment,
+ * el backend usa la misma lógica filtrando por categoría de proveedor)
+ */
+export interface AdminAestheticPayment {
+  id: string;
+  appointmentId: string;
+  patientName: string;
+  date: string;
+  amount: number;
+  commission: number;
+  gatewayFee: number;
+  netAmount: number;
+  status: 'pending' | 'paid';
+  paymentMethod: string;
+  createdAt: string;
+  source: 'admin' | 'clinic';
+  providerId: string;
+  providerName: string;
+  doctorBankAccount?: {
+    bankName: string;
+    accountNumber: string;
+    accountType: string;
+    accountHolder: string;
+    identificationNumber?: string;
+    email?: string;
+  };
+}
+
+/**
  * API: Obtener pagos pendientes a clínicas
  * Endpoint: GET /api/admin/payments/clinics
  */
@@ -103,6 +132,34 @@ export const markDoctorPaymentsAsPaidAPI = async (
 ): Promise<void> => {
   await httpClient.post<{ success: boolean }>(
     `/admin/payments/doctors/${doctorId}/mark-paid`,
+    { paymentIds }
+  );
+};
+
+/**
+ * API: Obtener pagos pendientes a centros estéticos
+ * Endpoint: GET /api/admin/payments/aesthetic
+ */
+export const getAdminAestheticPaymentsAPI = async (
+  params?: { page?: number; limit?: number }
+): Promise<PaginatedResponse<AdminAestheticPayment>> => {
+  const response = await httpClient.get<{ success: boolean; data: PaginatedResponse<AdminAestheticPayment> }>(
+    '/admin/payments/aesthetic',
+    { params }
+  );
+  return extractData(response);
+};
+
+/**
+ * API: Marcar pagos a centro estético como pagados
+ * Endpoint: POST /api/admin/payments/aesthetic/:providerId/mark-paid
+ */
+export const markAestheticPaymentsAsPaidAPI = async (
+  providerId: string,
+  paymentIds: string[]
+): Promise<void> => {
+  await httpClient.post<{ success: boolean }>(
+    `/admin/payments/aesthetic/${providerId}/mark-paid`,
     { paymentIds }
   );
 };

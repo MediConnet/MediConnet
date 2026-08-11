@@ -158,7 +158,9 @@ export const LoginPage = () => {
               navigate("/supply/dashboard", { replace: true });
               break;
             case "clinics":
-              navigate("/clinic/dashboard", { replace: true });
+              // Módulo de clínicas fuera de uso: se redirige a home en vez del
+              // dashboard propio (que además está bloqueado por ClinicRoute).
+              navigate("/home", { replace: true });
               break;
             case "aesthetic":
             case "estetica":

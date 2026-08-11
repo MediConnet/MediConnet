@@ -9,6 +9,7 @@ import {
   MedicalServices,
   Refresh,
   Science,
+  Spa,
 } from "@mui/icons-material";
 import {
   Avatar,
@@ -44,6 +45,7 @@ const SERVICE_ICONS: Record<string, React.ReactNode> = {
   ambulance: <AirportShuttle />,
   supplies: <Inventory />,
   clinica: <Business />,
+  aesthetic: <Spa />,
 };
 
 const SERVICE_LABELS: Record<string, string> = {
@@ -53,6 +55,7 @@ const SERVICE_LABELS: Record<string, string> = {
   ambulance: "Ambulancia",
   supplies: "Insumos Médicos",
   clinica: "Clínica",
+  aesthetic: "Centro Estético",
 };
 
 const SERVICE_COLORS: Record<string, string> = {
@@ -62,6 +65,7 @@ const SERVICE_COLORS: Record<string, string> = {
   ambulance: "#06b6d4",
   supplies: "#f59e0b",
   clinica: "#8b5cf6",
+  aesthetic: "#d81b60",
 };
 
 const STATUS_OPTIONS = [
@@ -78,7 +82,9 @@ const SERVICE_TYPE_OPTIONS = [
   { value: "laboratory", label: "Laboratorio" },
   { value: "ambulance", label: "Ambulancia" },
   { value: "supplies", label: "Insumos Médicos" },
-  { value: "clinica", label: "Clínica" },
+  { value: "aesthetic", label: "Centro Estético" },
+  // Oculto: módulo de clínicas fuera de uso (no se borra)
+  // { value: "clinica", label: "Clínica" },
 ];
 
 export const HistoryPage = () => {

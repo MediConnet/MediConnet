@@ -10,6 +10,7 @@ import {
   LocalPharmacy,
   LocationOn,
   MedicalServices,
+  Spa,
   TrendingUp,
 } from "@mui/icons-material";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
@@ -188,13 +189,24 @@ export const AdminDashboardPage = () => {
               barColor="bg-amber-500"
             />
             <ServiceBar
-              label="Clínicas"
-              count={stats.servicesByType?.clinicas ?? 0}
+              label="Centros Estéticos"
+              count={stats.servicesByType?.aesthetic ?? 0}
               total={200}
-              icon={<Business />}
-              color="text-purple-600"
-              barColor="bg-purple-500"
+              icon={<Spa />}
+              color="text-pink-600"
+              barColor="bg-pink-500"
             />
+            {/* Oculto: módulo de clínicas fuera de uso (no se borra) */}
+            {false && (
+              <ServiceBar
+                label="Clínicas"
+                count={stats?.servicesByType?.clinicas ?? 0}
+                total={200}
+                icon={<Business />}
+                color="text-purple-600"
+                barColor="bg-purple-500"
+              />
+            )}
           </div>
         </div>
 

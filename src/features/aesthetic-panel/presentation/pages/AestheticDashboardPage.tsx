@@ -41,6 +41,8 @@ import { AppointmentsSection } from "../../../doctor-panel/presentation/componen
 import { onRealtimeEvent } from "../../../../shared/realtime/realtimeEvents";
 import { PatientsSection } from "../../../doctor-panel/presentation/components/PatientsSection";
 import { SettingsSection } from "../../../doctor-panel/presentation/components/SettingsSection";
+import { PaymentsSection } from "../../../doctor-panel/presentation/components/PaymentsSection";
+import { ReportsSection } from "../../../doctor-panel/presentation/components/ReportsSection";
 import { getAppointmentsAPI } from "../../../doctor-panel/infrastructure/appointments.api";
 
 type TabType =
@@ -51,6 +53,8 @@ type TabType =
   | "ads"
   | "reviews"
   | "reception"
+  | "payments"
+  | "reports"
   | "schedules";
 
 export const AestheticDashboardPage = () => {
@@ -309,7 +313,7 @@ export const AestheticDashboardPage = () => {
                 </Card>
               </Grid2>
 
-              {/* Card de Modalidad de Cobro */}
+              {/* Gráfico de Ingresos por Semana */}
               <Grid2 size={{ xs: 12, md: 6 }}>
                 <Card
                   elevation={0}
@@ -317,43 +321,67 @@ export const AestheticDashboardPage = () => {
                 >
                   <CardContent>
                     <Stack direction="row" spacing={2} alignItems="center" mb={3}>
-                      <CheckCircle sx={{ color: "#10b981", fontSize: 28 }} />
+                      <AttachMoney sx={{ color: "#db2777", fontSize: 28 }} />
                       <Box>
                         <Typography variant="h6" fontWeight={700}>
-                          Modalidad de Cobro
+                          Ingresos por Semana
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          Condiciones de pago del establecimiento
+                          Últimas 4 semanas
                         </Typography>
                       </Box>
                     </Stack>
 
-                    <Box
-                      sx={{
-                        p: 3,
-                        borderRadius: 3,
-                        bgcolor: "#ecfdf5",
-                        border: "1px solid #a7f3d0",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 1.5,
-                      }}
-                    >
-                      <Box display="flex" alignItems="center" gap={1.5}>
-                        <Storefront sx={{ color: "#047857", fontSize: 28 }} />
-                        <Typography variant="h6" fontWeight={700} color="#047857">
-                          100% Pago Presencial
-                        </Typography>
-                      </Box>
-
-                      <Typography variant="body2" color="#065f46" lineHeight={1.6}>
-                        Todos los cobros de tus tratamientos estéticos se realizan de forma directa en tu local (efectivo, tarjeta física o transferencia local).
-                      </Typography>
-
-                      <Box display="flex" gap={1} mt={1}>
-                        <Chip label="Sin comisiones digitales" size="small" sx={{ bgcolor: "#d1fae5", color: "#047857", fontWeight: 600 }} />
-                        <Chip label="Cobro en local" size="small" sx={{ bgcolor: "#d1fae5", color: "#047857", fontWeight: 600 }} />
-                      </Box>
+                    <Box sx={{ position: "relative", height: 200 }}>
+                      <Stack
+                        direction="row"
+                        spacing={2}
+                        alignItems="flex-end"
+                        sx={{ height: "100%" }}
+                      >
+                        {appointmentsByWeek.map((count, index) => {
+                          const estimatedRevenue = count * 35;
+                          const maxRevenue = Math.max(...appointmentsByWeek.map(c => c * 35), 1);
+                          return (
+                            <Box
+                              key={index}
+                              sx={{
+                                flex: 1,
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  width: "100%",
+                                  height: `${(estimatedRevenue / maxRevenue) * 160}px`,
+                                  bgcolor: "#db2777",
+                                  borderRadius: "4px 4px 0 0",
+                                  minHeight: count > 0 ? "8px" : "0",
+                                  transition: "all 0.3s ease",
+                                  "&:hover": {
+                                    bgcolor: "#be185d",
+                                  },
+                                }}
+                              />
+                              <Typography
+                                variant="caption"
+                                sx={{ mt: 1, fontWeight: 600 }}
+                              >
+                                ${estimatedRevenue}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontSize: "0.65rem" }}
+                              >
+                                Sem {4 - index}
+                              </Typography>
+                            </Box>
+                          );
+                        })}
+                      </Stack>
                     </Box>
                   </CardContent>
                 </Card>
@@ -581,7 +609,13 @@ export const AestheticDashboardPage = () => {
         {/* TAB 7: RECEPTION (PATIENTS & CLIENTS CONTROL) */}
         {currentTab === "reception" && <PatientsSection isAesthetic={true} />}
 
-        {/* TAB 8: SCHEDULES / CONFIGURACIÓN DE HORARIOS */}
+        {/* TAB 8: PAYMENTS / PAGOS E INGRESOS */}
+        {currentTab === "payments" && <PaymentsSection isAesthetic={true} />}
+
+        {/* TAB 9: REPORTS / REPORTES */}
+        {currentTab === "reports" && <ReportsSection isAesthetic={true} />}
+
+        {/* TAB 10: SCHEDULES / CONFIGURACIÓN DE HORARIOS */}
         {currentTab === "schedules" && <SettingsSection isAesthetic={true} />}
       </Box>
     </DashboardLayout>

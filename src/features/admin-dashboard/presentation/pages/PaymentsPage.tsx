@@ -1,4 +1,4 @@
-import { AttachMoney, CreditCard, Visibility, CheckCircle, Payment as PaymentIcon, AccountBalance, Business, LocalHospital, History, Refresh, Download, Close, Undo } from "@mui/icons-material";
+import { AttachMoney, CreditCard, Visibility, CheckCircle, Payment as PaymentIcon, AccountBalance, Business, LocalHospital, History, Refresh, Download, Close, Undo, Spa } from "@mui/icons-material";
 import {
   Avatar,
   Box,
@@ -35,14 +35,17 @@ import { getUserFriendlyMessage } from "../../../../shared/lib/api-error";
 import { useFeedbackStore } from "../../../../app/store/feedback.store";
 import {
   getAdminDoctorPaymentsAPI,
+  getAdminAestheticPaymentsAPI,
   getAdminClinicPaymentsAPI,
   markDoctorPaymentsAsPaidAPI,
+  markAestheticPaymentsAsPaidAPI,
   markClinicPaymentAsPaidAPI,
   getAdminTransactionsAPI,
   getAdminRefundRequestsAPI,
   approveAdminRefundAPI,
   rejectAdminRefundAPI,
   type AdminDoctorPayment,
+  type AdminAestheticPayment,
   type AdminClinicPayment,
   type AdminTransaction,
   type AdminRefundRequest
@@ -94,6 +97,17 @@ export const PaymentsPage = () => {
   const [clinicPagination, setClinicPagination] = useState({ page: 0, pageSize: 10 });
   const [historyPagination, setHistoryPagination] = useState({ page: 0, pageSize: 10 });
 
+  // Estados para centros estéticos (mismo patrón que médicos)
+  const [aestheticPayments, setAestheticPayments] = useState<AdminAestheticPayment[]>([]);
+  const [aestheticStatusFilter, setAestheticStatusFilter] = useState<"all" | "pending" | "paid">("all");
+  const [aestheticFilter, setAestheticFilter] = useState<string>("all");
+  const [selectedAesthetic, setSelectedAesthetic] = useState<string | null>(null);
+  const [isAestheticDetailModalOpen, setIsAestheticDetailModalOpen] = useState(false);
+  const [isAestheticPaymentConfirmDialogOpen, setIsAestheticPaymentConfirmDialogOpen] = useState(false);
+  const [aestheticToPay, setAestheticToPay] = useState<string | null>(null);
+  const [aestheticGroupPagination, setAestheticGroupPagination] = useState({ page: 0, pageSize: 10 });
+  const [aestheticDetailPagination, setAestheticDetailPagination] = useState({ page: 0, pageSize: 10 });
+
   // Estados para clínicas
   const [clinicPayments, setClinicPayments] = useState<AdminClinicPayment[]>([]);
   const [selectedClinic, setSelectedClinic] = useState<AdminClinicPayment | null>(null);
@@ -128,11 +142,13 @@ export const PaymentsPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const [doctorPaymentsData, clinicPaymentsData] = await Promise.all([
+        const [doctorPaymentsData, aestheticPaymentsData, clinicPaymentsData] = await Promise.all([
           getAdminDoctorPaymentsAPI({ page: 1, limit: 1000 }),
+          getAdminAestheticPaymentsAPI({ page: 1, limit: 1000 }),
           getAdminClinicPaymentsAPI({ page: 1, limit: 1000 })
         ]);
         setPayments(doctorPaymentsData.data);
+        setAestheticPayments(aestheticPaymentsData.data);
         setClinicPayments(clinicPaymentsData.data);
       } catch (err: any) {
         setError(getUserFriendlyMessage(err, { fallback: 'No fue posible cargar los pagos.' }));
@@ -338,6 +354,144 @@ export const PaymentsPage = () => {
     const totalNet = filteredPayments.reduce((sum, p) => sum + p.netAmount, 0);
     return { totalAmount, totalCommission, totalGateway, totalNet };
   }, [filteredPayments]);
+
+  // ── Centros Estéticos: mismo patrón que médicos (líneas de arriba), clonado ──
+  const paymentsByAesthetic = useMemo(() => {
+    const grouped = new Map<string, AdminAestheticPayment[]>();
+    aestheticPayments.forEach((payment) => {
+      const providerName = payment.providerName;
+      if (!grouped.has(providerName)) {
+        grouped.set(providerName, []);
+      }
+      grouped.get(providerName)!.push(payment);
+    });
+    return grouped;
+  }, [aestheticPayments]);
+
+  const aestheticTotals = useMemo(() => {
+    const totals = new Map<string, { totalAmount: number; totalCommission: number; totalNet: number; count: number; pendingCount: number }>();
+    aestheticPayments.forEach((payment) => {
+      const providerName = payment.providerName;
+      if (!totals.has(providerName)) {
+        totals.set(providerName, { totalAmount: 0, totalCommission: 0, totalNet: 0, count: 0, pendingCount: 0 });
+      }
+      const providerTotal = totals.get(providerName)!;
+      providerTotal.totalAmount += payment.amount;
+      providerTotal.totalCommission += payment.commission;
+      providerTotal.totalNet += payment.netAmount;
+      providerTotal.count += 1;
+      if (payment.status === "pending") {
+        providerTotal.pendingCount += 1;
+      }
+    });
+    return totals;
+  }, [aestheticPayments]);
+
+  const handleMarkAestheticAsPaid = (providerName: string) => {
+    setAestheticToPay(providerName);
+    setIsAestheticPaymentConfirmDialogOpen(true);
+  };
+
+  const confirmAestheticPayment = async () => {
+    if (!aestheticToPay) return;
+
+    try {
+      const providerPayments = aestheticPayments.filter(
+        (p) => p.providerName === aestheticToPay && p.status === "pending"
+      );
+      const paymentIds = providerPayments.map((p) => p.id);
+
+      const providerId = providerPayments[0]?.providerId;
+      if (!providerId) return;
+
+      await markAestheticPaymentsAsPaidAPI(providerId, paymentIds);
+
+      setAestheticPayments((prevPayments) =>
+        prevPayments.map((payment) => {
+          if (payment.providerName === aestheticToPay && payment.status === "pending") {
+            return { ...payment, status: "paid" as const };
+          }
+          return payment;
+        })
+      );
+
+      setIsAestheticPaymentConfirmDialogOpen(false);
+      setAestheticToPay(null);
+    } catch (err: any) {
+      feedback.showFeedback('error', 'Error', getUserFriendlyMessage(err, { fallback: 'No fue posible marcar los pagos como pagados.' }));
+    }
+  };
+
+  const getAestheticPendingTotal = (providerName: string) => {
+    const providerPayments = aestheticPayments.filter(
+      (p) => p.providerName === providerName && p.status === "pending"
+    );
+    return providerPayments.reduce((sum, p) => sum + p.netAmount, 0);
+  };
+
+  const selectedAestheticPayments = useMemo(() => {
+    if (!selectedAesthetic) return [];
+    return paymentsByAesthetic.get(selectedAesthetic) || [];
+  }, [selectedAesthetic, paymentsByAesthetic]);
+
+  const getAestheticBankAccount = (providerName: string) => {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("aesthetic-profile-")) {
+        try {
+          const profile = JSON.parse(localStorage.getItem(key) || "{}");
+          if (profile?.provider?.name === providerName && profile?.provider?.bankAccount) {
+            return profile.provider.bankAccount;
+          }
+        } catch (error) {
+          console.error("Error reading aesthetic provider profile:", error);
+        }
+      }
+    }
+    return {
+      bankName: "Banco Pichincha",
+      accountNumber: "2100123456789",
+      accountType: "checking",
+      accountHolder: providerName,
+    };
+  };
+
+  const selectedAestheticBankAccount = useMemo(() => {
+    if (!selectedAesthetic) return null;
+    const paymentWithBank = aestheticPayments.find(
+      (p) => p.providerName === selectedAesthetic && p.doctorBankAccount
+    );
+    if (paymentWithBank?.doctorBankAccount) {
+      return paymentWithBank.doctorBankAccount;
+    }
+    return getAestheticBankAccount(selectedAesthetic);
+  }, [selectedAesthetic, aestheticPayments]);
+
+  const filteredAesthetic = useMemo(() => {
+    let filtered = aestheticPayments;
+
+    if (aestheticStatusFilter !== "all") {
+      filtered = filtered.filter((p) => p.status === aestheticStatusFilter);
+    }
+
+    if (aestheticFilter !== "all" && aestheticFilter.trim() !== "") {
+      filtered = filtered.filter((p) =>
+        p.providerName.toLowerCase().includes(aestheticFilter.toLowerCase()) ||
+        p.patientName.toLowerCase().includes(aestheticFilter.toLowerCase())
+      );
+    }
+
+    return filtered;
+  }, [aestheticPayments, aestheticStatusFilter, aestheticFilter]);
+
+  const aestheticSummaryTotals = useMemo(() => {
+    const totalAmount = filteredAesthetic.reduce((sum, p) => sum + p.amount, 0);
+    const totalCommission = filteredAesthetic.reduce((sum, p) => sum + p.commission, 0);
+    const totalGateway = filteredAesthetic.reduce((sum, p) => sum + (p.gatewayFee || 0), 0);
+    const totalNet = filteredAesthetic.reduce((sum, p) => sum + p.netAmount, 0);
+    return { totalAmount, totalCommission, totalGateway, totalNet };
+  }, [filteredAesthetic]);
+
   const filteredClinicPayments = useMemo(() => {
     let filtered = clinicPayments;
 
@@ -609,6 +763,197 @@ export const PaymentsPage = () => {
       headerName: "Estado",
       width: 110,
       renderCell: (params: { row: AdminDoctorPayment }) => (
+        <Chip
+          label={params.row.status === "paid" ? "Pagado" : "Pendiente"}
+          color={params.row.status === "paid" ? "success" : "warning"}
+          size="small"
+        />
+      ),
+    },
+  ], []);
+
+  // ── Columnas: Centros Estéticos agrupados (clon de Médicos agrupados) ──────
+  interface AestheticGroupRow {
+    id: string;
+    providerName: string;
+    count: number;
+    totalAmount: number;
+    totalCommission: number;
+    totalNet: number;
+    pendingCount: number;
+    pendingTotal: number;
+  }
+
+  const aestheticGroupRows: AestheticGroupRow[] = useMemo(() => {
+    let allProviders = Array.from(new Set(aestheticPayments.map((p) => p.providerName)));
+    if (aestheticFilter !== "all" && aestheticFilter.trim() !== "") {
+      allProviders = allProviders.filter((name) =>
+        name.toLowerCase().includes(aestheticFilter.toLowerCase())
+      );
+    }
+    return allProviders.map((providerName) => {
+      const t = aestheticTotals.get(providerName) || { totalAmount: 0, totalCommission: 0, totalNet: 0, count: 0, pendingCount: 0 };
+      return {
+        id: providerName,
+        providerName,
+        count: t.count,
+        totalAmount: t.totalAmount,
+        totalCommission: t.totalCommission,
+        totalNet: t.totalNet,
+        pendingCount: t.pendingCount,
+        pendingTotal: getAestheticPendingTotal(providerName),
+      };
+    });
+  }, [aestheticPayments, aestheticTotals, aestheticFilter]);
+
+  const aestheticGroupColumns = useMemo(() => [
+    {
+      field: "providerName",
+      headerName: "Centro Estético",
+      flex: 1,
+      minWidth: 200,
+      renderCell: (params: { row: AestheticGroupRow }) => (
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Avatar sx={{ bgcolor: "primary.light", width: 36, height: 36 }}>
+            {params.row.providerName.charAt(0)}
+          </Avatar>
+          <Typography fontWeight={600}>{params.row.providerName}</Typography>
+        </Stack>
+      ),
+    },
+    {
+      field: "count",
+      headerName: "Pagos",
+      width: 100,
+      renderCell: (params: { row: AestheticGroupRow }) => (
+        <Chip label={params.row.count} color="primary" size="small" />
+      ),
+    },
+    {
+      field: "totalAmount",
+      headerName: "Total Cobrado",
+      width: 140,
+      renderCell: (params: { row: AestheticGroupRow }) => (
+        <Typography fontWeight={600}>{formatMoney(params.row.totalAmount)}</Typography>
+      ),
+    },
+    {
+      field: "totalCommission",
+      headerName: "Comisión",
+      width: 120,
+      renderCell: (params: { row: AestheticGroupRow }) => (
+        <Typography color="text.secondary">{formatMoney(params.row.totalCommission)}</Typography>
+      ),
+    },
+    {
+      field: "totalNet",
+      headerName: "Total Neto",
+      width: 140,
+      renderCell: (params: { row: AestheticGroupRow }) => (
+        <Stack spacing={0.5} justifyContent="center" sx={{ height: "100%" }}>
+          <Typography fontWeight={600} color="#10b981" sx={{ lineHeight: 1.2 }}>
+            {formatMoney(params.row.totalNet)}
+          </Typography>
+          {params.row.pendingCount > 0 && (
+            <Typography variant="caption" color="warning.main" fontWeight={600} sx={{ lineHeight: 1 }}>
+              {formatMoney(params.row.pendingTotal)} pendiente
+            </Typography>
+          )}
+        </Stack>
+      ),
+    },
+    {
+      field: "status",
+      headerName: "Estado",
+      width: 110,
+      renderCell: (params: { row: AestheticGroupRow }) => (
+        <Chip
+          label={params.row.pendingCount > 0 ? "Pendiente" : "Pagado"}
+          color={params.row.pendingCount > 0 ? "warning" : "success"}
+          size="small"
+        />
+      ),
+    },
+    {
+      field: "actions",
+      headerName: "Acciones",
+      width: 240,
+      renderCell: (params: { row: AestheticGroupRow }) => (
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant="outlined" size="small" startIcon={<Visibility />}
+            onClick={() => { setSelectedAesthetic(params.row.providerName); setIsAestheticDetailModalOpen(true); }}
+            sx={{ textTransform: "none" }}
+          >
+            Ver Detalle
+          </Button>
+          {params.row.pendingCount > 0 && (
+            <Button
+              variant="contained" size="small" color="success" startIcon={<PaymentIcon />}
+              onClick={() => handleMarkAestheticAsPaid(params.row.providerName)}
+              sx={{ textTransform: "none" }}
+            >
+              Pagar
+            </Button>
+          )}
+        </Stack>
+      ),
+    },
+  ], []);
+
+  // ── Columnas: Detalle de Pagos a Centros Estéticos ─────────────────────────
+  const aestheticDetailColumns = useMemo(() => [
+    {
+      field: "providerName",
+      headerName: "Centro Estético",
+      flex: 1,
+      minWidth: 180,
+      renderCell: (params: { row: AdminAestheticPayment }) => (
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Avatar sx={{ bgcolor: "primary.light", width: 32, height: 32 }}>
+            {params.row.providerName.charAt(0)}
+          </Avatar>
+          <Typography fontWeight={600}>{params.row.providerName}</Typography>
+        </Stack>
+      ),
+    },
+    {
+      field: "date",
+      headerName: "Fecha",
+      width: 120,
+      renderCell: (params: { row: AdminAestheticPayment }) => (
+        <Typography>{new Date(params.row.date).toLocaleDateString("es-ES")}</Typography>
+      ),
+    },
+    {
+      field: "amount",
+      headerName: "Monto Cobrado",
+      width: 130,
+      renderCell: (params: { row: AdminAestheticPayment }) => (
+        <Typography fontWeight={600}>{formatMoney(params.row.amount)}</Typography>
+      ),
+    },
+    {
+      field: "commission",
+      headerName: "Comisión",
+      width: 130,
+      renderCell: (params: { row: AdminAestheticPayment }) => (
+        <Typography color="text.secondary">{formatMoney(params.row.commission)}</Typography>
+      ),
+    },
+    {
+      field: "netAmount",
+      headerName: "Total Neto",
+      width: 130,
+      renderCell: (params: { row: AdminAestheticPayment }) => (
+        <Typography fontWeight={600} color="#10b981">{formatMoney(params.row.netAmount)}</Typography>
+      ),
+    },
+    {
+      field: "status",
+      headerName: "Estado",
+      width: 110,
+      renderCell: (params: { row: AdminAestheticPayment }) => (
         <Chip
           label={params.row.status === "paid" ? "Pagado" : "Pendiente"}
           color={params.row.status === "paid" ? "success" : "warning"}
@@ -908,11 +1253,13 @@ export const PaymentsPage = () => {
       const loadPayments = async () => {
         setLoading(true);
         try {
-          const [doctorPaymentsData, clinicPaymentsData] = await Promise.all([
+          const [doctorPaymentsData, aestheticPaymentsData, clinicPaymentsData] = await Promise.all([
             getAdminDoctorPaymentsAPI({ page: 1, limit: 1000 }),
+            getAdminAestheticPaymentsAPI({ page: 1, limit: 1000 }),
             getAdminClinicPaymentsAPI({ page: 1, limit: 1000 })
           ]);
           setPayments(doctorPaymentsData.data);
+          setAestheticPayments(aestheticPaymentsData.data);
           setClinicPayments(clinicPaymentsData.data);
         } catch (err: any) {
           setError(getUserFriendlyMessage(err, { fallback: 'No fue posible cargar los pagos.' }));
@@ -940,7 +1287,7 @@ export const PaymentsPage = () => {
               Gestión de Pagos
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Administra los pagos a médicos independientes y clínicas
+              Administra los pagos a médicos independientes y centros estéticos
             </Typography>
           </Box>
         </Stack>
@@ -966,9 +1313,9 @@ export const PaymentsPage = () => {
               label="Pagos a Médicos"
             />
             <Tab
-              icon={<Business />}
+              icon={<Spa />}
               iconPosition="start"
-              label="Pagos a Clínicas"
+              label="Pagos a Centros Estéticos"
             />
             <Tab
               icon={<Undo />}
@@ -1404,8 +1751,412 @@ export const PaymentsPage = () => {
           </Box>
         )}
 
-        {/* Tab Content - Pagos a Clínicas */}
+        {/* Tab Content - Pagos a Centros Estéticos (clon de "Pagos a Médicos", ocupa el lugar de "Pagos a Clínicas") */}
         {currentTab === 1 && (
+          <Box>
+            {/* Resumen de totales */}
+            <Grid2 container spacing={3} mb={4}>
+              <Grid2 size={{ xs: 12, sm: 6, md: 2.4 }}>
+                <Card elevation={0} sx={{ bgcolor: "#f0fdfa", border: "1px solid #d1fae5" }}>
+                  <CardContent>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <AttachMoney sx={{ color: "#14b8a6", fontSize: 32 }} />
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Total Cobrado
+                        </Typography>
+                        <Typography variant="h6" fontWeight={700} color="#14b8a6">
+                          {formatMoney(aestheticSummaryTotals.totalAmount)}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 6, md: 2.4 }}>
+                <Card elevation={0} sx={{ bgcolor: "#fef3c7", border: "1px solid #fde68a" }}>
+                  <CardContent>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <CreditCard sx={{ color: "#f59e0b", fontSize: 32 }} />
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Comisión App
+                        </Typography>
+                        <Typography variant="h6" fontWeight={700} color="#f59e0b">
+                          {formatMoney(aestheticSummaryTotals.totalCommission)}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 6, md: 2.4 }}>
+                <Card elevation={0} sx={{ bgcolor: "#eff6ff", border: "1px solid #bfdbfe" }}>
+                  <CardContent>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <PaymentIcon sx={{ color: "#3b82f6", fontSize: 32 }} />
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Comisiones Nuvei
+                        </Typography>
+                        <Typography variant="h6" fontWeight={700} color="#3b82f6">
+                          {formatMoney(aestheticSummaryTotals.totalGateway)}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 6, md: 2.4 }}>
+                <Card elevation={0} sx={{ bgcolor: "#fff7ed", border: "1px solid #fed7aa" }}>
+                  <CardContent>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <CreditCard sx={{ color: "#ea580c", fontSize: 32 }} />
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Pendientes
+                        </Typography>
+                        <Typography variant="h6" fontWeight={700} color="#ea580c">
+                          {formatMoney(filteredAesthetic.filter(p => p.status === 'pending').reduce((sum, p) => sum + p.netAmount, 0))}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid2>
+              <Grid2 size={{ xs: 12, sm: 6, md: 2.4 }}>
+                <Card elevation={0} sx={{ bgcolor: "#ecfdf5", border: "1px solid #a7f3d0" }}>
+                  <CardContent>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <CheckCircle sx={{ color: "#10b981", fontSize: 32 }} />
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Pagados
+                        </Typography>
+                        <Typography variant="h6" fontWeight={700} color="#10b981">
+                          {formatMoney(filteredAesthetic.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.netAmount, 0))}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid2>
+            </Grid2>
+
+            {/* Toolbar + DataTable: Centros Estéticos con Pagos con Tarjeta */}
+            <TableToolbar
+              title="Centros Estéticos con Pagos con Tarjeta"
+              searchValue={aestheticFilter === "all" ? "" : aestheticFilter}
+              searchPlaceholder="Filtrar por centro estético..."
+              onSearchChange={(v) => { setAestheticFilter(v || "all"); setAestheticGroupPagination((p) => ({ ...p, page: 0 })); }}
+              filters={[
+                {
+                  key: "status",
+                  label: "Estado",
+                  value: aestheticStatusFilter,
+                  onChange: (v) => { setAestheticStatusFilter(v as any); setAestheticGroupPagination((p) => ({ ...p, page: 0 })); },
+                  options: [
+                    { value: "all", label: "Todos" },
+                    { value: "pending", label: "Pendientes" },
+                    { value: "paid", label: "Pagados" },
+                  ],
+                },
+              ]}
+              actions={[
+                { label: "Refrescar", icon: <Refresh />, onClick: handleRefresh, variant: "outlined" },
+              ]}
+              sx={{ mb: 2 }}
+            />
+            <Box mb={4}>
+              <DataTable
+                rows={(() => {
+                  const all = Array.from(aestheticGroupRows);
+                  const start = aestheticGroupPagination.page * aestheticGroupPagination.pageSize;
+                  return all.slice(start, start + aestheticGroupPagination.pageSize);
+                })()}
+                columns={aestheticGroupColumns}
+                getRowId={(row) => row.id}
+                rowCount={aestheticGroupRows.length}
+                paginationModel={aestheticGroupPagination}
+                onPaginationModelChange={setAestheticGroupPagination}
+                pageSizeOptions={[5, 10, 20]}
+                rowHeight={64}
+                emptyTitle="Sin centros estéticos con pagos"
+                emptyDescription="No hay centros estéticos con pagos registrados."
+              />
+            </Box>
+
+            {/* Toolbar + DataTable: Detalle de Pagos */}
+            <TableToolbar
+              title="Detalle de Pagos"
+              searchValue={aestheticFilter === "all" ? "" : aestheticFilter}
+              searchPlaceholder="Filtrar por centro estético..."
+              onSearchChange={(v) => { setAestheticFilter(v || "all"); setAestheticDetailPagination((p) => ({ ...p, page: 0 })); }}
+              sx={{ mb: 2 }}
+            />
+            <Box mb={4}>
+              <DataTable
+                rows={(() => {
+                  const start = aestheticDetailPagination.page * aestheticDetailPagination.pageSize;
+                  return filteredAesthetic.slice(start, start + aestheticDetailPagination.pageSize);
+                })()}
+                columns={aestheticDetailColumns}
+                getRowId={(row) => row.id}
+                rowCount={filteredAesthetic.length}
+                paginationModel={aestheticDetailPagination}
+                onPaginationModelChange={setAestheticDetailPagination}
+                pageSizeOptions={[5, 10, 20]}
+                rowHeight={64}
+                emptyTitle="Sin pagos registrados"
+                emptyDescription="No hay pagos que coincidan con los filtros aplicados."
+              />
+            </Box>
+
+            {/* Modal de Detalle del Centro Estético */}
+            <Dialog
+              open={isAestheticDetailModalOpen}
+              onClose={() => {
+                setIsAestheticDetailModalOpen(false);
+                setSelectedAesthetic(null);
+              }}
+              maxWidth="md"
+              fullWidth
+            >
+              <DialogTitle>
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Box>
+                    <Typography variant="h6" fontWeight={700}>
+                      Detalle de Pagos - {selectedAesthetic}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Pagos con tarjeta y comisiones
+                    </Typography>
+                  </Box>
+                  <IconButton
+                    onClick={() => {
+                      setIsAestheticDetailModalOpen(false);
+                      setSelectedAesthetic(null);
+                    }}
+                  >
+                    <Close />
+                  </IconButton>
+                </Stack>
+              </DialogTitle>
+              <DialogContent>
+                {selectedAesthetic && (
+                  <Box>
+                    <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: "#f0fdfa", border: "1px solid #d1fae5" }}>
+                      <Grid2 container spacing={3}>
+                        <Grid2 size={{ xs: 12, sm: 4 }}>
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">Total Cobrado</Typography>
+                            <Typography variant="h6" fontWeight={700} color="#14b8a6">
+                              {formatMoney(aestheticTotals.get(selectedAesthetic)?.totalAmount || 0)}
+                            </Typography>
+                          </Box>
+                        </Grid2>
+                        <Grid2 size={{ xs: 12, sm: 4 }}>
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">Total Comisión</Typography>
+                            <Typography variant="h6" fontWeight={700} color="#f59e0b">
+                              {formatMoney(aestheticTotals.get(selectedAesthetic)?.totalCommission || 0)}
+                            </Typography>
+                          </Box>
+                        </Grid2>
+                        <Grid2 size={{ xs: 12, sm: 4 }}>
+                          <Box>
+                            <Typography variant="caption" color="text.secondary">Total Neto del Centro Estético</Typography>
+                            <Typography variant="h6" fontWeight={700} color="#10b981">
+                              {formatMoney(aestheticTotals.get(selectedAesthetic)?.totalNet || 0)}
+                            </Typography>
+                          </Box>
+                        </Grid2>
+                      </Grid2>
+                    </Paper>
+
+                    {selectedAestheticBankAccount && (
+                      <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: "#fff7ed", border: "2px solid #fbbf24", borderRadius: 2 }}>
+                        <Stack direction="row" spacing={1} alignItems="center" mb={2}>
+                          <AccountBalance sx={{ color: "#f59e0b", fontSize: 24 }} />
+                          <Typography variant="h6" fontWeight={700} color="#f59e0b">Datos Bancarios para Transferencia</Typography>
+                        </Stack>
+                        <Alert severity="info" sx={{ mb: 2 }}>
+                          Utiliza esta información para realizar la transferencia externa al centro estético.
+                        </Alert>
+                        <Grid2 container spacing={2}>
+                          <Grid2 size={{ xs: 12, sm: 6 }}>
+                            <Box>
+                              <Typography variant="caption" color="text.secondary" fontWeight={600}>Banco</Typography>
+                              <Typography variant="body1" fontWeight={700} color="#1f2937">{selectedAestheticBankAccount.bankName}</Typography>
+                            </Box>
+                          </Grid2>
+                          <Grid2 size={{ xs: 12, sm: 6 }}>
+                            <Box>
+                              <Typography variant="caption" color="text.secondary" fontWeight={600}>Número de Cuenta</Typography>
+                              <Typography variant="body1" fontWeight={700} color="#1f2937" sx={{ fontFamily: "monospace" }}>{selectedAestheticBankAccount.accountNumber}</Typography>
+                            </Box>
+                          </Grid2>
+                          <Grid2 size={{ xs: 12, sm: 6 }}>
+                            <Box>
+                              <Typography variant="caption" color="text.secondary" fontWeight={600}>Tipo de Cuenta</Typography>
+                              <Typography variant="body1" fontWeight={700} color="#1f2937">
+                                {selectedAestheticBankAccount.accountType === "checking" || selectedAestheticBankAccount.accountType === "Corriente" ? "Corriente" : "Ahorros"}
+                              </Typography>
+                            </Box>
+                          </Grid2>
+                          <Grid2 size={{ xs: 12, sm: 6 }}>
+                            <Box>
+                              <Typography variant="caption" color="text.secondary" fontWeight={600}>Titular de la Cuenta</Typography>
+                              <Typography variant="body1" fontWeight={700} color="#1f2937">{selectedAestheticBankAccount.accountHolder}</Typography>
+                            </Box>
+                          </Grid2>
+                          {selectedAestheticBankAccount.identificationNumber && (
+                            <Grid2 size={{ xs: 12, sm: 6 }}>
+                              <Box>
+                                <Typography variant="caption" color="text.secondary" fontWeight={600}>RUC / Cédula</Typography>
+                                <Typography variant="body1" fontWeight={700} color="#1f2937">{selectedAestheticBankAccount.identificationNumber}</Typography>
+                              </Box>
+                            </Grid2>
+                          )}
+                          {selectedAestheticBankAccount.email && (
+                            <Grid2 size={{ xs: 12, sm: 6 }}>
+                              <Box>
+                                <Typography variant="caption" color="text.secondary" fontWeight={600}>Correo Electrónico</Typography>
+                                <Typography variant="body1" fontWeight={700} color="#1f2937">{selectedAestheticBankAccount.email}</Typography>
+                              </Box>
+                            </Grid2>
+                          )}
+                        </Grid2>
+                        <Divider sx={{ my: 2 }} />
+                        <Box sx={{ bgcolor: "#fef3c7", p: 2, borderRadius: 1 }}>
+                          <Typography variant="body2" fontWeight={600} color="#92400e" gutterBottom>Monto a Transferir:</Typography>
+                          <Typography variant="h5" fontWeight={700} color="#f59e0b">{formatMoney(getAestheticPendingTotal(selectedAesthetic))}</Typography>
+                        </Box>
+                      </Paper>
+                    )}
+
+                    <Typography variant="subtitle1" fontWeight={600} mb={2}>Pagos Individuales</Typography>
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow sx={{ bgcolor: "#f9fafb" }}>
+                            <TableCell sx={{ fontWeight: 600 }}>Fecha</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }} align="right">Monto Cobrado</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }} align="right">Comisión</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }} align="right">Neto</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }} align="center">Estado</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {selectedAestheticPayments.map((payment) => (
+                            <TableRow key={payment.id}>
+                              <TableCell>{new Date(payment.date).toLocaleDateString("es-ES")}</TableCell>
+                              <TableCell align="right"><Typography fontWeight={600}>{formatMoney(payment.amount)}</Typography></TableCell>
+                              <TableCell align="right"><Typography color="text.secondary">{formatMoney(payment.commission)}</Typography></TableCell>
+                              <TableCell align="right"><Typography fontWeight={600} color="#10b981">{formatMoney(payment.netAmount)}</Typography></TableCell>
+                              <TableCell align="center">
+                                <Chip label={payment.status === "paid" ? "Pagado" : "Pendiente"} color={payment.status === "paid" ? "success" : "warning"} size="small" />
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Box>
+                )}
+              </DialogContent>
+            </Dialog>
+
+            {/* Dialog de Confirmación de Pago */}
+            <Dialog
+              open={isAestheticPaymentConfirmDialogOpen}
+              onClose={() => { setIsAestheticPaymentConfirmDialogOpen(false); setAestheticToPay(null); }}
+              maxWidth="sm" fullWidth
+            >
+              <DialogTitle>
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Typography variant="h6" fontWeight={700}>Confirmar Pago al Centro Estético</Typography>
+                  <IconButton onClick={() => { setIsAestheticPaymentConfirmDialogOpen(false); setAestheticToPay(null); }}><Close /></IconButton>
+                </Stack>
+              </DialogTitle>
+              <DialogContent>
+                {aestheticToPay && (() => {
+                  const paymentWithBank = aestheticPayments.find(
+                    (p) => p.providerName === aestheticToPay && p.doctorBankAccount
+                  );
+                  const bankAccount = paymentWithBank?.doctorBankAccount || getAestheticBankAccount(aestheticToPay);
+                  return (
+                    <Stack spacing={3}>
+                      <Alert severity="info">¿Estás seguro de que deseas marcar todos los pagos pendientes de <strong>{aestheticToPay}</strong> como pagados?</Alert>
+                      <Box>
+                        <Typography variant="subtitle2" color="text.secondary" gutterBottom>Resumen del pago:</Typography>
+                        <Paper elevation={0} sx={{ p: 2, bgcolor: "#f9fafb", border: "1px solid #e5e7eb" }}>
+                          <Stack spacing={1}>
+                            <Stack direction="row" justifyContent="space-between">
+                              <Typography variant="body2">Total a pagar:</Typography>
+                              <Typography variant="body2" fontWeight={700} color="#10b981">{formatMoney(getAestheticPendingTotal(aestheticToPay))}</Typography>
+                            </Stack>
+                            <Stack direction="row" justifyContent="space-between">
+                              <Typography variant="body2">Pagos pendientes:</Typography>
+                              <Typography variant="body2" fontWeight={600}>{aestheticTotals.get(aestheticToPay)?.pendingCount || 0} citas</Typography>
+                            </Stack>
+                          </Stack>
+                        </Paper>
+                      </Box>
+                      {bankAccount && (
+                        <Box>
+                          <Typography variant="subtitle2" color="text.secondary" gutterBottom>Datos bancarios para transferencia:</Typography>
+                          <Paper elevation={0} sx={{ p: 2, bgcolor: "#fff7ed", border: "1px solid #fbbf24" }}>
+                            <Stack spacing={1}>
+                              <Stack direction="row" justifyContent="space-between">
+                                <Typography variant="body2" fontWeight={600}>Banco:</Typography>
+                                <Typography variant="body2" fontWeight={700}>{bankAccount.bankName}</Typography>
+                              </Stack>
+                              <Stack direction="row" justifyContent="space-between">
+                                <Typography variant="body2" fontWeight={600}>Número de Cuenta:</Typography>
+                                <Typography variant="body2" fontWeight={700} sx={{ fontFamily: "monospace" }}>{bankAccount.accountNumber}</Typography>
+                              </Stack>
+                              <Stack direction="row" justifyContent="space-between">
+                                <Typography variant="body2" fontWeight={600}>Tipo:</Typography>
+                                <Typography variant="body2" fontWeight={700}>
+                                  {bankAccount.accountType === "checking" || bankAccount.accountType === "Corriente" ? "Corriente" : "Ahorros"}
+                                </Typography>
+                              </Stack>
+                              <Stack direction="row" justifyContent="space-between">
+                                <Typography variant="body2" fontWeight={600}>Titular:</Typography>
+                                <Typography variant="body2" fontWeight={700}>{bankAccount.accountHolder}</Typography>
+                              </Stack>
+                              {bankAccount.identificationNumber && (
+                                <Stack direction="row" justifyContent="space-between">
+                                  <Typography variant="body2" fontWeight={600}>RUC / Cédula:</Typography>
+                                  <Typography variant="body2" fontWeight={700}>{bankAccount.identificationNumber}</Typography>
+                                </Stack>
+                              )}
+                              {bankAccount.email && (
+                                <Stack direction="row" justifyContent="space-between">
+                                  <Typography variant="body2" fontWeight={600}>Correo:</Typography>
+                                  <Typography variant="body2" fontWeight={700}>{bankAccount.email}</Typography>
+                                </Stack>
+                              )}
+                            </Stack>
+                          </Paper>
+                        </Box>
+                      )}
+                      <Alert severity="warning">Esta acción marcará todos los pagos pendientes como "Pagado". Asegúrate de haber realizado el pago externo (transferencia bancaria, etc.) antes de confirmar.</Alert>
+                    </Stack>
+                  );
+                })()}
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => { setIsAestheticPaymentConfirmDialogOpen(false); setAestheticToPay(null); }} sx={{ textTransform: "none" }}>Cancelar</Button>
+                <Button onClick={confirmAestheticPayment} variant="contained" color="success" startIcon={<CheckCircle />} sx={{ textTransform: "none" }}>Confirmar Pago Realizado</Button>
+              </DialogActions>
+            </Dialog>
+          </Box>
+        )}
+
+        {/* Tab Content - Pagos a Clínicas (OCULTO: módulo de clínicas fuera de uso, código conservado sin borrar) */}
+        {false && (
           <Box>
             {/* Resumen de totales de clínicas */}
             <Grid2 container spacing={3} mb={4}>

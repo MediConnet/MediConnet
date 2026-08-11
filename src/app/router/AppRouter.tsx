@@ -12,6 +12,7 @@ import { logger } from "../../shared/lib/logger";
 // Guards / Rutas Protegidas
 import { ClinicRoute } from "./ClinicRoute";
 import { DoctorRoute } from "./DoctorRoute";
+import { AestheticRoute } from "./AestheticRoute";
 import { LaboratoryRoute } from "./LaboratoryRoute";
 import { SupplyRoute } from "./SupplyRoute";
 import { RoleRoute } from "./RoleRoute";
@@ -204,9 +205,9 @@ export const AppRouter = () => {
         <Route
           path="/aesthetic"
           element={
-            <RoleRoute allowedRoles={["provider", "profesional", "admin"]}>
+            <AestheticRoute>
               <Outlet />
-            </RoleRoute>
+            </AestheticRoute>
           }
         >
           <Route path="dashboard" element={<AestheticDashboardPage />} />

@@ -244,7 +244,8 @@ export const UsersPage = () => {
                 { value: "all", label: "Todos" },
                 { value: "admin", label: "Administradores" },
                 { value: "provider", label: "Proveedores" },
-                { value: "clinic", label: "Clínicas" },
+                // Oculto: módulo de clínicas fuera de uso (no se borra)
+                // { value: "clinic", label: "Clínicas" },
               ],
             },
           ]}
@@ -281,7 +282,8 @@ export const UsersPage = () => {
                     onChange={(e) => setSelectedUser({ ...selectedUser, role: e.target.value as any })}>
                     <MenuItem value="admin">Administrador</MenuItem>
                     <MenuItem value="provider">Proveedor</MenuItem>
-                    <MenuItem value="clinic">Clínica</MenuItem>
+                    {/* Oculto: módulo de clínicas fuera de uso (no se borra) */}
+                    {/* <MenuItem value="clinic">Clínica</MenuItem> */}
                     <MenuItem value="patient">Paciente</MenuItem>
                   </Select>
                 </FormControl>

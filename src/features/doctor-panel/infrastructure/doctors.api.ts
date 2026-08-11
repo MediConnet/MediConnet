@@ -147,13 +147,16 @@ export const getDoctorPanelReviewsAPI = async (
  * Convierte Array del Backend ["Efectivo", "Tarjeta"] -> Frontend 'both' | 'card' | 'cash'
  */
 const mapBackendPaymentsToFrontend = (methods: string[]): PaymentMethod => {
-  if (!methods) return 'cash';
+  // Proveedor recién creado: aún no guardó nunca este campo (array vacío/ausente).
+  // No se debe interpretar como "solo presencial" — igual que médicos, el default es aceptar ambas.
+  if (!methods || methods.length === 0) return 'both';
   const hasCash = methods.some(m => m.toLowerCase().includes(PAYMENT_METHOD_BACKEND.CASH.toLowerCase()));
   const hasCard = methods.some(m => m.toLowerCase().includes(PAYMENT_METHOD_BACKEND.CARD.toLowerCase()));
 
   if (hasCash && hasCard) return 'both';
   if (hasCard) return 'card';
-  return 'cash';
+  if (hasCash) return 'cash';
+  return 'both';
 };
 
 const mapFrontendPaymentsToBackend = (method: PaymentMethod): string[] => {

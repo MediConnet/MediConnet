@@ -1321,7 +1321,7 @@ export const ProfileSection = ({ data, onUpdate, isAesthetic }: ProfileSectionPr
                   }
                   className="w-full"
                 >
-                  {(isAesthetic ? (['cash'] as const) : (['card', 'cash', 'both'] as const)).map((method) => (
+                  {(['card', 'cash', 'both'] as const).map((method) => (
                     <MenuItem key={method} value={method}>
                       {method === 'card' ? 'Solo Tarjeta' : method === 'cash' ? 'Solo Presencial' : 'Tarjeta y Presencial'}
                     </MenuItem>
