@@ -8,25 +8,44 @@ import type { PaginatedResponse } from '../../../shared/types/pagination';
  * 
  * ✅ CORRECCIÓN: Manejo robusto de respuestas y sin filtros automáticos
  */
+export interface ProviderRequestsStats {
+  pending: number;
+  approved: number;
+  rejected: number;
+  total: number;
+}
+
 export const getProviderRequestsAPI = async (params?: {
   status?: "all" | "PENDING" | "APPROVED" | "REJECTED";
+  search?: string;
+  serviceType?: string;
   dateFrom?: string;
+  dateTo?: string;
   page?: number;
   limit?: number;
-}): Promise<PaginatedResponse<ProviderRequest>> => {
+}): Promise<PaginatedResponse<ProviderRequest> & { stats?: ProviderRequestsStats }> => {
   try {
     const searchParams = new URLSearchParams();
     searchParams.set("page", String(params?.page || 1));
     searchParams.set("limit", String(params?.limit || 20));
-    
+
     if (params?.status === "all") {
       searchParams.set("status", "ALL");
     } else if (params?.status) {
       searchParams.set("status", params.status);
     }
-    
+
+    if (params?.search && params.search.trim() !== '') {
+      searchParams.set("search", params.search.trim());
+    }
+    if (params?.serviceType) {
+      searchParams.set("serviceType", params.serviceType);
+    }
     if (params?.dateFrom) {
       searchParams.set("dateFrom", params.dateFrom);
+    }
+    if (params?.dateTo) {
+      searchParams.set("dateTo", params.dateTo);
     }
 
     console.log('🔍 getProviderRequestsAPI - Params:', { params, searchParams: searchParams.toString() });
@@ -73,9 +92,14 @@ export const getProviderRequestsAPI = async (params?: {
       }
     }
     
-    console.log('✅ getProviderRequestsAPI - Final result:', { data: data.length, pagination });
-    
-    return { data, pagination };
+    const stats: ProviderRequestsStats | undefined =
+      extractedData && typeof extractedData === 'object' && extractedData.stats
+        ? extractedData.stats
+        : undefined;
+
+    console.log('✅ getProviderRequestsAPI - Final result:', { data: data.length, pagination, stats });
+
+    return { data, pagination, stats };
   } catch (error) {
     console.error('❌ getProviderRequestsAPI - Error:', error);
     // Retornar estructura vacía en caso de error

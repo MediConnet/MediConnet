@@ -1,6 +1,6 @@
 import type { RequestStatusType } from "./request-status.enum";
 
-export type ServiceType = 'doctor' | 'pharmacy' | 'laboratory' | 'ambulance' | 'supplies' | 'clinica';
+export type ServiceType = 'doctor' | 'pharmacy' | 'laboratory' | 'ambulance' | 'supplies' | 'clinica' | 'aesthetic';
 
 // Definimos la estructura de un documento
 export interface ProviderDocument {

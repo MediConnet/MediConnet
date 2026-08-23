@@ -9,13 +9,11 @@ import {
   Comment,
   Dashboard,
   Group,
-  History,
   Inventory,
   LocalHospital,
   LocalPharmacy,
   LocalShipping,
   Map,
-  MedicalServices,
   Message,
   Notifications,
   Percent,
@@ -55,12 +53,15 @@ export const ADMIN_MENU: MenuItem[] = [
     label: "Anuncios",
     path: "/admin/ads",
   },
-  {
-    icon: <MedicalServices />,
-    label: "Servicios Aprobados",
-    path: "/admin/services",
-  },
-  { icon: <History />, label: "Historial", path: "/admin/history" },
+  // Ocultas: unificadas dentro de "Solicitudes" (ahora trae estado, tipo de
+  // servicio, rango de fechas y tarjetas de resumen) — no se borran, las
+  // páginas siguen existiendo por si se necesitan de nuevo.
+  // {
+  //   icon: <MedicalServices />,
+  //   label: "Servicios Aprobados",
+  //   path: "/admin/services",
+  // },
+  // { icon: <History />, label: "Historial", path: "/admin/history" },
   { icon: <AttachMoney />, label: "Pagos", path: "/admin/payments" },
   { icon: <Percent />, label: "Comisiones", path: "/admin/commissions" },
   { icon: <Group />, label: "Usuarios", path: "/admin/users" },

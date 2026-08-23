@@ -289,45 +289,49 @@ export const RequestDetailModal = ({
         </Box>
       </DialogContent>
 
-      <Divider />
+      {request.status === "PENDING" && (
+        <>
+          <Divider />
 
-      <DialogActions sx={{ p: 3, justifyContent: "flex-end", gap: 2 }}>
-        <Button
-          variant="outlined"
-          color="error"
-          size="large"
-          startIcon={<Block />}
-          onClick={() => {
-            onReject(request);
-            onClose();
-          }}
-          sx={{
-            px: 3,
-            borderRadius: 2,
-            textTransform: "none",
-            fontWeight: 600,
-          }}
-        >
-          Rechazar Solicitud
-        </Button>
-        <Button
-          variant="contained"
-          color="success"
-          size="large"
-          startIcon={<Check />}
-          onClick={() => onApprove(request.id)}
-          sx={{
-            color: "white",
-            px: 4,
-            borderRadius: 2,
-            textTransform: "none",
-            fontWeight: 600,
-            boxShadow: "0 4px 12px rgba(46, 125, 50, 0.2)",
-          }}
-        >
-          Aprobar Solicitud
-        </Button>
-      </DialogActions>
+          <DialogActions sx={{ p: 3, justifyContent: "flex-end", gap: 2 }}>
+            <Button
+              variant="outlined"
+              color="error"
+              size="large"
+              startIcon={<Block />}
+              onClick={() => {
+                onReject(request);
+                onClose();
+              }}
+              sx={{
+                px: 3,
+                borderRadius: 2,
+                textTransform: "none",
+                fontWeight: 600,
+              }}
+            >
+              Rechazar Solicitud
+            </Button>
+            <Button
+              variant="contained"
+              color="success"
+              size="large"
+              startIcon={<Check />}
+              onClick={() => onApprove(request.id)}
+              sx={{
+                color: "white",
+                px: 4,
+                borderRadius: 2,
+                textTransform: "none",
+                fontWeight: 600,
+                boxShadow: "0 4px 12px rgba(46, 125, 50, 0.2)",
+              }}
+            >
+              Aprobar Solicitud
+            </Button>
+          </DialogActions>
+        </>
+      )}
     </Dialog>
   );
 };
