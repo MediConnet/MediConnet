@@ -1,13 +1,17 @@
 import {
   AirportShuttle,
+  Assignment,
   Business,
   Check,
+  CheckCircle,
   Close,
   Download,
+  HourglassEmpty,
   Inventory,
   LocalHospital,
   LocalPharmacy,
   Science,
+  Spa,
   Visibility,
 } from "@mui/icons-material";
 import {
@@ -24,6 +28,7 @@ import {
   type GridRenderCellParams,
   type GridPaginationModel,
 } from "@mui/x-data-grid";
+import Grid2 from "@mui/material/Grid2";
 import { useMemo, useState } from "react";
 import { DashboardLayout } from "../../../../shared/layouts/DashboardLayout";
 import type {
@@ -33,6 +38,7 @@ import type {
 import { RequestDetailModal } from "../components/RequestDetailModal";
 import { RejectProviderRequestModal } from "../components/RejectProviderRequestModal";
 import { RequestStatusBadge } from "../components/RequestStatusBadge";
+import { ServiceStatCard } from "../components/ServiceStatCard";
 import { useProviderRequests } from "../hooks/useProviderRequests";
 import { useRequestFiltering } from "../hooks/useRequestFiltering";
 import { useQueryClient } from "@tanstack/react-query";
@@ -51,19 +57,38 @@ const CURRENT_ADMIN = {
   initials: "AG",
 };
 
+const SERVICE_TYPE_OPTIONS = [
+  { value: "", label: "Todos los servicios" },
+  { value: "doctor", label: "Médico" },
+  { value: "pharmacy", label: "Farmacia" },
+  { value: "laboratory", label: "Laboratorio" },
+  { value: "ambulance", label: "Ambulancia" },
+  { value: "supplies", label: "Insumos Médicos" },
+  { value: "aesthetic", label: "Centro Estético" },
+  // Oculto: módulo de clínicas fuera de uso (no se borra)
+  // { value: "clinica", label: "Clínica" },
+];
+
 export const RequestsPage = () => {
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
-  const [serverStatusFilter, setServerStatusFilter] = useState<"all" | "PENDING" | "APPROVED" | "REJECTED">("all");
+  const [serverStatusFilter, setServerStatusFilter] = useState<"all" | "PENDING" | "APPROVED" | "REJECTED">("PENDING");
+  const [serverSearchText, setServerSearchText] = useState("");
+  const [serverServiceType, setServerServiceType] = useState("");
   const [serverDateFilter, setServerDateFilter] = useState("");
+  const [serverDateToFilter, setServerDateToFilter] = useState("");
   const { data: result, isLoading } = useProviderRequests({
     status: serverStatusFilter,
+    search: serverSearchText || undefined,
+    serviceType: serverServiceType || undefined,
     dateFrom: serverDateFilter || undefined,
+    dateTo: serverDateToFilter || undefined,
     page: paginationModel.page + 1,
     limit: paginationModel.pageSize,
   });
 
   const requests = useMemo(() => result?.data ?? [], [result]);
   const pagination = useMemo(() => result?.pagination ?? { total: 0, page: 1, limit: 10, totalPages: 0 }, [result]);
+  const stats = result?.stats;
 
   const queryClient = useQueryClient();
   const { appointments: adminAppointments, notificationsViewAllPath } = useAdminNotificationsLayout();
@@ -76,7 +101,7 @@ export const RequestsPage = () => {
     setDateFilter,
     approveRequest,
     rejectRequest,
-  } = useRequestFiltering(requests, "all");
+  } = useRequestFiltering(requests, "PENDING");
 
   const [selectedRequest, setSelectedRequest] =
     useState<ProviderRequest | null>(null);
@@ -90,9 +115,25 @@ export const RequestsPage = () => {
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
   };
 
+  const handleSearchChange = (value: string) => {
+    setSearchText(value);
+    setServerSearchText(value);
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+  };
+
+  const handleServiceTypeChange = (value: string) => {
+    setServerServiceType(value);
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+  };
+
   const handleDateFilterChange = (value: string) => {
     setDateFilter(value);
     setServerDateFilter(value);
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+  };
+
+  const handleDateToFilterChange = (value: string) => {
+    setServerDateToFilter(value);
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
   };
 
@@ -299,6 +340,8 @@ export const RequestsPage = () => {
           icon = <Inventory color="warning" fontSize="small" />;
         if (type === "clinica")
           icon = <Business color="secondary" fontSize="small" />;
+        if (type === "aesthetic")
+          icon = <Spa sx={{ color: "#d81b60" }} fontSize="small" />;
 
         return (
           <Stack
@@ -393,12 +436,55 @@ export const RequestsPage = () => {
       notificationsViewAllPath={notificationsViewAllPath}
     >
       <TablePageLayout>
+        <Grid2 container spacing={2} sx={{ mb: 3 }}>
+          <Grid2 size={{ xs: 6, sm: 3 }}>
+            <ServiceStatCard
+              title="Pendientes"
+              count={stats?.pending}
+              icon={<HourglassEmpty />}
+              isLoading={isLoading}
+              iconColorBg="#FEF3C7"
+              iconColorText="#B45309"
+            />
+          </Grid2>
+          <Grid2 size={{ xs: 6, sm: 3 }}>
+            <ServiceStatCard
+              title="Aprobados"
+              count={stats?.approved}
+              icon={<CheckCircle />}
+              isLoading={isLoading}
+              iconColorBg="#DCFCE7"
+              iconColorText="#108369"
+            />
+          </Grid2>
+          <Grid2 size={{ xs: 6, sm: 3 }}>
+            <ServiceStatCard
+              title="Rechazados"
+              count={stats?.rejected}
+              icon={<Close />}
+              isLoading={isLoading}
+              iconColorBg="#FEE2E2"
+              iconColorText="#DC2626"
+            />
+          </Grid2>
+          <Grid2 size={{ xs: 6, sm: 3 }}>
+            <ServiceStatCard
+              title="Total"
+              count={stats?.total}
+              icon={<Assignment />}
+              isLoading={isLoading}
+              iconColorBg="#E0F2F1"
+              iconColorText="#009688"
+            />
+          </Grid2>
+        </Grid2>
+
         <TableToolbar
           title="Solicitudes de Proveedores"
-          subtitle="Gestiona las solicitudes de registro y verificación."
+          subtitle="Gestiona las solicitudes de registro y verificación — pendientes, aprobadas y rechazadas."
           searchValue={filters.searchText}
-          searchPlaceholder="Buscar por nombre o email..."
-          onSearchChange={setSearchText}
+          searchPlaceholder="Buscar por nombre, email o ciudad..."
+          onSearchChange={handleSearchChange}
           filters={[
             {
               key: "status",
@@ -412,17 +498,35 @@ export const RequestsPage = () => {
                 { value: "REJECTED", label: "Rechazados" },
               ],
             },
+            {
+              key: "serviceType",
+              label: "Tipo de Servicio",
+              value: serverServiceType,
+              onChange: handleServiceTypeChange,
+              options: SERVICE_TYPE_OPTIONS,
+            },
           ]}
           extraFilters={
-            <TextField
-              type="date"
-              size="small"
-              sx={{ minWidth: 150 }}
-              slotProps={{ inputLabel: { shrink: true } }}
-              label="Desde fecha"
-              value={filters.dateFilter}
-              onChange={(e) => handleDateFilterChange(e.target.value)}
-            />
+            <>
+              <TextField
+                type="date"
+                size="small"
+                sx={{ minWidth: 150 }}
+                slotProps={{ inputLabel: { shrink: true } }}
+                label="Desde fecha"
+                value={filters.dateFilter}
+                onChange={(e) => handleDateFilterChange(e.target.value)}
+              />
+              <TextField
+                type="date"
+                size="small"
+                sx={{ minWidth: 150 }}
+                slotProps={{ inputLabel: { shrink: true } }}
+                label="Hasta fecha"
+                value={serverDateToFilter}
+                onChange={(e) => handleDateToFilterChange(e.target.value)}
+              />
+            </>
           }
           actions={[
             {

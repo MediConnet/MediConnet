@@ -1,6 +1,6 @@
 import {
   Business, Campaign, Check, Close, LocalHospital, LocalPharmacy,
-  Science, AirportShuttle, Inventory, Visibility, DeleteOutline,
+  Science, AirportShuttle, Inventory, Visibility,
 } from "@mui/icons-material";
 import {
   Avatar, Box, Button, Chip, IconButton, Stack, Typography,
@@ -15,8 +15,6 @@ import { RequestStatusBadge } from "../components/RequestStatusBadge";
 import { useAdRequests } from "../hooks/useAdRequests";
 import { approveAdRequestUseCase } from "../../application/approve-ad-request.usecase";
 import { rejectAdRequestUseCase } from "../../application/reject-ad-request.usecase";
-import { clearAdsFromStorage } from "../../infrastructure/ads.mock";
-import { clearAdRequests } from "../../infrastructure/ad-requests.mock";
 import { useAdminNotificationsLayout } from "../hooks/useAdminNotificationsLayout";
 import { DataTable, TableToolbar, TablePageLayout } from "../../../../shared/components/DataTable";
 import { useFeedbackStore } from "../../../../app/store/feedback.store";
@@ -31,11 +29,13 @@ const SERVICE_ICONS: Record<string, React.ReactNode> = {
 
 export const AdRequestsPage = () => {
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
-  const [statusFilter, setStatusFilter] = useState("all");
   const [searchText, setSearchText] = useState("");
 
+  // Esta pantalla es solo la bandeja de revisión: únicamente solicitudes
+  // pendientes. Una vez aprobada/rechazada, deja de ser una "solicitud" —
+  // lo aprobado se administra en Anuncios (Gestión).
   const { data: result, isLoading, refetch } = useAdRequests({
-    status: statusFilter === "all" ? undefined : statusFilter,
+    status: "PENDING",
     page: paginationModel.page + 1,
     limit: paginationModel.pageSize,
   });
@@ -57,11 +57,6 @@ export const AdRequestsPage = () => {
     );
   }, [requests, searchText]);
 
-  const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value);
-    setPaginationModel((prev) => ({ ...prev, page: 0 }));
-  };
-
   const handleApprove = async (id: string) => {
     try {
       await approveAdRequestUseCase(id);
@@ -82,15 +77,6 @@ export const AdRequestsPage = () => {
     } catch (e) {
       feedback.showFeedback("error", FEEDBACK.ERROR.GENERIC.title, FEEDBACK.ERROR.GENERIC.message);
     }
-  };
-
-  const handleClearAllAds = () => {
-    feedback.showDelete("Eliminar todos los registros", "¿Limpiar TODOS los anuncios y solicitudes? Esta acción no se puede deshacer.", () => {
-      clearAdsFromStorage();
-      clearAdRequests();
-      refetch();
-      feedback.showFeedback("success", "Registros eliminados", "Anuncios y solicitudes limpiados correctamente");
-    });
   };
 
   const columns: GridColDef<AdRequest>[] = [
@@ -200,34 +186,11 @@ export const AdRequestsPage = () => {
       <TablePageLayout>
         <TableToolbar
           title="Solicitudes de Anuncios"
-          subtitle="Gestiona las solicitudes de permisos para crear anuncios"
+          subtitle="Solicitudes pendientes de revisión — apruébalas o recházalas."
           titleIcon={<Campaign sx={{ fontSize: 32 }} />}
           searchValue={searchText}
           searchPlaceholder="Nombre o email del proveedor..."
           onSearchChange={setSearchText}
-          filters={[
-            {
-              key: "status",
-              label: "Estado",
-              value: statusFilter,
-              onChange: handleStatusFilterChange,
-              options: [
-                { value: "all", label: "Todos" },
-                { value: "PENDING", label: "Pendiente" },
-                { value: "APPROVED", label: "Aprobado" },
-                { value: "REJECTED", label: "Rechazado" },
-              ],
-            },
-          ]}
-          actions={[
-            {
-              label: "Limpiar Todo",
-              icon: <DeleteOutline />,
-              onClick: handleClearAllAds,
-              variant: "outlined",
-              color: "error",
-            },
-          ]}
           sx={{ mb: 3 }}
         />
 
